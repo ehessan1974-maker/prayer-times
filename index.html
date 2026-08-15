@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مواقيت الصلاة - تحميل التطبيق</title>
+    <style>
+        /* ===== Reset & Base ===== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --green-600: #059669;
+            --green-700: #047857;
+            --green-800: #065f46;
+            --green-900: #064e3b;
+            --green-100: #ecfdf5;
+            --green-50: #f0fdf4;
+            --green-200: #d1fae5;
+            --green-400: #34d399;
+            --green-500: #10b981;
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+            --shadow-xl: 0 20px 60px rgba(5,150,105,0.18);
+            --radius: 16px;
+            --radius-lg: 24px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--green-50);
+            color: var(--gray-800);
+            line-height: 1.8;
+            direction: rtl;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* ===== Decorative Background ===== */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -200px;
+            left: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(5,150,105,0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -300px;
+            right: -200px;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(5,150,105,0.05) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ===== Islamic Pattern Overlay ===== */
+        .pattern-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.018;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(30deg, var(--green-600) 12%, transparent 12.5%, transparent 87%, var(--green-600) 87.5%, var(--green-600)),
+                linear-gradient(150deg, var(--green-600) 12%, transparent 12.5%, transparent 87%, var(--green-600) 87.5%, var(--green-600)),
+                linear-gradient(30deg, var(--green-600) 12%, transparent 12.5%, transparent 87%, var(--green-600) 87.5%, var(--green-600)),
+                linear-gradient(150deg, var(--green-600) 12%, transparent 12.5%, transparent 87%, var(--green-600) 87.5%, var(--green-600)),
+                linear-gradient(60deg, rgba(5,150,105,0.5) 25%, transparent 25.5%, transparent 75%, rgba(5,150,105,0.5) 75%, rgba(5,150,105,0.5)),
+                linear-gradient(60deg, rgba(5,150,105,0.5) 25%, transparent 25.5%, transparent 75%, rgba(5,150,105,0.5) 75%, rgba(5,150,105,0.5));
+            background-size: 80px 140px;
+            background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== Header ===== */
+        header {
+            background: linear-gradient(135deg, var(--green-800) 0%, var(--green-600) 50%, var(--green-700) 100%);
+            padding: 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 30px rgba(5,150,105,0.3);
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 40%);
+            pointer-events: none;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--green-400), var(--green-200), var(--green-400));
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 40px 20px 36px;
+            text-align: center;
+        }
+
+        .mosque-icon {
+            width: 72px;
+            height: 72px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+
+        .mosque-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: var(--green-100);
+        }
+
+        .header-text h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--white);
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .header-text .subtitle {
+            font-size: 0.95rem;
+            color: var(--green-200);
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        /* ===== Bismillah ===== */
+        .bismillah {
+            text-align: center;
+            padding: 24px 20px 8px;
+            font-size: 1.6rem;
+            color: var(--green-700);
+            font-weight: 700;
+            opacity: 0.6;
+        }
+
+        /* ===== Section Shared ===== */
+        section {
+            padding: 48px 0;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--green-800);
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--gray-600);
+            font-size: 0.95rem;
+            margin-bottom: 36px;
+        }
+
+        /* ===== App Description Card ===== */
+        .desc-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--green-200);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .desc-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--green-600), var(--green-400));
+            border-radius: 0 24px 24px 0;
+        }
+
+        .desc-card h2 {
+            font-size: 1.3rem;
+            color: var(--green-800);
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .desc-card p {
+            color: var(--gray-600);
+            font-size: 1rem;
+            line-height: 2;
+            margin-bottom: 20px;
+        }
+
+        .key-points {
+            list-style: none;
+            padding: 0;
+        }
+
+        .key-points li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            color: var(--gray-700);
+            font-size: 0.95rem;
+        }
+
+        .key-points li .check {
+            width: 26px;
+            height: 26px;
+            min-width: 26px;
+            background: var(--green-100);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .key-points li .check svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--green-600);
+        }
+
+        /* ===== Download Section ===== */
+        .download-section {
+            text-align: center;
+            padding: 56px 0;
+        }
+
+        .download-card {
+            background: linear-gradient(145deg, var(--white) 0%, var(--green-50) 100%);
+            border-radius: var(--radius-lg);
+            padding: 48px 40px;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--green-200);
+            max-width: 560px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 30%, rgba(5,150,105,0.03), transparent 50%);
+            pointer-events: none;
+        }
+
+        .version-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--green-100);
+            color: var(--green-700);
+            padding: 6px 18px;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border: 1px solid var(--green-200);
+        }
+
+        .download-card h2 {
+            font-size: 1.6rem;
+            color: var(--green-900);
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .file-info {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 28px;
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .file-info span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .file-info svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--gray-500);
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: linear-gradient(135deg, var(--green-600) 0%, var(--green-700) 100%);
+            color: var(--white);
+            text-decoration: none;
+            padding: 18px 56px;
+            border-radius: 16px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            box-shadow: 0 8px 30px rgba(5,150,105,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .btn-download::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-download:hover::before {
+            left: 100%;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 40px rgba(5,150,105,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .btn-download:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-download svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--white);
+        }
+
+        .android-note {
+            margin-top: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--green-100);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: var(--green-800);
+            font-weight: 500;
+            border: 1px solid var(--green-200);
+        }
+
+        .android-note svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--green-600);
+        }
+
+        /* ===== Screenshots ===== */
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 8px;
+        }
+
+        .screenshot-item {
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            aspect-ratio: 9 / 16;
+            max-height: 400px;
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .screenshot-item:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .screenshot-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screenshot-placeholder.s1 {
+            background: linear-gradient(160deg, #ecfdf5 0%, #a7f3d0 40%, #059669 100%);
+        }
+        .screenshot-placeholder.s2 {
+            background: linear-gradient(160deg, #f0fdf4 0%, #6ee7b7 40%, #047857 100%);
+        }
+        .screenshot-placeholder.s3 {
+            background: linear-gradient(160deg, #d1fae5 0%, #34d399 40%, #065f46 100%);
+        }
+
+        .screenshot-placeholder svg {
+            width: 48px;
+            height: 48px;
+            fill: rgba(255,255,255,0.7);
+        }
+
+        .screenshot-placeholder span {
+            color: var(--white);
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .screenshot-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.3));
+            color: var(--white);
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* ===== Features Grid ===== */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 32px 24px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--green-200);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--green-400), var(--green-600));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--green-400);
+        }
+
+        .feature-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, var(--green-100), var(--green-200));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feature-icon svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--green-600);
+        }
+
+        .feature-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--green-800);
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            line-height: 1.7;
+        }
+
+        /* ===== Footer ===== */
+        footer {
+            background: linear-gradient(135deg, var(--green-900) 0%, var(--green-800) 100%);
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--green-400), transparent);
+        }
+
+        footer .footer-content {
+            color: var(--green-200);
+            font-size: 0.95rem;
+        }
+
+        footer .footer-content strong {
+            color: var(--white);
+            font-weight: 700;
+        }
+
+        footer .footer-dua {
+            margin-top: 16px;
+            font-size: 1.1rem;
+            color: var(--green-300);
+            opacity: 0.8;
+            font-weight: 600;
+        }
+
+        footer .footer-copy {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.3);
+        }
+
+        /* ===== Divider ===== */
+        .divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--green-400), var(--green-600));
+            border-radius: 10px;
+            margin: 0 auto 12px;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .header-inner {
+                flex-direction: column;
+                padding: 32px 20px 28px;
+                gap: 16px;
+            }
+
+            .header-text h1 {
+                font-size: 1.6rem;
+            }
+
+            .mosque-icon {
+                width: 64px;
+                height: 64px;
+            }
+
+            .mosque-icon svg {
+                width: 34px;
+                height: 34px;
+            }
+
+            .desc-card {
+                padding: 28px 20px;
+            }
+
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+            }
+
+            .screenshots-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+            }
+
+            .screenshot-item:last-child {
+                display: none;
+            }
+
+            .download-card {
+                padding: 32px 24px;
+            }
+
+            .btn-download {
+                padding: 16px 40px;
+                font-size: 1.05rem;
+                width: 100%;
+            }
+
+            .feature-card {
+                padding: 24px 16px;
+            }
+
+            section {
+                padding: 36px 0;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .screenshots-grid {
+                grid-template-columns: 1fr;
+                max-width: 280px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .screenshot-item:last-child {
+                display: block;
+            }
+
+            .screenshot-item {
+                max-height: 360px;
+            }
+
+            .file-info {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        /* ===== Animations ===== */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="pattern-overlay"></div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-inner">
+            <div class="mosque-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C12 2 8 6 8 10C8 11.1 8.9 12 10 12H14C15.1 12 16 11.1 16 10C16 6 12 2 12 2Z"/>
+                    <rect x="6" y="12" width="12" height="8" rx="1"/>
+                    <rect x="10" y="8" width="4" height="4" rx="2"/>
+                    <rect x="9" y="14" width="2" height="6" rx="0.5"/>
+                    <rect x="13" y="14" width="2" height="6" rx="0.5"/>
+                    <rect x="11" y="13" width="2" height="7" rx="0.5"/>
+                    <rect x="4" y="20" width="16" height="2" rx="1"/>
+                </svg>
+            </div>
+            <div class="header-text">
+                <h1>مواقيت الصلاة</h1>
+                <p class="subtitle">تطبيق مواقيت الصلاة لأجهزة أندرويد</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Bismillah -->
+    <div class="bismillah">
+        &#1576;&#1616;&#1587;&#1618;&#1605;&#1616; &#1575;&#1604;&#1604;&#1617;&#1607;&#1616; &#1575;&#1604;&#1585;&#1617;&#1614;&#1581;&#1618;&#1605;&#1614;&#1606;&#1616; &#1575;&#1604;&#1585;&#1617;&#1614;&#1581;&#1616;&#1610;&#1605;&#1616;
+    </div>
+
+    <div class="container">
+
+        <!-- Description Section -->
+        <section>
+            <div class="desc-card animate-in">
+                <h2>عن التطبيق</h2>
+                <p>
+                    تطبيق "مواقيت الصلاة" هو تطبيق إسلامي شامل مصمم لمساعدتك على معرفة
+                    مواقيت الصلوات الخمس بدقة عالية، مع إشعارات ذكية وتنبيهات مرحلية
+                    تضمن لك عدم فوات أي صلاة. يتميز التطبيق بواجهة عربية أنيقة وسهلة الاستخدام.
+                </p>
+                <ul class="key-points">
+                    <li>
+                        <span class="check">
+                            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                        </span>
+                        حساب دقيق لمواعيد الصلوات حسب موقعك الجغرافي
+                    </li>
+                    <li>
+                        <span class="check">
+                            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                        </span>
+                        إشعارات أذان وإقامة مع تنبيهات ثلاثية المراحل
+                    </li>
+                    <li>
+                        <span class="check">
+                            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                        </span>
+                        دعم مصالح متعددة لحساب المواقيت
+                    </li>
+                    <li>
+                        <span class="check">
+                            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                        </span>
+                        تنبيه شروق الشمس لضمان أداء صلاة الفجر في وقتها
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Download Section -->
+        <section class="download-section">
+            <div class="divider"></div>
+            <h2 class="section-title">تحميل التطبيق</h2>
+            <p class="section-subtitle">حمّل التطبيق الآن واستمتع بتجربة صلاة ميسّرة</p>
+
+            <div class="download-card animate-in delay-1">
+                <div class="version-badge">
+                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--green-600);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    الإصدار 1.7
+                </div>
+                <h2>مواقيت الصلاة</h2>
+                <div class="file-info">
+                    <span>
+                        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                        حجم الملف: 2.9 ميجابايت
+                    </span>
+                    <span>
+                        <svg viewBox="0 0 24 24"><path d="M21 10.12h-6.78l2.74-2.82c-2.73-2.7-7.15-2.8-9.88-.1-2.73 2.71-2.73 7.08 0 9.79s7.15 2.71 9.88 0C18.32 15.65 19 14.08 19 12.1h2c0 2.48-.94 4.95-2.83 6.83-3.73 3.73-9.78 3.73-13.51 0-3.73-3.73-3.73-9.78 0-13.51 3.73-3.73 9.78-3.73 13.51 0L21 2v8.12z"/></svg>
+                        ملف APK
+                    </span>
+                </div>
+                <a href="prayer-times-v1.7-release.apk" class="btn-download">
+                    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                    تحميل التطبيق
+                </a>
+                <div class="android-note">
+                    <svg viewBox="0 0 24 24"><path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.85 1.23 12.95 1 12 1c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31C6.97 3.26 6 5.01 6 7h12c0-1.99-.97-3.75-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/></svg>
+                    يتطلب نظام أندرويد 4.0 أو أحدث
+                </div>
+            </div>
+        </section>
+
+        <!-- Screenshots Section -->
+        <section>
+            <div class="divider"></div>
+            <h2 class="section-title">لقطات من التطبيق</h2>
+            <p class="section-subtitle">تصفّح واجهة التطبيق الأنيقة والسهلة</p>
+
+            <div class="screenshots-grid">
+                <div class="screenshot-item animate-in delay-1">
+                    <div class="screenshot-placeholder s1">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                        </svg>
+                        <span>صورة شاشة 1</span>
+                    </div>
+                    <div class="screenshot-label">الشاشة الرئيسية</div>
+                </div>
+                <div class="screenshot-item animate-in delay-2">
+                    <div class="screenshot-placeholder s2">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                        </svg>
+                        <span>صورة شاشة 2</span>
+                    </div>
+                    <div class="screenshot-label">الإشعارات والتنبيهات</div>
+                </div>
+                <div class="screenshot-item animate-in delay-3">
+                    <div class="screenshot-placeholder s3">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                        </svg>
+                        <span>صورة شاشة 3</span>
+                    </div>
+                    <div class="screenshot-label">الإعدادات المتقدمة</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Grid -->
+        <section>
+            <div class="divider"></div>
+            <h2 class="section-title">مميزات التطبيق</h2>
+            <p class="section-subtitle">اكتشف جميع المميزات التي يقدمها التطبيق</p>
+
+            <div class="features-grid">
+                <div class="feature-card animate-in delay-1">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                    </div>
+                    <h3>مواقيت الصلاة</h3>
+                    <p>حساب دقيق لمواعيد الصلوات الخمس حسب إحداثيات موقعك الجغرافي</p>
+                </div>
+
+                <div class="feature-card animate-in delay-1">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                    </div>
+                    <h3>الأذان والإقامة</h3>
+                    <p>إشعارات الأذان والإقامة مع أصوات مميزة واختيار المؤذن المفضل</p>
+                </div>
+
+                <div class="feature-card animate-in delay-2">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                    </div>
+                    <h3>تنبيهات ثلاثية المراحل</h3>
+                    <p>تنبيهات ذكية متعددة المراحل قبل كل صلاة لضمان عدم النسيان</p>
+                </div>
+
+                <div class="feature-card animate-in delay-2">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    </div>
+                    <h3>تعدد المصادر</h3>
+                    <p>دعم عدة مصالح لحساب المواقيت مثل أم القرى والرابطة والجامعة الإسلامية</p>
+                </div>
+
+                <div class="feature-card animate-in delay-3">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/></svg>
+                    </div>
+                    <h3>تنبيه شروق الشمس</h3>
+                    <p>تنبيه خاص عند شروق الشمس كمرجع لوقت انتهاء صلاة الفجر</p>
+                </div>
+
+                <div class="feature-card animate-in delay-3">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                    </div>
+                    <h3>إعدادات متقدمة</h3>
+                    <p>تخصيص شامل للإعدادات بما يتناسب مع طريقة حسابك المفضلة وموقعك</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <strong>فريق العمل:</strong> د. إحسان العبد الله
+        </div>
+        <div class="footer-dua">
+            &#1608;&#1587;&#1604;&#1617;&#1605; &#1593;&#1604;&#1610;&#1603;&#1605; &#1608;&#1585;&#1581;&#1605;&#1577; &#1575;&#1604;&#1604;&#1607; &#1608;&#1576;&#1585;&#1603;&#1575;&#1578;&#1607;
+        </div>
+        <div class="footer-copy">
+            &copy; 2025 مواقيت الصلاة - جميع الحقوق محفوظة
+        </div>
+    </footer>
+
+</body>
+</html>
