@@ -1,0 +1,3428 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🕌 مواقيت الصلاة</title>
+<!-- خط الثلث لاسم اليوم -->
+<style>
+@font-face {
+  font-family: 'DTHULUTH-II';
+  src: url('fonts/DTHULUTH-II.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+</style>
+<!-- خطوط النظام -->
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  font-family: Tahoma, Arial, sans-serif;
+  background: #f0fdf4;
+  color: #1a1a1a;
+  height: 100%;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+/* Header */
+.header {
+  position: relative; z-index: 50;
+  background: rgba(255,255,255,0.95);
+  border-bottom: 1px solid #a7f3d0;
+  padding: 4px 8px;
+}
+.header-inner {
+  max-width: 600px; margin: 0 auto;
+  display: table;
+  width: 100%;
+}
+.header-ramadan {
+  background: linear-gradient(to right, #ecfdf5, #f0fdfa, #ecfdf5);
+  border: 1px solid #a7f3d0; border-radius: 6px;
+  padding: 2px 6px;
+  overflow: hidden; /* clearfix */
+  width: -webkit-fit-content;
+  width: fit-content;
+}
+.header-ramadan.ramadan-active {
+  background: linear-gradient(to right, #fffbeb, #fef9c3, #fffbeb);
+  border-color: #fde68a;
+}
+.header-ramadan .hr-icon { font-size: 12px; }
+.header-ramadan .hr-title { font-size: 9px; font-weight: 700; color: #065f46; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.header-ramadan.ramadan-active .hr-title { color: #92400e; }
+.header-ramadan.ramadan-active .hr-num { color: #92400e; }
+.header-ramadan.ramadan-active .hr-unit { color: #b45309; }
+.header-row2 {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  margin-top: 3px;
+}
+.header-row2 > div {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+  padding: 0 2px;
+}
+.header-row2 > div > div {
+  height: 100%;
+}
+.header-btns { text-align: center; }
+.icon-btn {
+  width: 30px; height: 30px; line-height: 28px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0; background: rgba(255,255,255,0.8);
+  cursor: pointer; font-size: 14px; text-align: center;
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 1px;
+}
+
+/* Main */
+.main {
+  -webkit-box-flex: 1;
+  padding: 6px 8px; max-width: 600px; margin: 0 auto; width: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Location message */
+.loc-msg {
+  background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+  padding: 6px 8px; text-align: center; margin-bottom: 6px; font-size: 10px; color: #92400e;
+}
+.loc-msg .coords { font-weight: 600; color: #b45309; margin-top: 2px; }
+.loc-msg .hint { color: #78716c; font-size: 9px; margin-top: 2px; }
+.loc-manual {
+  background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;
+  padding: 6px 8px; text-align: center; margin-bottom: 6px; font-size: 10px; color: #065f46;
+}
+.loc-manual .coords { font-weight: 600; font-family: monospace; margin-top: 2px; }
+
+/* Loading */
+.loading {
+  text-align: center;
+  padding: 64px 0;
+}
+.loading .spinner {
+  margin: 0 auto 16px auto;
+}
+.spinner {
+  width: 40px; height: 40px; border: 4px solid #a7f3d0;
+  border-top-color: #059669; border-radius: 50%;
+  -webkit-animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px auto;
+}
+@-webkit-keyframes spin { to { -webkit-transform: rotate(360deg); transform: rotate(360deg); } }
+@keyframes spin { to { -webkit-transform: rotate(360deg); transform: rotate(360deg); } }
+
+/* Error */
+.error-box {
+  background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px;
+  padding: 16px; text-align: center; color: #dc2626; font-size: 14px;
+}
+.retry-btn {
+  margin-top: 8px; padding: 6px 16px; border: 1px solid #fca5a5;
+  border-radius: 8px; background: white; color: #dc2626; cursor: pointer; font-size: 13px;
+}
+
+/* ====== DATE HEADER ====== */
+.date-section { margin-bottom: 6px; }
+.year-row {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  margin-bottom: 4px;
+}
+.year-row > div {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+  padding: 0 2px;
+}
+.year-row > .day-name-box { width: 65%; }
+.year-row > .year-box { width: 17.5%; }
+.year-box {
+  background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+  border: 1px solid #a7f3d0; border-radius: 8px; padding: 6px 4px;
+  min-height: 60px;
+}
+.year-box span {
+  font-size: 10px; font-weight: 700; color: #065f46;
+  line-height: 1.5;
+}
+.year-label { font-size: 8px; color: #065f46; display: block; margin-top: 2px; }
+.day-name-box {
+  background: linear-gradient(to right, #d1fae5, #f0fdf4, #d1fae5);
+  border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 4px;
+}
+.day-name-box span { font-family: 'DTHULUTH-II', 'Aref Ruqaa', 'Traditional Arabic', Tahoma, serif; font-size: 75px; font-weight: 700; color: #064e3b; line-height: 1; }
+.month-row {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  margin-bottom: 4px;
+}
+.month-row > div {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+}
+.month-box {
+  background: white; border: 1px solid #a7f3d0; border-radius: 8px; padding: 4px;
+}
+.month-box span { font-size: 11px; font-weight: 600; color: #065f46; }
+.corrected-tag { color: #d97706; font-size: 9px; margin-top: 1px; }
+.day-row {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  min-height: 50px;
+}
+.day-row > div {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+}
+.day-num {
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border: 1px solid #a7f3d0; border-radius: 8px;
+  font-size: 40px; font-weight: 700; color: #064e3b;
+  padding: 4px;
+}
+.day-num-greg {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 1px solid #e2e8f0; border-radius: 8px;
+  font-size: 40px; font-weight: 700; color: #475569;
+  padding: 4px;
+}
+
+/* ====== TIME ====== */
+.time-section { margin-bottom: 6px; }
+.time-row {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  margin-bottom: 6px;
+}
+.time-row > div {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+}
+.current-time {
+  background: linear-gradient(135deg, #fff1f2, #fef2f2);
+  border: 1px solid #fecaca; border-radius: 8px; padding: 4px;
+}
+.current-time .clock { font-size: 38px; font-weight: 700; color: #e11d48; letter-spacing: 1px; }
+.cd-box {
+  border-radius: 8px; padding: 4px;
+}
+.cd-next {
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border: 1px solid #bbf7d0;
+}
+.cd-iqama {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 1px solid #e2e8f0;
+}
+.cd-box .label { font-size: 9px; font-weight: 700; color: #166534; margin-bottom: 1px; }
+.cd-iqama .label { color: #475569; }
+.cd-box .time { font-size: 16px; font-weight: 700; letter-spacing: 1px; }
+.cd-next .time { color: #166534; }
+.cd-iqama .time { color: #1e293b; }
+
+/* ====== PRAYER GRID ====== */
+.prayer-section { margin-bottom: 6px; }
+.prayer-row {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  margin-bottom: 4px;
+}
+.prayer-row > div {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+  padding: 0 2px;
+}
+.prayer-cell {
+  background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 4px;
+  -webkit-transition: all 0.5s;
+}
+.prayer-cell.active {
+  background: linear-gradient(135deg, #dcfce7, #d1fae5);
+  border: 1.5px solid #ef4444;
+}
+.prayer-cell .name { font-size: 10px; font-weight: 700; color: #64748b; margin-bottom: 2px; }
+.prayer-cell.active .name { color: #166534; }
+.prayer-cell .ptime { font-size: 18px; font-weight: 700; color: #1e293b; }
+.prayer-cell.active .ptime { color: #14532d; }
+.prayer-cell .next-tag { font-size: 9px; color: #16a34a; margin-top: 2px; }
+/* Toggle switch for settings */
+.toggle-row { display: table; width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+.toggle-row > div { display: table-cell; vertical-align: middle; }
+.toggle-row .t-name { padding: 6px 0; font-size: 11px; font-weight: 600; color: #374151; }
+.toggle-row .t-controls { text-align: left; padding: 4px 0; }
+.mini-toggle {
+  display: inline-block; width: 36px; height: 20px; border-radius: 10px;
+  background: #d1d5db; position: relative; cursor: pointer; margin: 0 2px;
+  -webkit-transition: background 0.2s; transition: background 0.2s; vertical-align: middle;
+}
+.mini-toggle.on { background: #16a34a; }
+.mini-toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%; background: white;
+  -webkit-transition: left 0.2s; transition: left 0.2s;
+  -webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.3); box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.mini-toggle.on::after { left: 18px; }
+.toggle-label { font-size: 9px; color: #6b7280; vertical-align: middle; margin: 0 1px; }
+@-webkit-keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+/* ====== SETTINGS MODAL ====== */
+.modal-overlay {
+  position: fixed; top:0;left:0;right:0;bottom:0; background: rgba(0,0,0,0.5);
+  z-index: 9999; padding: 16px;
+  display: none;
+}
+.modal-overlay.show { display: block; }
+.modal-center {
+  display: table;
+  width: 100%;
+  height: 100%;
+}
+.modal-center-inner {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+}
+.modal {
+  background: white; border-radius: 16px; padding: 24px; max-width: 420px; width: 100%;
+  max-height: 85vh; overflow-y: auto; direction: rtl;
+  position: relative;
+  display: inline-block;
+  text-align: right;
+  vertical-align: middle;
+}
+.modal h2 { font-size: 18px; font-weight: 700; color: #065f46; text-align: right; margin-bottom: 20px; }
+.modal-close {
+  position: absolute; top: 16px; left: 16px;
+  width: 32px; height: 32px; line-height: 30px;
+  border-radius: 50%;
+  background: #f1f5f9; border: 1px solid #e2e8f0;
+  cursor: pointer; font-size: 18px; text-align: center;
+  color: #64748b;
+}
+.modal-section { margin-bottom: 20px; }
+.modal-section .sec-title {
+  font-size: 14px; font-weight: 600; color: #374151;
+  margin-bottom: 8px;
+}
+.modal-section .sec-desc { font-size: 11px; color: #6b7280; margin-bottom: 8px; }
+.setting-box {
+  background: #f8fafc; border-radius: 10px; padding: 12px;
+  display: table;
+  width: 100%;
+  margin-bottom: 8px;
+}
+.setting-box > * {
+  display: table-cell;
+  vertical-align: middle;
+}
+.setting-box > span { font-size: 13px; color: #374151; }
+.setting-box input[type="number"] {
+  width: 60px; text-align: center; border-radius: 8px;
+  border: 1px solid #d1d5db; padding: 4px; font-size: 14px; font-family: monospace;
+}
+.loc-inputs { margin-bottom: 8px; overflow: hidden; }
+.loc-inputs > div {
+  float: right;
+  width: 48%;
+  margin-left: 2%;
+}
+.loc-inputs input {
+  width: 100%; text-align: center; border-radius: 8px;
+  border: 1px solid #d1d5db; padding: 6px; font-size: 13px; font-family: monospace;
+  -webkit-box-sizing: border-box;
+}
+.loc-inputs label { display: block; font-size: 10px; color: #6b7280; margin-bottom: 2px; }
+.btn-row { margin-bottom: 8px; overflow: hidden; }
+.btn {
+  float: right;
+  padding: 8px; border-radius: 8px; border: none;
+  font-size: 12px; cursor: pointer; font-family: inherit; font-weight: 600;
+  -webkit-box-sizing: border-box;
+  margin-left: 8px;
+  width: auto;
+}
+.btn-outline { border: 1px solid #d1d5db; background: white; color: #374151; }
+.btn-primary { background: #059669; color: white; border: 1px solid #059669; }
+.btn-amber { border: 1px solid #fbbf24; background: white; color: #d97706; }
+.btn-sm { padding: 6px 12px; float: none; display: inline-block; margin-left: 4px; }
+.correction-controls { text-align: center; }
+.correction-controls .val {
+  display: inline-block;
+  width: 32px; text-align: center; font-weight: 700; font-size: 14px; color: #1e293b;
+  vertical-align: middle;
+}
+.minus-btn, .plus-btn {
+  display: inline-block;
+  vertical-align: middle;
+  width: 32px; height: 32px; line-height: 30px;
+  border-radius: 8px; border: 1px solid #d1d5db;
+  background: white; font-size: 18px; cursor: pointer; text-align: center;
+  font-weight: 700; color: #374151;
+  margin: 0 6px;
+}
+.audio-on { background: #059669; color: white; border: 1px solid #059669; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+.audio-off { background: white; color: #374151; border: 1px solid #d1d5db; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+
+/* Audio activation */
+.audio-float {
+  position: fixed; bottom: 80px; left: 50%; z-index: 40;
+  margin-left: -80px;
+  -webkit-animation: bounce 1s infinite;
+  animation: bounce 1s infinite;
+}
+.audio-float button {
+  background: #059669; color: white; border: none; border-radius: 50px;
+  padding: 12px 24px; font-size: 14px; cursor: pointer; font-family: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+}
+@-webkit-keyframes bounce { 0%,100% { -webkit-transform: translateY(0); transform: translateY(0); } 50% { -webkit-transform: translateY(-8px); transform: translateY(-8px); } }
+@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+/* EHE Floating Button */
+.ehe-btn {
+  position: fixed; top: 80px; right: 16px; z-index: 60;
+  width: 50px; height: 50px; line-height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white; border: 2px solid #ffffff;
+  font-weight: 800; font-size: 16px;
+  cursor: grab; -webkit-user-select: none; user-select: none;
+  text-align: center;
+}
+/* Stop Audio Button */
+.stop-audio-btn {
+  position: fixed; bottom: 100px; left: 16px; z-index: 60;
+  width: 50px; height: 50px; line-height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white; border: 2px solid #ffffff;
+  font-weight: 800; font-size: 20px;
+  cursor: grab; -webkit-user-select: none; user-select: none;
+  text-align: center;
+}
+.stop-audio-btn.disabled { background: linear-gradient(135deg, #9ca3af, #6b7280); opacity: 0.5; }
+
+/* Credits Modal */
+.credits-modal {
+  position: fixed; top:0;left:0;right:0;bottom:0; background: rgba(0,0,0,0.6);
+  z-index: 9998; padding: 16px;
+  display: none;
+}
+.credits-modal.show { display: block; }
+.credits-center {
+  display: table;
+  width: 100%;
+  height: 100%;
+}
+.credits-center-inner {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+}
+.credits-content {
+  background: linear-gradient(135deg, #ffffff, #f0fdf4);
+  border-radius: 20px; padding: 32px 24px; max-width: 380px; width: 100%;
+  text-align: center;
+  border: 2px solid #a7f3d0;
+  display: inline-block;
+  vertical-align: middle;
+  -webkit-animation: scaleIn 0.3s ease;
+}
+@-webkit-keyframes scaleIn { from { -webkit-transform: scale(0.8); opacity: 0; } to { -webkit-transform: scale(1); opacity: 1; } }
+@keyframes scaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.credits-content .icon { font-size: 56px; margin-bottom: 12px; }
+.credits-content h2 { font-size: 22px; font-weight: 800; color: #064e3b; margin-bottom: 20px; }
+.credits-list { text-align: right; direction: rtl; }
+.credits-item {
+  background: rgba(255,255,255,0.7); border-radius: 12px;
+  padding: 12px 16px; margin-bottom: 10px; border: 1px solid #d1fae5;
+}
+.credits-item .role { font-size: 12px; color: #059669; font-weight: 600; margin-bottom: 4px; }
+.credits-item .name { font-size: 15px; color: #064e3b; font-weight: 700; }
+.credits-close {
+  margin-top: 20px; padding: 10px 24px; border-radius: 50px;
+  background: #059669; color: white; border: none; font-family: inherit;
+  font-weight: 600; font-size: 14px; cursor: pointer; width: 100%;
+}
+
+/* ===== Islamic Info Section ===== */
+.info-section {
+  margin: 0;
+  width: 100%;
+}
+.info-card-inner {
+  overflow: hidden;
+  position: relative;
+}
+.info-card-slide {
+  -webkit-transition: opacity 0.5s ease, -webkit-transform 0.5s ease;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.info-card-slide.slide-out {
+  opacity: 0;
+  -webkit-transform: translateX(30px);
+  transform: translateX(30px);
+}
+.info-card-slide.slide-in {
+  opacity: 0;
+  -webkit-transform: translateX(-30px);
+  transform: translateX(-30px);
+}
+.info-card-progress {
+  height: 3px; border-radius: 2px; background: #fde68a; margin-top: 6px; overflow: hidden;
+}
+.info-card-progress-bar {
+  height: 100%; border-radius: 2px; background: linear-gradient(to left, #059669, #10b981);
+  -webkit-transition: width linear;
+  transition: width linear;
+}
+.info-card {
+  background: linear-gradient(135deg, #fefce8, #fffbeb, #fef3c7);
+  border-top: 2px solid #fde68a;
+  border-bottom: 2px solid #fde68a;
+  border-left: 2px solid #fde68a;
+  border-right: 2px solid #fde68a;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: center;
+  cursor: pointer;
+  -webkit-transition: all 0.4s;
+  min-height: 40px;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-box-pack: center;
+  -webkit-box-align: center;
+}
+.info-card:active {
+  -webkit-transform: scale(0.99);
+  opacity: 0.9;
+}
+.info-icon { display: none; }
+.info-text {
+  font-size: 11px; line-height: 1.8; color: #78350f;
+  font-weight: 600; direction: rtl; text-align: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  width: 100%;
+}
+.info-source {
+  font-size: 9px; color: #b45309; opacity: 0.7;
+}
+.info-nav {
+  font-size: 8px; color: #d97706; opacity: 0.5; margin-top: 4px;
+}
+/* === أزرار التنقل === */
+.nav-btns {
+  display: -webkit-box;
+  -webkit-box-orient: horizontal;
+  -webkit-box-align: center;
+  -webkit-box-pack: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+.nav-btn {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  background: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+  -webkit-tap-highlight-color: transparent;
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  line-height: 1.4;
+}
+.nav-btn:active {
+  background: rgba(217, 119, 6, 0.3);
+}
+.nav-counter {
+  font-size: 8px;
+  color: #d97706;
+  opacity: 0.6;
+}
+/* === شريط متحرك (تحكم بالسحب) === */
+.marquee-wrap {
+  overflow: hidden;
+  width: 100%;
+}
+.marquee-track {
+  display: inline-block;
+  white-space: nowrap;
+}
+/* Hadith Audio Mode */
+.info-card.hadith-audio-mode {
+  background: linear-gradient(135deg, #eff6ff, #f0f9ff, #e0f2fe);
+  border: 1px solid #7dd3fc;
+  border-radius: 12px;
+  min-height: 90px;
+  margin-left: 0;
+  margin-right: 0;
+}
+.info-card.hadith-audio-mode .info-icon {
+  display: block;
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+.info-card.hadith-audio-mode .info-text {
+  color: #1e3a5f;
+  font-size: 12px;
+  line-height: 2;
+}
+.info-card.hadith-audio-mode .info-source {
+  color: #0369a1;
+  opacity: 0.8;
+  font-size: 10px;
+}
+.info-card.hadith-audio-mode .info-nav {
+  color: #0284c7;
+  opacity: 0.7;
+}
+.hadith-mode-badge {
+  display: inline-block;
+  background: linear-gradient(to left, #2563eb, #3b82f6);
+  color: white;
+  font-size: 8px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+.hadith-audio-controls {
+  display: -webkit-box;
+  -webkit-box-orient: horizontal;
+  -webkit-box-pack: center;
+  -webkit-box-align: center;
+  margin-top: 6px;
+}
+.hadith-audio-controls span {
+  font-size: 9px;
+  color: #0369a1;
+  padding: 0 4px;
+}
+
+/* ===== Smart TV / Large Screen Support ===== */
+/* Screens >= 720px (tablets, TVs) */
+@media screen and (min-width: 720px) {
+  html, body { font-size: 20px; }
+  .header { padding: 8px 16px; }
+  .header-ramadan { padding: 4px 12px; }
+  .hr-title { font-size: 13px; }
+  .hr-icon { font-size: 18px; }
+  .main { padding: 12px 16px; }
+  .loc-msg, .loc-manual { font-size: 14px; padding: 10px 16px; }
+  .prayer-cell { padding: 10px 8px; border-radius: 12px; }
+  .prayer-cell .name { font-size: 16px; }
+  .prayer-cell .ptime { font-size: 24px; margin-top: 4px; }
+  .next-tag { font-size: 11px; margin-top: 4px; }
+  .countdown-section { padding: 12px 0; }
+  .countdown-section .label { font-size: 13px; }
+  .countdown-section .time { font-size: 28px; }
+  .year-box span:first-child { font-size: 18px; }
+  .month-box span { font-size: 14px; }
+  .day-num { font-size: 28px; }
+  .day-num-greg { font-size: 22px; }
+  .day-name-box span { font-family: 'DTHULUTH-II', 'Aref Ruqaa', 'Traditional Arabic', Tahoma, serif; font-size: 100px; }
+  .icon-btn { width: 42px; height: 42px; line-height: 40px; font-size: 18px; }
+  .iqama-offsets { font-size: 12px; }
+  .iqama-offsets .time { font-size: 16px; }
+  .ehe-btn { width: 60px; height: 60px; font-size: 24px; line-height: 58px; }
+  .audio-float-btn { width: 56px; height: 56px; font-size: 22px; line-height: 54px; }
+  .notif-banner { font-size: 16px; padding: 12px 20px; }
+  .modal-content { max-width: 500px; padding: 24px; }
+  .setting-box input[type="number"] { width: 60px; font-size: 16px; }
+  .credits-title { font-size: 20px; }
+  .credits-item .name { font-size: 18px; }
+  .credits-close { font-size: 16px; }
+  /* Header title larger */
+  .title-cell h1 { font-size: 16px; }
+  /* Time row spacing */
+  .time-row { gap: 10px; }
+  .cd-box .label { font-size: 12px; }
+  .cd-box .time { font-size: 24px; }
+}
+
+/* Screens >= 1280px (large TVs / Smart TV) */
+@media screen and (min-width: 1280px) {
+  html, body { font-size: 28px; }
+  .header { padding: 12px 24px; }
+  .header-inner { max-width: 1100px; }
+  .title-cell h1 { font-size: 22px; }
+  .main { padding: 16px 24px; max-width: 1100px; }
+  .prayer-cell { padding: 14px 10px; border-radius: 14px; }
+  .prayer-cell .name { font-size: 22px; }
+  .prayer-cell .ptime { font-size: 38px; }
+  .next-tag { font-size: 13px; margin-top: 6px; }
+  .cd-box { padding: 12px 16px; border-radius: 14px; }
+  .cd-box .label { font-size: 14px; }
+  .cd-box .time { font-size: 36px; }
+  .time-row { gap: 14px; padding: 14px 0; }
+  .countdown-section .time { font-size: 38px; }
+  .year-box span:first-child { font-size: 26px; }
+  .month-box span { font-size: 20px; }
+  .day-num { font-size: 40px; }
+  .day-num-greg { font-size: 32px; }
+  .icon-btn { width: 52px; height: 52px; line-height: 50px; font-size: 22px; margin: 0 3px; }
+  .iqama-offsets .time { font-size: 22px; }
+  /* Location messages larger */
+  .loc-msg, .loc-manual { font-size: 16px; padding: 12px 20px; }
+  /* Ramadan box */
+  .hr-title { font-size: 16px; }
+  .hr-icon { font-size: 22px; }
+  /* Notification banner */
+  .notif-banner { font-size: 22px; padding: 16px 30px; }
+}
+
+/* Extra large TV screens (4K / Full HD Smart TV) */
+@media screen and (min-width: 1920px) {
+  html, body { font-size: 38px; }
+  .header { padding: 16px 40px; }
+  .header-inner { max-width: 1400px; }
+  .title-cell h1 { font-size: 28px; }
+  .main { padding: 20px 40px; max-width: 1400px; }
+  .prayer-cell { padding: 18px 14px; border-radius: 16px; }
+  .prayer-cell .name { font-size: 28px; }
+  .prayer-cell .ptime { font-size: 48px; }
+  .next-tag { font-size: 15px; }
+  .cd-box { padding: 16px 22px; border-radius: 16px; }
+  .cd-box .label { font-size: 18px; }
+  .cd-box .time { font-size: 48px; }
+  .time-row { gap: 20px; padding: 18px 0; }
+  .year-box span:first-child { font-size: 32px; }
+  .month-box span { font-size: 24px; }
+  .day-num { font-size: 50px; }
+  .day-num-greg { font-size: 40px; }
+  .day-name-box span { font-family: 'DTHULUTH-II', 'Aref Ruqaa', 'Traditional Arabic', Tahoma, serif; font-size: 65px; }
+  .hr-title { font-size: 20px; }
+  .hr-icon { font-size: 28px; }
+  .notif-banner { font-size: 28px; padding: 20px 40px; }
+  .loc-msg, .loc-manual { font-size: 20px; padding: 16px 28px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-inner">
+    <div class="title-cell" style="display:table-cell;vertical-align:middle;width:auto;white-space:nowrap;padding-left:4px;">
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة</h1>
+    </div>
+    <div class="ramadan-cell" style="display:table-cell;vertical-align:middle;padding:0 4px;">
+      <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
+    </div>
+    <div class="btns-cell" style="display:table-cell;vertical-align:middle;width:auto;white-space:nowrap;text-align:left;padding-right:2px;">
+      <div class="header-btns" style="display:inline-block;">
+        <span id="onlineIcon" style="font-size:14px;vertical-align:middle;">🟢</span>
+        <button class="icon-btn" id="infoToggleBtn" onclick="toggleOnlineInfo()" title="معلومات وأحاديث" style="vertical-align:middle;">📚</button>
+        <button class="icon-btn" onclick="openSettings()" style="vertical-align:middle;">⚙️</button>
+      </div>
+    </div>
+  </div>
+  <div class="header-row2">
+    <div>
+      <div class="current-time">
+        <div class="clock" id="liveClock">--:--:--</div>
+      </div>
+    </div>
+    <div>
+      <div class="cd-box cd-next">
+        <div class="label" id="nextPrayerLabel">باقي لصلاة --</div>
+        <div class="time" id="nextPrayerTime">--:--:--</div>
+      </div>
+    </div>
+    <div>
+      <div class="cd-box cd-iqama">
+        <div class="label" id="nextIqamaLabel">باقي لإقامة --</div>
+        <div class="time" id="nextIqamaTime">--:--:--</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+  <div id="loadingArea" class="loading">
+    <div class="spinner"></div>
+    <p style="color:#64748b;font-size:14px;">جارٍ جلب مواقيت الصلاة...</p>
+  </div>
+  <div id="errorArea" style="display:none;">
+    <div class="error-box">
+      <p id="errorMsg"></p>
+      <button class="retry-btn" onclick="refreshData()">🔄 إعادة المحاولة</button>
+    </div>
+  </div>
+  <div id="contentArea" style="display:none;">
+    <!-- Location Messages -->
+    <div id="locAutoMsg" class="loc-msg" style="display:none;">
+      <span>📍 <span id="locPlaceName" style="cursor:pointer;" onclick="promptLocName()" title="اضغط لتغيير اسم الموقع">--</span></span>
+    </div>
+    <div id="locManualMsg" class="loc-manual" style="display:none;">
+      <span>📍 <span id="locManualPlaceName">موقع يدوي</span></span>
+      <div class="coords" id="locManualCoords"></div>
+    </div>
+    <div id="locNamePrompt" style="display:none;margin:4px auto;max-width:400px;text-align:center;">
+      <div style="font-size:11px;color:#6b7280;margin-bottom:2px;">اكتب اسم الموقع:</div>
+      <div style="display:-webkit-box;-webkit-box-orient:horizontal;-webkit-box-align:center;">
+        <input type="text" id="quickLocName" style="flex:1;padding:4px 8px;border:1px solid #10b981;border-radius:8px;font-size:13px;font-family:Tahoma,Arial,sans-serif;text-align:right;outline:none;" placeholder="مثال: دمشق">
+        <button onclick="applyQuickLocName()" style="margin-right:4px;padding:4px 12px;background:#10b981;color:white;border:none;border-radius:8px;font-size:12px;font-family:Tahoma,Arial,sans-serif;cursor:pointer;">✓</button>
+        <button onclick="cancelQuickLocName()" style="padding:4px 8px;background:#ef4444;color:white;border:none;border-radius:8px;font-size:12px;font-family:Tahoma,Arial,sans-serif;cursor:pointer;">✕</button>
+      </div>
+    </div>
+
+    <!-- Date -->
+    <div class="date-section" id="dateSection"></div>
+
+    <!-- Prayer Grid -->
+    <div class="prayer-section" id="prayerGrid"></div>
+
+    <!-- Islamic Info Section - fetched from internet -->
+    <div class="info-section" id="infoSection" style="display:none;">
+      <!-- Category filter buttons -->
+      <div id="infoCatBar" style="overflow-x:auto;white-space:nowrap;padding:4px 0 6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;display:none;">
+        <span onclick="toggleCatFilter('all')" id="catBtn_all" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:#059669;color:white;font-size:9px;cursor:pointer;margin:0 2px;">الكل</span>
+        <span onclick="toggleCatFilter('hadith')" id="catBtn_hadith" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🕌 أحاديث</span>
+        <span onclick="toggleCatFilter('quran')" id="catBtn_quran" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📖 قرآن</span>
+        <span onclick="toggleCatFilter('azkar')" id="catBtn_azkar" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🤲 أذكار</span>
+        <span onclick="toggleCatFilter('dua')" id="catBtn_dua" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🤲 أدعية</span>
+        <span onclick="toggleCatFilter('today')" id="catBtn_today" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📅 أحداث</span>
+        <span onclick="toggleCatFilter('health')" id="catBtn_health" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💊 صحة</span>
+        <span onclick="toggleCatFilter('food')" id="catBtn_food" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🍯 أطعمة</span>
+        <span onclick="toggleCatFilter('jokes')" id="catBtn_jokes" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">😂 نكت</span>
+        <span onclick="toggleCatFilter('world')" id="catBtn_world" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🌍 طرائف</span>
+        <span onclick="toggleCatFilter('dua')" id="catBtn_dua" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🤲 أدعية</span>
+        <span onclick="toggleCatFilter('wisdom')" id="catBtn_wisdom" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💎 حكم</span>
+        <span onclick="toggleCatFilter('prophet')" id="catBtn_prophet" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📜 أنبياء</span>
+        <span onclick="toggleCatFilter('seasons')" id="catBtn_seasons" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🌡️ فصول</span>
+        <span onclick="toggleCatFilter('poetry')" id="catBtn_poetry" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🎼 شعر</span>
+        <span onclick="toggleCatFilter('quran-tafseer')" id="catBtn_quran-tafseer" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📝 إعراب</span>
+        <span onclick="toggleCatFilter('vitamins')" id="catBtn_vitamins" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💊 فيتامينات</span>
+      </div>
+      <div class="info-card" id="infoCard" onclick="nextInfo()">
+        <div class="info-card-inner">
+          <div class="info-card-slide" id="infoSlide">
+            <div class="info-icon" id="infoIcon">📖</div>
+            <div class="info-text" id="infoText"></div>
+            <div class="info-source" id="infoSource"></div>
+            <div class="info-nav" id="infoNav">اضغط لإيقاف الحركة</div>
+          </div>
+        </div>
+        <div class="info-card-progress"><div class="info-card-progress-bar" id="infoProgressBar" style="width:0%;"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-center"><div class="modal-center-inner">
+  <div class="modal">
+    <button class="modal-close" onclick="closeSettings()">✕</button>
+    <h2>⚙️ الإعدادات</h2>
+
+    <!-- Location -->
+    <div class="modal-section">
+      <div class="sec-title">📍 الموقع <span id="manualTag" style="display:none;font-size:10px;background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:12px;">يدوي</span></div>
+      <div class="setting-box">
+        <span>اسم الموقع: <strong id="locDisplayName" style="font-size:12px;">--</strong></span>
+      </div>
+      <div style="font-size:11px;color:#6b7280;margin-bottom:4px;">أدخل اسم الموقع:</div>
+      <div style="margin-bottom:8px;">
+        <input type="text" id="inputLocName" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:Tahoma,Arial,sans-serif;text-align:right;" placeholder="مثال: دمشق" oninput="saveLocName(this.value)">
+      </div>
+      <div style="font-size:11px;color:#6b7280;margin-bottom:4px;">الإحداثيات (اختياري):</div>
+      <div class="loc-inputs">
+        <div style="flex:1;">
+          <label>خط العرض</label>
+          <input type="number" step="0.0001" id="inputLat" value="33.5138">
+        </div>
+        <div style="flex:1;">
+          <label>خط الطول</label>
+          <input type="number" step="0.0001" id="inputLng" value="36.2765">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" onclick="applyManualLocation()">📍 تطبيق</button>
+        <button class="btn btn-outline btn-sm" id="resetLocBtn" style="display:none;" onclick="resetToAuto()">🔄 تلقائي</button>
+        <button class="btn btn-outline btn-sm" onclick="requestLocation()">📍 إعادة طلب</button>
+      </div>
+    </div>
+
+    <!-- Hijri Correction -->
+    <div class="modal-section">
+      <div class="sec-title">📅 تصحيح التاريخ الهجري</div>
+      <div class="sec-desc">أضف أو اطرح أيام لتصحيح التاريخ الهجري (التقويم الهاشمي - أم القرى)</div>
+      <div class="setting-box">
+        <span>تصحيح (أيام):</span>
+        <div class="correction-controls">
+          <button class="minus-btn" onclick="changeCorrection(-1)">−</button>
+          <span class="val" id="correctionVal">0</span>
+          <button class="plus-btn" onclick="changeCorrection(1)">+</button>
+        </div>
+      </div>
+      <button class="btn btn-amber" style="width:100%;" onclick="resetCorrection()">إعادة تعيين التصحيح</button>
+    </div>
+
+    <!-- Iqama Offsets -->
+    <div class="modal-section">
+      <div class="sec-title">🕌 فواصل الإقامة (بالدقائق)</div>
+      <div id="iqamaSettings"></div>
+    </div>
+
+    <!-- Alert & Vibration Toggles -->
+    <div class="modal-section">
+      <div class="sec-title">🔔 تفعيل التنبيهات والرجاج</div>
+      <div style="font-size:10px;color:#6b7280;margin-bottom:8px;">تفعيل/إلغاء التنبيه الصوتي والرجاج لكل توقيت</div>
+      <div id="alertToggles"></div>
+    </div>
+
+    <!-- Audio -->
+    <div class="modal-section">
+      <div class="setting-box">
+        <span class="sec-title" style="margin:0;">🔊 الإشعارات الصوتية</span>
+        <button id="audioToggle" class="audio-off" onclick="toggleAudio()">🔇 معطّل</button>
+      </div>
+      <div class="setting-box" id="azkarAudioSetting" style="margin-top:4px;">
+        <span style="font-size:11px;color:#374151;">📖 أذكار صوتية بين الأذان والإقامة</span>
+        <button id="azkarAudioToggle" onclick="toggleAzkarAudioSetting()" style="font-size:9px;padding:3px 8px;border-radius:8px;border:1px solid #93c5fd;background:#dbeafe;color:#1d4ed8;cursor:pointer;">مفعّل</button>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="resetIqama()">إعادة تعيين الفواصل</button>
+      <button class="btn btn-primary" onclick="refreshData();closeSettings();">تحديث المواقيت</button>
+    </div>
+  </div>
+  </div></div>
+</div>
+
+<!-- Audio Activation Float -->
+<div class="audio-float" id="audioFloat" style="display:none;">
+  <button onclick="activateAudio()">🔊 تفعيل صوت الأذان</button>
+</div>
+
+<!-- Audio Activation Modal -->
+<div class="modal-overlay" id="audioModal">
+  <div class="modal" style="max-width:360px;text-align:center;">
+    <div style="font-size:48px;margin-bottom:16px;">🔊</div>
+    <h2 style="text-align:center;">تفعيل الإشعارات الصوتية</h2>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:20px;">يرجى النقر لتفعيل الصوت حتى يتمكن التطبيق من تشغيل الأذان والإقامة</p>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeAudioModal()">لاحقاً</button>
+      <button class="btn btn-primary" onclick="activateAudio()">تفعيل الصوت</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden Audio - preload=none to avoid Android 4 media resource limits -->
+<audio id="adhanAudio" src="adhan.mp3" preload="none"></audio>
+<audio id="iqamaAudio" src="iqama.mp3" preload="none"></audio>
+<audio id="azkarAudio" preload="none"></audio>
+<audio id="duaAudio" src="duaAudio.mp3" preload="none"></audio>
+<audio id="reminder15Audio" src="baki-llsalat-15.mp3" preload="none"></audio>
+<audio id="reminder10Audio" src="baki-llsalat-10.mp3" preload="none"></audio>
+<audio id="reminder5Audio" src="baki-llsalat-5.mp3" preload="none"></audio>
+<audio id="shorouq15Audio" src="baki-lshorouq-15.mp3" preload="none"></audio>
+<audio id="shorouq10Audio" src="baki-lshorouq-10.mp3" preload="none"></audio>
+<audio id="shorouq5Audio" src="baki-lshorouq-5.mp3" preload="none"></audio>
+<audio id="shorouqAudio" src="shorouq.mp3" preload="none"></audio>
+
+<!-- Notification Banner -->
+<div id="notifBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(to right, #065f46, #047857);color:white;text-align:center;padding:12px 16px;font-size:15px;font-weight:700;opacity:0;-webkit-transition:opacity 0.5s;transition:opacity 0.5s;border-bottom:3px solid #fde68a;-webkit-box-shadow:0 4px 12px rgba(0,0,0,0.3);box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>
+
+<!-- EHE Floating Button (draggable) -->
+<div class="stop-audio-btn disabled" id="stopAudioBtn">&#x23F9;</div>
+<div class="ehe-btn" id="eheBtn">ehe</div>
+
+<!-- Credits Modal -->
+<div class="credits-modal" id="creditsModal">
+  <div class="credits-center"><div class="credits-center-inner">
+  <div class="credits-content">
+    <div class="icon">🕌</div>
+    <div class="credits-item">
+      <div class="role">💻 البرمجة والتصميم</div>
+      <div class="name">د. إحسان العبد الله</div>
+    </div>
+    <button class="credits-close" onclick="closeCredits()">إغلاق</button>
+  </div>
+  </div></div>
+</div>
+
+<script>
+// تعيين volume=1 لكل عناصر الصوت
+var _allA=document.getElementsByTagName("audio");for(var _i=0;_i<_allA.length;_i++)_allA[_i].volume=1.0;
+// ===== CLASSLIST POLYFILL =====
+if (!('classList' in document.documentElement)) {
+  (function() {
+    var proto = Element.prototype;
+    proto.classList = {
+      _getClasses: function() {
+        var cls = this.className.split(/\s+/);
+        var obj = {};
+        for (var i = 0; i < cls.length; i++) { if (cls[i]) obj[cls[i]] = true; }
+        return obj;
+      },
+      add: function(c) {
+        var cls = this._getClasses();
+        if (!cls[c]) { this.className = (this.className ? this.className + ' ' : '') + c; }
+      },
+      remove: function(c) {
+        var cls = this._getClasses();
+        if (cls[c]) {
+          var arr = [];
+          for (var k in cls) { if (k !== c) arr.push(k); }
+          this.className = arr.join(' ');
+        }
+      },
+      contains: function(c) {
+        return !!this._getClasses()[c];
+      },
+      toggle: function(c) {
+        if (this.contains(c)) { this.remove(c); return false; }
+        else { this.add(c); return true; }
+      }
+    };
+  })();
+}
+
+
+
+// ===== ES5 POLYFILLS =====
+if (typeof JSON === 'undefined') { JSON = {}; }
+if (!JSON.parse) { JSON.parse = function(s) { return eval('(' + s + ')'); }; }
+if (!JSON.stringify) {
+  JSON.stringify = function(o) {
+    if (o === null) return 'null';
+    if (typeof o === 'undefined') return undefined;
+    if (typeof o === 'string') return '"' + o.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+    if (typeof o === 'number' || typeof o === 'boolean') return String(o);
+    if (o instanceof Array) {
+      var a = []; for (var i = 0; i < o.length; i++) a.push(JSON.stringify(o[i]));
+      return '[' + a.join(',') + ']';
+    }
+    if (typeof o === 'object') {
+      var p = []; for (var k in o) { if (o.hasOwnProperty(k)) p.push('"' + k + '":' + JSON.stringify(o[k])); }
+      return '{' + p.join(',') + '}';
+    }
+    return String(o);
+  };
+}
+if (!Object.keys) {
+  Object.keys = function(o) { var r = []; for (var k in o) { if (o.hasOwnProperty(k)) r.push(k); } return r; };
+}
+if (!Array.prototype.forEach) {
+  Array.prototype.forEach = function(fn) { for (var i = 0; i < this.length; i++) fn(this[i], i, this); };
+}
+if (!Array.prototype.map) {
+  Array.prototype.map = function(fn) { var r = []; for (var i = 0; i < this.length; i++) r.push(fn(this[i], i, this)); return r; };
+}
+if (!Array.prototype.filter) {
+  Array.prototype.filter = function(fn) { var r = []; for (var i = 0; i < this.length; i++) { if (fn(this[i], i, this)) r.push(this[i]); } return r; };
+}
+if (!Array.prototype.indexOf) {
+  Array.prototype.indexOf = function(v) { for (var i = 0; i < this.length; i++) { if (this[i] === v) return i; } return -1; };
+}
+if (!String.prototype.trim) {
+  String.prototype.trim = function() { return this.replace(/^\s+|\s+$/g, ''); };
+}
+function SimpleSet() { this._k = {}; }
+SimpleSet.prototype.add = function(v) { this._k[String(v)] = true; };
+SimpleSet.prototype.has = function(v) { return !!this._k[String(v)]; };
+SimpleSet.prototype.clear = function() { this._k = {}; };
+
+// ===== CONSTANTS =====
+var DAY_NAMES = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+var HIJRI_MONTHS = ["محرم","صفر","ربيع الأول","ربيع الثاني","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
+var GREG_MONTHS_SHAMI = ["كانون الثاني","شباط","آذار","نيسان","أيار","حزيران","تموز","آب","أيلول","تشرين الأول","تشرين الثاني","كانون الأول"];
+var GREG_MONTHS_GLOBAL = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+var PRAYER_NAMES = { Fajr:"الفجر", Sunrise:"شروق الشمس", Dhuhr:"الظهر", Asr:"العصر", Maghrib:"المغرب", Isha:"العشاء" };
+var PRAYER_COUNTDOWN_LABEL = { Fajr:"صلاة الفجر", Sunrise:"شروق الشمس", Dhuhr:"صلاة الظهر", Asr:"صلاة العصر", Maghrib:"صلاة المغرب", Isha:"صلاة العشاء" };
+var PRAYER_IQAMA_LABEL = { Fajr:"الفجر", Dhuhr:"الظهر", Asr:"العصر", Maghrib:"المغرب", Isha:"العشاء" };
+var PRAYER_ORDER = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+var DEFAULT_IQAMA = { Fajr:30, Dhuhr:20, Asr:20, Maghrib:10, Isha:10 };
+var DEFAULT_LAT = 33.5138, DEFAULT_LNG = 36.2765;
+var HIJRI_MONTH_DAYS = 29.5306;
+
+// ===== STATE =====
+var latitude = DEFAULT_LAT, longitude = DEFAULT_LNG;
+var isManualLocation = false;
+var prayerData = null;
+var prayerTimings = {};
+var loading = true, errorMsg = null;
+var audioEnabled = false, audioActivated = false;
+var dateCorrection = 0;
+var iqamaOffsets = {};
+var alertSettings = {}; // { Fajr: {sound:true, vibrate:true}, Sunrise: {...}, ... }
+var adhanPlayed, iqamaPlayedSet;
+var azkarDoneSet;
+var locError = null;
+
+// ===== ONLINE ISLAMIC INFO (fetched from internet) =====
+var onlineInfoEnabled = true;
+var cachedInfoItems = [];
+var currentInfoIdx = 0;
+var infoRefreshTimer = null;
+var infoFetching = false;
+var hadithDB = null;
+var INFO_REFRESH_MS = 300000;
+var INFO_CYCLE_MS = 8000;
+var infoCycleTimer = null;
+var infoCycleProgressTimer = null;
+var infoCycleProgress = 0;
+var infoCatFilter = "all";
+var fullContentDB = null;
+
+var INFO_CATEGORIES = ["hadith","quran","azkar","dua","today","health","food","jokes","world","wisdom","prophet","seasons","poetry","quran-tafseer","vitamins"];
+
+// Initialize info settings
+(function() {
+  try {
+    var v = localStorage.getItem("online-info-enabled");
+    if (v === "false") {
+      onlineInfoEnabled = false;
+    } else {
+      onlineInfoEnabled = true;
+    }
+  } catch(e) {}
+  updateInfoToggleBtn();
+})();
+
+function toggleOnlineInfo() {
+  onlineInfoEnabled = !onlineInfoEnabled;
+  try { localStorage.setItem("online-info-enabled", onlineInfoEnabled ? "true" : "false"); } catch(e) {}
+  updateInfoToggleBtn();
+  if (onlineInfoEnabled) {
+    if (cachedInfoItems.length > 0) {
+      displayCurrentInfo();
+    } else {
+      fetchAllInfo();
+    }
+    startInfoCycle();
+    startInfoRefresh();
+  } else {
+    stopMarqueeLoop();
+    el("infoSection").style.display = "none";
+    el("infoCatBar").style.display = "none";
+    stopInfoRefresh();
+    stopInfoCycle();
+  }
+}
+
+function updateInfoToggleBtn() {
+  var btn = el("infoToggleBtn");
+  if (!btn) return;
+  if (onlineInfoEnabled) {
+    btn.style.background = "#dcfce7";
+    btn.style.borderColor = "#86efac";
+    btn.title = "\u0625\u062E\u0641\u0627\u0621 \u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062A";
+  } else {
+    btn.style.background = "rgba(255,255,255,0.8)";
+    btn.style.borderColor = "#e2e8f0";
+    btn.title = "\u0639\u0631\u0636 \u0623\u062D\u0627\u062F\u064A\u062B \u0648\u0645\u0639\u0644\u0648\u0645\u0627\u062A";
+  }
+}
+
+function toggleCatFilter(cat) {
+  infoCatFilter = cat;
+  // Update button styles
+  var allBtns = document.querySelectorAll("[id^='catBtn_']");
+  for (var i = 0; i < allBtns.length; i++) {
+    var b = allBtns[i];
+    var bCat = b.id.replace("catBtn_", "");
+    if (bCat === cat) {
+      b.style.background = "#059669";
+      b.style.color = "white";
+    } else {
+      b.style.background = "white";
+      b.style.color = "#065f46";
+    }
+  }
+  currentInfoIdx = 0;
+  displayCurrentInfo();
+  resetCycleProgress();
+}
+
+function getFilteredItems() {
+  if (!cachedInfoItems || cachedInfoItems.length === 0) return [];
+  if (infoCatFilter === "all") return cachedInfoItems;
+  var filtered = [];
+  for (var i = 0; i < cachedInfoItems.length; i++) {
+    if (cachedInfoItems[i].cat === infoCatFilter) filtered.push(cachedInfoItems[i]);
+  }
+  return filtered;
+}
+
+var CONTENT_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/content.json";
+var AZKAR_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/azkar.json";
+var HADITHS_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/hadiths.json";
+
+
+function fetchAllInfo() {
+  if (!onlineInfoEnabled || infoFetching) return;
+  infoFetching = true;
+  // Fetch from our hosted content JSON
+  fetchContentJSON();
+  // Fetch hadiths from dedicated JSON file
+  fetchHadithsJSON();
+  // Fetch azkar from dedicated JSON file
+  fetchAzkarJSON();
+  // Also fetch from other APIs
+  fetchNawawiHadiths();
+  fetchQuranVerse();
+  setTimeout(function() { pickRandomHadith(); }, 3000);
+  setTimeout(function() { infoFetching = false; }, 15000);
+}
+
+function fetchContentJSON() {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", CONTENT_URL + "?t=" + Date.now(), true);
+  xhr.timeout = 20000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        var items = JSON.parse(xhr.responseText);
+        if (items && items.length > 0) {
+          fullContentDB = items;
+          rebuildInfoPool();
+        }
+      } catch(e) {}
+    }
+  };
+  xhr.send();
+}
+
+// Fetch hadiths from dedicated JSON file - merge into fullContentDB
+var onlineHadithsDB = null;
+function fetchHadithsJSON() {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", HADITHS_URL + "?t=" + Date.now(), true);
+  xhr.timeout = 20000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        var items = JSON.parse(xhr.responseText);
+        if (items && items.length > 0) {
+          onlineHadithsDB = items;
+          mergeHadithsToPool(items);
+        }
+      } catch(e) {}
+    }
+  };
+  xhr.send();
+}
+function mergeHadithsToPool(items) {
+  if (!items || items.length === 0) return;
+  if (!fullContentDB) fullContentDB = [];
+  var existingTexts = {};
+  for (var i = 0; i < fullContentDB.length; i++) {
+    existingTexts[fullContentDB[i].text] = true;
+  }
+  for (var i = 0; i < items.length; i++) {
+    if (!existingTexts[items[i].text]) {
+      fullContentDB.push({
+        icon: items[i].icon || "\uD83D\uDD4A",
+        text: items[i].text,
+        src: items[i].src,
+        cat: items[i].cat || "hadith"
+      });
+    }
+  }
+  rebuildInfoPool();
+}
+
+// Fetch azkar from dedicated JSON file
+var onlineAzkarDB = null;
+function fetchAzkarJSON() {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", AZKAR_URL + "?t=" + Date.now(), true);
+  xhr.timeout = 20000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        var groups = JSON.parse(xhr.responseText);
+        if (groups && groups.length > 0) {
+          onlineAzkarDB = groups;
+          addAzkarToCarousel(groups);
+        }
+      } catch(e) {}
+    }
+  };
+  xhr.send();
+}
+
+function addAzkarToCarousel(groups) {
+  for (var g = 0; g < groups.length; g++) {
+    var group = groups[g];
+    if (group.items && group.items.length > 0) {
+      // Add group title as one item
+      addInfoItem(group.icon || "\uD83E\uDD2D", group.text, group.cat === "dua" ? "\u062F\u0639\u0627\u0621" : "\u0623\u0630\u0643\u0627\u0631");
+      // Add ALL items in order (not random)
+      for (var i = 0; i < group.items.length; i++) {
+        var azkarItem = group.items[i];
+        var countStr = azkarItem.count > 1 ? " (" + azkarItem.count + "\u0645\u0631\u0627\u062A)" : "";
+        addInfoItem(
+          group.icon || "\uD83E\uDD2D",
+          azkarItem.arabic + countStr,
+          azkarItem.ref || group.text
+        );
+      }
+    }
+  }
+}
+
+function rebuildInfoPool() {
+  if (!fullContentDB || fullContentDB.length === 0) return;
+  cachedInfoItems = [];
+  for (var i = 0; i < fullContentDB.length; i++) {
+    cachedInfoItems.push(fullContentDB[i]);
+  }
+  currentInfoIdx = 0;
+  if (onlineInfoEnabled) {
+    el("infoSection").style.display = "block";
+    el("infoCatBar").style.display = "block";
+    displayCurrentInfo();
+    startInfoCycle();
+  }
+}
+
+function fetchNawawiHadiths() {
+  if (hadithDB && hadithDB.hadiths && hadithDB.hadiths.length > 0) return;
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "https://uthumany.github.io/nawawi-40-hadiths/api/hadiths.json", true);
+  xhr.timeout = 15000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        hadithDB = JSON.parse(xhr.responseText);
+        pickRandomHadith();
+      } catch(e) {}
+    }
+  };
+  xhr.ontimeout = function() {};
+  xhr.onerror = function() {};
+  xhr.send();
+}
+
+function pickRandomHadith() {
+  if (!hadithDB || !hadithDB.hadiths) return;
+  var hadiths = hadithDB.hadiths;
+  var idx = Math.floor(Math.random() * hadiths.length);
+  var h = hadiths[idx];
+  var text = h.arabic_text || "";
+  if (text.length > 350) text = text.substring(0, 350) + "...";
+  var src = h.source || "\u062D\u062F\u064A\u062B \u0646\u0628\u0648\u064A";
+  addInfoItem("\uD83D\uDCD6", text, "\u0627\u0644\u0623\u0631\u0628\u0639\u0648\u0646 \u0627\u0644\u0646\u0648\u0627\u0648\u064A\u0629 #" + h.hadith_number + " - " + src);
+}
+
+function fetchQuranVerse() {
+  var totalAyahs = 6236;
+  var num = Math.floor(Math.random() * totalAyahs) + 1;
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "https://api.alquran.cloud/v1/ayah/" + num + "/ar", true);
+  xhr.timeout = 10000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        var d = JSON.parse(xhr.responseText);
+        if (d.code === 200 && d.data) {
+          var a = d.data;
+          var s = a.surah || {};
+          var text = a.text || "";
+          if (text.length > 300) text = text.substring(0, 300) + "...";
+          var src = "\u0633\u0648\u0631\u0629 " + (s.name || "") + " - \u0622\u064A\u0629 " + a.numberInSurah;
+          addInfoItem("\uD83D\uDCD6", text, src);
+        }
+      } catch(e) {}
+    }
+  };
+  xhr.ontimeout = function() {};
+  xhr.onerror = function() {};
+  xhr.send();
+}
+
+function addInfoItem(icon, text, src, cat) {
+  var found = false;
+  for (var i = 0; i < cachedInfoItems.length; i++) {
+    if (cachedInfoItems[i].text === text) { found = true; break; }
+  }
+  if (found) return;
+  cachedInfoItems.push({icon: icon, text: text, src: src, cat: cat || "other"});
+  if (cachedInfoItems.length > 200) cachedInfoItems.shift();
+  if (onlineInfoEnabled) {
+    el("infoSection").style.display = "block";
+    el("infoCatBar").style.display = "block";
+    displayCurrentInfo();
+  }
+}
+
+function displayCurrentInfo() {
+  if (!onlineInfoEnabled) return;
+  if (cachedInfoItems.length === 0) {
+    el("infoSection").style.display = "none";
+    el("infoCatBar").style.display = "none";
+    return;
+  }
+  el("infoSection").style.display = "block";
+  el("infoCatBar").style.display = "block";
+  var filtered = getFilteredItems();
+  if (filtered.length === 0) {
+    el("infoText").textContent = "";
+    el("infoSource").textContent = "";
+    return;
+  }
+  var item = filtered[currentInfoIdx % filtered.length];
+  el("infoIcon").textContent = item.icon;
+  stopMarqueeLoop();
+  el("infoText").textContent = item.text;
+  el("infoSource").textContent = item.src;
+  el("infoNav").textContent = "";
+}
+
+function renderInfo() {
+  if (onlineInfoEnabled) {
+    displayCurrentInfo();
+  }
+}
+
+function nextInfo() {
+  // في وضع الأذكار: تخطي للذكر التالي
+  if (azkarAudioMode) {
+    stopAzkarAudio();
+    if (azkarAudioPauseTimer) { clearTimeout(azkarAudioPauseTimer); azkarAudioPauseTimer = null; }
+    azkarAudioIdx++;
+    showNextAzkarAudio();
+    return;
+  }
+  var filtered = getFilteredItems();
+  if (filtered.length === 0) return;
+  currentInfoIdx = (currentInfoIdx + 1) % filtered.length;
+  displayCurrentInfo();
+  resetCycleProgress();
+}
+function prevInfo() {
+  if (azkarAudioMode) return;
+  var filtered = getFilteredItems();
+  if (filtered.length === 0) return;
+  currentInfoIdx = (currentInfoIdx - 1 + filtered.length) % filtered.length;
+  displayCurrentInfo();
+  resetCycleProgress();
+}
+var marqueePaused = false;
+var _isDragging = false;
+var marqueePos = 0;
+var marqueeSpeed = 0.5;
+var marqueeTimer = null;
+var marqueeTextW = 0;
+var marqueeContainerW = 0;
+
+function toggleMarqueePause() {
+  if (_isDragging) return;
+  if (azkarAudioMode) {
+    stopAzkarAudio();
+    if (azkarAudioPauseTimer) { clearTimeout(azkarAudioPauseTimer); azkarAudioPauseTimer = null; }
+    azkarAudioIdx++;
+    showNextAzkarAudio();
+    return;
+  }
+  var track = el("marqueeTrack");
+  if (!track) return;
+  marqueePaused = !marqueePaused;
+  if (marqueePaused) { stopMarqueeLoop(); }
+  else { startMarqueeLoop(); }
+}
+function startMarqueeLoop() {
+  stopMarqueeLoop();
+  marqueeTimer = setInterval(function() {
+    marqueePos += marqueeSpeed;
+    if (marqueePos >= 0) marqueePos = -marqueeTextW;
+    var track = el("marqueeTrack");
+    if (track) {
+      track.style.webkitTransform = "translateX(" + marqueePos + "px)";
+      track.style.transform = "translateX(" + marqueePos + "px)";
+    }
+  }, 16);
+}
+function stopMarqueeLoop() {
+  if (marqueeTimer) { clearInterval(marqueeTimer); marqueeTimer = null; }
+}
+function initDragScroll() {
+  var card = el("infoCard");
+  if (!card) return;
+  var dragging = false, startX = 0, startPos = 0;
+  card.addEventListener("touchstart", function(e) {
+    var track = el("marqueeTrack");
+    if (!track) return;
+    dragging = true; _isDragging = false;
+    startX = e.touches[0].clientX;
+    startPos = marqueePos;
+    stopMarqueeLoop();
+  }, {passive: true});
+  card.addEventListener("touchmove", function(e) {
+    if (!dragging) return;
+    var dx = e.touches[0].clientX - startX;
+    if (Math.abs(dx) > 3) _isDragging = true;
+    if (_isDragging) {
+      marqueePos = startPos + dx;
+      var track = el("marqueeTrack");
+      if (track) {
+        track.style.webkitTransform = "translateX(" + marqueePos + "px)";
+        track.style.transform = "translateX(" + marqueePos + "px)";
+      }
+    }
+  }, {passive: true});
+  card.addEventListener("touchend", function() {
+    dragging = false;
+    if (_isDragging) {
+      setTimeout(function() { _isDragging = false; }, 300);
+      if (!marqueePaused) startMarqueeLoop();
+    }
+  });
+  // ماوس (للكمبيوتر)
+  card.addEventListener("mousedown", function(e) {
+    var track = el("marqueeTrack");
+    if (!track) return;
+    dragging = true; _isDragging = false;
+    startX = e.clientX;
+    startPos = marqueePos;
+    stopMarqueeLoop();
+    e.preventDefault();
+  });
+  document.addEventListener("mousemove", function(e) {
+    if (!dragging) return;
+    var dx = e.clientX - startX;
+    if (Math.abs(dx) > 3) _isDragging = true;
+    if (_isDragging) {
+      marqueePos = startPos + dx;
+      var track = el("marqueeTrack");
+      if (track) {
+        track.style.webkitTransform = "translateX(" + marqueePos + "px)";
+        track.style.transform = "translateX(" + marqueePos + "px)";
+      }
+    }
+  });
+  document.addEventListener("mouseup", function() {
+    if (!dragging) return;
+    dragging = false;
+    if (_isDragging) {
+      setTimeout(function() { _isDragging = false; }, 300);
+      if (!marqueePaused) startMarqueeLoop();
+    }
+  });
+}
+function slideToNextInfo() {
+  var filtered = getFilteredItems();
+  if (filtered.length === 0) return;
+  currentInfoIdx = (currentInfoIdx + 1) % filtered.length;
+  displayCurrentInfo();
+  resetCycleProgress();
+}
+function startInfoCycle() {
+  stopInfoCycle();
+  infoCycleTimer = setInterval(function() {
+    if (onlineInfoEnabled && cachedInfoItems.length > 0) slideToNextInfo();
+  }, INFO_CYCLE_MS);
+  startCycleProgress();
+}
+function stopInfoCycle() {
+  if (infoCycleTimer) { clearInterval(infoCycleTimer); infoCycleTimer = null; }
+  stopCycleProgress();
+}
+function startCycleProgress() {
+  stopCycleProgress();
+  infoCycleProgress = 0;
+  if (!el("infoProgressBar")) return;
+  var step = 100 / (INFO_CYCLE_MS / 100);
+  infoCycleProgressTimer = setInterval(function() {
+    infoCycleProgress = Math.min(100, infoCycleProgress + step);
+    if (el("infoProgressBar")) el("infoProgressBar").style.width = infoCycleProgress + "%";
+    if (infoCycleProgress >= 100) { infoCycleProgress = 0; }
+  }, 100);
+}
+function stopCycleProgress() {
+  if (infoCycleProgressTimer) { clearInterval(infoCycleProgressTimer); infoCycleProgressTimer = null; }
+  infoCycleProgress = 0;
+  if (el("infoProgressBar")) el("infoProgressBar").style.width = "0%";
+}
+function resetCycleProgress() {
+  stopCycleProgress();
+  startCycleProgress();
+}
+
+function startInfoRefresh() {
+  stopInfoRefresh();
+  infoRefreshTimer = setInterval(function() {
+    if (onlineInfoEnabled && navigator.onLine) fetchAllInfo();
+  }, INFO_REFRESH_MS);
+}
+
+function stopInfoRefresh() {
+  if (infoRefreshTimer) { clearInterval(infoRefreshTimer); infoRefreshTimer = null; }
+}
+
+// ===== AZKAR AUDIO MODE (between Adhan and Iqama) =====
+var azkarAudioMode = false;
+var azkarAudioActive = false;
+var azkarAudioPauseTimer = null;
+var azkarAudioIdx = 0;
+var azkarAudioEnabled = true;
+// ✅ متغيرات جديدة لحماية تشغيل الدعاء
+var _duaSafetyTimer = null;    // مؤقت أمان: ينتقل للأحاديث إذا لم يحدث شيء
+var _duaPlaying = false;       // منع تكرار تشغيل الدعاء
+var _duaDoneFired = false;     // منع استدعاء onDuaDone مرتين
+var currentAzkarPrayer = "";
+var KAABA_IMG_URL = "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/d67baf71737c.jpg";
+
+
+(function() {
+  try { azkarAudioEnabled = localStorage.getItem("azkar-audio-enabled") !== "false"; } catch(e) {}
+})();
+
+function isBetweenAdhanAndIqama(nowMs) {
+  if (!prayerTimings || !hasTimings()) return null;
+  if (!audioEnabled || !audioActivated) return null;
+  var now = new Date();
+  for (var i = 0; i < PRAYER_ORDER.length; i++) {
+    var k = PRAYER_ORDER[i];
+    if (k === "Sunrise") continue;
+    var t = prayerTimings[k];
+    if (!t) continue;
+    var p = t.split(":");
+    var d = new Date();
+    d.setHours(parseInt(p[0]), parseInt(p[1]), 0, 0);
+    var adhanMs = d.getTime();
+    var iqMs = adhanMs + (iqamaOffsets[k] || 10) * 60000;
+    // ✅ التحقق من أن الأذان قد انتهى بالفعل (adhanEndMs > 0)
+    if (adhanEndMs === 0) continue; // الأذان لم ينتهِ بعد
+    // ✅ تأكد من أن الوقت الحالي بعد انتهاء الأذان + 10 ثانية
+    var startMs = adhanEndMs + 10000; // 10 ثواني بعد انتهاء الأذان
+    // ✅ يجب أن يكون الوقت قبل الإقامة بـ 10 ثواني على الأقل
+    if (nowMs >= startMs && nowMs < iqMs - 10000) {
+      return { prayer: k, remainingMs: iqMs - nowMs, iqMs: iqMs };
+    }
+  }
+  return null;
+}
+
+function enterAzkarAudioMode(prayerName) {
+  if (azkarAudioMode || !onlineInfoEnabled || !azkarAudioEnabled) return;
+  // ✅ منع التكرار: إذا كان الدعاء قد اكتمل لهذه الصلاة، لا تعد إدخال الوضع
+  if (_duaDoneFired && currentAzkarPrayer === prayerName) return;
+  azkarAudioMode = true;
+  currentAzkarPrayer = prayerName;
+  azkarAudioIdx = -1;
+  hadithAudioIdx = 0;
+  // ✅ إعادة تعيين حالة الدعاء للسماح بتشغيله للصلاة الجديدة
+  _duaPlaying = false;
+  _duaDoneFired = false;
+  if (_duaSafetyTimer) { clearTimeout(_duaSafetyTimer); _duaSafetyTimer = null; }
+  stopInfoCycle();
+  stopMarqueeLoop();
+  // تأكد من إظهار قسم المعلومات
+  el("infoSection").style.display = "block";
+  if (el("infoCatBar")) el("infoCatBar").style.display = "none";
+  var card = el("infoCard");
+  if (card) card.className = "info-card hadith-audio-mode";
+  showDuaAfterAdhan();
+}
+
+function exitAzkarAudioMode() {
+  if (!azkarAudioMode) return;
+  azkarAudioMode = false;
+  azkarAudioActive = false;
+  _anyAudioActive = false; // ✅ تأكد من إيقاف حالة الصوت النشط
+  _duaPlaying = false;     // ✅ إعادة تعيين حالة الدعاء
+  // ✅ لا نمسح _duaDoneFired و currentAzkarPrayer هنا لمنع إعادة تشغيل الدعاء
+  // (يُعاد تعيينهما فقط في enterAzkarAudioMode عند بدء صلاة جديدة)
+  _stopIqamaStopMonitor(); // ✅ إيقاف مراقب الإقامة
+  stopAzkarAudio();
+  if (azkarAudioPauseTimer) { clearTimeout(azkarAudioPauseTimer); azkarAudioPauseTimer = null; }
+  // Restore original card HTML structure
+  var card = el("infoCard");
+  if (card) {
+    card.className = "info-card";
+    card.innerHTML = '<div class="info-card-inner">' +
+      '<div class="info-card-slide" id="infoSlide">' +
+      '<div class="info-icon" id="infoIcon">\uD83D\uDCD6</div>' +
+      '<div class="info-text" id="infoText"></div>' +
+      '<div class="info-source" id="infoSource"></div>' +
+      '<div class="info-nav" id="infoNav"></div>' +
+      '</div></div>' +
+      '<div class="info-card-progress"><div class="info-card-progress-bar" id="infoProgressBar" style="width:0%;"></div></div>';
+    // Restore onclick
+    card.onclick = function() { nextInfo(); };
+  }
+  startInfoCycle();
+  displayCurrentInfo();
+}
+
+
+
+// دالة مساعدة: تنظيف كامل لمورد الدعاء
+function _cleanupDuaAudio() {
+  try {
+    var duaA = el("duaAudio");
+    if (duaA) {
+      duaA.onended = null;
+      duaA.onerror = null;
+      duaA.oncanplay = null;
+      try { duaA.pause(); } catch(e) {}
+      try { duaA.currentTime = 0; } catch(e) {}
+    }
+  } catch(e) {}
+  if (_duaSafetyTimer) { clearTimeout(_duaSafetyTimer); _duaSafetyTimer = null; }
+  // ✅ لا تعيد تعيين _duaPlaying إذا كان الدعاء قد اكتمل بالفعل
+  // (لمنع إعادة تشغيل الدعاء بعد onDuaDone)
+  if (!_duaDoneFired) {
+    _duaPlaying = false;
+  }
+}
+
+// دالة مساعدة: الانتقال إلى الأحاديث بعد انتهاء/فشل الدعاء
+function _proceedToHadithsAfterDua(delayMs) {
+  if (azkarAudioPauseTimer) { clearTimeout(azkarAudioPauseTimer); azkarAudioPauseTimer = null; }
+  azkarAudioPauseTimer = setTimeout(function() {
+    azkarAudioPauseTimer = null;
+    if (azkarAudioMode) {
+      azkarAudioIdx = 0;
+      showNextHadithAudio();
+    }
+  }, delayMs || 10000);
+}
+
+function showDuaAfterAdhan() {
+  if (!azkarAudioMode) return;
+  if (_duaPlaying) return; // ✅ منع التكرار
+  _duaPlaying = true;
+  _duaDoneFired = false;
+
+  // ✅ تنظيف أي مؤقتات سابقة
+  if (azkarAudioPauseTimer) { clearTimeout(azkarAudioPauseTimer); azkarAudioPauseTimer = null; }
+  if (_duaSafetyTimer) { clearTimeout(_duaSafetyTimer); _duaSafetyTimer = null; }
+
+  // تأكد من إظهار القسم
+  el("infoSection").style.display = "block";
+  var card = el("infoCard");
+  if (!card) { _duaPlaying = false; return; }
+  card.className = "info-card hadith-audio-mode";
+  card.innerHTML = '<div style="width:100%;text-align:center;">' +
+    '<div class="info-card-slide" id="infoSlide">' +
+    '<div class="info-icon" id="infoIcon" style="font-size:24px;">🤲</div>' +
+    '<div class="info-text" id="infoText" style="font-size:14px;line-height:2.2;padding:0 8px;font-weight:bold;"></div>' +
+    '<div class="info-source" id="infoSource" style="font-size:11px;"></div>' +
+    '<div class="info-nav" id="infoNav"></div>' +
+    '</div>' +
+    '<div class="info-card-progress"><div class="info-card-progress-bar" id="infoProgressBar" style="width:0%;"></div></div>' +
+    '</div>';
+  var textEl = el("infoText");
+  var srcEl = el("infoSource");
+  var navEl = el("infoNav");
+  if (textEl) textEl.textContent = "";
+  if (srcEl) srcEl.textContent = "الدعاء بعد الأذان";
+  var prayerLabel = currentAzkarPrayer ? "صلاة " + PRAYER_NAMES[currentAzkarPrayer] : "";
+  if (navEl) navEl.innerHTML = '<span class="hadith-mode-badge">🔊 قراءة صوتية</span> ' +
+    '<div class="hadith-audio-controls"><span>' + prayerLabel + '</span></div>';
+
+  var duaA = el("duaAudio");
+  if (!duaA) {
+    _duaPlaying = false;
+    _proceedToHadithsAfterDua(2000);
+    return;
+  }
+
+  // ✅ دالة انتقال للأحاديث (مع حماية من التكرار)
+  function onDuaDone(delayMs) {
+    if (_duaDoneFired) return;
+    _duaDoneFired = true;
+    if (_duaSafetyTimer) { clearTimeout(_duaSafetyTimer); _duaSafetyTimer = null; }
+    _anyAudioActive = false;
+    // ✅ أبقِ _duaPlaying = true لمنع إعادة تشغيل الدعاء
+    // (يُعاد تعيينه فقط في enterAzkarAudioMode للصلاة الجديدة)
+    _duaPlaying = true;
+    updateStopButton();
+    _proceedToHadithsAfterDua(delayMs || 10000);
+  }
+
+  // ✅ تعيين المعالجات قبل التشغيل لضمان التقاط أي خطأ
+  duaA.onended = function() { onDuaDone(10000); };
+  duaA.onerror = function() { onDuaDone(5000); };
+
+  // ✅ مؤقت أمان: إذا لم يحدث onended/onerror خلال 120 ثانية، انتقل للأحاديث
+  _duaSafetyTimer = setTimeout(function() {
+    _duaSafetyTimer = null;
+    try { duaA.pause(); } catch(e) {}
+    onDuaDone(3000);
+  }, 120000);
+
+  // ✅ تشغيل مباشر بدون انتظار canplay (أبسط وأكثر موثوقية)
+  // play() سيبدأ التشغيل تلقائياً عندما يتوفر ما يكفي من البيانات
+  try {
+    duaA.volume = 1.0;
+    // إعادة التشغيل من البداية
+    try { duaA.currentTime = 0; } catch(e) {}
+    var playPromise = duaA.play();
+    if (playPromise && typeof playPromise.then === "function") {
+      // ✅ معالجة Promise بشكل صحيح
+      playPromise.then(function() {
+        // تشغيل ناجح
+        if (!_duaDoneFired) {
+          _anyAudioActive = true;
+          updateStopButton();
+        }
+      }).catch(function(e) {
+        // ❌ فشل التشغيل (ملف مفقود، حظر تلقائي، إلخ)
+        _anyAudioActive = false;
+        updateStopButton();
+        onDuaDone(3000);
+      });
+    } else {
+      // متصفحات قديمة بدون Promise - افترض النجاح
+      _anyAudioActive = true;
+      updateStopButton();
+    }
+  } catch(e) {
+    _anyAudioActive = false;
+    updateStopButton();
+    onDuaDone(3000);
+  }
+}
+function playAzkarAudioWithCallback(file, onDone) {
+  stopAzkarAudio();
+  var audio = el("azkarAudio");
+  if (!audio) {
+    if (onDone) setTimeout(onDone, 10000);
+    return;
+  }
+  if (_anyAudioActive) {
+    if (onDone) setTimeout(onDone, 5000);
+    return;
+  }
+  try {
+    audio.src = file;
+    audio.load();
+    azkarAudioActive = true;
+    audio.onended = function() {
+      azkarAudioActive = false;
+      if (onDone) onDone();
+    };
+    audio.onerror = function() {
+      azkarAudioActive = false;
+      if (onDone) onDone();
+    };
+    // ✅ تأخير 300ms قبل التشغيل لضمان عدم تعارض مع الأذان
+    audio.volume = 1.0;
+    setTimeout(function() {
+      try { audio.play(); } catch(e) {
+        azkarAudioActive = false;
+        if (onDone) onDone();
+      }
+    }, 300);
+  } catch(e) {
+    azkarAudioActive = false;
+    if (onDone) onDone();
+  }
+}
+
+function showNextHadithAudio() {
+  if (!azkarAudioMode) return;
+  var gap = isBetweenAdhanAndIqama(Date.now());
+  if (!gap || gap.remainingMs < 10000) {
+    // ✅ إيقاف أي قراءة جارية
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch(e) {}
+    exitAzkarAudioMode();
+    return;
+  }
+  var card = el("infoCard");
+  if (card) {
+    card.className = "info-card hadith-audio-mode";
+    card.innerHTML = '<div style="width:100%;text-align:center;">' +
+      '<div class="info-card-slide" id="infoSlide">' +
+      '<div class="info-icon" id="infoIcon" style="font-size:24px;">📖</div>' +
+      '<div class="info-text" id="infoText" style="font-size:14px;line-height:2;padding:0 8px;font-weight:bold;"></div>' +
+      '<div class="info-source" id="infoSource" style="font-size:11px;"></div>' +
+      '<div class="info-nav" id="infoNav"></div>' +
+      '</div>' +
+      '<div class="info-card-progress"><div class="info-card-progress-bar" id="infoProgressBar" style="width:100%;"></div></div>' +
+      '</div>';
+    card.onclick = null;
+  }
+  // ✅ تعيين _anyAudioActive = true لمنع الحلقة الرئيسية من استدعاء exitAzkarAudioMode
+  // أثناء قراءة الحديث (TTS لا يُعين _anyAudioActive تلقائياً)
+  _anyAudioActive = true;
+  updateStopButton();
+  // جلب حديث ترتيبي من GitHub
+  fetchSequentialHadithFromJson(function(text, src) {
+    if (!azkarAudioMode) return;
+    el("infoText").textContent = text;
+    el("infoSource").textContent = src || "";
+    var prayerLabel = currentAzkarPrayer ? "\u0635\u0644\u0627\u0629 " + PRAYER_NAMES[currentAzkarPrayer] : "";
+    el("infoNav").innerHTML = '<span class="hadith-mode-badge">\uD83D\uDD0A \u0642\u0631\u0627\u0621\u0629 \u0635\u0648\u062A\u064A\u0629</span> ' +
+      '<div class="hadith-audio-controls"><span>' + prayerLabel + '</span></div>';
+    // ✅ بدء مراقب الإيقاف قبل الإقامة بـ 10 ثواني
+    _startIqamaStopMonitor();
+    speakText(text, function() {
+      _stopIqamaStopMonitor();
+      // ✅ تعيين _anyAudioActive = false بعد انتهاء قراءة الحديث
+      _anyAudioActive = false;
+      updateStopButton();
+      if (azkarAudioPauseTimer) clearTimeout(azkarAudioPauseTimer);
+      azkarAudioPauseTimer = setTimeout(function() {
+        azkarAudioPauseTimer = null;
+        if (azkarAudioMode) {
+          azkarAudioIdx++;
+          showNextHadithAudio();
+        }
+      }, 3000);
+    });
+  });
+}
+
+// ✅ مراقب إيقاف القراءة قبل الإقامة بـ 10 ثواني
+var _iqamaStopMonitor = null;
+function _startIqamaStopMonitor() {
+  if (_iqamaStopMonitor) clearInterval(_iqamaStopMonitor);
+  _iqamaStopMonitor = setInterval(function() {
+    if (!azkarAudioMode) {
+      _stopIqamaStopMonitor();
+      return;
+    }
+    var gap = isBetweenAdhanAndIqama(Date.now());
+    if (!gap || gap.remainingMs < 10000) {
+      // ✅ إيقاف القراءة فوراً قبل الإقامة بـ 10 ثواني
+      try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch(e) {}
+      _stopIqamaStopMonitor();
+      exitAzkarAudioMode();
+    }
+  }, 1000);
+}
+function _stopIqamaStopMonitor() {
+  if (_iqamaStopMonitor) { clearInterval(_iqamaStopMonitor); _iqamaStopMonitor = null; }
+}
+
+var hadithAudioDB = null;
+var hadithAudioIdx = 0;
+
+function fetchSequentialHadithFromJson(callback) {
+  // إذا عندنا البيانات مخزنة، نستخدمها مباشرة
+  if (hadithAudioDB && hadithAudioDB.length > 0) {
+    var idx = hadithAudioIdx % hadithAudioDB.length;
+    var hadith = hadithAudioDB[idx];
+    hadithAudioIdx++;
+    callback(hadith.text, hadith.src || hadith.source);
+    return;
+  }
+  // أول مرة: نجلب البيانات من GitHub ونخزنها
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/hadiths.json", true);
+  xhr.timeout = 10000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        var items = JSON.parse(xhr.responseText);
+        if (items && items.length > 0) {
+          hadithAudioDB = items;
+          var idx = hadithAudioIdx % items.length;
+          var hadith = items[idx];
+          hadithAudioIdx++;
+          callback(hadith.text, hadith.src || hadith.source);
+          return;
+        }
+      } catch(e) {}
+    }
+    // فشل الجلب: ننتقل للتالي
+    if (azkarAudioPauseTimer) clearTimeout(azkarAudioPauseTimer);
+    azkarAudioPauseTimer = setTimeout(function() {
+      azkarAudioPauseTimer = null;
+      if (azkarAudioMode) { azkarAudioIdx++; showNextHadithAudio(); }
+    }, 3000);
+  };
+  xhr.onerror = function() {
+    if (azkarAudioPauseTimer) clearTimeout(azkarAudioPauseTimer);
+    azkarAudioPauseTimer = setTimeout(function() {
+      azkarAudioPauseTimer = null;
+      if (azkarAudioMode) { azkarAudioIdx++; showNextHadithAudio(); }
+    }, 3000);
+  };
+  xhr.send();
+}
+
+// ✅ تمكين قراءة النص صوتياً بصوت شيخ سعودي مع التشكيل
+// اختيار أفضل صوت عربي (يفضل ar-SA - السعودية)
+var _cachedArabicVoice = null;
+var _voicesLoaded = false;
+
+// ✅ دالة اختيار أفضل صوت عربي سعودي
+function _selectBestArabicVoice() {
+  if (!window.speechSynthesis) return null;
+  var voices;
+  try { voices = window.speechSynthesis.getVoices(); } catch(e) { return null; }
+  if (!voices || voices.length === 0) return null;
+
+  // ✅ أولوية اختيار الصوت:
+  // 1. صوت سعودي (ar-SA)
+  // 2. صوت عربي يحتوي على اسم شيخ سعودي معروف
+  // 3. أي صوت عربي (ar-*)
+  var saudiVoice = null;
+  var arabicVoice = null;
+
+  // البحث عن صوت ar-SA أولاً
+  for (var i = 0; i < voices.length; i++) {
+    var v = voices[i];
+    var langLower = (v.lang || "").toLowerCase();
+    if (langLower === "ar-sa") {
+      saudiVoice = v;
+      break;
+    }
+  }
+
+  // إذا لم نجد ar-SA، ابحث عن أصوات بأسماء شيخ سعودية معروفة
+  if (!saudiVoice) {
+    var saudiNames = ["majed", "naayf", "saudi", "hamed", "tarik", "mishari", "sudais", "shuraim", "abdullah"];
+    for (var j = 0; j < voices.length; j++) {
+      var vv = voices[j];
+      var vLang = (vv.lang || "").toLowerCase();
+      var vName = (vv.name || "").toLowerCase();
+      if (vLang.indexOf("ar") === 0) {
+        for (var k = 0; k < saudiNames.length; k++) {
+          if (vName.indexOf(saudiNames[k]) !== -1) {
+            saudiVoice = vv;
+            break;
+          }
+        }
+        if (saudiVoice) break;
+        if (!arabicVoice) arabicVoice = vv;
+      }
+    }
+  }
+
+  return saudiVoice || arabicVoice || null;
+}
+
+// تحميل الأصوات بشكل غير متزامن (بعض المتصفحات تحتاج وقت)
+if (window.speechSynthesis) {
+  try {
+    window.speechSynthesis.onvoiceschanged = function() {
+      _voicesLoaded = true;
+      _cachedArabicVoice = _selectBestArabicVoice();
+    };
+  } catch(e) {}
+  // محاولة أولية
+  try {
+    var _initVoices = window.speechSynthesis.getVoices();
+    if (_initVoices && _initVoices.length > 0) {
+      _voicesLoaded = true;
+      _cachedArabicVoice = _selectBestArabicVoice();
+    }
+  } catch(e) {}
+}
+
+function speakText(text, onDone) {
+  if (!window.speechSynthesis) {
+    // إذا لم يدعم المتصفح TTS، نكتفي بعرض النص ونتابع
+    if (onDone) setTimeout(onDone, 5000);
+    return;
+  }
+  // إيقاف أي قراءة سابقة
+  window.speechSynthesis.cancel();
+
+  // ✅ اختيار أفضل صوت عربي سعودي
+  var voice = _cachedArabicVoice;
+  if (!voice && !_voicesLoaded) {
+    _cachedArabicVoice = _selectBestArabicVoice();
+    voice = _cachedArabicVoice;
+    _voicesLoaded = true;
+  }
+
+  var utterance = new SpeechSynthesisUtterance(text);
+  // ✅ تعيين اللغة العربية السعودية
+  utterance.lang = "ar-SA";
+  // ✅ سرعة أبطأ لمحاكاة التلاوة مع التشكيل (0.8 = أبطأ من العادي)
+  utterance.rate = 0.8;
+  // ✅ طبقة صوت منخفضة قليلاً لمحاكاة صوت الشيخ
+  utterance.pitch = 0.9;
+  utterance.volume = 1.0;
+
+  // ✅ تعيين الصوت إذا وجد
+  if (voice) {
+    utterance.voice = voice;
+    if (voice.lang) utterance.lang = voice.lang;
+  }
+
+  var _doneCalled = false;
+  var _speakSafety = null;
+  function callDone() {
+    if (_doneCalled) return;
+    _doneCalled = true;
+    if (_speakSafety) { clearTimeout(_speakSafety); _speakSafety = null; }
+    if (onDone) onDone();
+  }
+
+  utterance.onend = function() { callDone(); };
+  utterance.onerror = function() { callDone(); };
+
+  // ✅ مؤقت أمان: تقدير وقت القراءة بناءً على طول النص
+  // المتوسط: ~2 حرف/ثانية عند rate=0.8 مع التشكيل الكامل
+  // نضيف هامش 100% + 60 ثانية إضافية كاحتياط سخي
+  var textLength = (text || "").length;
+  var estimatedDurationMs = Math.max(60000, (textLength / 2) * 1000 * 2 + 60000);
+  // الحد الأقصى: 10 دقائق (600000 مللي ثانية) للحديث الواحد
+  estimatedDurationMs = Math.min(estimatedDurationMs, 600000);
+
+  _speakSafety = setTimeout(function() {
+    try { window.speechSynthesis.cancel(); } catch(e) {}
+    callDone();
+  }, estimatedDurationMs);
+
+  // ✅ تشغيل القراءة
+  try {
+    window.speechSynthesis.speak(utterance);
+  } catch(e) {
+    callDone();
+  }
+}
+
+// Keep old playAzkarAudio for backward compatibility (not called anymore)
+function playAzkarAudio(file) {
+  stopAzkarAudio();
+  var audio = el("azkarAudio");
+  if (!audio) return;
+  try {
+    audio.src = file;
+    audio.load();
+    azkarAudioActive = true;
+    audio.onended = function() { azkarAudioActive = false; };
+    audio.onerror = function() { azkarAudioActive = false; };
+    setTimeout(function() { audio.play(); }, 300);
+  } catch(e) { azkarAudioActive = false; }
+}
+
+function stopAzkarAudio() {
+  azkarAudioActive = false;
+  try {
+    var audio = el("azkarAudio");
+    if (audio) {
+      audio.pause();
+      audio.onended = null;
+      audio.onerror = null;
+    }
+  } catch(e) {}
+  // ✅ إيقاف الدعاء أيضاً مع تنظيف المؤقتات
+  _cleanupDuaAudio();
+  // ✅ إيقاف مراقب الإقامة
+  _stopIqamaStopMonitor();
+  // إيقاف TTS إذا كان يقرأ حديثاً
+  try {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  } catch(e) {}
+  // إلغاء أي مؤقت انتظار بين الأذكار
+  if (azkarAudioPauseTimer) { clearTimeout(azkarAudioPauseTimer); azkarAudioPauseTimer = null; }
+}
+
+function toggleAzkarAudio() {
+  azkarAudioEnabled = !azkarAudioEnabled;
+  try { localStorage.setItem("azkar-audio-enabled", azkarAudioEnabled ? "true" : "false"); } catch(e) {}
+  if (!azkarAudioEnabled && azkarAudioMode) {
+    exitAzkarAudioMode();
+  }
+}
+
+function toggleAzkarAudioSetting() {
+  azkarAudioEnabled = !azkarAudioEnabled;
+  try { localStorage.setItem("azkar-audio-enabled", azkarAudioEnabled ? "true" : "false"); } catch(e) {}
+  var btn = el("azkarAudioToggle");
+  if (btn) {
+    if (azkarAudioEnabled) {
+      btn.textContent = "\u0645\u0641\u0639\u0651\u0644";
+      btn.style.background = "#dbeafe";
+      btn.style.color = "#1d4ed8";
+    } else {
+      btn.textContent = "\u0645\u0639\u0637\u0651\u0644";
+      btn.style.background = "#f3f4f6";
+      btn.style.color = "#6b7280";
+    }
+  }
+  if (!azkarAudioEnabled && azkarAudioMode) {
+    exitAzkarAudioMode();
+  }
+}
+
+
+
+// ===== INIT STATE =====
+(function() {
+  try { dateCorrection = parseInt(localStorage.getItem("hijri-date-correction") || "0"); } catch(e) { dateCorrection = 0; }
+  try { iqamaOffsets = JSON.parse(localStorage.getItem("iqama-offsets") || "{}"); } catch(e) { iqamaOffsets = {}; }
+  if (!iqamaOffsets.Fajr) { iqamaOffsets = { Fajr:30, Dhuhr:20, Asr:20, Maghrib:10, Isha:10 }; }
+  try { alertSettings = JSON.parse(localStorage.getItem("alert-settings") || "{}"); } catch(e) { alertSettings = {}; }
+  if (!alertSettings.Fajr) {
+    alertSettings = { Fajr:{sound:true,vibrate:true}, Sunrise:{sound:true,vibrate:true}, Dhuhr:{sound:true,vibrate:true}, Asr:{sound:true,vibrate:true}, Maghrib:{sound:true,vibrate:true}, Isha:{sound:true,vibrate:true} };
+  }
+  adhanPlayed = new SimpleSet();
+  iqamaPlayedSet = new SimpleSet();
+  preAdhanPlayed = new SimpleSet();
+  sunrisePlayed = new SimpleSet();
+  azkarDoneSet = new SimpleSet();
+  lastSyncedDate = "";
+  try {
+    var sl = localStorage.getItem("manual-lat");
+    var sm = localStorage.getItem("manual-lng");
+    if (sl && sm) { latitude = parseFloat(sl); longitude = parseFloat(sm); isManualLocation = true; }
+  } catch(e) {}
+})();
+
+// ===== HELPERS =====
+function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+function toAr(num) {
+  var d = ["0","1","2","3","4","5","6","7","8","9"];
+  var a = ["\u0660","\u0661","\u0662","\u0663","\u0664","\u0665","\u0666","\u0667","\u0668","\u0669"];
+  var s = "" + num;
+  var r = "";
+  for (var i = 0; i < s.length; i++) {
+    if (s[i] === "-") r += "-";
+    else r += a[parseInt(s[i])];
+  }
+  return r;
+}
+function el(id) { return document.getElementById(id); }
+function fmtDiff(ms) {
+  if (ms < 0) ms = 0;
+  var h = Math.floor(ms / 3600000);
+  var m = Math.floor((ms % 3600000) / 60000);
+  var s = Math.floor((ms % 60000) / 1000);
+  return pad2(h) + ":" + pad2(m) + ":" + pad2(s);
+}
+function toVertical(s) {
+  var r = '';
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0) r += '<br>';
+    r += s[i];
+  }
+  return r;
+}
+function correctHijri(d, m, y, c) {
+  d += c;
+  while (d < 1) { m--; if (m < 1) { m = 12; y--; } d += 30; }
+  while (d > 30) { d -= 30; m++; if (m > 12) { m = 1; y++; } }
+  return { day: d, month: m, year: y };
+}
+function calcRamadan(hY, hM, hD) {
+  var c = correctHijri(hD, hM, hY, dateCorrection);
+  hM = c.month; hD = c.day; hY = c.year;
+  if (hM === 9) return { isRamadan: true, days: 30 - hD };
+  var months;
+  if (hM < 9) months = 9 - hM;
+  else months = 12 - hM + 9;
+  return { isRamadan: false, days: Math.ceil(months * HIJRI_MONTH_DAYS - hD) };
+}
+
+// ===== FETCH (XMLHttpRequest - works on Android 4) =====
+function fetchPrayerTimes() {
+  var now = new Date();
+  var dd = pad2(now.getDate());
+  var mm = pad2(now.getMonth()+1);
+  var yyyy = now.getFullYear();
+  var cacheKey = "prayer-" + dd + "-" + mm + "-" + yyyy + "-" + latitude.toFixed(2) + "-" + longitude.toFixed(2);
+  var cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      prayerData = JSON.parse(cached);
+      extractTimings(prayerData);
+      loading = false;
+      render();
+      // Still try to fetch from internet in background
+      fetchFromInternet(cacheKey);
+      return;
+    } catch(e) {}
+  }
+  // No cache - show loading and fetch
+  loading = true; errorMsg = null; render();
+  fetchFromInternet(cacheKey);
+}
+function fetchFromInternet(cacheKey) {
+  if (!navigator.onLine) {
+    if (prayerData && hasTimings()) { loading = false; render(); }
+    else {
+      // Try to load any cached data even if old
+      var fallbackData = findAnyCachedData();
+      if (fallbackData) {
+        try {
+          prayerData = JSON.parse(fallbackData);
+          extractTimings(prayerData);
+          loading = false; render();
+          return;
+        } catch(e) {}
+      }
+      errorMsg = null;
+      loading = false; render();
+    }
+    return;
+  }
+  var now = new Date();
+  var dd = pad2(now.getDate());
+  var mm = pad2(now.getMonth()+1);
+  var yyyy = now.getFullYear();
+  var url = "https://api.aladhan.com/v1/timings/" + dd + "-" + mm + "-" + yyyy + "?latitude=" + latitude + "&longitude=" + longitude + "&method=4";
+  var xhr = new XMLHttpRequest();
+  xhr.timeout = 10000;
+  xhr.open("GET", url, true);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    if (xhr.status === 200) {
+      try {
+        var json = JSON.parse(xhr.responseText);
+        prayerData = json.data;
+        extractTimings(prayerData);
+        try { localStorage.setItem(cacheKey, JSON.stringify(prayerData)); } catch(e) {}
+        loading = false; render();
+        // Pre-fetch tomorrow's data for offline use
+        preFetchTomorrow();
+      } catch(e) {
+        if (!prayerData || !hasTimings()) {
+          var fb = findAnyCachedData();
+          if (fb) { try { prayerData = JSON.parse(fb); extractTimings(prayerData); } catch(ex) {} }
+        }
+        errorMsg = null;
+        loading = false; render();
+      }
+    } else {
+      if (!prayerData || !hasTimings()) {
+        var fb = findAnyCachedData();
+        if (fb) { try { prayerData = JSON.parse(fb); extractTimings(prayerData); } catch(ex) {} }
+      }
+      errorMsg = null;
+      loading = false; render();
+    }
+  };
+  xhr.ontimeout = function() {
+    // Try fallback cached data before showing nothing
+    if (!prayerData || !hasTimings()) {
+      var fallbackData = findAnyCachedData();
+      if (fallbackData) {
+        try {
+          prayerData = JSON.parse(fallbackData);
+          extractTimings(prayerData);
+        } catch(e) {}
+      }
+    }
+    errorMsg = null;
+    loading = false; render();
+  };
+  xhr.onerror = function() {
+    // Try fallback cached data before showing nothing
+    if (!prayerData || !hasTimings()) {
+      var fallbackData = findAnyCachedData();
+      if (fallbackData) {
+        try {
+          prayerData = JSON.parse(fallbackData);
+          extractTimings(prayerData);
+        } catch(e) {}
+      }
+    }
+    errorMsg = null;
+    loading = false; render();
+  };
+  try { xhr.send(); } catch(e) {
+    if (!prayerData || !hasTimings()) {
+      var fallbackData = findAnyCachedData();
+      if (fallbackData) {
+        try { prayerData = JSON.parse(fallbackData); extractTimings(prayerData); } catch(ex) {}
+      }
+    }
+    errorMsg = null;
+    loading = false; render();
+  }
+}
+// Pre-fetch tomorrow's prayer times for offline use
+function preFetchTomorrow() {
+  if (!navigator.onLine) return;
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  var dd = pad2(tomorrow.getDate());
+  var mm = pad2(tomorrow.getMonth()+1);
+  var yyyy = tomorrow.getFullYear();
+  var cacheKey = "prayer-" + dd + "-" + mm + "-" + yyyy + "-" + latitude.toFixed(2) + "-" + longitude.toFixed(2);
+  // Skip if already cached
+  if (localStorage.getItem(cacheKey)) return;
+  var url = "https://api.aladhan.com/v1/timings/" + dd + "-" + mm + "-" + yyyy + "?latitude=" + latitude + "&longitude=" + longitude + "&method=4";
+  var xhr = new XMLHttpRequest();
+  xhr.timeout = 8000;
+  xhr.open("GET", url, true);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    if (xhr.status === 200) {
+      try {
+        var json = JSON.parse(xhr.responseText);
+        localStorage.setItem(cacheKey, JSON.stringify(json.data));
+      } catch(e) {}
+    }
+  };
+  try { xhr.send(); } catch(e) {}
+}
+// Find any cached prayer data as fallback
+function findAnyCachedData() {
+  try {
+    var now = new Date();
+    var dd = pad2(now.getDate());
+    var mm = pad2(now.getMonth()+1);
+    var yyyy = now.getFullYear();
+    var cacheKey = "prayer-" + dd + "-" + mm + "-" + yyyy + "-" + latitude.toFixed(2) + "-" + longitude.toFixed(2);
+    var cached = localStorage.getItem(cacheKey);
+    if (cached) return cached;
+    // Try yesterday's cache
+    var yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    var ydd = pad2(yesterday.getDate());
+    var ymm = pad2(yesterday.getMonth()+1);
+    var yyyyy = yesterday.getFullYear();
+    var yKey = "prayer-" + ydd + "-" + ymm + "-" + yyyyy + "-" + latitude.toFixed(2) + "-" + longitude.toFixed(2);
+    return localStorage.getItem(yKey);
+  } catch(e) { return null; }
+}
+function extractTimings(data) {
+  var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i], raw = data.timings[k];
+    var m = raw ? raw.match(/^(\d{1,2}:\d{2})/) : null;
+    prayerTimings[k] = m ? m[1] : "";
+  }
+  // Sync prayer times to native Android AlarmManager for background alerts
+  syncAlarmsToNative();
+}
+
+// ===== NATIVE ALARM SYNC =====
+// Native alarms handle adhan/reminders/iqama in BACKGROUND (via AlarmManager + MediaPlayer).
+// JS skips audio playback when native is available to avoid double sound.
+function syncAlarmsToNative() {
+  if (!window.PrayerNative) return;
+  try {
+    var now = new Date();
+    var dateStr = now.getFullYear() + "-" + pad2(now.getMonth()+1) + "-" + pad2(now.getDate());
+    PrayerNative.setAlarmDate(dateStr);
+    var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+    var names = ["\u0627\u0644\u0641\u062C\u0631","\u0634\u0631\u0648\u0642 \u0627\u0644\u0634\u0645\u0633","\u0627\u0644\u0638\u0647\u0631","\u0627\u0644\u0639\u0635\u0631","\u0627\u0644\u0645\u063A\u0631\u0628","\u0627\u0644\u0639\u0634\u0627\u0621"];
+    for (var i = 0; i < keys.length; i++) {
+      var t = prayerTimings[keys[i]];
+      if (!t) continue;
+      var iq = iqamaOffsets[keys[i]] || 10;
+      PrayerNative.schedulePrayer(keys[i], names[i], t, "" + iq);
+    }
+    PrayerNative.scheduleTomorrowFajr();
+  } catch(e) {}
+}
+function hasTimings() {
+  var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+  for (var i = 0; i < keys.length; i++) { if (!prayerTimings[keys[i]]) return false; }
+  return true;
+}
+
+// ===== LOCATION =====
+function requestLocation() {
+  locError = null;
+  if (!navigator.geolocation) { locError = "المتصفح لا يدعم تحديد الموقع"; renderLocation(); fetchPrayerTimes(); return; }
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      latitude = pos.coords.latitude; longitude = pos.coords.longitude;
+      isManualLocation = false;
+      try { localStorage.removeItem("manual-lat"); localStorage.removeItem("manual-lng"); } catch(e) {}
+      locError = null; fetchPrayerTimes();
+    },
+    function(err) {
+      var msgs = { 1:"تم رفض إذن تحديد الموقع", 2:"الموقع غير متاح", 3:"انتهت مهلة طلب الموقع" };
+      locError = msgs[err.code] || "فشل في تحديد الموقع";
+      renderLocation(); fetchPrayerTimes();
+    },
+    { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
+  );
+}
+function applyManualLocation() {
+  var lat = parseFloat(el("inputLat").value);
+  var lng = parseFloat(el("inputLng").value);
+  if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+  latitude = lat; longitude = lng; isManualLocation = true;
+  localStorage.setItem("manual-lat", lat.toString());
+  localStorage.setItem("manual-lng", lng.toString());
+  locError = null; fetchPrayerTimes();
+}
+function saveLocName(name) {
+  localStorage.setItem("location-name", name);
+  el("inputLocName").value = name;
+  el("locDisplayName").textContent = name || "--";
+  renderLocation();
+}
+function promptLocName() {
+  el("locNamePrompt").style.display = "block";
+  el("quickLocName").value = localStorage.getItem("location-name") || "";
+  el("quickLocName").focus();
+}
+function applyQuickLocName() {
+  var name = el("quickLocName").value.trim();
+  localStorage.setItem("location-name", name);
+  el("inputLocName").value = name;
+  el("locDisplayName").textContent = name || "--";
+  el("locNamePrompt").style.display = "none";
+  renderLocation();
+}
+function cancelQuickLocName() {
+  el("locNamePrompt").style.display = "none";
+}
+function resetToAuto() {
+  localStorage.removeItem("manual-lat"); localStorage.removeItem("manual-lng");
+  isManualLocation = false; latitude = DEFAULT_LAT; longitude = DEFAULT_LNG;
+  requestLocation();
+}
+
+// ===== FIND NEXT PRAYER =====
+function findNext(nowMs) {
+  for (var i = 0; i < PRAYER_ORDER.length; i++) {
+    var k = PRAYER_ORDER[i], t = prayerTimings[k]; if (!t) continue;
+    var p = t.split(":"); var d = new Date(); d.setHours(parseInt(p[0]),parseInt(p[1]),0,0);
+    if (d.getTime() > nowMs) return { name: k, diffMs: d.getTime() - nowMs };
+  }
+  var ft = prayerTimings["Fajr"]; if (!ft) return null;
+  var p = ft.split(":"); var d = new Date(); d.setDate(d.getDate()+1); d.setHours(parseInt(p[0]),parseInt(p[1]),0,0);
+  return { name: "Fajr", diffMs: d.getTime() - nowMs };
+}
+function findNextIqama(nowMs) {
+  var now = new Date();
+  var currentHour = now.getHours();
+  var currentMin = now.getMinutes();
+  var isAfterMidnight = (currentHour >= 0 && currentHour < 12);
+
+  // Special handling: if it's after midnight but before noon,
+  // we should be counting down to TODAY's Fajr iqama (which hasn't happened yet)
+  // But findNextIqama only checks future times, so Fajr at 4:30 AM with iqama at 5:00 AM
+  // will be correctly found if current time is before 5:00 AM.
+  // The key issue: if ALL prayers today have passed (after Isha),
+  // we need tomorrow's Fajr.
+  // Also: if it's after midnight but before Fajr, Fajr's Date() setHours gives today.
+
+  for (var i = 0; i < PRAYER_ORDER.length; i++) {
+    var k = PRAYER_ORDER[i]; if (k === "Sunrise") continue;
+    var t = prayerTimings[k]; if (!t) continue;
+    var p = t.split(":");
+    var d = new Date();
+    d.setHours(parseInt(p[0]), parseInt(p[1]), 0, 0);
+    var iqMs = d.getTime() + (iqamaOffsets[k] || 10) * 60000;
+
+    // For Fajr: if current time is after midnight but before Fajr+Iqama,
+    // the setHours already gives today, and iqMs is today - works correctly.
+    // But if Fajr+Iqama was at 5:00 AM and now it's 4:00 AM (same day),
+    // it still shows correctly because d.getTime() = today at 4:30, iqMs = 5:00.
+    if (iqMs > nowMs) return { name: k, diffMs: iqMs - nowMs };
+  }
+  // All today's iqama times passed (we're after Isha) - return tomorrow's Fajr iqama
+  var ft = prayerTimings["Fajr"]; if (!ft) return null;
+  var p = ft.split(":");
+  var d = new Date(); d.setDate(d.getDate() + 1); d.setHours(parseInt(p[0]), parseInt(p[1]), 0, 0);
+  var iqMs = d.getTime() + (iqamaOffsets["Fajr"] || 30) * 60000;
+  return { name: "Fajr", diffMs: iqMs - nowMs };
+}
+
+// ===== AUDIO =====
+function toggleAudio() {
+  audioEnabled = !audioEnabled;
+  audioActivated = audioEnabled;
+  localStorage.setItem("audio-enabled", audioEnabled ? "true" : "false");
+  updateAudioBtn();
+  el("audioFloat").style.display = "none";
+}
+function updateAudioBtn() {
+  var btn = el("audioToggle");
+  if (audioEnabled) { btn.className = "audio-on"; btn.innerHTML = "\uD83D\uDD0A مفعّل"; }
+  else { btn.className = "audio-off"; btn.innerHTML = "\uD83D\uDD07 معطّل"; }
+}
+function playAudio(audioId) {
+  if (!audioEnabled || !audioActivated) return;
+  // CRITICAL: On Android 4, ALL audio elements share ONE media pipeline.
+  // If adhan is playing, do NOT touch any other audio element - it will kill adhan.
+  if (_anyAudioActive && audioId !== "adhanAudio") return;
+  // Only stop azkar audio if azkar mode is actually active
+  if (azkarAudioMode) stopAzkarAudio();
+  var a = el(audioId);
+  if (!a) return;
+  try {
+    a.volume = 1.0;
+    a.load();
+    a.currentTime = 0;
+    a.play();
+    updateStopButton();
+  } catch(e) {
+    // Retry once with delay for Android 4
+    setTimeout(function() {
+      try { a.volume = 1.0; a.load(); a.currentTime = 0; a.play(); updateStopButton(); } catch(e2) {}
+    }, 500);
+  }
+  if (audioId !== "adhanAudio") {
+    setTimeout(function() {
+      try { a.pause(); a.currentTime = 0; } catch(e) {}
+      updateStopButton();
+    }, 180000);
+  }
+}
+var adhanEndMs = 0; // Tracks when adhan audio actually ended
+var _anyAudioActive = false;
+var ADHAN_ESTIMATED_DURATION = 180000; // 3 minutes fallback
+var ADHAN_WAIT_AFTER_END = 10000; // 10 seconds wait after adhan ends
+var DUA_TO_HADITH_GAP = 10000; // 10 seconds between dua and hadith
+var IQAMA_BUFFER = 10000; // Stop 10s before iqama
+var currentAdhanPrayer = ""; // Which prayer's adhan is playing
+
+var _adhanMonitor = null;
+var _adhanResumeCount = 0;
+var _adhanTargetEnd = 0;
+
+function playAdhan() {
+  currentAdhanPrayer = "";
+  _anyAudioActive = true;
+  _adhanResumeCount = 0;
+  _adhanTargetEnd = Date.now() + 250000; // 4:10
+  var a = el("adhanAudio");
+  if (!a) return;
+  _setAdhanHandlers(a);
+  a.volume = 1.0;
+  a.load();
+  try { a.currentTime = 0; a.play(); } catch(e) {
+    setTimeout(function() { a.volume = 1.0; try { a.load(); a.currentTime = 0; a.play(); } catch(e2) {} }, 500);
+  }
+  // ✅ تعيين وقت انتهاء الأذان بعد التشغيل بـ 210 ثانية (تقديري)
+  adhanEndMs = Date.now() + 210000; // 3:30 دقيقة
+  if (_adhanMonitor) clearInterval(_adhanMonitor);
+  _adhanMonitor = setInterval(function() { _monitorAdhan(a); }, 3000);
+  updateStopButton();
+}
+
+function _setAdhanHandlers(a) {
+  a.onended = function() {
+    adhanEndMs = Date.now(); _anyAudioActive = false;
+    if (_adhanMonitor) { clearInterval(_adhanMonitor); _adhanMonitor = null; }
+    updateStopButton();
+    // ✅ بدء الدعاء بعد انتهاء الأذان بـ 10 ثواني
+    setTimeout(function() {
+      if (!azkarAudioMode && audioEnabled && audioActivated) {
+        // ✅ التحقق من وجود وقت كافٍ للإقامة
+        var now = new Date();
+        var gap = isBetweenAdhanAndIqama(now.getTime());
+        // ✅ منع التكرار: تحقق من azkarDoneSet
+        if (gap && !azkarDoneSet.has(gap.prayer + "-" + now.toDateString())) {
+          azkarDoneSet.add(gap.prayer + "-" + now.toDateString());
+          enterAzkarAudioMode(gap.prayer);
+        }
+      }
+    }, 10000); // 10 ثواني بعد انتهاء الأذان
+  };
+  a.onerror = function() {
+    adhanEndMs = Date.now(); _anyAudioActive = false;
+    if (_adhanMonitor) { clearInterval(_adhanMonitor); _adhanMonitor = null; }
+    updateStopButton();
+  };
+  a.ontimeupdate = null;
+}
+
+function _monitorAdhan(a) {
+  if (!_anyAudioActive) { clearInterval(_adhanMonitor); _adhanMonitor = null; return; }
+  try {
+    if (!a || a.ended) return;
+    // Detect premature stop: paused + before expected end time
+    if (a.paused && a.currentTime > 0 && Date.now() < _adhanTargetEnd && _adhanResumeCount < 20) {
+      _adhanResumeCount++;
+      var savedTime = a.currentTime;
+      // Strategy 1: simple resume (NO load() - on Android 4, load() disrupts the media pipeline)
+      try { a.play(); } catch(e) {
+        // Strategy 2: small delay then resume from saved position
+        setTimeout(function() {
+          try {
+            a.currentTime = savedTime;
+            a.play();
+          } catch(e2) {
+            // Strategy 3: last resort - restart from beginning
+            setTimeout(function() {
+              try { a.currentTime = 0; a.play(); } catch(e3) {}
+            }, 500);
+          }
+        }, 500);
+      }
+    }
+  } catch(e) {}
+}
+function playIqama() { playAudio("iqamaAudio"); }
+function playReminder15() { playAudio("reminder15Audio"); }
+function playReminder10() { playAudio("reminder10Audio"); }
+function playReminder5() { playAudio("reminder5Audio"); }
+// أصوات شروق الشمس المخصصة
+function playShorouq15() { playAudio("shorouq15Audio"); }
+function playShorouq10() { playAudio("shorouq10Audio"); }
+function playShorouq5() { playAudio("shorouq5Audio"); }
+function playShorouq() { playAudio("shorouqAudio"); }
+
+// ===== REMINDER SYSTEM =====
+// 3-stage pre-adhan reminders: 15min, 10min, 5min before each prayer/sunrise
+// Sunrise gets alerts (3 stages + at time) but NO adhan
+// Regular prayers get alerts (3 stages) + adhan at time + iqama
+
+function stopAllAudio() {
+  // تحقق إذا الأذان هو اللي عم يشتغل
+  var adhanA = el("adhanAudio");
+  var adhanWasPlaying = false;
+  try { if (adhanA && !adhanA.paused && adhanA.currentTime > 0) adhanWasPlaying = true; } catch(e) {}
+  if (_anyAudioActive && !azkarAudioMode) adhanWasPlaying = true;
+
+  if (adhanWasPlaying) {
+    // وقف الأذان فقط لكن كمّل التدفق (دعاء → أحاديث → إقامة)
+    try { if (adhanA) { adhanA.pause(); adhanA.currentTime = 0; adhanA.onended = null; adhanA.onerror = null; } } catch(e) {}
+    if (_adhanMonitor) { clearInterval(_adhanMonitor); _adhanMonitor = null; }
+    _anyAudioActive = false;
+    adhanEndMs = Date.now(); // عيّن كأن الأذان انتهى الآن
+    updateStopButton();
+    // جدولة الدعاء بعد 10 ثواني
+    setTimeout(function() {
+      if (!azkarAudioMode && audioEnabled && audioActivated) {
+        var now = new Date();
+        var gap = isBetweenAdhanAndIqama(now.getTime());
+        // ✅ منع التكرار: تحقق من azkarDoneSet
+        if (gap && !azkarDoneSet.has(gap.prayer + "-" + now.toDateString())) {
+          azkarDoneSet.add(gap.prayer + "-" + now.toDateString());
+          enterAzkarAudioMode(gap.prayer);
+        }
+      }
+    }, 10000);
+    return; // لا توقف باقي الأصوات
+  }
+
+  // ✅ إذا في وضع الأذكار (دعاء أو أحاديث)
+  if (azkarAudioMode) {
+    // ✅ تحديد ما إذا كان الدعاء يعمل حالياً
+    var duaA = el("duaAudio");
+    var duaWasPlaying = false;
+    try { if (duaA && !duaA.paused && duaA.currentTime > 0) duaWasPlaying = true; } catch(e) {}
+    // إذا _duaPlaying=true و _duaDoneFired=false، فالدعاء ما زال يعمل
+    if (_duaPlaying && !_duaDoneFired) duaWasPlaying = true;
+
+    if (duaWasPlaying) {
+      // ✅ إيقاف الدعاء فقط، ثم بدء الأحاديث فوراً (بدون انتظار 10 ثواني)
+      _cleanupDuaAudio();
+      // ✅ أبقِ _anyAudioActive = true لمنع الحلقة الرئيسية من استدعاء exitAzkarAudioMode
+      // أثناء فترة الانتقال (500ms) قبل بدء الأحاديث
+      _duaDoneFired = true; // منع إعادة تشغيل الدعاء
+      _duaPlaying = true;   // أبقِ true لمنع إعادة التشغيل
+      if (azkarAudioPauseTimer) { clearTimeout(azkarAudioPauseTimer); azkarAudioPauseTimer = null; }
+      updateStopButton();
+      // ✅ بدء الأحاديث فوراً بعد إيقاف الدعاء
+      setTimeout(function() {
+        if (azkarAudioMode) {
+          // ✅ تعيين _anyAudioActive = false الآن لأن الأحاديث ستبدأ
+          _anyAudioActive = false;
+          azkarAudioIdx = 0;
+          showNextHadithAudio();
+        }
+      }, 500);
+      return;
+    }
+
+    // ✅ إذا كانت الأحاديث تعمل: أوقف everything واخرج من الوضع
+    // إيقاف TTS
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch(e) {}
+    // ✅ إيقاف ملف الدعاء مع تنظيف كامل للمؤقتات
+    _cleanupDuaAudio();
+    // ✅ إيقاف مراقب الإقامة
+    _stopIqamaStopMonitor();
+    azkarAudioActive = false;
+    _anyAudioActive = false;
+    if (azkarAudioPauseTimer) { clearTimeout(azkarAudioPauseTimer); azkarAudioPauseTimer = null; }
+    updateStopButton();
+    // ✅ اخرج من وضع الأذكار
+    setTimeout(function() {
+      if (azkarAudioMode) exitAzkarAudioMode();
+    }, 200);
+    return;
+  }
+
+  // وقف كل الأصوات (تنبيهات، إقامة، شروق)
+  var ids = ["azkarAudio", "adhanAudio", "duaAudio", "iqamaAudio", "reminder15Audio", "reminder10Audio", "reminder5Audio", "shorouq15Audio", "shorouq10Audio", "shorouq5Audio", "shorouqAudio"];
+  for (var i = 0; i < ids.length; i++) {
+    try { var a = el(ids[i]); if (a) { a.pause(); a.currentTime = 0; a.onended = null; a.onerror = null; } } catch(e) {}
+  }
+  // إيقاف TTS
+  try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch(e) {}
+  // Also stop YouTube video if playing
+  try {
+    var ytFrame = el("ytPlayer");
+    if (ytFrame) ytFrame.parentNode.removeChild(ytFrame);
+  } catch(e) {}
+  azkarAudioActive = false;
+  _anyAudioActive = false;
+  if (_adhanMonitor) { clearInterval(_adhanMonitor); _adhanMonitor = null; }
+  updateStopButton();
+}
+function isAnyAudioPlaying() {
+  if (_anyAudioActive) return true;
+  if (!audioEnabled || !audioActivated) return false;
+  var ids = ["azkarAudio","adhanAudio","duaAudio","iqamaAudio","reminder15Audio","reminder10Audio","reminder5Audio","shorouq15Audio","shorouq10Audio","shorouq5Audio","shorouqAudio"];
+  for (var i = 0; i < ids.length; i++) { try { var a = el(ids[i]); if (a && !a.paused && a.currentTime > 0) return true; } catch(e) {} }
+  // تحقق من TTS
+  try { if (window.speechSynthesis && window.speechSynthesis.speaking) return true; } catch(e) {}
+  return false;
+}
+function updateStopButton() {
+  var btn = el("stopAudioBtn"); if (!btn) return;
+  btn.className = isAnyAudioPlaying() ? "stop-audio-btn" : "stop-audio-btn disabled";
+}
+
+function checkReminders(nowMs) {
+  if (!audioEnabled || !audioActivated) return;
+  var hasNative = !!window.PrayerNative;
+  var now = new Date();
+  var dateStr = now.toDateString();
+  var WINDOW = 5000;
+  var IQAMA_WINDOW = 10000;
+
+  for (var i = 0; i < PRAYER_ORDER.length; i++) {
+    var k = PRAYER_ORDER[i], t = prayerTimings[k]; if (!t) continue;
+    var p = t.split(":");
+    var prayerTime = new Date();
+    prayerTime.setHours(parseInt(p[0]), parseInt(p[1]), 0, 0);
+    var prayerMs = prayerTime.getTime();
+    var diffMs = prayerMs - nowMs;
+
+    if (!hasNative) {
+      var reminder15Ms = 15 * 60 * 1000;
+      var pre15Key = k + "-pre15-" + dateStr;
+      if (diffMs > 0 && Math.abs(diffMs - reminder15Ms) < WINDOW && !preAdhanPlayed.has(pre15Key)) {
+        preAdhanPlayed.add(pre15Key);
+        var label15 = (k === "Sunrise") ? "\u0634\u0631\u0648\u0642 \u0627\u0644\u0634\u0645\u0633" : "\u0635\u0644\u0627\u0629 " + PRAYER_NAMES[k];
+        showNotification("\u23F0 \u062A\u0646\u0628\u064A\u0647: " + label15 + " \u0628\u0639\u062F 15 \u062F\u0642\u064A\u0642\u0629");
+        if (k === "Sunrise") playShorouq15(); else playReminder15();
+      }
+    }
+
+    if (!hasNative) {
+      var reminder10Ms = 10 * 60 * 1000;
+      var pre10Key = k + "-pre10-" + dateStr;
+      if (diffMs > 0 && Math.abs(diffMs - reminder10Ms) < WINDOW && !preAdhanPlayed.has(pre10Key)) {
+        preAdhanPlayed.add(pre10Key);
+        var label10 = (k === "Sunrise") ? "\u0634\u0631\u0648\u0642 \u0627\u0644\u0634\u0645\u0633" : "\u0635\u0644\u0627\u0629 " + PRAYER_NAMES[k];
+        showNotification("\u23F0 \u062A\u0646\u0628\u064A\u0647: " + label10 + " \u0628\u0639\u062F 10 \u062F\u0642\u0627\u0626\u0642");
+        if (k === "Sunrise") playShorouq10(); else playReminder10();
+      }
+    }
+
+    if (!hasNative) {
+      var reminder5Ms = 5 * 60 * 1000;
+      var pre5Key = k + "-pre5-" + dateStr;
+      if (diffMs > 0 && Math.abs(diffMs - reminder5Ms) < WINDOW && !preAdhanPlayed.has(pre5Key)) {
+        preAdhanPlayed.add(pre5Key);
+        var label5 = (k === "Sunrise") ? "\u0634\u0631\u0648\u0642 \u0627\u0644\u0634\u0645\u0633" : "\u0635\u0644\u0627\u0629 " + PRAYER_NAMES[k];
+        showNotification("\u23F0 \u062A\u0646\u0628\u064A\u0647: " + label5 + " \u0628\u0639\u062F 5 \u062F\u0642\u0627\u0626\u0642");
+        if (k === "Sunrise") playShorouq5(); else playReminder5();
+      }
+    }
+
+    if (k === "Sunrise") {
+      if (!hasNative) {
+        var srKey = "Sunrise-alert-" + dateStr;
+        if (Math.abs(diffMs) < WINDOW && !sunrisePlayed.has(srKey)) {
+          sunrisePlayed.add(srKey);
+          showNotification("\u2600\uFE0F \u062D\u0627\u0646 \u0648\u0642\u062A \u0634\u0631\u0648\u0642 \u0627\u0644\u0634\u0645\u0633");
+          playShorouq();
+        }
+      }
+    } else {
+      // Adhan detection
+      var adhanKey = k + "-adhan-" + dateStr;
+// داخل دالة checkReminders، في الجزء الخاص بالأذان:
+if (Math.abs(diffMs) < WINDOW && !adhanPlayed.has(adhanKey)) {
+  adhanPlayed.add(adhanKey);
+  currentAdhanPrayer = k;
+  showNotification("\uD83C\uDFE4 \u062D\u0627\u0646 \u0648\u0642\u062A \u0635\u0644\u0627\u0629 " + PRAYER_NAMES[k] + " - \u0627\u0644\u0623\u0630\u0627\u0646");
+  if (hasNative) {
+    // ✅ تعيين وقت انتهاء الأذان تقديرياً (3:30 دقيقة)
+    adhanEndMs = Date.now() + 210000;
+    _anyAudioActive = true;
+    updateStopButton();
+    setTimeout(function() { _anyAudioActive = false; updateStopButton(); }, 220000);
+    // ✅ جدولة بدء الدعاء بعد 10 ثواني من انتهاء الأذان التقديري
+    setTimeout(function() {
+      if (!azkarAudioMode && audioEnabled && audioActivated) {
+        var now = new Date();
+        var gap = isBetweenAdhanAndIqama(now.getTime());
+        // ✅ منع التكرار: تحقق من azkarDoneSet
+        if (gap && !azkarDoneSet.has(gap.prayer + "-" + now.toDateString())) {
+          azkarDoneSet.add(gap.prayer + "-" + now.toDateString());
+          enterAzkarAudioMode(gap.prayer);
+        }
+      }
+    }, 220000); // 3:40 تقريباً (3:30 أذان + 10 ثواني انتظار)
+  } else {
+    adhanEndMs = 0; // سيتم تعيينه عبر onended
+    playAdhan();
+  }
+}
+
+      var iqMs = prayerMs + (iqamaOffsets[k] || 10) * 60000;
+      // Iqama detection
+      var iqKey = k + "-iqama-" + dateStr;
+      if (Math.abs(iqMs - nowMs) < IQAMA_WINDOW && !iqamaPlayedSet.has(iqKey)) {
+        iqamaPlayedSet.add(iqKey);
+        if (azkarAudioMode) exitAzkarAudioMode();
+        showNotification("\u23F0 \u062D\u0627\u0646 \u0648\u0642\u062A \u0625\u0642\u0627\u0645\u0629 \u0635\u0644\u0627\u0629 " + PRAYER_NAMES[k]);
+        if (!hasNative) {
+          // No native - HTML handles iqama audio
+          if (_anyAudioActive) {
+            (function(prayerK) {
+              var _waitIq = setInterval(function() {
+                if (!_anyAudioActive) {
+                  clearInterval(_waitIq);
+                  stopAllAudio();
+                  showNotification("\u23F0 \u062D\u0627\u0646 \u0648\u0642\u062A \u0625\u0642\u0627\u0645\u0629 \u0635\u0644\u0627\u0629 " + PRAYER_NAMES[prayerK]);
+                  playIqama();
+                }
+              }, 2000);
+            })(k);
+          } else {
+            stopAllAudio();
+            playIqama();
+          }
+        }
+        // When hasNative, native handles iqama audio in background - no JS audio needed
+      }
+    }
+  }
+}
+
+
+
+var notifTimeout = null;
+function showNotification(msg) {
+  var banner = el("notifBanner");
+  if (!banner) return;
+  banner.textContent = msg;
+  banner.style.display = "block";
+  banner.style.opacity = "1";
+  // Vibrate on Android
+  try { if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]); } catch(e) {}
+  if (notifTimeout) clearTimeout(notifTimeout);
+  notifTimeout = setTimeout(function() {
+    banner.style.opacity = "0";
+    setTimeout(function() { banner.style.display = "none"; }, 500);
+  }, 15000);
+}
+
+// ===== RENDER =====
+function render() {
+  el("loadingArea").style.display = loading ? "block" : "none";
+  // Never show error area - always show content with location info
+  el("errorArea").style.display = "none";
+  el("contentArea").style.display = loading ? "none" : "block";
+  // Always render location
+  renderLocation();
+  if (prayerData && hasTimings()) {
+    renderDate(); renderRamadan(); renderInfo();
+    // Fetch online info if enabled and online
+    if (onlineInfoEnabled && navigator.onLine && cachedInfoItems.length === 0) {
+      fetchAllInfo();
+      startInfoRefresh();
+      startInfoCycle();
+    } else if (onlineInfoEnabled) {
+      startInfoRefresh();
+      startInfoCycle();
+    }
+    if (!audioActivated && audioEnabled === false) {
+      el("audioFloat").style.display = "block";
+    } else {
+      el("audioFloat").style.display = "none";
+    }
+  }
+}
+function renderLocation() {
+  var locName = localStorage.getItem("location-name") || "";
+  if (locName) {
+    el("locAutoMsg").style.display = "block"; el("locManualMsg").style.display = "none";
+    el("locPlaceName").textContent = locName;
+  } else if (isManualLocation) {
+    el("locAutoMsg").style.display = "none"; el("locManualMsg").style.display = "block";
+    el("locManualCoords").textContent = latitude.toFixed(4) + "\u00b0N, " + longitude.toFixed(4) + "\u00b0E";
+  } else if (locError) {
+    el("locAutoMsg").style.display = "block"; el("locManualMsg").style.display = "none";
+    el("locPlaceName").textContent = latitude.toFixed(4) + "\u00b0, " + longitude.toFixed(4) + "\u00b0";
+  } else {
+    el("locAutoMsg").style.display = "block"; el("locManualMsg").style.display = "none";
+    var tz = "--";
+    try { if (prayerData && prayerData.meta && prayerData.meta.timezone) { tz = prayerData.meta.timezone; } } catch(e) {}
+    el("locPlaceName").textContent = tz;
+  }
+}
+function renderDate() {
+  var hd = prayerData.date.hijri, gd = prayerData.date.gregorian;
+  var today = new Date();
+  var dayName = DAY_NAMES[today.getDay()];
+  var rawDay = parseInt(hd.day), rawMonth = hd.month.number, rawYear = parseInt(hd.year);
+  var hDay, hMonth, corrected = false;
+  if (dateCorrection !== 0) {
+    var c = correctHijri(rawDay, rawMonth, rawYear, dateCorrection);
+    hDay = toAr(c.day); hMonth = HIJRI_MONTHS[c.month-1]; rawYear = c.year; corrected = true;
+  } else {
+    hDay = toAr(rawDay); hMonth = hd.month.ar;
+  }
+  var hYear = toAr(rawYear);
+  var gDay = toAr(today.getDate());
+  var gMonthShami = GREG_MONTHS_SHAMI[today.getMonth()];
+  var gMonthGlobal = GREG_MONTHS_GLOBAL[today.getMonth()];
+  var gMonthNum = today.getMonth() + 1;
+  var gYear = today.getFullYear();
+  el("dateSection").innerHTML =
+    '<div class="year-row"><div class="year-box"><span>' + toVertical(hYear) + '</span><span class="year-label">هجري</span></div>' +
+    '<div class="day-name-box"><span>' + dayName + '</span></div>' +
+    '<div class="year-box"><span>' + toVertical(gYear + '') + '</span><span class="year-label">ميلادي</span></div></div>' +
+    '<div class="month-row"><div class="month-box"><span>' + hMonth + ' - ' + toAr(rawMonth) + '</span>' +
+    (corrected ? '<span class="corrected-tag">مُصحَّح</span>' : '') + '</div>' +
+    '<div class="month-box"><span>' + gMonthShami + ' - ' + gMonthGlobal + ' - ' + gMonthNum + '</span></div></div>' +
+    '<div class="day-row"><div class="day-num">' + hDay + '</div><div class="day-num-greg">' + gDay + '</div></div>';
+}
+function renderRamadan() {
+  var hd = prayerData.date.hijri;
+  var info = calcRamadan(parseInt(hd.year), hd.month.number, parseInt(hd.day));
+  var box = el("headerRamadanBox");
+  box.style.display = "block";
+  if (info.isRamadan) {
+    box.className = "header-ramadan ramadan-active";
+    box.innerHTML = '<span class="hr-icon">\uD83C\uDF19</span><span class="hr-title">رمضان كريم - متبقّي ' + toAr(info.days) + ' يوم</span>';
+  } else {
+    box.className = "header-ramadan";
+    box.innerHTML = '<span class="hr-icon">\uD83D\uDD4C</span><span class="hr-title">باقي لرمضان ' + toAr(info.days) + ' يوم</span>';
+  }
+}
+function renderPrayerGrid(nextPrayer) {
+  var rows = [["Fajr","Sunrise","Dhuhr"],["Asr","Maghrib","Isha"]];
+  var html = "";
+  for (var r = 0; r < rows.length; r++) {
+    html += '<div class="prayer-row">';
+    var row = rows[r];
+    for (var c = 0; c < row.length; c++) {
+      var k = row[c];
+      var active = (nextPrayer && nextPrayer.name === k) ? " active" : "";
+      var tag = (nextPrayer && nextPrayer.name === k && k !== "Sunrise") ? '<div class="next-tag">\u25CF الصلاة القادمة</div>' : '';
+      html += '<div class="prayer-cell' + active + '"><div class="name">' + PRAYER_NAMES[k] + '</div>' +
+              '<div class="ptime">' + (prayerTimings[k] || "--:--") + '</div>' + tag + '</div>';
+    }
+    html += '</div>';
+  }
+  el("prayerGrid").innerHTML = html;
+}
+function renderIqamaSettings() {
+  var container = el("iqamaSettings");
+  if (!container) return;
+  container.style.display = "block";
+  var html = "";
+  for (var i = 0; i < PRAYER_ORDER.length; i++) {
+    var k = PRAYER_ORDER[i];
+    if (k === "Sunrise") continue;
+    html += '<div class="setting-box" style="display:table;"><span style="display:table-cell;vertical-align:middle;font-size:13px;color:#374151;">' + PRAYER_NAMES[k] + '</span>' +
+            '<input type="number" min="1" max="60" value="' + (iqamaOffsets[k]||10) + '" onchange="updateIqama(\'' + k + '\',this.value)" style="width:60px;text-align:center;border-radius:8px;border:1px solid #d1d5db;padding:4px;font-size:14px;font-family:monospace;display:table-cell;vertical-align:middle;"></div>';
+  }
+  container.innerHTML = html;
+}
+function updateIqama(key, val) {
+  iqamaOffsets[key] = Math.max(1, Math.min(60, parseInt(val) || 10));
+  localStorage.setItem("iqama-offsets", JSON.stringify(iqamaOffsets));
+}
+function resetIqama() {
+  iqamaOffsets = { Fajr:30, Dhuhr:20, Asr:20, Maghrib:10, Isha:10 };
+  localStorage.setItem("iqama-offsets", JSON.stringify(iqamaOffsets));
+  renderIqamaSettings();
+}
+function renderAlertToggles() {
+  var container = el("alertToggles");
+  if (!container) return;
+  container.style.display = "block";
+  var html = "";
+  for (var i = 0; i < PRAYER_ORDER.length; i++) {
+    var k = PRAYER_ORDER[i];
+    var s = alertSettings[k] || {sound:true,vibrate:true};
+    var sOn = s.sound ? " on" : "";
+    var vOn = s.vibrate ? " on" : "";
+    html += '<div class="toggle-row" style="display:table;width:100%;border-collapse:collapse;margin-bottom:4px;">';
+    html += '<div class="t-name" style="display:table-cell;padding:6px 0;font-size:11px;font-weight:600;color:#374151;">' + PRAYER_NAMES[k] + '</div>';
+    html += '<div class="t-controls" style="display:table-cell;text-align:left;padding:4px 0;">';
+    html += '<span class="toggle-label" style="font-size:9px;color:#6b7280;vertical-align:middle;margin:0 1px;">صوت</span>';
+    html += '<div class="mini-toggle' + sOn + '" id="snd_' + k + '" onclick="toggleAlertSound(\'' + k + '\')" style="display:inline-block;width:36px;height:20px;border-radius:10px;background:' + (s.sound ? '#16a34a' : '#d1d5db') + ';position:relative;cursor:pointer;margin:0 2px;vertical-align:middle;"><div style="position:absolute;top:2px;left:' + (s.sound ? '18px' : '2px') + ';width:16px;height:16px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div></div>';
+    html += '<span class="toggle-label" style="font-size:9px;color:#6b7280;vertical-align:middle;margin:0 1px;margin-left:6px;">رجاج</span>';
+    html += '<div class="mini-toggle' + vOn + '" id="vib_' + k + '" onclick="toggleAlertVibrate(\'' + k + '\')" style="display:inline-block;width:36px;height:20px;border-radius:10px;background:' + (s.vibrate ? '#16a34a' : '#d1d5db') + ';position:relative;cursor:pointer;margin:0 2px;vertical-align:middle;"><div style="position:absolute;top:2px;left:' + (s.vibrate ? '18px' : '2px') + ';width:16px;height:16px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div></div>';
+    html += '</div></div>';
+  }
+  container.innerHTML = html;
+}
+function toggleAlertSound(key) {
+  if (!alertSettings[key]) alertSettings[key] = {sound:true,vibrate:true};
+  alertSettings[key].sound = !alertSettings[key].sound;
+  localStorage.setItem("alert-settings", JSON.stringify(alertSettings));
+  var el2 = document.getElementById("snd_" + key);
+  if (el2) {
+    el2.style.background = alertSettings[key].sound ? "#16a34a" : "#d1d5db";
+    var dot = el2.firstChild;
+    if (dot) dot.style.left = alertSettings[key].sound ? "18px" : "2px";
+  }
+}
+function toggleAlertVibrate(key) {
+  if (!alertSettings[key]) alertSettings[key] = {sound:true,vibrate:true};
+  alertSettings[key].vibrate = !alertSettings[key].vibrate;
+  localStorage.setItem("alert-settings", JSON.stringify(alertSettings));
+  var el2 = document.getElementById("vib_" + key);
+  if (el2) {
+    el2.style.background = alertSettings[key].vibrate ? "#16a34a" : "#d1d5db";
+    var dot = el2.firstChild;
+    if (dot) dot.style.left = alertSettings[key].vibrate ? "18px" : "2px";
+  }
+}
+
+// ===== SETTINGS =====
+function openSettings() {
+  el("settingsModal").classList.add("show");
+  el("inputLat").value = latitude.toFixed(4);
+  el("inputLng").value = longitude.toFixed(4);
+  el("inputLocName").value = localStorage.getItem("location-name") || "";
+  el("locDisplayName").textContent = localStorage.getItem("location-name") || "--";
+  el("manualTag").style.display = isManualLocation ? "inline" : "none";
+  el("resetLocBtn").style.display = isManualLocation ? "block" : "none";
+  el("correctionVal").textContent = dateCorrection > 0 ? "+" + dateCorrection : "" + dateCorrection;
+  renderIqamaSettings(); renderAlertToggles(); updateAudioBtn();
+  // Update azkar audio toggle button state
+  var haBtn = el("azkarAudioToggle");
+  if (haBtn) {
+    if (azkarAudioEnabled) {
+      haBtn.textContent = "\u0645\u0641\u0639\u0651\u0644";
+      haBtn.style.background = "#dbeafe";
+      haBtn.style.color = "#1d4ed8";
+    } else {
+      haBtn.textContent = "\u0645\u0639\u0637\u0651\u0644";
+      haBtn.style.background = "#f3f4f6";
+      haBtn.style.color = "#6b7280";
+    }
+  }
+}
+function closeSettings() { el("settingsModal").classList.remove("show"); }
+function changeCorrection(delta) {
+  dateCorrection += delta;
+  localStorage.setItem("hijri-date-correction", "" + dateCorrection);
+  el("correctionVal").textContent = dateCorrection > 0 ? "+" + dateCorrection : "" + dateCorrection;
+  if (prayerData) { renderDate(); renderRamadan(); }
+}
+function resetCorrection() {
+  dateCorrection = 0;
+  localStorage.setItem("hijri-date-correction", "0");
+  el("correctionVal").textContent = "0";
+  if (prayerData) { renderDate(); renderRamadan(); }
+}
+function closeAudioModal() { el("audioModal").classList.remove("show"); }
+function activateAudio() {
+  audioEnabled = true;
+  audioActivated = true;
+  localStorage.setItem("audio-enabled", "true");
+  updateAudioBtn();
+  el("audioFloat").style.display = "none";
+  el("audioModal").classList.remove("show");
+  // فتح مجرى الصوت بتشغيل صوت حقيقي بدرجة خفيفة جداً
+  try {
+    var a = el("iqamaAudio");
+    if (a) {
+      a.volume = 0.01;
+      a.load();
+      a.play();
+      setTimeout(function() { try { a.pause(); a.currentTime = 0; a.volume = 1.0; } catch(e) {} }, 800);
+    }
+  } catch(e) {}
+}
+function refreshData() { fetchPrayerTimes(); }
+
+// ===== EHE DRAGGABLE BUTTON =====
+(function() {
+  var btn = el("eheBtn");
+  if (!btn) return;
+  var isDragging = false, startX, startY, startLeft, startTop, hasMoved;
+  function onStart(e) {
+    var touch = e.touches ? e.touches[0] : e;
+    isDragging = true; hasMoved = false;
+    startX = touch.clientX; startY = touch.clientY;
+    var rect = btn.getBoundingClientRect();
+    startLeft = rect.left; startTop = rect.top;
+    btn.classList.add("dragging");
+    btn.style.left = startLeft + "px"; btn.style.top = startTop + "px"; btn.style.right = "auto";
+    e.preventDefault();
+  }
+  function onMove(e) {
+    if (!isDragging) return;
+    var touch = e.touches ? e.touches[0] : e;
+    var dx = touch.clientX - startX, dy = touch.clientY - startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasMoved = true;
+    var newLeft = startLeft + dx, newTop = startTop + dy;
+    var btnSize = 50;
+    if (newLeft < 0) newLeft = 0;
+    if (newLeft > window.innerWidth - btnSize) newLeft = window.innerWidth - btnSize;
+    if (newTop < 0) newTop = 0;
+    if (newTop > window.innerHeight - btnSize) newTop = window.innerHeight - btnSize;
+    btn.style.left = newLeft + "px"; btn.style.top = newTop + "px";
+  }
+  function onEnd() {
+    if (!isDragging) return;
+    isDragging = false; btn.classList.remove("dragging");
+    try { localStorage.setItem("ehe-pos", JSON.stringify({ left: btn.style.left, top: btn.style.top })); } catch(e) {}
+    if (!hasMoved) openCredits();
+  }
+  btn.addEventListener("mousedown", onStart);
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onEnd);
+  btn.addEventListener("touchstart", onStart);
+  document.addEventListener("touchmove", onMove);
+  document.addEventListener("touchend", onEnd);
+  var saved = localStorage.getItem("ehe-pos");
+  if (saved) { try { var pos = JSON.parse(saved); btn.style.left = pos.left; btn.style.top = pos.top; btn.style.right = "auto"; } catch(e) {} }
+})();
+
+
+// ===== STOP AUDIO DRAGGABLE BUTTON =====
+(function() {
+  var btn = el("stopAudioBtn");
+  if (!btn) return;
+  var isDragging = false, startX, startY, startLeft, startTop, hasMoved;
+  function onStart(e) {
+    var touch = e.touches ? e.touches[0] : e;
+    isDragging = true; hasMoved = false;
+    startX = touch.clientX; startY = touch.clientY;
+    var rect = btn.getBoundingClientRect();
+    startLeft = rect.left; startTop = rect.top;
+    btn.style.left = startLeft + "px"; btn.style.top = startTop + "px"; btn.style.right = "auto";
+    e.preventDefault();
+  }
+  function onMove(e) {
+    if (!isDragging) return;
+    var touch = e.touches ? e.touches[0] : e;
+    var dx = touch.clientX - startX, dy = touch.clientY - startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasMoved = true;
+    var newLeft = startLeft + dx, newTop = startTop + dy;
+    var btnSize = 50;
+    if (newLeft < 0) newLeft = 0;
+    if (newLeft > window.innerWidth - btnSize) newLeft = window.innerWidth - btnSize;
+    if (newTop < 0) newTop = 0;
+    if (newTop > window.innerHeight - btnSize) newTop = window.innerHeight - btnSize;
+    btn.style.left = newLeft + "px"; btn.style.top = newTop + "px";
+  }
+  function onEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    try { localStorage.setItem("stop-audio-pos", JSON.stringify({ left: btn.style.left, top: btn.style.top })); } catch(e) {}
+    if (!hasMoved) stopAllAudio();
+  }
+  btn.addEventListener("mousedown", onStart);
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onEnd);
+  btn.addEventListener("touchstart", onStart);
+  document.addEventListener("touchmove", onMove);
+  document.addEventListener("touchend", onEnd);
+  var saved = localStorage.getItem("stop-audio-pos");
+  if (saved) { try { var pos = JSON.parse(saved); btn.style.left = pos.left; btn.style.top = pos.top; btn.style.right = "auto"; } catch(e) {} }
+})();
+
+function openCredits() { el("creditsModal").classList.add("show"); }
+function closeCredits() { el("creditsModal").classList.remove("show"); }
+
+// Close modals on outside click
+el("settingsModal").addEventListener("click", function(e) { if (e.target === this) closeSettings(); });
+el("creditsModal").addEventListener("click", function(e) { if (e.target === this) closeCredits(); });
+
+// ===== أداة التحكم بالوقت للاختبار =====
+var testMode = false;
+var testOffsetMs = 0;
+
+function addTestControl() {
+  var btn = document.createElement("button");
+  btn.id = "testTimeBtn";
+  btn.textContent = "\u23F1\uFE0F تغيير الوقت";
+  btn.style.cssText = "position:fixed;top:60px;left:16px;z-index:99999;background:#f59e0b;color:#1a1a1a;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:bold;font-family:Tahoma,Arial,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);";
+  btn.onclick = function() {
+    var panel = document.getElementById("testTimePanel");
+    if (panel) { panel.style.display = panel.style.display === "block" ? "none" : "block"; }
+  };
+  document.body.appendChild(btn);
+}
+
+function createTestPanel() {
+  var panel = document.createElement("div");
+  panel.id = "testTimePanel";
+  panel.style.cssText = "position:fixed;top:100px;left:16px;z-index:99999;background:rgba(0,0,0,0.85);color:white;padding:12px;border-radius:12px;font-family:Tahoma,Arial,sans-serif;font-size:12px;direction:ltr;display:none;min-width:200px;box-shadow:0 4px 16px rgba(0,0,0,0.5);";
+  var now = new Date();
+  panel.innerHTML =
+    '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">' +
+    '<span style="font-weight:bold;">\u23F1\uFE0F تحريك الوقت</span>' +
+    '<button onclick="document.getElementById(\'testTimePanel\').style.display=\'none\'" style="background:#ef4444;color:white;border:none;border-radius:4px;padding:0 8px;cursor:pointer;">\u2715</button>' +
+    '</div>' +
+    '<div style="display:flex;gap:4px;margin-bottom:6px;">' +
+    '<input id="th" type="number" min="0" max="23" value="' + now.getHours() + '" style="width:40px;text-align:center;padding:2px;border-radius:4px;border:1px solid #4b5563;background:#1f2937;color:white;font-size:12px;">' +
+    '<span>:</span>' +
+    '<input id="tm" type="number" min="0" max="59" value="' + now.getMinutes() + '" style="width:40px;text-align:center;padding:2px;border-radius:4px;border:1px solid #4b5563;background:#1f2937;color:white;font-size:12px;">' +
+    '<span>:</span>' +
+    '<input id="ts" type="number" min="0" max="59" value="' + now.getSeconds() + '" style="width:40px;text-align:center;padding:2px;border-radius:4px;border:1px solid #4b5563;background:#1f2937;color:white;font-size:12px;">' +
+    '</div>' +
+    '<div style="display:flex;gap:4px;">' +
+    '<button onclick="applyTestTime()" style="flex:1;background:#10b981;color:white;border:none;border-radius:4px;padding:4px;cursor:pointer;">تطبيق</button>' +
+    '<button onclick="resetTestTime()" style="flex:1;background:#6b7280;color:white;border:none;border-radius:4px;padding:4px;cursor:pointer;">إعادة</button>' +
+    '</div>' +
+    '<div style="margin-top:4px;display:flex;gap:4px;">' +
+    '<button onclick="addTestTime(1,0,0)" style="flex:1;background:#3b82f6;color:white;border:none;border-radius:4px;padding:2px;cursor:pointer;font-size:10px;">+1 ساعة</button>' +
+    '<button onclick="addTestTime(0,10,0)" style="flex:1;background:#3b82f6;color:white;border:none;border-radius:4px;padding:2px;cursor:pointer;font-size:10px;">+10 د</button>' +
+    '<button onclick="addTestTime(0,1,0)" style="flex:1;background:#3b82f6;color:white;border:none;border-radius:4px;padding:2px;cursor:pointer;font-size:10px;">+1 د</button>' +
+    '</div>' +
+    '<div id="testStatus" style="margin-top:6px;text-align:center;font-size:11px;color:#f59e0b;font-weight:bold;display:none;">\uD83E\uDDEA الوقت متقدم: --:--:--</div>';
+  document.body.appendChild(panel);
+}
+
+function applyTestTime() {
+  var h = parseInt(document.getElementById("th").value) || 0;
+  var m = parseInt(document.getElementById("tm").value) || 0;
+  var s = parseInt(document.getElementById("ts").value) || 0;
+  var now = new Date();
+  var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, s);
+  testOffsetMs = target.getTime() - now.getTime();
+  testMode = true;
+  document.getElementById("testTimePanel").style.display = "none";
+}
+
+function addTestTime(h, m, s) {
+  testOffsetMs += (h * 3600 + m * 60 + s) * 1000;
+  if (!testMode) testMode = true;
+  var virtualNow = new Date(Date.now() + testOffsetMs);
+  document.getElementById("th").value = virtualNow.getHours();
+  document.getElementById("tm").value = virtualNow.getMinutes();
+  document.getElementById("ts").value = virtualNow.getSeconds();
+}
+
+function resetTestTime() {
+  testMode = false;
+  testOffsetMs = 0;
+  var status = document.getElementById("testStatus");
+  if (status) status.style.display = "none";
+  var panel = document.getElementById("testTimePanel");
+  if (panel) panel.style.display = "none";
+  document.getElementById("liveClock").style.color = "#e11d48";
+}
+
+// تهيئة أداة الاختبار
+setTimeout(function() { addTestControl(); createTestPanel(); }, 1000);
+
+// ===== LIVE UPDATE (every second) =====
+setInterval(function() {
+  var now = testMode ? new Date(Date.now() + testOffsetMs) : new Date();
+  if (testMode) {
+    el("liveClock").style.color = "#f59e0b";
+    var st = document.getElementById("testStatus");
+    if (st) { st.textContent = "\uD83E\uDDEA الوقت متقدم: " + pad2(now.getHours()) + ":" + pad2(now.getMinutes()) + ":" + pad2(now.getSeconds()); st.style.display = "block"; }
+  }
+  el("liveClock").textContent = pad2(now.getHours()) + ":" + pad2(now.getMinutes()) + ":" + pad2(now.getSeconds());
+  if (!prayerData) return;
+  var nowMs = now.getTime();
+  var np = findNext(nowMs);
+  var ni = findNextIqama(nowMs);
+  if (np) {
+    el("nextPrayerLabel").textContent = "باقي ل" + PRAYER_COUNTDOWN_LABEL[np.name];
+    el("nextPrayerTime").textContent = fmtDiff(np.diffMs);
+  }
+  if (ni) {
+    el("nextIqamaLabel").textContent = "باقي لإقامة " + PRAYER_IQAMA_LABEL[ni.name];
+    el("nextIqamaTime").textContent = fmtDiff(ni.diffMs);
+  }
+  renderPrayerGrid(np);
+  // Background catch-up: if native played adhan while app was in background,
+  // detect it now so the azkar/dua/hadith chain can start
+  var _hasNativeBG = !!window.PrayerNative;
+  if (_hasNativeBG && audioEnabled && audioActivated) {
+    var _catchDateStr = now.toDateString();
+    for (var _ci = 0; _ci < PRAYER_ORDER.length; _ci++) {
+      var _ck = PRAYER_ORDER[_ci];
+      if (_ck === "Sunrise") continue;
+      var _ct = prayerTimings[_ck];
+      if (!_ct) continue;
+      var _cp = _ct.split(":");
+      var _cd = new Date();
+      _cd.setHours(parseInt(_cp[0]), parseInt(_cp[1]), 0, 0);
+      var _cAdhanMs = _cd.getTime();
+      var _cIqMs = _cAdhanMs + (iqamaOffsets[_ck] || 10) * 60000;
+      var _cAdhanKey = _ck + "-adhan-" + _catchDateStr;
+      // Adhan time passed (>10s ago) but not tracked in JS, and still before iqama-30s
+      if (!adhanPlayed.has(_cAdhanKey) && nowMs > _cAdhanMs + 10000 && nowMs < _cIqMs - IQAMA_BUFFER) {
+        adhanPlayed.add(_cAdhanKey);
+        currentAdhanPrayer = _ck;
+        var _estEnd = _cAdhanMs + 210000;
+        adhanEndMs = (_estEnd > nowMs) ? _estEnd : nowMs;
+      }
+    }
+  }
+  // Reminder + Adhan + Iqama checks
+  checkReminders(nowMs);
+  // Azkar Audio Mode check: enter/exit based on Adhan-Iqama gap
+  // لا ندخل وضع الأذكار إلا بعد انتهاء الأذان
+  var gap = (!_anyAudioActive) ? isBetweenAdhanAndIqama(nowMs) : null;
+  if (gap && !azkarAudioMode && !azkarDoneSet.has(gap.prayer + "-" + now.toDateString())) {
+    azkarDoneSet.add(gap.prayer + "-" + now.toDateString());
+    enterAzkarAudioMode(gap.prayer);
+  } else if (!gap && azkarAudioMode && !_anyAudioActive) {
+    // ✅ لا تخرج من وضع الأذكار أثناء تشغيل الدعاء/الأحاديث
+    exitAzkarAudioMode();
+  }
+  // Online check
+  try { el("onlineIcon").textContent = navigator.onLine ? "\uD83D\uDFE2" : "\uD83D\uDD34"; } catch(e) {}
+}, 1000);
+
+// Clear played sets daily
+setInterval(function() {
+  adhanPlayed.clear(); iqamaPlayedSet.clear();
+  preAdhanPlayed.clear(); sunrisePlayed.clear();
+  azkarDoneSet.clear();
+}, 86400000);
+
+// ===== INIT =====
+(function() {
+  try { if (localStorage.getItem("audio-enabled") === "true") { audioEnabled = true; audioActivated = true; } } catch(e) {}
+  // إظهار نافذة تفعيل الصوت إذا لم يُفعّل بعد
+  if (!audioActivated) {
+    try { el("audioModal").classList.add("show"); } catch(e) {}
+  }
+  // Clear old native alarms, then reschedule with current timings
+  try { if (window.PrayerNative && window.PrayerNative.clearAlarms) PrayerNative.clearAlarms(); } catch(e) {}
+  // Fetch online content immediately if enabled
+  if (onlineInfoEnabled) {
+    fetchAllInfo();
+    startInfoCycle();
+    startInfoRefresh();
+  }
+  initDragScroll();
+  if (isManualLocation) { fetchPrayerTimes(); }
+  else { requestLocation(); }
+})();
+</script>
+</body>
+</html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                
