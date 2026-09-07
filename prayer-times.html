@@ -3290,7 +3290,9 @@ function isAnyAudioPlaying() {
 }
 function updateStopButton() {
   var btn = el("stopAudioBtn"); if (!btn) return;
-  btn.className = isAnyAudioPlaying() ? "stop-audio-btn" : "stop-audio-btn disabled";
+  var playing = isAnyAudioPlaying() || (window.AndroidPrayer && azkarAudioMode);
+  btn.className = playing ? "stop-audio-btn" : "stop-audio-btn disabled";
+  if (window.AndroidPrayer) btn.style.display = playing ? "" : "none";
 }
 
 // التقاط المنبهات الفائتة: تتبّع آخر فحص حتى تُطلَق الأحداث التي عبرت أثناء تجمّد الصفحة في الخلفية (سماحية 120 ثانية)
@@ -4994,6 +4996,8 @@ function backupAllToGitHub() {
 (function() {
   try { if (localStorage.getItem("audio-enabled") === "true") { audioEnabled = true; audioActivated = true; } } catch(e) {}
   if (!audioActivated) { try { el("audioModal").classList.add("show"); } catch(e) {} }
+  // داخل تطبيق أندرويد: زر الإيقاف العائم مخفي افتراضياً ويظهر فقط أثناء تشغيل صوت فعلي
+  if (window.AndroidPrayer) { try { el("stopAudioBtn").style.display = "none"; } catch(eSb) {} }
   // ملاحظة مهمة: لا نمسح الإنذارات الأصلية عند الإقلاع — الجدولة نفسها تلغي وتعيد الجدولة بأمان،
   // والمسح هنا كان يترك التطبيق بلا منبهات لو فشل بعده تحديد الموقع أو جلب المواقيت
   initAudioSources();
@@ -5012,8 +5016,8 @@ function backupAllToGitHub() {
   fetchStarsData();
   if (isManualLocation) { fetchPrayerTimes(); }
   else { requestLocation(); }
-  // إظهار أداة الاختبار بعد ثانية من فتح البرنامج
-  setTimeout(function() { addTestControl(); createTestPanel(); }, 1000);
+  // أداة الاختبار للمتصفح فقط — تُخفى داخل تطبيق أندرويد (الإشعارات النظامية تكفي)
+  setTimeout(function() { if (!window.AndroidPrayer) { addTestControl(); createTestPanel(); } }, 1000);
 })();
 </script>
 </body>
