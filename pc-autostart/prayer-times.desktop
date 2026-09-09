@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Prayer Times
+Name[ar]=مواقيت الصلاة
+Comment=تشغيل مواقيت الصلاة تلقائياً مع إقلاع النظام
+Exec=google-chrome --kiosk --new-window "file:///home/pi/prayer-times/prayer-times.html"
+Terminal=false
+X-GNOME-Autostart-enabled=true
+Categories=Utility;
