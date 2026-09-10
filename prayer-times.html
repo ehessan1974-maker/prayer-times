@@ -7,6 +7,7 @@
 <title>🕌 مواقيت الصلاة</title>
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
+<!-- v15: أشرطة تمرير عريضة وواضحة (الإعدادات وكل المناطق القابلة للتمرير) — تحكم أسهل بالفأرة واللمس والشاشة الذكية -->
 <!-- v12: وضع الشاشة الذكية — لوحة 1600×900 ملء الشاشة بلا تمرير + خط الثلث المضمّن (v8) -->
 <!-- خط الثلث لاسم اليوم — مضمّن Base64 يعمل بلا إنترنت (v8) -->
 <style>
@@ -915,6 +916,17 @@ body.smart .error-box { margin: 0 auto; max-width: 600px; font-size: 20px; }
 .cr-sub { font-size:11px; color:#6b7280; margin-top:2px; }
 .method-select { width:100%; padding:7px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; font-family:Tahoma,Arial,sans-serif; background:#fff; text-align:right; }
 
+/* ====== v15: أشرطة تمرير عريضة وواضحة — تحكم أسهل في كل المناطق ====== */
+html { scrollbar-width: auto; scrollbar-color: #10b981 #d1fae5; }
+*::-webkit-scrollbar { width: 14px; height: 14px; -webkit-appearance: none; appearance: none; }
+*::-webkit-scrollbar-track { background: #d1fae5; border-radius: 8px; }
+*::-webkit-scrollbar-thumb { background: #10b981; border-radius: 8px; border: 3px solid #d1fae5; }
+*::-webkit-scrollbar-thumb:hover, *::-webkit-scrollbar-thumb:active { background: #059669; border-color: #a7f3d0; }
+*::-webkit-scrollbar-corner { background: #d1fae5; }
+body.smart *::-webkit-scrollbar { width: 20px; height: 20px; }
+body.smart *::-webkit-scrollbar-thumb { border-width: 4px; }
+body.smart .modal { scrollbar-gutter: stable; }
+
 /* ====== v14: بوصلة القبلة ====== */
 .qb-stage { display:-webkit-box; -webkit-box-pack:center; display:flex; justify-content:center; padding:6px 0 10px; }
 .qb-dial {
@@ -1044,6 +1056,11 @@ body.dark-mode .qb-angle { color:#a7d7bf; }
 body.dark-mode .qb-dist, body.dark-mode .qb-sensor, body.dark-mode .qb-note { color:#9fb8ab; }
 body.dark-mode .qb-dist strong { color:#6ee7b7; }
 body.dark-mode #tvCanvas { background:#0d1512; }
+html.dark-mode { scrollbar-color: #2f7d5c #0f1f18; }
+body.dark-mode *::-webkit-scrollbar-track { background: #0f1f18; }
+body.dark-mode *::-webkit-scrollbar-thumb { background: #2f7d5c; border-color: #0f1f18; }
+body.dark-mode *::-webkit-scrollbar-thumb:hover, body.dark-mode *::-webkit-scrollbar-thumb:active { background: #34d399; border-color: #1a3a2c; }
+body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 
 </style>
 </head>
@@ -1427,7 +1444,7 @@ body.dark-mode #tvCanvas { background:#0d1512; }
     </div>
     <div class="credits-item">
       <div class="role">🚀 الإصدار</div>
-      <div class="name">v14 — بوصلة القبلة + الوضع الليلي/النهاري</div>
+      <div class="name">v15 — بوصلة القبلة + الوضع الليلي + أشرطة تمرير عريضة</div>
     </div>
     <button class="credits-close" onclick="closeCredits()">إغلاق</button>
   </div>
