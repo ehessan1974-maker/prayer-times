@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.IBinder;
@@ -33,6 +35,57 @@ public class PrayerAudioService extends Service {
     private volatile boolean ttsReady = false;
     private volatile String pendingTts = null;
     private PowerManager.WakeLock wakeLock;
+    // مانع التكرار: تجاهل طلب تشغيل نفس الملف إذا كان الصوت يعمل فعلاً
+    // (يمنع تشويش إعادة التشغيل عند تزامن الإنذار الأصلي مع نداء الصفحة المتزامن)
+    private static volatile String sLastFile = "";
+    private static volatile long sLastPlayAt = 0;
+    private AudioManager audioManager;
+    private AudioFocusRequest focusRequest;
+
+    /** مستمع تركيز الصوت — الأذان/الإقامة لهما الأولوية: نستمر بالتشغيل ولا نخفض */
+    private final AudioManager.OnAudioFocusChangeListener focusListener =
+            new AudioManager.OnAudioFocusChangeListener() {
+                @Override
+                public void onAudioFocusChange(int focusChange) {
+                    // نتجاهل فقدان التركيز المؤقت — تنبيهات المواقيت ذات أولوية
+                }
+            };
+
+    /** المطالبة بأولوية الصوت: توقف تطبيقات الموسيقى/الفيديو الأخرى أثناء الأذان */
+    private void requestAudioPriority() {
+        try {
+            audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            if (audioManager == null) return;
+            AudioAttributes attrs = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build();
+            if (Build.VERSION.SDK_INT >= 26) {
+                focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                        .setAudioAttributes(attrs)
+                        .setOnAudioFocusChangeListener(focusListener)
+                        .build();
+                audioManager.requestAudioFocus(focusRequest);
+            } else {
+                audioManager.requestAudioFocus(focusListener, AudioManager.STREAM_ALARM,
+                        AudioManager.AUDIOFOCUS_GAIN);
+            }
+        } catch (Exception e) {}
+    }
+
+    /** إعادة التركيز بعد انتهاء التشغيل حتى تعود التطبيقات الأخرى لعملها الطبيعي */
+    private void abandonAudioPriority() {
+        try {
+            if (audioManager == null) return;
+            if (focusRequest != null && Build.VERSION.SDK_INT >= 26) {
+                audioManager.abandonAudioFocusRequest(focusRequest);
+            } else {
+                audioManager.abandonAudioFocus(focusListener);
+            }
+        } catch (Exception e) {}
+        focusRequest = null;
+        audioManager = null;
+    }
 
     public static void play(Context c, String file, String title, String text, int notifId) {
         Intent it = new Intent(c, PrayerAudioService.class);
@@ -75,6 +128,7 @@ public class PrayerAudioService extends Service {
         int notifId = intent.getIntExtra("notifId", 1001);
         goForeground(notifId, title, text);
         acquireLock();
+        requestAudioPriority();
         resolveAndPlay(audioFile, title);
         return START_NOT_STICKY;
     }
@@ -105,7 +159,10 @@ public class PrayerAudioService extends Service {
          .setContentText(text == null ? "" : text)
          .setOngoing(true)
          .setOnlyAlertOnce(true)
-         .setAutoCancel(false);
+         .setAutoCancel(false)
+         // إشعار الحدث يظهر كمنبه وعلى شاشة القفل — زر الإيقاف موجود أدناه
+         .setCategory(Notification.CATEGORY_ALARM)
+         .setVisibility(Notification.VISIBILITY_PUBLIC);
         try {
             Intent open = new Intent(this, MainActivity.class);
             int piFlags = PendingIntent.FLAG_UPDATE_CURRENT;
@@ -140,6 +197,16 @@ public class PrayerAudioService extends Service {
 
     private void resolveAndPlay(String file, String title) {
         String f = (file == null) ? "" : file.trim();
+        // 0) تجاهل التكرار: نفس الملف خلال 15 ثانية بينما الصوت يعمل الآن
+        if (f.length() > 0 && f.equals(sLastFile)
+                && (System.currentTimeMillis() - sLastPlayAt) < 15000
+                && player != null && player.isPlaying()) {
+            return;
+        }
+        // تحرير أي مشغّل سابق قبل إنشاء جديد (منع تسريب MediaPlayer)
+        releasePlayer();
+        sLastFile = f;
+        sLastPlayAt = System.currentTimeMillis();
         // 1) ملف وضعه المستخدم في مجلد التطبيق الخارجي (أولوية أولى)
         try {
             File extDir = getExternalFilesDir(null);
@@ -306,6 +373,9 @@ public class PrayerAudioService extends Service {
         try {
             if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
         } catch (Exception e2) {}
+        abandonAudioPriority();
+        sLastFile = "";
+        sLastPlayAt = 0;
         try {
             stopForeground(true);
         } catch (Exception e3) {}
