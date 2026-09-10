@@ -24,6 +24,7 @@ public class BootReceiver extends BroadcastReceiver {
                 Intent.ACTION_TIMEZONE_CHANGED.equals(action) ||
                 Intent.ACTION_MY_PACKAGE_REPLACED.equals(action);
             if (hit) {
+                // وضع الخلفية: إعادة تسليح المنبهات + إبقاء العملية حيّة — دون فتح واجهة التطبيق
                 AlarmScheduler.rearmStored(context);
                 KeepAliveService.start(context);
             }
