@@ -13,6 +13,7 @@ public class AlarmReceiver extends BroadcastReceiver {
             if (intent == null) return;
             String action = intent.getAction();
             if (AlarmScheduler.ACTION_ALARM_FIRE.equals(action)) {
+                // تشغيل الصوت + إشعار نظام بزر إيقاف — دون فتح/إحضار واجهة التطبيق (وضع الخلفية)
                 PrayerAudioService.play(
                         context,
                         intent.getStringExtra("audioFile"),
