@@ -31,6 +31,8 @@ public class KeepAliveService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         goForeground();
+        // بدء حلقة فحص التحديث التلقائي من GitHub كل 5 دقائق
+        try { UpdateChecker.startPeriodicCheck(this); } catch (Exception e) {}
         return START_STICKY;
     }
 

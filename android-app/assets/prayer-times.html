@@ -4,6 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<link rel="manifest" href="public/manifest.json">
+<meta name="theme-color" content="#065f46">
 <title>🕌 مواقيت الصلاة</title>
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -447,6 +449,87 @@ textarea.msged-input { resize: vertical; line-height: 1.5; }
 .msged-token-badge {
   display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 12px; margin-right: 4px;
 }
+
+/* ===== حقل audience — استهداف مستخدمين محددين ===== */
+.msged-audience-box {
+  margin: 6px 0 8px; padding: 8px 9px; border: 1px solid #d1d5db; border-radius: 8px;
+  background: #f9fafb;
+}
+body.dark-mode .msged-audience-box { background:#15201b; border-color:#234536; }
+.msged-audience-title {
+  font-size: 10px; color: #6b7280; font-weight: 700; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+body.dark-mode .msged-audience-title { color:#a7d7bf; }
+.msged-audience-modes { display: flex; gap: 4px; margin-bottom: 6px; }
+.msged-audience-mode-btn {
+  flex: 1; padding: 5px 6px; font-size: 11px; border: 1px solid #d1d5db; border-radius: 6px;
+  background: white; color: #374151; cursor: pointer; font-family: inherit;
+}
+body.dark-mode .msged-audience-mode-btn { background:#15201b; color:#e2e8f0; border-color:#234536; }
+.msged-audience-mode-btn.active {
+  background: #065f46; color: white; border-color: #065f46; font-weight: 700;
+}
+.msged-audience-ids {
+  border: 1px dashed #cbd5e1; border-radius: 6px; padding: 6px; background: white;
+  min-height: 30px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+}
+body.dark-mode .msged-audience-ids { background:#0f1f18; border-color:#234536; }
+.msged-audience-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px;
+  background: #dcfce7; border: 1px solid #86efac; color: #166534;
+  border-radius: 12px; font-size: 10px; font-family: monospace;
+}
+body.dark-mode .msged-audience-chip { background:#1f3a2c; border-color:#2f7d5c; color:#6ee7b7; }
+.msged-audience-chip-remove {
+  cursor: pointer; color: #991b1b; font-weight: 700; padding: 0 2px; font-size: 12px;
+}
+.msged-audience-chip-name { color: #4b5563; font-family: Tahoma, Arial, sans-serif; font-size: 10px; }
+body.dark-mode .msged-audience-chip-name { color:#9fb8ab; }
+.msged-audience-add-row { display: flex; gap: 4px; margin-top: 6px; }
+.msged-audience-add-row input {
+  flex: 1; padding: 4px 6px; font-size: 11px; border: 1px solid #d1d5db; border-radius: 5px;
+  font-family: monospace; background: white; color: #1f2937;
+}
+body.dark-mode .msged-audience-add-row input { background:#0f1f18; color:#e2e8f0; border-color:#234536; }
+.msged-audience-add-btn {
+  padding: 4px 10px; font-size: 11px; border: 1px solid #065f46; background: #065f46;
+  color: white; border-radius: 5px; cursor: pointer; font-family: inherit; font-weight: 700;
+}
+.msged-audience-known-list {
+  margin-top: 6px; max-height: 80px; overflow-y: auto; padding: 4px; background: white;
+  border: 1px solid #e5e7eb; border-radius: 6px;
+}
+body.dark-mode .msged-audience-known-list { background:#0f1f18; border-color:#234536; }
+.msged-audience-known-item {
+  display: flex; align-items: center; gap: 6px; padding: 3px 4px; font-size: 10px;
+  border-bottom: 1px dotted #e5e7eb;
+}
+body.dark-mode .msged-audience-known-item { border-bottom-color:#234536; }
+.msged-audience-known-item:last-child { border-bottom: none; }
+.msged-audience-known-name { flex: 1; font-family: Tahoma, Arial, sans-serif; color: #374151; }
+body.dark-mode .msged-audience-known-name { color:#e2e8f0; }
+.msged-audience-known-id { font-family: monospace; color: #6b7280; font-size: 9px; }
+.msged-audience-known-add {
+  padding: 2px 6px; font-size: 10px; background: #ecfdf5; color: #047857; border: 1px solid #86efac;
+  border-radius: 4px; cursor: pointer; font-family: inherit;
+}
+body.dark-mode .msged-audience-known-add { background:#1f3a2c; color:#6ee7b7; border-color:#2f7d5c; }
+.msged-audience-myid {
+  margin-top: 6px; padding: 4px 6px; background: #fef3c7; border: 1px solid #fcd34d; color: #92400e;
+  border-radius: 6px; font-size: 10px; font-family: monospace; word-break: break-all; cursor: pointer;
+}
+body.dark-mode .msged-audience-myid { background:#3a2f0f; color:#fcd34d; border-color:#92400e; }
+.msged-audience-badge {
+  display: inline-block; font-size: 9px; padding: 1px 5px; border-radius: 8px;
+  background: #ede9fe; color: #6d28d9; border: 1px solid #c4b5fd; margin-right: 3px;
+}
+body.dark-mode .msged-audience-badge { background:#2d1f4a; color:#c4b5fd; border-color:#5b3d8a; }
+.msged-audience-add-name {
+  width: 100%; padding: 4px 6px; font-size: 10px; border: 1px solid #d1d5db; border-radius: 5px;
+  margin-top: 4px; font-family: Tahoma, Arial, sans-serif; background: white; color: #1f2937;
+}
+body.dark-mode .msged-audience-add-name { background:#0f1f18; color:#e2e8f0; border-color:#234536; }
 
 /* Audio activation */
 .audio-float {
@@ -1671,10 +1754,19 @@ function toggleCatFilter(cat) {
 
 function getFilteredItems() {
   if (!cachedInfoItems || cachedInfoItems.length === 0) return [];
-  if (infoCatFilter === "all") return cachedInfoItems;
+  if (infoCatFilter === "all") {
+    // تطبيق فلتر audience على كل العناصر
+    var all = [];
+    for (var a = 0; a < cachedInfoItems.length; a++) {
+      if (messageIsForMe(cachedInfoItems[a])) all.push(cachedInfoItems[a]);
+    }
+    return all;
+  }
   var filtered = [];
   for (var i = 0; i < cachedInfoItems.length; i++) {
-    if (cachedInfoItems[i].cat === infoCatFilter) filtered.push(cachedInfoItems[i]);
+    if (cachedInfoItems[i].cat === infoCatFilter && messageIsForMe(cachedInfoItems[i])) {
+      filtered.push(cachedInfoItems[i]);
+    }
   }
   return filtered;
 }
@@ -3600,7 +3692,7 @@ function msgsFromItems(arr) {
   var out = [];
   if (!arr || typeof arr.length !== "number") return out;
   for (var i = 0; i < arr.length; i++) {
-    if (arr[i] && arr[i].cat === "messages") out.push(arr[i]);
+    if (arr[i] && arr[i].cat === "messages" && messageIsForMe(arr[i])) out.push(arr[i]);
   }
   return out;
 }
@@ -3884,12 +3976,20 @@ function msgEdNormalize(m) {
     cat: "messages"
   };
   if (m.ts && String(m.ts).replace(/^\s+|\s+$/g, "") !== "") out.ts = String(m.ts).replace(/^\s+|\s+$/g, "");
+  // دعم audience: "*" | "all" | ["id1","id2"] | "id1,id2" | "id1"
+  // "*" و "all" لا تُخزَّن (السلوك الافتراضي = للجميع)
+  if (m.audience !== undefined && m.audience !== null && m.audience !== "" && m.audience !== "*" && m.audience !== "all") {
+    if (typeof m.audience === "string" || Object.prototype.toString.call(m.audience) === "[object Array]") {
+      out.audience = m.audience;
+    }
+  }
   return out;
 }
 
 // تاريخ/ساعة الإضافة أو آخر تعديل: يُحدّث فقط عند تغيّر المحتوى فعلاً
 function msgEdWithTs(prev, next) {
-  var changed = !prev || !prev.ts || prev.icon !== next.icon || prev.text !== next.text || prev.src !== next.src;
+  var changed = !prev || !prev.ts || prev.icon !== next.icon || prev.text !== next.text || prev.src !== next.src ||
+    JSON.stringify(prev.audience || "") !== JSON.stringify(next.audience || "");
   next.ts = changed ? msgEdStamp() : prev.ts;
   return next;
 }
@@ -4075,23 +4175,77 @@ function renderEditorMessages() {
   var html = "";
   for (var i = 0; i < editorMsgs.length; i++) {
     if (editorEditIdx === i) {
+      // ===== وضع التحرير: حقول icon + text + src + audience =====
+      var cur = editorMsgs[i];
+      var audMode = "all";
+      var audIds = [];
+      if (cur && cur.audience && cur.audience !== "*" && cur.audience !== "all") {
+        if (Object.prototype.toString.call(cur.audience) === "[object Array]") {
+          audMode = "specific";
+          audIds = cur.audience.slice();
+        } else if (typeof cur.audience === "string") {
+          audMode = "specific";
+          audIds = cur.audience.split(",");
+          for (var k = 0; k < audIds.length; k++) audIds[k] = audIds[k].replace(/^\s+|\s+$/g, "");
+        }
+      }
+      // تخزين قائمة audience مؤقتاً في كائن مؤقت لتعديلها عبر الأزرار
+      window._audDrafts = window._audDrafts || {};
+      window._audDrafts[i] = { mode: audMode, ids: audIds.slice() };
+
       html += '<div class="msg-row msg-row-editing">'
         + '<div style="font-size:10px;color:#b45309;margin-bottom:5px;font-weight:700;">✏️ تحرير الرسالة #' + (i + 1)
-        + (editorMsgs[i].ts ? ' <span style="font-weight:400;color:#92400e;">• 🕐 آخر تحديث: ' + escapeHtml(editorMsgs[i].ts) + '</span>' : '') + '</div>'
-        + '<input class="msged-input" id="msgEdIcon_' + i + '" value="' + escapeHtml(editorMsgs[i].icon || "") + '" maxlength="12" placeholder="أيقونة (إيموجي)">'
-        + '<textarea class="msged-input" id="msgEdText_' + i + '" rows="4" placeholder="نص الرسالة...">' + escapeHtml(editorMsgs[i].text || "") + '</textarea>'
-        + '<input class="msged-input" id="msgEdSrc_' + i + '" value="' + escapeHtml(editorMsgs[i].src || "") + '" placeholder="المصدر / الوصف">'
+        + (cur.ts ? ' <span style="font-weight:400;color:#92400e;">• 🕐 آخر تحديث: ' + escapeHtml(cur.ts) + '</span>' : '') + '</div>'
+        + '<input class="msged-input" id="msgEdIcon_' + i + '" value="' + escapeHtml(cur.icon || "") + '" maxlength="12" placeholder="أيقونة (إيموجي)">'
+        + '<textarea class="msged-input" id="msgEdText_' + i + '" rows="4" placeholder="نص الرسالة...">' + escapeHtml(cur.text || "") + '</textarea>'
+        + '<input class="msged-input" id="msgEdSrc_' + i + '" value="' + escapeHtml(cur.src || "") + '" placeholder="المصدر / الوصف">'
+
+        // ===== حقل audience =====
+        + '<div class="msged-audience-box">'
+        + '  <div class="msged-audience-title">🎯 المستلمون — من يرى هذه الرسالة؟</div>'
+        + '  <div class="msged-audience-modes">'
+        + '    <button type="button" class="msged-audience-mode-btn' + (audMode === "all" ? " active" : "") + '" id="msgEdAudAllBtn_' + i + '" onclick="msgEdAudSetMode(' + i + ',\'all\')">🌐 للجميع</button>'
+        + '    <button type="button" class="msged-audience-mode-btn' + (audMode === "specific" ? " active" : "") + '" id="msgEdAudSpecBtn_' + i + '" onclick="msgEdAudSetMode(' + i + ',\'specific\')">👤 مستخدمون محددون</button>'
+        + '  </div>'
+        + '  <div id="msgEdAudSpecific_' + i + '" style="display:' + (audMode === "specific" ? "block" : "none") + '">'
+        + '    <div class="msged-audience-ids" id="msgEdAudIds_' + i + '">' + msgEdRenderAudChips(i) + '</div>'
+        + '    <div class="msged-audience-add-row">'
+        + '      <input type="text" id="msgEdAudAddInput_' + i + '" placeholder="الصق معرّف جهاز (مثل: android:abc123...)" />'
+        + '      <button type="button" class="msged-audience-add-btn" onclick="msgEdAudAddFromInput(' + i + ')">➕ إضافة</button>'
+        + '    </div>'
+        + '    <input type="text" class="msged-audience-add-name" id="msgEdAudAddName_' + i + '" placeholder="اسم مستعار اختياري (مثل: أحمد - جواله)" />'
+        + '    <div style="font-size:9px;color:#6b7280;margin-top:4px;">📚 الأجهزة المعروفة (انقر للإضافة):</div>'
+        + '    <div class="msged-audience-known-list" id="msgEdAudKnown_' + i + '">' + msgEdRenderKnownDevices(i) + '</div>'
+        + '    <div class="msged-audience-myid" onclick="msgEdAudAddFromInput(' + i + ', true)" title="انقر لإضافة جهازك الحالي للقائمة">'
+        + '      📱 معرّف جهازك الحالي: ' + escapeHtml(getDeviceId()) + ' (انقر للإضافة)'
+        + '    </div>'
+        + '  </div>'
+        + '</div>'
+
         + '<div style="text-align:left;">'
         + '<button class="btn btn-primary btn-sm" onclick="msgEdSaveEdit(' + i + ')">✔️ حفظ</button>'
         + '<button class="btn btn-outline btn-sm" onclick="msgEdCancelEdit()">✖️ إلغاء</button>'
         + '</div></div>';
     } else {
+      // ===== وضع العرض: عرض الرسالة + badge للاستهداف =====
       var upDis = (i === 0) ? " disabled" : "";
       var downDis = (i === editorMsgs.length - 1) ? " disabled" : "";
+      // badge يوضح إن كانت الرسالة موجَّهة فقط
+      var audBadge = "";
+      if (editorMsgs[i].audience && editorMsgs[i].audience !== "*" && editorMsgs[i].audience !== "all") {
+        var cnt = 0;
+        if (Object.prototype.toString.call(editorMsgs[i].audience) === "[object Array]") {
+          cnt = editorMsgs[i].audience.length;
+        } else if (typeof editorMsgs[i].audience === "string") {
+          cnt = editorMsgs[i].audience.split(",").length;
+        }
+        audBadge = '<span class="msged-audience-badge" title="هذه الرسالة موجَّهة لمستخدمين محددين">👤 ' + cnt + ' مستلم</span>';
+      }
       html += '<div class="msg-row"><div class="msg-row-view">'
         + '<div class="msg-row-main">'
         + '<span class="msg-icon">' + escapeHtml(editorMsgs[i].icon || "💬") + '</span>'
         + '<span class="msg-text" style="display:inline;">' + escapeHtml(editorMsgs[i].text || "") + '</span>'
+        + (audBadge ? '<div style="margin-top:3px;">' + audBadge + '</div>' : '')
         + (editorMsgs[i].src ? '<div class="msg-src">— ' + escapeHtml(editorMsgs[i].src) + '</div>' : '')
         + (editorMsgs[i].ts ? '<div class="msg-ts">🕐 ' + escapeHtml(editorMsgs[i].ts) + '</div>' : '')
         + '</div>'
@@ -4107,6 +4261,139 @@ function renderEditorMessages() {
   msgEdUpdateDirtyHint();
 }
 
+// ===== دوال دعم حقل audience في وضع التحرير =====
+
+// عرض chips المعرّفات المضافة للرسالة
+function msgEdRenderAudChips(i) {
+  var d = window._audDrafts && window._audDrafts[i];
+  if (!d || !d.ids || d.ids.length === 0) {
+    return '<span style="color:#9ca3af;font-size:10px;font-family:Tahoma,Arial,sans-serif;">لم تُضِف مستلمين بعد</span>';
+  }
+  var html = "";
+  for (var k = 0; k < d.ids.length; k++) {
+    var id = d.ids[k];
+    if (!id) continue;
+    var name = nameOfDevice(id);
+    html += '<span class="msged-audience-chip" title="' + escapeHtml(id) + '">'
+      + (name ? '<span class="msged-audience-chip-name">' + escapeHtml(name) + '</span> ' : '')
+      + '<span>' + escapeHtml(id.length > 22 ? id.substr(0, 22) + "…" : id) + '</span>'
+      + '<span class="msged-audience-chip-remove" onclick="msgEdAudRemove(' + i + ',' + k + ')">✕</span>'
+      + '</span>';
+  }
+  return html;
+}
+
+// عرض قائمة الأجهزة المعروفة (للنقر عليها وإضافتها)
+function msgEdRenderKnownDevices(i) {
+  var d = window._audDrafts && window._audDrafts[i];
+  var selectedIds = d ? d.ids.slice() : [];
+  var known = getKnownDevices();
+  if (known.length === 0) {
+    return '<div style="font-size:10px;color:#9ca3af;padding:4px;text-align:center;font-family:Tahoma,Arial,sans-serif;">لا توجد أجهزة محفوظة بعد. أضِف معرّفاً + اسم مستعار وسنحفظه تلقائياً.</div>';
+  }
+  var html = "";
+  for (var k = 0; k < known.length; k++) {
+    var dev = known[k];
+    if (!dev || !dev.id) continue;
+    var isSel = false;
+    for (var s = 0; s < selectedIds.length; s++) {
+      if (selectedIds[s] === dev.id) { isSel = true; break; }
+    }
+    html += '<div class="msged-audience-known-item">'
+      + '<span class="msged-audience-known-name">' + escapeHtml(dev.name || "(بدون اسم)") + '</span>'
+      + '<span class="msged-audience-known-id">' + escapeHtml(dev.id.length > 28 ? dev.id.substr(0, 28) + "…" : dev.id) + '</span>'
+      + (isSel
+          ? '<span style="font-size:9px;color:#16a34a;">✓ مُضافة</span>'
+          : '<button type="button" class="msged-audience-known-add" onclick="msgEdAudAdd(' + i + ',\'' + escapeHtml(dev.id).replace(/'/g, "\\'") + '\')">➕ إضافة</button>')
+      + '</div>';
+  }
+  return html;
+}
+
+// تبديل وضع audience (all / specific)
+function msgEdAudSetMode(i, mode) {
+  if (!window._audDrafts) window._audDrafts = {};
+  if (!window._audDrafts[i]) window._audDrafts[i] = { mode: "all", ids: [] };
+  window._audDrafts[i].mode = mode;
+  // تحديث الأزرار
+  var allBtn = el("msgEdAudAllBtn_" + i);
+  var specBtn = el("msgEdAudSpecBtn_" + i);
+  var specBox = el("msgEdAudSpecific_" + i);
+  if (allBtn && specBtn) {
+    allBtn.classList.toggle("active", mode === "all");
+    specBtn.classList.toggle("active", mode === "specific");
+  }
+  if (specBox) specBox.style.display = (mode === "specific") ? "block" : "none";
+}
+
+// إضافة معرّف لقائمة audience
+function msgEdAudAdd(i, deviceId) {
+  if (!deviceId) return;
+  if (!window._audDrafts) window._audDrafts = {};
+  if (!window._audDrafts[i]) window._audDrafts[i] = { mode: "specific", ids: [] };
+  // منع التكرار
+  for (var k = 0; k < window._audDrafts[i].ids.length; k++) {
+    if (window._audDrafts[i].ids[k] === deviceId) return;
+  }
+  window._audDrafts[i].ids.push(deviceId);
+  window._audDrafts[i].mode = "specific";
+  msgEdAudRefresh(i);
+}
+
+// إضافة من حقل الإدخال
+function msgEdAudAddFromInput(i, useMyDevice) {
+  var inputEl = el("msgEdAudAddInput_" + i);
+  var nameEl = el("msgEdAudAddName_" + i);
+  var id = "";
+  if (useMyDevice) {
+    id = getDeviceId();
+  } else if (inputEl) {
+    id = String(inputEl.value || "").replace(/^\s+|\s+$/g, "");
+  }
+  if (!id || id.length < 5) {
+    msgEdSetStatus("error", "⚠️ معرّف الجهاز غير صحيح. يجب أن يكون 5 أحرف على الأقل.");
+    return;
+  }
+  // حفظ الاسم المستعار إن وُجد
+  var name = nameEl ? String(nameEl.value || "").replace(/^\s+|\s+$/g, "") : "";
+  if (name) addKnownDevice(id, name);
+  else addKnownDevice(id, "");
+
+  msgEdAudAdd(i, id);
+  if (inputEl) inputEl.value = "";
+  if (nameEl) nameEl.value = "";
+  msgEdSetStatus("loading", "✅ تمت إضافة المستلم. " + (name ? "تم حفظ الاسم المستعار: " + name : ""));
+}
+
+// إزالة معرّف من قائمة audience
+function msgEdAudRemove(i, k) {
+  if (!window._audDrafts || !window._audDrafts[i]) return;
+  window._audDrafts[i].ids.splice(k, 1);
+  msgEdAudRefresh(i);
+}
+
+// إعادة عرض جزء audience فقط دون إعادة بناء القائمة كلها
+function msgEdAudRefresh(i) {
+  var idsEl = el("msgEdAudIds_" + i);
+  var knownEl = el("msgEdAudKnown_" + i);
+  if (idsEl) idsEl.innerHTML = msgEdRenderAudChips(i);
+  if (knownEl) knownEl.innerHTML = msgEdRenderKnownDevices(i);
+  // إن أصبحت القائمة فارغة، ارجع تلقائياً إلى "للجميع"
+  if (window._audDrafts[i] && window._audDrafts[i].ids.length === 0 && window._audDrafts[i].mode === "specific") {
+    // أبقِ الوضع specific حتى يختار المستخدم — لكن أظهر تلميحاً
+  }
+  // أعد بناء قائمة الأجهزة المعروفة لإظهار "✓ مُضافة" بشكل صحيح
+  if (knownEl) knownEl.innerHTML = msgEdRenderKnownDevices(i);
+}
+
+// بناء audience جاهز للحفظ انطلاقاً من draft
+function msgEdBuildAudience(i) {
+  var d = window._audDrafts && window._audDrafts[i];
+  if (!d || d.mode === "all" || !d.ids || d.ids.length === 0) return "*";
+  // إرجاع مصفوفة (JSON-clean)
+  return d.ids.slice();
+}
+
 function msgEdCommitOpenEdit() {
   if (editorEditIdx < 0 || !editorMsgs || !editorMsgs[editorEditIdx]) { editorEditIdx = -1; return; }
   var iconEl = el("msgEdIcon_" + editorEditIdx);
@@ -4116,14 +4403,18 @@ function msgEdCommitOpenEdit() {
     var t = String(textEl.value || "");
     if (t.replace(/^\s+|\s+$/g, "") !== "") {
       var prevM = editorMsgs[editorEditIdx];
-      var nextM = msgEdWithTs(prevM, msgEdNormalize({ icon: iconEl.value, text: t, src: srcEl.value }));
-      if (prevM.icon !== nextM.icon || prevM.text !== nextM.text || prevM.src !== nextM.src || prevM.ts !== nextM.ts) {
+      var audVal = msgEdBuildAudience(editorEditIdx);
+      var nextM = msgEdWithTs(prevM, msgEdNormalize({ icon: iconEl.value, text: t, src: srcEl.value, audience: audVal }));
+      if (prevM.icon !== nextM.icon || prevM.text !== nextM.text || prevM.src !== nextM.src ||
+          prevM.ts !== nextM.ts || JSON.stringify(prevM.audience || "") !== JSON.stringify(nextM.audience || "")) {
         editorMsgs[editorEditIdx] = nextM;
         editorDirty = true;
         applyMessagesToCache(editorMsgsForCache());
       }
     }
   }
+  // تنظيف draft
+  if (window._audDrafts) { try { delete window._audDrafts[editorEditIdx]; } catch(e) {} }
   editorEditIdx = -1;
   renderEditorMessages();
 }
@@ -4148,8 +4439,16 @@ function msgEdSaveEdit(i) {
     try { textEl.focus(); } catch(e) {}
     return;
   }
-  editorMsgs[i] = msgEdWithTs(editorMsgs[i], msgEdNormalize({ icon: iconEl ? iconEl.value : "💬", text: t, src: srcEl ? srcEl.value : "" }));
+  var audVal = msgEdBuildAudience(i);
+  editorMsgs[i] = msgEdWithTs(editorMsgs[i], msgEdNormalize({
+    icon: iconEl ? iconEl.value : "💬",
+    text: t,
+    src: srcEl ? srcEl.value : "",
+    audience: audVal
+  }));
   editorDirty = true;
+  // تنظيف draft
+  if (window._audDrafts) { try { delete window._audDrafts[i]; } catch(e) {} }
   editorEditIdx = -1;
   renderEditorMessages();
   applyMessagesToCache(editorMsgsForCache());
@@ -4787,6 +5086,249 @@ function closeQibla() {
   if (qiblaSensorTimer) { clearTimeout(qiblaSensorTimer); qiblaSensorTimer = null; }
 }
 
+// ===== قائمة الأجهزة المعروفة محلياً (أسماء مستعارة لمعرّفات الأجهزة) =====
+var KNOWN_DEVICES_KEY = "pt-known-devices";
+
+function getKnownDevices() {
+  try {
+    var raw = localStorage.getItem(KNOWN_DEVICES_KEY);
+    if (!raw) return [];
+    var arr = JSON.parse(raw);
+    return (arr && arr.length) ? arr : [];
+  } catch(e) { return []; }
+}
+
+function saveKnownDevices(arr) {
+  try { localStorage.setItem(KNOWN_DEVICES_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+
+// إضافة معرّف لقائمة الأجهزة المعروفة (إن لم يكن موجوداً)
+function addKnownDevice(deviceId, name) {
+  if (!deviceId) return false;
+  var arr = getKnownDevices();
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i] && arr[i].id === deviceId) {
+      // تحديث الاسم فقط إذا تغيّر
+      if (name && arr[i].name !== name) {
+        arr[i].name = name;
+        saveKnownDevices(arr);
+      }
+      return false;
+    }
+  }
+  arr.push({ id: deviceId, name: (name || ""), addedAt: Date.now() });
+  saveKnownDevices(arr);
+  return true;
+}
+
+// اسم مستعار لمعرّف جهاز معروف
+function nameOfDevice(deviceId) {
+  if (!deviceId) return "";
+  var arr = getKnownDevices();
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i] && arr[i].id === deviceId) return arr[i].name || "";
+  }
+  return "";
+}
+
+// =====================================================================
+// ===== DEVICE ID — معرّف فريد لكل تثبيت (للرسائل الموجَّهة) =====
+// =====================================================================
+var DEVICE_ID_KEY = "pt-device-id";
+
+function getDeviceId() {
+  try {
+    // أولوية لـ ANDROID_ID من الجسر الأصلي (يبقى ثابتاً عبر إعادة التثبيت)
+    if (window.AndroidPrayer && typeof AndroidPrayer.getDeviceId === "function") {
+      var androidId = AndroidPrayer.getDeviceId();
+      if (androidId && String(androidId).length >= 6) return "android:" + String(androidId);
+    }
+  } catch(e) {}
+  try {
+    var id = localStorage.getItem(DEVICE_ID_KEY);
+    if (id) return id;
+    id = "web-" + Date.now().toString(36) + "-" + Math.random().toString(36).substr(2, 10);
+    localStorage.setItem(DEVICE_ID_KEY, id);
+    return id;
+  } catch(e) { return "web-anon-" + Date.now(); }
+}
+
+// فحص: هل الرسالة موجهة لهذا الجهاز؟
+// audience: "*" | "all" | ["id1","id2"] | undefined => للجميع
+function messageIsForMe(item) {
+  if (!item) return false;
+  if (!item.audience || item.audience === "*" || item.audience === "all") return true;
+  var myId = getDeviceId();
+  if (Object.prototype.toString.call(item.audience) === "[object Array]") {
+    for (var i = 0; i < item.audience.length; i++) {
+      if (String(item.audience[i]) === myId) return true;
+    }
+    return false;
+  }
+  // سلسلة نصية واحدة
+  if (typeof item.audience === "string" && item.audience.indexOf(",") !== -1) {
+    var ids = item.audience.split(",");
+    for (var k = 0; k < ids.length; k++) {
+      if (ids[k].replace(/^\s+|\s+$/g, "") === myId) return true;
+    }
+    return false;
+  }
+  return String(item.audience) === myId;
+}
+
+// =====================================================================
+// ===== AUTO UPDATE — فحص version.json دورياً وتحديث التطبيق =====
+// =====================================================================
+var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
+var APP_VERSION_KEY = "pt-app-version";
+var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
+var CURRENT_APP_VERSION = "16.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var _updateToastEl = null;
+
+function _ensureUpdateToast() {
+  if (_updateToastEl) return _updateToastEl;
+  try {
+    var t = document.createElement("div");
+    t.id = "updateToast";
+    t.style.cssText = "position:fixed;bottom:16px;left:16px;right:16px;" +
+      "background:linear-gradient(135deg,#065f46,#10b981);color:#fff;padding:14px 18px;" +
+      "border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.35);font-family:inherit;" +
+      "font-size:14px;z-index:99999;display:none;direction:rtl;text-align:center;cursor:pointer;" +
+      "border:1px solid rgba(255,255,255,.2);";
+    t.innerHTML = "<div style='font-weight:700;margin-bottom:4px'>🔄 تحديث جديد متوفر</div>" +
+      "<div style='font-size:12px;opacity:.95' id='updateToastSub'>اضغط هنا لإعادة التحميل</div>";
+    t.onclick = function() { applyAppUpdate(true); };
+    document.body.appendChild(t);
+    _updateToastEl = t;
+  } catch(e) {}
+  return _updateToastEl;
+}
+
+function showUpdateToast(newVersion) {
+  var t = _ensureUpdateToast();
+  if (!t) return;
+  try {
+    var sub = t.querySelector("#updateToastSub");
+    if (sub) sub.textContent = "النسخة الحالية: " + CURRENT_APP_VERSION + " → الجديدة: " + newVersion;
+  } catch(e) {}
+  t.style.display = "block";
+  t.style.animation = "ptSlideUp .35s ease";
+}
+
+function hideUpdateToast() {
+  if (_updateToastEl) _updateToastEl.style.display = "none";
+}
+
+function applyAppUpdate(userTriggered) {
+  // 1) تحديث النسخة المسجلة محلياً
+  try { localStorage.setItem(APP_VERSION_KEY, CURRENT_APP_VERSION); } catch(e) {}
+  // 2) محاولة إعلام Service Worker بتحديث الكاش
+  if ("serviceWorker" in navigator) {
+    try {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        for (var i = 0; i < regs.length; i++) {
+          regs[i].update();
+          regs[i].active && regs[i].active.postMessage("skipWaiting");
+        }
+      });
+    } catch(e) {}
+  }
+  // 3) على الأندرويد: الاعتماد على NativeBridge لتنزيل HTML جديد في getFilesDir()
+  if (window.AndroidPrayer && typeof AndroidPrayer.downloadAppUpdate === "function") {
+    try {
+      AndroidPrayer.downloadAppUpdate(function() {
+        // بعد اكتمال التنزيل، أعد تحميل الويبفيو
+        setTimeout(function() { location.reload(); }, 800);
+      });
+      return;
+    } catch(e) {}
+  }
+  // 4) الويب/PWA: إعادة تحميل بسيطة مع تخطي الكاش
+  setTimeout(function() {
+    location.reload();
+  }, 200);
+}
+
+function checkAppUpdate() {
+  // تخطّي الفحص إذا لم يكن هناك اتصال
+  if (!navigator.onLine) return;
+  var url = VERSION_URL + "?t=" + Date.now();
+  var onResult = function(text) {
+    if (!text) return;
+    try {
+      var info = (typeof text === "string") ? JSON.parse(text) : text;
+      if (!info || !info.appVersion) return;
+      var latest = String(info.appVersion);
+      var current = CURRENT_APP_VERSION;
+      // مقارنة نصية بسيطة كافية طالما النسخة بصيغة "15.0" أو "16.0"
+      if (latest !== current) {
+        // خزّن رابط التحديث لاستخدامه لاحقاً
+        try {
+          localStorage.setItem("pt-update-info", JSON.stringify({
+            version: latest,
+            url: info.htmlUrl || "",
+            releasedAt: info.releasedAt || ""
+          }));
+        } catch(e) {}
+        showUpdateToast(latest);
+      } else {
+        hideUpdateToast();
+      }
+    } catch(e) {}
+  };
+  try {
+    if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
+      AndroidPrayer.fetchUrl(url, "_appVersionCallback");
+    } else if (window.XMLHttpRequest) {
+      var x = new XMLHttpRequest();
+      x.open("GET", url, true);
+      x.timeout = 10000;
+      x.onreadystatechange = function() {
+        if (x.readyState !== 4) return;
+        if (x.status === 200) onResult(x.responseText);
+      };
+      x.send();
+    }
+  } catch(e) {}
+}
+
+// جسر يستدعيه NativeBridge.fetchUrl بعد جلب version.json
+function _appVersionCallback(data) {
+  if (!data && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+    try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
+  }
+  if (data) checkAppUpdate._parse && checkAppUpdate._parse(data);
+  // استدعاء مباشر:
+  try {
+    var info = (typeof data === "string") ? JSON.parse(data) : data;
+    if (info && info.appVersion && String(info.appVersion) !== CURRENT_APP_VERSION) {
+      try { localStorage.setItem("pt-update-info", JSON.stringify({version: info.appVersion, url: info.htmlUrl||""})); } catch(e2) {}
+      showUpdateToast(info.appVersion);
+    } else { hideUpdateToast(); }
+  } catch(e3) {}
+}
+
+// تسجيل Service Worker (للويب/PWA فقط — لا يعمل على file://)
+function registerServiceWorker() {
+  if (window.AndroidPrayer) return; // الأندرويد يعتمد على UpdateChecker الأصلي
+  if (location.protocol !== "https:" && location.protocol !== "http:") return;
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    navigator.serviceWorker.register("sw.js").then(function(reg) {
+      reg.addEventListener("updatefound", function() {
+        var nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", function() {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) {
+            showUpdateToast(CURRENT_APP_VERSION);
+          }
+        });
+      });
+    }).catch(function() {});
+  } catch(e) {}
+}
+
+// =====================================================================
 // ===== INIT =====
 (function() {
   try { if (localStorage.getItem("audio-enabled") === "true") { audioEnabled = true; audioActivated = true; } } catch(e) {}
@@ -4812,6 +5354,21 @@ function closeQibla() {
   else { requestLocation(); }
   // أداة الاختبار للمتصفح فقط — تُخفى داخل تطبيق أندرويد (الإشعارات النظامية تكفي)
   setTimeout(function() { if (!window.AndroidPrayer) { addTestControl(); createTestPanel(); } }, 1000);
+
+  // ===== تهيئة نظام التحديث التلقائي =====
+  registerServiceWorker();
+  // فحص فوري عند الإقلاع
+  setTimeout(function() {
+    try {
+      var savedVer = localStorage.getItem(APP_VERSION_KEY);
+      if (savedVer) CURRENT_APP_VERSION = savedVer;
+    } catch(e) {}
+    checkAppUpdate();
+  }, 3000);
+  // فحص دوري كل 5 دقائق
+  setInterval(function() {
+    try { checkAppUpdate(); } catch(e) {}
+  }, APP_VERSION_CHECK_INTERVAL);
 })();
 </script>
 </body>

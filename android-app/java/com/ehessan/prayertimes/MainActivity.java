@@ -10,6 +10,8 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
@@ -19,6 +21,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -63,11 +67,20 @@ public class MainActivity extends Activity {
             }
         });
         webView.addJavascriptInterface(new NativeBridge(), "AndroidPrayer");
-        webView.loadUrl("file:///android_asset/prayer-times.html");
+        // تحميل نسخة محدَّثة من HTML إن وُجدت في getFilesDir()، وإلا fallback للأصل في assets/
+        File updatedHtml = new File(getFilesDir(), "prayer-times.html");
+        if (updatedHtml.exists() && updatedHtml.length() > 1000) {
+            webView.loadUrl("file://" + updatedHtml.getAbsolutePath());
+        } else {
+            webView.loadUrl("file:///android_asset/prayer-times.html");
+        }
 
         tts = new PrayerTts(getApplicationContext());
         requestRuntimePermissions();
         KeepAliveService.start(this);
+
+        // فحص تحديثات HTML من GitHub في الخلفية (يلتقط prayer-times.html الجديد)
+        UpdateChecker.checkAndDownload(this, null);
     }
 
     @Override
@@ -238,6 +251,41 @@ public class MainActivity extends Activity {
                     startActivity(it);
                 } catch (Exception e) {}
             }
+        }
+
+        // ===== معرّف الجهاز للرسائل الموجَّهة (يستخدم ANDROID_ID الثابت) =====
+        @JavascriptInterface
+        public String getDeviceId() {
+            try {
+                String androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+                if (androidId != null && androidId.length() >= 6) return androidId;
+            } catch (Exception e) {}
+            // fallback: معرّف عشوائي يُخزَّن في SharedPreferences
+            try {
+                String saved = getSharedPreferences("pt-prefs", 0).getString("fallback-device-id", "");
+                if (saved != null && saved.length() > 0) return saved;
+                String newId = "fallback-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 100000);
+                getSharedPreferences("pt-prefs", 0).edit().putString("fallback-device-id", newId).apply();
+                return newId;
+            } catch (Exception e2) { return "unknown"; }
+        }
+
+        // ===== تنزيل تحديث HTML جديد من GitHub (يستدعيه JS عند توفر نسخة جديدة) =====
+        @JavascriptInterface
+        public void downloadAppUpdate(final String jsCallback) {
+            new Thread(new Runnable() {
+                public void run() {
+                    boolean ok = UpdateChecker.checkAndDownload(MainActivity.this, null);
+                    if (jsCallback != null && jsCallback.trim().length() > 0) {
+                        final String call = jsCallback.trim() + "(" + (ok ? "true" : "false") + ")";
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                try { if (webView != null) webView.evaluateJavascript(call, null); } catch (Exception e) {}
+                            }
+                        });
+                    }
+                }
+            }).start();
         }
     }
 }
