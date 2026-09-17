@@ -2747,8 +2747,46 @@ function pickCity(i) {
   fetchPrayerTimes();
   qiblaRefreshIfOpen(); // v14: تحديث البوصلة إن كانت مفتوحة
 }
-// v13: تحديد اسم الموقع عكسياً بعد الجغرافيا (BigDataCloud — مجاني بلا مفتاح)
+// v13: تحديد اسم الموقع عكسياً بعد الجغرافيا
+// v16.1: التحويل من BigDataCloud (غير دقيق في سوريا) إلى Nominatim (OpenStreetMap)
+// Nominatim أكثر دقة ويعتمد على OpenStreetMap الذي يغطي القرى والمدن الصغيرة
 function reverseGeoName(la, ln) {
+  try {
+    // محاولة 1: Nominatim (الأكثر دقة)
+    var xhr = new XMLHttpRequest();
+    xhr.timeout = 8000;
+    xhr.open("GET", "https://nominatim.openstreetmap.org/reverse?lat=" + la + "&lon=" + ln + "&format=json&accept-language=ar&zoom=12", true);
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status === 200) {
+        try {
+          var j = JSON.parse(xhr.responseText);
+          var addr = j.address || {};
+          // أولوية: city > town > village > suburb > county > state
+          var city = addr.city || addr.town || addr.village || addr.suburb || addr.county || "";
+          var reg = addr.state || "";
+          var ctry = addr.country || "";
+          var parts = [];
+          if (city) parts.push(city);
+          else if (reg) parts.push(reg);
+          if (ctry && parts.length && parts[0] !== ctry) parts.push(ctry);
+          if (parts.length) { geoName = parts.join("، "); renderLocation(); return; }
+        } catch(e) {}
+        // لو لم يُرجع اسماً صالحاً، نحاول BigDataCloud كنسخة احتياطية
+        reverseGeoNameFallbackBigDataCloud(la, ln);
+      } else {
+        reverseGeoNameFallbackBigDataCloud(la, ln);
+      }
+    };
+    xhr.send();
+  } catch(e) {
+    reverseGeoNameFallbackBigDataCloud(la, ln);
+  }
+}
+
+// نسخة احتياطية: BigDataCloud (إن فشل Nominatim)
+function reverseGeoNameFallbackBigDataCloud(la, ln) {
   try {
     var xhr = new XMLHttpRequest();
     xhr.timeout = 8000;
@@ -2765,7 +2803,7 @@ function reverseGeoName(la, ln) {
           if (city) parts.push(city);
           else if (reg) parts.push(reg);
           if (ctry && parts.length && parts[0] !== ctry) parts.push(ctry);
-          if (parts.length) { geoName = parts.join("، "); renderLocation(); }
+          if (parts.length && !geoName) { geoName = parts.join("، "); renderLocation(); }
         } catch(e) {}
       }
     };
