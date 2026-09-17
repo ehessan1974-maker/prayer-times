@@ -1,6 +1,6 @@
 {
-  "appVersion": "16.0",
+  "appVersion": "16.1",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-17T10:00:00Z",
-  "changelog": "إضافة نظام التحديث التلقائي + الرسائل الموجَّهة لمستخدمين محددين"
+  "releasedAt": "2026-09-17T18:00:00Z",
+  "changelog": "إصلاح اسم الموقع (Nominatim بدل BigDataCloud) + تفعيل الدقة العالية + إصلاح رابط تحميل APK"
 }

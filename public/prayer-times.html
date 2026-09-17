@@ -2627,6 +2627,7 @@ function hasTimings() {
 function requestLocation() {
   locError = null;
   if (!navigator.geolocation) { locError = "المتصفح لا يدعم تحديد الموقع"; renderLocation(); fetchPrayerTimes(); return; }
+  // v16.1: تفعيل الدقة العالية + إلغاء الكاش للحصول على موقع دقيق
   navigator.geolocation.getCurrentPosition(
     function(pos) {
       latitude = pos.coords.latitude; longitude = pos.coords.longitude;
@@ -2641,7 +2642,8 @@ function requestLocation() {
       locError = msgs[err.code] || "فشل في تحديد الموقع";
       renderLocation(); fetchPrayerTimes();
     },
-    { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
+    // v16.1: تفعيل الدقة العالية (GPS) + مهلة أطول + عدم قبول موقع مخزّن سابق
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
   );
 }
 function applyManualLocation() {
@@ -5223,7 +5225,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "16.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "16.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {
