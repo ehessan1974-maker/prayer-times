@@ -1013,49 +1013,70 @@ body.smart *::-webkit-scrollbar { width: 20px; height: 20px; }
 body.smart *::-webkit-scrollbar-thumb { border-width: 4px; }
 body.smart .modal { scrollbar-gutter: stable; }
 
-/* ====== v14: بوصلة القبلة ====== */
-.qb-stage { display:-webkit-box; -webkit-box-pack:center; display:flex; justify-content:center; padding:6px 0 10px; }
-.qb-dial {
-  position:relative; width:216px; height:216px; border-radius:50%;
+/* ====== v17: اتجاه القبلة (سهم + خريطة) ====== */
+.qb-arrow-stage { display:flex; justify-content:center; padding:10px 0 6px; }
+.qb-arrow-circle {
+  position:relative; width:180px; height:180px; border-radius:50%;
   background: radial-gradient(circle, #ffffff 58%, #ecfdf5 100%);
   border:3px solid #059669;
   box-shadow: 0 4px 18px rgba(5,150,105,0.25), inset 0 0 14px rgba(5,150,105,0.12);
+  display:flex; align-items:center; justify-content:center;
   overflow:hidden;
 }
-.qb-tick { position:absolute; left:50%; top:50%; width:2px; height:8px; margin-left:-1px; margin-top:-4px; background:#94a3b8; border-radius:1px; }
-.qb-tick.qb-cardinal-tick { height:12px; width:3px; margin-left:-1.5px; background:#059669; }
-.qb-card { position:absolute; font-size:13px; font-weight:bold; color:#059669; width:20px; text-align:center; line-height:20px; }
-.qb-n { top:4px;  left:50%; margin-left:-10px; color:#dc2626; font-size:15px; }
-.qb-s { bottom:4px; left:50%; margin-left:-10px; }
-.qb-e { right:6px;  top:50%; margin-top:-10px; }
-.qb-w { left:6px;  top:50%; margin-top:-10px; }
-.qb-rotor { position:absolute; left:50%; top:50%; width:0; height:0;
-  -webkit-transition: -webkit-transform 0.25s ease-out; transition: transform 0.25s ease-out; }
-.qb-needle {
-  position:absolute; left:-5px; top:-78px; width:10px; height:78px;
-  background: linear-gradient(to top, #059669, #34d399);
-  border-radius:5px 5px 0 0;
+.qb-cardinal {
+  position:absolute; font-size:14px; font-weight:bold; color:#059669;
 }
-.qb-needle:after {
-  content:""; position:absolute; left:-7px; top:-18px;
-  border-left:12px solid transparent; border-right:12px solid transparent;
-  border-bottom:20px solid #dc2626;
+.qb-cardinal-n { top:6px; left:50%; transform:translateX(-50%); color:#dc2626; font-size:16px; }
+.qb-cardinal-s { bottom:6px; left:50%; transform:translateX(-50%); }
+.qb-cardinal-e { right:8px; top:50%; transform:translateY(-50%); }
+.qb-cardinal-w { left:8px; top:50%; transform:translateY(-50%); }
+.qb-arrow {
+  transition: transform 0.25s ease-out;
+  transform-origin: center;
+  display: flex; align-items: center; justify-content: center;
+  /* مؤشر النقطة المركزية */
+  position:relative;
 }
-.qb-tail { position:absolute; left:-4px; top:0; width:8px; height:32px; background:#94a3b8; border-radius:0 0 4px 4px; }
-.qb-kaaba {
-  position:absolute; left:-10px; top:-104px; width:20px; height:20px;
-  background:#111; border:2px solid #d4af37; border-radius:3px;
-  text-align:center; line-height:17px; font-size:11px; color:#d4af37;
+.qb-arrow::after {
+  content: ""; position:absolute; left:50%; top:50%; width:8px; height:8px;
+  margin:-4px 0 0 -4px; border-radius:50%; background:#059669;
+  border:2px solid #fff; box-shadow:0 0 4px rgba(0,0,0,0.3);
 }
-.qb-center { position:absolute; left:50%; top:50%; width:12px; height:12px; margin:-6px 0 0 -6px; border-radius:50%; background:#059669; border:2px solid #fff; box-shadow:0 0 6px rgba(0,0,0,0.3); }
 .qb-angle { font-size:14px; color:#065f46; font-weight:700; margin:2px 0; }
 .qb-angle strong { color:#dc2626; font-size:17px; font-family:monospace; }
 .qb-dist { font-size:12px; color:#6b7280; margin-bottom:6px; }
 .qb-dist strong { color:#065f46; font-family:monospace; font-size:13px; }
 .qb-status { font-size:13px; font-weight:700; min-height:20px; margin-bottom:6px; color:#b45309; }
 .qb-status.qb-aligned { color:#059669; }
+.qb-status-big {
+  font-size: 18px !important;
+  padding: 12px 16px !important;
+  background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+  border: 2px solid #f59e0b !important;
+  border-radius: 12px !important;
+  margin: 10px 0 !important;
+  text-align: center !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2) !important;
+  animation: qbPulse 1.5s ease-in-out infinite !important;
+}
+.qb-status-big.qb-aligned {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+  border-color: #059669 !important;
+  color: #064e3b !important;
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.3) !important;
+  animation: qbPulseSuccess 1s ease-in-out infinite !important;
+}
+@keyframes qbPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes qbPulseSuccess {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 16px rgba(5, 150, 105, 0.3); }
+  50% { transform: scale(1.05); box-shadow: 0 6px 24px rgba(5, 150, 105, 0.5); }
+}
 .qb-sensor { font-size:10px; color:#6b7280; margin-bottom:8px; }
 .qb-note { font-size:9px; color:#94a3b8; margin-top:8px; line-height:1.6; }
+.qb-map-section { margin-top: 14px; }
 
 /* ====== v14: الوضع الليلي (Dark Mode) ====== */
 html.dark-mode { background:#0d1512 !important; }
@@ -1374,33 +1395,58 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
   </div></div>
 </div>
 
-<!-- v14: نافذة بوصلة القبلة -->
+<!-- v17: نافذة اتجاه القبلة (سهم + خريطة Google) -->
 <div class="modal-overlay" id="qiblaModal">
   <div class="modal-center"><div class="modal-center-inner">
-  <div class="modal" style="max-width:360px;text-align:center;">
+  <div class="modal" style="max-width:500px;text-align:center;">
     <button class="modal-close" onclick="closeQibla()">✕</button>
-    <h2 style="text-align:center;">🧭 بوصلة القبلة</h2>
-    <div class="qb-stage">
-      <div class="qb-dial" id="qbDial">
-        <div id="qbTicks"></div>
-        <div class="qb-card qb-n">ش</div>
-        <div class="qb-card qb-e">ق</div>
-        <div class="qb-card qb-s">ج</div>
-        <div class="qb-card qb-w">غ</div>
-        <div class="qb-rotor" id="qbRotor">
-          <div class="qb-tail"></div>
-          <div class="qb-needle"></div>
-          <div class="qb-kaaba" title="مكة المكرمة">🕋</div>
-        </div>
-        <div class="qb-center"></div>
-      </div>
-    </div>
+    <h2 style="text-align:center;">🧭 اتجاه القبلة</h2>
+
+    <!-- معلومات القبلة -->
     <div class="qb-angle">زاوية القبلة من الشمال: <strong id="qbAngle">--</strong>°</div>
     <div class="qb-dist" id="qbDist">--</div>
+
+    <!-- السهم الذي يشير للقبلة -->
+    <div class="qb-arrow-stage">
+      <div class="qb-arrow-circle" id="qbArrowCircle">
+        <div class="qb-cardinal qb-cardinal-n">ش</div>
+        <div class="qb-cardinal qb-cardinal-s">ج</div>
+        <div class="qb-cardinal qb-cardinal-e">ق</div>
+        <div class="qb-cardinal qb-cardinal-w">غ</div>
+        <div class="qb-arrow" id="qbArrow">
+          <svg viewBox="0 0 100 100" width="80" height="80" style="display:block;">
+            <defs>
+              <linearGradient id="qbArrowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#dc2626"/>
+                <stop offset="100%" style="stop-color:#991b1b"/>
+              </linearGradient>
+            </defs>
+            <path d="M50,8 L68,75 L50,62 L32,75 Z" fill="url(#qbArrowGrad)" stroke="#7f1d1d" stroke-width="2"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- رسالة الحالة -->
     <div class="qb-status" id="qbStatus">--</div>
     <div class="qb-sensor" id="qbSensor"></div>
+
+    <!-- زر تفعيل الحساس -->
     <button class="btn btn-primary btn-sm" id="qbSensorBtn" onclick="qiblaEnableSensor()">🔄 تفعيل حساس الاتجاه</button>
-    <div class="qb-note">جدّه أعلى الهاتف أفقياً — يدور السهم الأحمر نحو القبلة وعلامة 🕋 على محيط القرص. عند تزامن السهم مع خط الأعلى فأنت واجه القبلة. دقة البوصلة تقريبية — قارن مع بوصلة جهازك للتحقق.</div>
+
+    <!-- خريطة Google Maps: المسار من موقعك إلى مكة -->
+    <div class="qb-map-section">
+      <div style="font-size:13px;font-weight:700;color:#065f46;margin:14px 0 6px;">📍 المسار إلى الكعبة المشرّفة على الخريطة</div>
+      <iframe id="qbMapFrame"
+              width="100%"
+              height="350"
+              frameborder="0"
+              style="border:0;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,0.15);"
+              src=""
+              allowfullscreen></iframe>
+    </div>
+
+    <div class="qb-note">السهم الأحمر يشير دائماً نحو القبلة، كيفما أدّرت الموبايل. الخريطة أعلاه تعرض المسار من موقعك إلى مكة المكرمة.</div>
   </div>
   </div></div>
 </div>
@@ -5025,48 +5071,49 @@ function qiblaDistanceKm(lat, lng) {
   var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat * d2r) * Math.cos(KAABA_LAT * d2r) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
-function qiblaBuildTicks() {
-  var t = el("qbTicks");
-  if (!t || t.getAttribute("data-built")) return;
-  var html = "";
-  for (var i = 0; i < 36; i++) {
-    var cardinal = (i % 9 === 0);
-    var deg = i * 10;
-    var tf = "rotate(" + deg + "deg) translateY(-98px)";
-    html += '<div class="qb-tick' + (cardinal ? " qb-cardinal-tick" : "") + '" style="-webkit-transform:' + tf + ';transform:' + tf + ';"></div>';
-  }
-  t.innerHTML = html;
-  t.setAttribute("data-built", "1");
-}
-function qiblaSetRot(elm, deg) {
-  var v = "rotate(" + deg + "deg)";
-  elm.style.webkitTransform = v;
-  elm.style.transform = v;
-}
 function qiblaCompute() {
   qiblaAngle = qiblaBearing(latitude, longitude);
   var km = qiblaDistanceKm(latitude, longitude);
   var kmTxt = ("" + km).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   el("qbAngle").innerHTML = qiblaAngle.toFixed(1);
   el("qbDist").innerHTML = "المسافة إلى مكة المكرمة: <strong>" + kmTxt + "</strong> كم";
+  // v17: تحميل خريطة Google Maps بالمسار من موقعك إلى الكعبة
+  var frame = el("qbMapFrame");
+  if (frame) {
+    var src = "https://www.google.com/maps?saddr=" + latitude + "," + longitude +
+              "&daddr=" + KAABA_LAT + "," + KAABA_LNG +
+              "&output=embed";
+    if (frame.src !== src) frame.src = src;
+  }
 }
 function qiblaRender() {
-  qiblaBuildTicks();
   var hasH = qiblaLive && qiblaHeading !== null && qiblaHeading !== undefined;
-  var rot = qiblaAngle - (hasH ? qiblaHeading : 0);
-  var rotor = el("qbRotor");
-  if (rotor) qiblaSetRot(rotor, rot);
+  // v17: السهم يشير للقبلة دائماً، كيفما أدّرت الموبايل
+  // السهم يدور بزاوية: qiblaAngle - deviceHeading
+  // - بدون حساس: السهم ثابت في زاوية qiblaAngle (يشير للقبلة المطلقة)
+  // - مع حساس: السهم يتبع القبلة، يدور عكس دوران الجهاز
+  var arrowRot = qiblaAngle - (hasH ? qiblaHeading : 0);
+  var arrow = el("qbArrow");
+  if (arrow) qiblaSetRot(arrow, arrowRot);
   var st = el("qbStatus"), sn = el("qbSensor");
   if (hasH) {
     var diff = Math.abs(((qiblaAngle - qiblaHeading) % 360 + 540) % 360 - 180);
     if (st) {
-      if (diff < 4) { st.innerHTML = "✅ أنت الآن باتجاه القبلة"; st.className = "qb-status qb-aligned"; }
-      else { st.innerHTML = "دوّر جهازك حتى يتجه السهم الأحمر إلى الأعلى"; st.className = "qb-status"; }
+      if (diff < 5) {
+        st.innerHTML = "✅ أنت الآن في اتجاه القبلة";
+        st.className = "qb-status qb-aligned qb-status-big";
+      } else {
+        var turn = (qiblaAngle - qiblaHeading + 360) % 360;
+        var turnDir = turn < 180 ? "يميناً" : "يساراً";
+        var turnAmt = turn < 180 ? turn : (360 - turn);
+        st.innerHTML = "🧭 أدر جهازك " + Math.round(turnAmt) + "° " + turnDir + " للقبلة";
+        st.className = "qb-status qb-status-big";
+      }
     }
-    if (sn) sn.innerHTML = "الحساس نشط — اتجاه الجهاز: " + Math.round(qiblaHeading) + "° من الشمال";
+    if (sn) sn.innerHTML = "اتجاه جهازك: " + Math.round(qiblaHeading) + "° • القبلة: " + Math.round(qiblaAngle) + "° • الفرق: " + Math.round(diff) + "°";
   } else {
-    if (st) { st.innerHTML = "القرص ثابت: الشمال أعلى والقبلة عند علامة 🕋"; st.className = "qb-status"; }
-    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس اتجاه: واجه الشمال (ش) ثم أدِر نفسك " + qiblaAngle.toFixed(0) + "° يميناً";
+    if (st) { st.innerHTML = "📍 السهم يشير للقبلة — فعّل حساس الاتجاه لتحريكه"; st.className = "qb-status qb-status-big"; }
+    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس: السهم ثابت في زاوية " + qiblaAngle.toFixed(0) + "° من الشمال";
   }
 }
 function qiblaOrientHandler(e) {
@@ -5225,7 +5272,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "16.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "17.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {

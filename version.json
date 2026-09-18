@@ -1,6 +1,6 @@
 {
-  "appVersion": "16.1",
+  "appVersion": "17.0",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-17T18:00:00Z",
-  "changelog": "إصلاح اسم الموقع (Nominatim بدل BigDataCloud) + تفعيل الدقة العالية + إصلاح رابط تحميل APK"
+  "releasedAt": "2026-09-18T03:00:00Z",
+  "changelog": "استبدال البوصلة بسهم + خريطة Google Maps تعرض المسار من موقعك إلى الكعبة"
 }
