@@ -39,7 +39,7 @@ echo "==> 3/7 aapt2 link"
   --java "$OUT/gen" \
   -A "$PROJ/assets" \
   --auto-add-overlay \
-  --min-sdk-version 21 --target-sdk-version 34
+  --min-sdk-version 19 --target-sdk-version 34
 
 echo "==> 4/7 تجميع الجافا (ecj)"
 java -jar "$ECJ" -1.8 -nowarn \
