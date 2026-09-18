@@ -1187,7 +1187,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
         <span id="onlineIcon" style="font-size:14px;vertical-align:middle;">🟢</span>
         <button class="icon-btn" id="infoToggleBtn" onclick="toggleOnlineInfo()" title="معلومات وأحاديث" style="vertical-align:middle;">📚</button>
         <button class="icon-btn" id="qiblaBtn" onclick="openQibla()" title="اتجاه القبلة" style="vertical-align:middle;">🧭</button>
-        <button class="icon-btn" id="tokenBtn" onclick="openTokenInput()" title="إدخال رمز GitHub لتحرير الرسائل" style="vertical-align:middle;">🔑</button>
+        <button class="icon-btn" id="tokenBtn" onclick="openTokenInput()" title="الرمز السري" style="vertical-align:middle;">🔑</button>
         <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="الوضع الليلي/النهاري" style="vertical-align:middle;">🌙</button>
         <button class="icon-btn" onclick="openSettings()" style="vertical-align:middle;">⚙️</button>
       </div>
@@ -1457,25 +1457,13 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
   <div class="modal-center"><div class="modal-center-inner">
   <div class="modal" style="max-width:460px;text-align:center;">
     <button class="modal-close" onclick="closeTokenInput()">✕</button>
-    <h2 style="text-align:center;">🔑 رمز GitHub لتحرير الرسائل</h2>
+    <h2 style="text-align:center;">🔑 الرمز السري</h2>
     <div class="msged-status" id="tokenInputStatus"></div>
-    <div style="background:#f0fdf4;border-radius:10px;padding:12px;border:1px solid #a7f3d0;margin-bottom:10px;text-align:right;font-size:12px;line-height:1.8;color:#065f46;">
-      <b>لتحرير رسائل الشريط المتحرك، تحتاج إلى رمز وصول شخصي (PAT) من GitHub:</b><br>
-      1️⃣ github.com → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b><br>
-      2️⃣ <b>Repository access</b>: Only select repositories → اختر <b>prayer-times</b><br>
-      3️⃣ <b>Repository permissions → Contents</b>: <b>Read and write</b><br>
-      4️⃣ <b>Expiration</b>: سنة (أو أكثر)<br>
-      5️⃣ اضغط <b>Generate token</b>، انسخ التوكن، الصقه هنا
-    </div>
     <div id="tokenInputCurrentState" style="margin-bottom:10px;font-size:11px;"></div>
-    <input type="password" id="tokenInputField" class="msged-input" style="font-family:monospace;" placeholder="github_pat_xxxxxxxxxxxx" autocomplete="off">
+    <input type="password" id="tokenInputField" class="msged-input" style="font-family:monospace;" placeholder="الصق الرمز هنا" autocomplete="off">
     <div class="btn-row" style="margin-bottom:0;">
-      <button class="btn btn-primary btn-sm" onclick="saveTokenFromInput()">💾 حفظ الرمز</button>
-      <button class="btn btn-outline btn-sm" onclick="clearTokenFromInput()">🗑️ حذف الرمز</button>
-    </div>
-    <div style="font-size:10px;color:#9ca3af;margin-top:8px;line-height:1.6;">
-      🔒 الرمز يُخزَّن في متصفحك فقط ولا يُرسل لأي جهة خارج GitHub.<br>
-      بعد حفظ الرمز، سيظهر زر "✏️ تحرير الرسائل" تلقائياً في الشريط.
+      <button class="btn btn-primary btn-sm" onclick="saveTokenFromInput()">💾 حفظ</button>
+      <button class="btn btn-outline btn-sm" onclick="clearTokenFromInput()">🗑️ حذف</button>
     </div>
   </div>
   </div></div>
@@ -4035,7 +4023,6 @@ function msgEdUpdateButtonVisibility() {
 function openTokenInput() {
   el("tokenInputModal").classList.add("show");
   updateTokenInputState();
-  // تركيز على حقل الإدخال إن لم يوجد رمز
   if (!msgEdGetToken()) {
     setTimeout(function() {
       var inp = el("tokenInputField");
@@ -4053,10 +4040,10 @@ function updateTokenInputState() {
   if (!state) return;
   var hasToken = !!msgEdGetToken();
   if (hasToken) {
-    state.innerHTML = "✅ <b>الرمز محفوظ حالياً</b> — زر «✏️ تحرير الرسائل» مفعّل في الشريط";
+    state.innerHTML = "✅ <b>الرمز محفوظ</b>";
     state.style.color = "#065f46";
   } else {
-    state.innerHTML = "⚠️ <b>لا يوجد رمز محفوظ</b> — أدخل الرمز أدناه لتفعيل تحرير الرسائل";
+    state.innerHTML = "⚠️ <b>لا يوجد رمز محفوظ</b>";
     state.style.color = "#b45309";
   }
 }
@@ -4066,36 +4053,27 @@ function saveTokenFromInput() {
   if (!inp) return;
   var t = String(inp.value || "").replace(/^\s+|\s+$/g, "");
   if (t === "") {
-    setTokenInputStatus("error", "⚠️ الصق الرمز في الخانة أولاً.");
+    setTokenInputStatus("error", "⚠️ الصق الرمز أولاً.");
     try { inp.focus(); } catch(e) {}
     return;
   }
-  // التحقق من صيغة الرمز
-  if (t.indexOf("github_pat_") !== 0 && t.indexOf("ghp_") !== 0) {
-    setTokenInputStatus("error", "⚠️ الرمز غير صحيح. يجب أن يبدأ بـ github_pat_ أو ghp_");
-    return;
-  }
-  if (t.length < 20) {
-    setTokenInputStatus("error", "⚠️ الرمز قصير جداً. تأكد من نسخه كاملاً من GitHub.");
-    return;
-  }
   try { localStorage.setItem(MSG_ED_TOKEN_KEY, t); } catch(e) {
-    setTokenInputStatus("error", "تعذر حفظ الرمز في التخزين المحلي.");
+    setTokenInputStatus("error", "تعذر حفظ الرمز.");
     return;
   }
   inp.value = "";
-  msgEdUpdateButtonVisibility(); // إظهار زر التحرير
+  msgEdUpdateButtonVisibility();
   updateTokenInputState();
-  setTokenInputStatus("success", "✅ تم حفظ الرمز! زر «✏️ تحرير الرسائل» أصبح ظاهراً في الشريط.");
+  setTokenInputStatus("success", "✅ تم الحفظ");
 }
 
 function clearTokenFromInput() {
   try { localStorage.removeItem(MSG_ED_TOKEN_KEY); } catch(e) {}
-  msgEdUpdateButtonVisibility(); // إخفاء زر التحرير
+  msgEdUpdateButtonVisibility();
   updateTokenInputState();
   var inp = el("tokenInputField");
   if (inp) inp.value = "";
-  setTokenInputStatus("loading", "🗑️ تم حذف الرمز. زر «✏️ تحرير الرسائل» لم يعد ظاهراً.");
+  setTokenInputStatus("loading", "🗑️ تم الحذف");
 }
 
 function setTokenInputStatus(kind, html) {
@@ -4106,7 +4084,7 @@ function setTokenInputStatus(kind, html) {
   if (kind === "success") {
     setTimeout(function() {
       if (s.innerHTML === html) { s.className = "msged-status"; s.innerHTML = ""; }
-    }, 5000);
+    }, 3000);
   }
 }
 
