@@ -1,6 +1,6 @@
 {
-  "appVersion": "16.4",
+  "appVersion": "16.5",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-17T21:00:00Z",
-  "changelog": "إضافة زر 'عكس اتجاه البوصلة' لحل مشكلة الانعكاس على بعض أجهزة أندرويد"
+  "releasedAt": "2026-09-17T22:00:00Z",
+  "changelog": "إصلاح زر عكس البوصلة: إضافة 180° على زاوية الدوران بدلاً من عكس الحساس"
 }

@@ -1400,8 +1400,8 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <div class="qb-status" id="qbStatus">--</div>
     <div class="qb-sensor" id="qbSensor"></div>
     <button class="btn btn-primary btn-sm" id="qbSensorBtn" onclick="qiblaEnableSensor()">🔄 تفعيل حساس الاتجاه</button>
-    <button class="btn btn-outline btn-sm" id="qbFlipBtn" onclick="qiblaToggleFlip()" style="margin-top:6px;">🔁 عكس اتجاه البوصلة</button>
-    <div class="qb-note">جدّه أعلى الهاتف أفقياً — يدور السهم الأحمر نحو القبلة وعلامة 🕋 على محيط القرص. عند تزامن السهم مع خط الأعلى فأنت واجه القبلة. دقة البوصلة تقريبية — قارن مع بوصلة جهازك للتحقق.<br><b>إن كان الاتجاه معكوساً</b> اضغط زر «🔁 عكس اتجاه البوصلة».</div>
+    <button class="btn btn-outline btn-sm" id="qbFlipBtn" onclick="qiblaToggleFlip()" style="margin-top:6px;">🔁 عكس اتجاه البوصلة (180°)</button>
+    <div class="qb-note">جدّه أعلى الهاتف أفقياً — يدور السهم الأحمر نحو القبلة وعلامة 🕋 على محيط القرص. عند تزامن السهم مع خط الأعلى فأنت واجه القبلة. دقة البوصلة تقريبية — قارن مع بوصلة جهازك للتحقق.<br><b>إن كان السهم يشير للاتجاه المعاكس تماماً (180°)</b> اضغط زر «🔁 عكس اتجاه البوصلة».</div>
   </div>
   </div></div>
 </div>
@@ -5017,7 +5017,7 @@ function qiblaLoadFlipPref() {
   try { qiblaFlipped = (localStorage.getItem(QIBLA_FLIP_KEY) === "true"); } catch(e) {}
   var btn = el("qbFlipBtn");
   if (btn) {
-    btn.textContent = qiblaFlipped ? "🔁 إلغاء عكس الاتجاه" : "🔁 عكس اتجاه البوصلة";
+    btn.textContent = qiblaFlipped ? "🔁 إلغاء عكس الاتجاه (180°)" : "🔁 عكس اتجاه البوصلة (180°)";
     btn.style.background = qiblaFlipped ? "#fef3c7" : "";
     btn.style.borderColor = qiblaFlipped ? "#f59e0b" : "";
   }
@@ -5075,27 +5075,26 @@ function qiblaCompute() {
 function qiblaRender() {
   qiblaBuildTicks();
   var hasH = qiblaLive && qiblaHeading !== null && qiblaHeading !== undefined;
-  // v16.4: دعم عكس اتجاه البوصلة لبعض أجهزة أندرويد التي تعطي قيم alpha معكوسة
-  // عند تفعيل qiblaFlipped، نعكس qiblaHeading قبل حساب rot
-  var effectiveHeading = hasH ? qiblaHeading : 0;
-  if (qiblaFlipped && hasH) {
-    // عكس الاتجاه بالنسبة لمحور الشمال-الجنوب
-    effectiveHeading = (360 - qiblaHeading) % 360;
+  // v16.5: إصلاح انعكاس بوصلة القبلة بمقدار 180°
+  // المشكلة: على بعض الأجهزة، السهم والكعبة كانا يشيران للاتجاه المعاكس تماماً (180°)
+  // الحل: زر "عكس اتجاه البوصلة" يضيف 180° على زاوية الدوران rot
+  // الصيغة الأساسية: rot = qiblaHeading - qiblaAngle (الكعبة في الأعلى عند توجيه الجهاز للقبلة)
+  // عند تفعيل qiblaFlipped: نضيف 180° لنعكس الاتجاه
+  var rot = (hasH ? qiblaHeading : 0) - qiblaAngle;
+  if (qiblaFlipped) {
+    rot = rot + 180; // إضافة 180° لعكس الاتجاه
   }
-  // الكعبة موضوعة في الأعلى افتراضياً (top:-104px)
-  // نريد: عندما يكون الجهاز مشيراً للقبلة، الكعبة في الأعلى (rot=0)
-  // الصيغة: rot = effectiveHeading - qiblaAngle
-  var rot = effectiveHeading - qiblaAngle;
   var rotor = el("qbRotor");
   if (rotor) qiblaSetRot(rotor, rot);
   var st = el("qbStatus"), sn = el("qbSensor");
   if (hasH) {
-    var diff = Math.abs(((qiblaAngle - effectiveHeading) % 360 + 540) % 360 - 180);
+    var diff = Math.abs(((qiblaAngle - qiblaHeading) % 360 + 540) % 360 - 180);
+    if (qiblaFlipped) diff = Math.abs(diff - 180); // عند العكس، الاختلاف يعكس هو الآخر
     if (st) {
       if (diff < 4) { st.innerHTML = "✅ أنت الآن باتجاه القبلة"; st.className = "qb-status qb-aligned"; }
       else { st.innerHTML = "دوّر جهازك حتى تتجه الكعبة 🕋 إلى الأعلى"; st.className = "qb-status"; }
     }
-    if (sn) sn.innerHTML = "الحساس نشط — اتجاه الجهاز: " + Math.round(qiblaHeading) + "° من الشمال" + (qiblaFlipped ? " (معكوس)" : "");
+    if (sn) sn.innerHTML = "الحساس نشط — اتجاه الجهاز: " + Math.round(qiblaHeading) + "° من الشمال" + (qiblaFlipped ? " (معكوس 180°)" : "");
   } else {
     if (st) { st.innerHTML = "القرص ثابت: الشمال أعلى والقبلة عند علامة 🕋"; st.className = "qb-status"; }
     if (sn && !qiblaLive) sn.innerHTML = "بدون حساس اتجاه: واجه الشمال (ش) ثم أدِر نفسك " + qiblaAngle.toFixed(0) + "° يميناً";
@@ -5258,7 +5257,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "16.4"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "16.5"; // النسخة الحالية — تُقارن مع version.json على GitHub
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {
