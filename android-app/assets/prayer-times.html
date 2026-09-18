@@ -1186,7 +1186,8 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-btns" style="display:inline-block;">
         <span id="onlineIcon" style="font-size:14px;vertical-align:middle;">🟢</span>
         <button class="icon-btn" id="infoToggleBtn" onclick="toggleOnlineInfo()" title="معلومات وأحاديث" style="vertical-align:middle;">📚</button>
-        <button class="icon-btn" id="qiblaBtn" onclick="openQibla()" title="بوصلة القبلة" style="vertical-align:middle;">🧭</button>
+        <button class="icon-btn" id="qiblaBtn" onclick="openQibla()" title="اتجاه القبلة" style="vertical-align:middle;">🧭</button>
+        <button class="icon-btn" id="tokenBtn" onclick="openTokenInput()" title="إدخال رمز GitHub لتحرير الرسائل" style="vertical-align:middle;">🔑</button>
         <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="الوضع الليلي/النهاري" style="vertical-align:middle;">🌙</button>
         <button class="icon-btn" onclick="openSettings()" style="vertical-align:middle;">⚙️</button>
       </div>
@@ -1447,6 +1448,35 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     </div>
 
     <div class="qb-note">السهم الأحمر يشير دائماً نحو القبلة، كيفما أدّرت الموبايل. الخريطة أعلاه تعرض المسار من موقعك إلى مكة المكرمة.</div>
+  </div>
+  </div></div>
+</div>
+
+<!-- v17.2: نافذة إدخال رمز GitHub -->
+<div class="modal-overlay" id="tokenInputModal">
+  <div class="modal-center"><div class="modal-center-inner">
+  <div class="modal" style="max-width:460px;text-align:center;">
+    <button class="modal-close" onclick="closeTokenInput()">✕</button>
+    <h2 style="text-align:center;">🔑 رمز GitHub لتحرير الرسائل</h2>
+    <div class="msged-status" id="tokenInputStatus"></div>
+    <div style="background:#f0fdf4;border-radius:10px;padding:12px;border:1px solid #a7f3d0;margin-bottom:10px;text-align:right;font-size:12px;line-height:1.8;color:#065f46;">
+      <b>لتحرير رسائل الشريط المتحرك، تحتاج إلى رمز وصول شخصي (PAT) من GitHub:</b><br>
+      1️⃣ github.com → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b><br>
+      2️⃣ <b>Repository access</b>: Only select repositories → اختر <b>prayer-times</b><br>
+      3️⃣ <b>Repository permissions → Contents</b>: <b>Read and write</b><br>
+      4️⃣ <b>Expiration</b>: سنة (أو أكثر)<br>
+      5️⃣ اضغط <b>Generate token</b>، انسخ التوكن، الصقه هنا
+    </div>
+    <div id="tokenInputCurrentState" style="margin-bottom:10px;font-size:11px;"></div>
+    <input type="password" id="tokenInputField" class="msged-input" style="font-family:monospace;" placeholder="github_pat_xxxxxxxxxxxx" autocomplete="off">
+    <div class="btn-row" style="margin-bottom:0;">
+      <button class="btn btn-primary btn-sm" onclick="saveTokenFromInput()">💾 حفظ الرمز</button>
+      <button class="btn btn-outline btn-sm" onclick="clearTokenFromInput()">🗑️ حذف الرمز</button>
+    </div>
+    <div style="font-size:10px;color:#9ca3af;margin-top:8px;line-height:1.6;">
+      🔒 الرمز يُخزَّن في متصفحك فقط ولا يُرسل لأي جهة خارج GitHub.<br>
+      بعد حفظ الرمز، سيظهر زر "✏️ تحرير الرسائل" تلقائياً في الشريط.
+    </div>
   </div>
   </div></div>
 </div>
@@ -3535,6 +3565,7 @@ el("settingsModal").addEventListener("click", function(e) { if (e.target === thi
 el("qiblaModal").addEventListener("click", function(e) { if (e.target === this) closeQibla(); }); // v14
 el("creditsModal").addEventListener("click", function(e) { if (e.target === this) closeCredits(); });
 el("messagesEditorModal").addEventListener("click", function(e) { if (e.target === this) closeMessagesEditor(); });
+el("tokenInputModal").addEventListener("click", function(e) { if (e.target === this) closeTokenInput(); }); // v17.2
 
 var _dayRollGuard = (new Date()).getDate(); // إعادة جدولة تلقائية عند تغيّر اليوم (منتصف الليل) في وضع أندرويد
 // ===== LIVE UPDATE (every second) =====
@@ -4000,6 +4031,85 @@ function msgEdUpdateButtonVisibility() {
   btn.style.display = hasToken ? "inline-block" : "none";
 }
 
+// v17.2: نافذة إدخال رمز GitHub المستقلة
+function openTokenInput() {
+  el("tokenInputModal").classList.add("show");
+  updateTokenInputState();
+  // تركيز على حقل الإدخال إن لم يوجد رمز
+  if (!msgEdGetToken()) {
+    setTimeout(function() {
+      var inp = el("tokenInputField");
+      if (inp) { try { inp.focus(); } catch(e) {} }
+    }, 200);
+  }
+}
+
+function closeTokenInput() {
+  el("tokenInputModal").classList.remove("show");
+}
+
+function updateTokenInputState() {
+  var state = el("tokenInputCurrentState");
+  if (!state) return;
+  var hasToken = !!msgEdGetToken();
+  if (hasToken) {
+    state.innerHTML = "✅ <b>الرمز محفوظ حالياً</b> — زر «✏️ تحرير الرسائل» مفعّل في الشريط";
+    state.style.color = "#065f46";
+  } else {
+    state.innerHTML = "⚠️ <b>لا يوجد رمز محفوظ</b> — أدخل الرمز أدناه لتفعيل تحرير الرسائل";
+    state.style.color = "#b45309";
+  }
+}
+
+function saveTokenFromInput() {
+  var inp = el("tokenInputField");
+  if (!inp) return;
+  var t = String(inp.value || "").replace(/^\s+|\s+$/g, "");
+  if (t === "") {
+    setTokenInputStatus("error", "⚠️ الصق الرمز في الخانة أولاً.");
+    try { inp.focus(); } catch(e) {}
+    return;
+  }
+  // التحقق من صيغة الرمز
+  if (t.indexOf("github_pat_") !== 0 && t.indexOf("ghp_") !== 0) {
+    setTokenInputStatus("error", "⚠️ الرمز غير صحيح. يجب أن يبدأ بـ github_pat_ أو ghp_");
+    return;
+  }
+  if (t.length < 20) {
+    setTokenInputStatus("error", "⚠️ الرمز قصير جداً. تأكد من نسخه كاملاً من GitHub.");
+    return;
+  }
+  try { localStorage.setItem(MSG_ED_TOKEN_KEY, t); } catch(e) {
+    setTokenInputStatus("error", "تعذر حفظ الرمز في التخزين المحلي.");
+    return;
+  }
+  inp.value = "";
+  msgEdUpdateButtonVisibility(); // إظهار زر التحرير
+  updateTokenInputState();
+  setTokenInputStatus("success", "✅ تم حفظ الرمز! زر «✏️ تحرير الرسائل» أصبح ظاهراً في الشريط.");
+}
+
+function clearTokenFromInput() {
+  try { localStorage.removeItem(MSG_ED_TOKEN_KEY); } catch(e) {}
+  msgEdUpdateButtonVisibility(); // إخفاء زر التحرير
+  updateTokenInputState();
+  var inp = el("tokenInputField");
+  if (inp) inp.value = "";
+  setTokenInputStatus("loading", "🗑️ تم حذف الرمز. زر «✏️ تحرير الرسائل» لم يعد ظاهراً.");
+}
+
+function setTokenInputStatus(kind, html) {
+  var s = el("tokenInputStatus");
+  if (!s) return;
+  s.className = "msged-status " + kind;
+  s.innerHTML = html;
+  if (kind === "success") {
+    setTimeout(function() {
+      if (s.innerHTML === html) { s.className = "msged-status"; s.innerHTML = ""; }
+    }, 5000);
+  }
+}
+
 function msgEdUpdateTokenState() {
   var badge = el("msgEdTokenState");
   if (!badge) return;
@@ -4139,6 +4249,12 @@ function applyMessagesToCache(msgs) {
 }
 
 function openMessagesEditor() {
+  // v17.2: لو فُتح المحرر بدون PAT، نوجّه المستخدم لنافذة إدخال الرمز
+  if (!msgEdGetToken()) {
+    closeMessagesEditor();
+    openTokenInput();
+    return;
+  }
   el("messagesEditorModal").classList.add("show");
   msgEdUpdateTokenState();
   try { msgMarkAllSeen(currentKnownMessages()); } catch(e) {}
@@ -5282,7 +5398,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "17.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "17.2"; // النسخة الحالية — تُقارن مع version.json على GitHub
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {

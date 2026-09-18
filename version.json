@@ -1,6 +1,6 @@
 {
-  "appVersion": "17.1",
+  "appVersion": "17.2",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-18T04:00:00Z",
-  "changelog": "إخفاء زر 'تحرير الرسائل' للمستخدمين الذين ليس لديهم PAT"
+  "releasedAt": "2026-09-18T05:00:00Z",
+  "changelog": "إضافة زر 🔑 في الشريط الرئيسي لإدخال PAT + نافذة منبثقة مخصصة"
 }
