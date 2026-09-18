@@ -1,6 +1,6 @@
 {
-  "appVersion": "16.2",
+  "appVersion": "16.3",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-17T19:00:00Z",
-  "changelog": "خفض minSdkVersion إلى 19 (Android 4.4 KitKat) — دعم الأجهزة القديمة"
+  "releasedAt": "2026-09-17T20:00:00Z",
+  "changelog": "إصلاح انعكاس اتجاه الكعبة في بوصلة القبلة"
 }

@@ -5053,7 +5053,16 @@ function qiblaCompute() {
 function qiblaRender() {
   qiblaBuildTicks();
   var hasH = qiblaLive && qiblaHeading !== null && qiblaHeading !== undefined;
-  var rot = qiblaAngle - (hasH ? qiblaHeading : 0);
+  // v16.3: إصلاح انعكاس اتجاه الكعبة
+  // الكود القديم: rot = qiblaAngle - heading → الكعبة كانت تظهر معاكسة تماماً
+  // السبب: في CSS، .qb-kaaba موضوعة في top:-104px (للأعلى = الشمال)
+  //   عند rot=165°، الكعبة تدور 165° مع عقارب الساعة من الأعلى
+  //   = تنتقل إلى أسفل-يسار (الزاوية 165° على القرص) = صحيح رياضياً
+  //   لكن المستخدم يقول إنها معاكسة تماماً — هذا يعني أن الحساس يعطي قيماً معكوسة
+  //   أو أن اتجاه دوران CSS يفسر بشكل مختلف على الجهاز
+  // الحل: عكس زاوية الدوران (rot = heading - qiblaAngle بدل qiblaAngle - heading)
+  //   هذا يجعل الكعبة تشير في الاتجاه المعاكس، والذي يجب أن يطابق القبلة الفعلية
+  var rot = (hasH ? qiblaHeading : 0) - qiblaAngle;
   var rotor = el("qbRotor");
   if (rotor) qiblaSetRot(rotor, rot);
   var st = el("qbStatus"), sn = el("qbSensor");
@@ -5061,7 +5070,7 @@ function qiblaRender() {
     var diff = Math.abs(((qiblaAngle - qiblaHeading) % 360 + 540) % 360 - 180);
     if (st) {
       if (diff < 4) { st.innerHTML = "✅ أنت الآن باتجاه القبلة"; st.className = "qb-status qb-aligned"; }
-      else { st.innerHTML = "دوّر جهازك حتى يتجه السهم الأحمر إلى الأعلى"; st.className = "qb-status"; }
+      else { st.innerHTML = "دوّر جهازك حتى تتجه الكعبة 🕋 إلى الأعلى"; st.className = "qb-status"; }
     }
     if (sn) sn.innerHTML = "الحساس نشط — اتجاه الجهاز: " + Math.round(qiblaHeading) + "° من الشمال";
   } else {
@@ -5225,7 +5234,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "16.2"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "16.3"; // النسخة الحالية — تُقارن مع version.json على GitHub
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {
