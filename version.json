@@ -1,6 +1,6 @@
 {
-  "appVersion": "16.8",
+  "appVersion": "16.9",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-18T01:00:00Z",
-  "changelog": "بوصلة القبلة: المؤشر يشير للقبلة دائماً كيفما كان وضع الموبايل"
+  "releasedAt": "2026-09-18T02:00:00Z",
+  "changelog": "بوصلة القبلة: إضافة 180° لعكس اتجاه المؤشر نحو الجنوب (القبلة)"
 }

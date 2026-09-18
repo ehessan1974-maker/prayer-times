@@ -5090,7 +5090,8 @@ function qiblaRender() {
   //
   // النتيجة: الكعبة 🕋 والسهم الأحمر يشيران نحو القبلة المطلقة دائماً،
   // كيفما كان وضع الموبايل.
-  var dialRot = qiblaAngle - (hasH ? qiblaHeading : 0);
+  // v16.9: إضافة 180° لعكس اتجاه المؤشر (يجب أن يشير جنوباً نحو القبلة)
+  var dialRot = qiblaAngle - (hasH ? qiblaHeading : 0) + 180;
   var dial = el("qbDial");
   if (dial) qiblaSetRot(dial, dialRot);
 
@@ -5277,7 +5278,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "16.8"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "16.9"; // النسخة الحالية — تُقارن مع version.json على GitHub
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {
