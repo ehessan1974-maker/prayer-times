@@ -5079,13 +5079,13 @@ function qiblaCompute() {
 function qiblaRender() {
   qiblaBuildTicks();
   var hasH = qiblaLive && qiblaHeading !== null && qiblaHeading !== undefined;
-  // v16.6: المؤشر يشير للقبلة تلقائياً كيفما وجّهت الجهاز
-  // الكعبة في الأعلى افتراضياً (top:-104px) — عند rot=0 تشير للشمال
-  // نريد: الكعبة تشير للقبلة المطلقة (qiblaAngle° من الشمال)
-  // الصيغة: rot = qiblaHeading - qiblaAngle + 180
-  // - qiblaHeading - qiblaAngle: تعويض دوران الجهاز
-  // - +180: إصلاح انعكاس CSS (الكعبة في الأعلى بدل الأسفل)
-  var rot = (hasH ? qiblaHeading : 0) - qiblaAngle + 180;
+  // v16.7: المؤشر يشير للقبلة تلقائياً + الكعبة في الأعلى عند المواجهة
+  // الكعبة موضوعة في الأعلى (top:-104px) — عند rot=0 تكون في الأعلى
+  // نريد: عندما يواجه المستخدم القبلة (heading = qiblaAngle)، الكعبة في الأعلى (rot=0)
+  // الصيغة: rot = qiblaHeading - qiblaAngle
+  // - عندما heading = qiblaAngle: rot = 0 → الكعبة في الأعلى ✅
+  // - عندما يدور الجهاز: rot يتغير → الكعبة تدور مع الجهاز تلقائياً
+  var rot = (hasH ? qiblaHeading : 0) - qiblaAngle;
   var rotor = el("qbRotor");
   if (rotor) qiblaSetRot(rotor, rot);
   var st = el("qbStatus"), sn = el("qbSensor");
@@ -5266,7 +5266,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "16.6"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "16.7"; // النسخة الحالية — تُقارن مع version.json على GitHub
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {

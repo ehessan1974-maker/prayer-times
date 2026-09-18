@@ -1,6 +1,6 @@
 {
-  "appVersion": "16.6",
+  "appVersion": "16.7",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-17T23:00:00Z",
-  "changelog": "بوصلة القبلة: المؤشر يشير للقبلة تلقائياً + رسالة واضحة + toast يختفي فوراً"
+  "releasedAt": "2026-09-18T00:00:00Z",
+  "changelog": "بوصلة القبلة: إزالة +180 — الكعبة في الأعلى عند مواجهة القبلة"
 }
