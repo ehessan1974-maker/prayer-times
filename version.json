@@ -1,6 +1,6 @@
 {
-  "appVersion": "17.2",
+  "appVersion": "18.0",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-18T05:00:00Z",
-  "changelog": "إضافة زر 🔑 في الشريط الرئيسي لإدخال PAT + نافذة منبثقة مخصصة"
+  "releasedAt": "2026-09-18T06:00:00Z",
+  "changelog": "نظام تسجيل دخول آمن عبر Cloudflare Worker — PAT مخفي تماماً، كل مستخدم حساب فريد، إمكانية إلغاء مستخدم واحد"
 }

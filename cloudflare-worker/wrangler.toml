@@ -1,0 +1,22 @@
+name = "prayer-times-worker"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+workers_dev = true
+
+# قاعدة بيانات D1 (يتم إنشاؤها بأمر wrangler)
+[[d1_databases]]
+binding = "DB"
+database_name = "prayer-times-db"
+database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+
+# متغيرات البيئة (القيم غير السرية)
+[vars]
+GH_OWNER = "ehessan1974-maker"
+GH_REPO = "prayer-times"
+GH_PATH = "content.json"
+GH_BRANCH = "main"
+ADMIN_EMAIL = "your-email@example.com"
+
+# المتغيرات السرية تُعدّ عبر:
+#   wrangler secret put GH_PAT
+#   wrangler secret put JWT_SECRET
