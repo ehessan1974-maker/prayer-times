@@ -1,6 +1,6 @@
 {
-  "appVersion": "17.0",
+  "appVersion": "17.1",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-18T03:00:00Z",
-  "changelog": "استبدال البوصلة بسهم + خريطة Google Maps تعرض المسار من موقعك إلى الكعبة"
+  "releasedAt": "2026-09-18T04:00:00Z",
+  "changelog": "إخفاء زر 'تحرير الرسائل' للمستخدمين الذين ليس لديهم PAT"
 }

@@ -1253,7 +1253,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <!-- Islamic Info Section -->
     <div class="info-section" id="infoSection" style="display:none;">
       <div id="infoCatBar" style="overflow-x:auto;white-space:nowrap;padding:4px 0 6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;display:none;">
-        <span onclick="openMessagesEditor()" id="msgsEditBtn" title="تحرير رسائل الشريط وإدارتها" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #fbbf24;background:#fffbeb;color:#b45309;font-size:9px;cursor:pointer;margin:0 2px;">✏️ تحرير الرسائل</span>
+        <span onclick="openMessagesEditor()" id="msgsEditBtn" data-requires-token="1" title="تحرير رسائل الشريط وإدارتها (يتطلب رمز GitHub)" style="display:none;padding:3px 8px;border-radius:12px;border:1px solid #fbbf24;background:#fffbeb;color:#b45309;font-size:9px;cursor:pointer;margin:0 2px;">✏️ تحرير الرسائل</span>
         <span onclick="toggleCatFilter('all')" id="catBtn_all" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:#059669;color:white;font-size:9px;cursor:pointer;margin:0 2px;">الكل</span>
         <span onclick="toggleCatFilter('hadith')" id="catBtn_hadith" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🕌 أحاديث</span>
         <span onclick="toggleCatFilter('quran')" id="catBtn_quran" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📖 قرآن</span>
@@ -3992,6 +3992,14 @@ function msgEdGetToken() {
   } catch(e) { return null; }
 }
 
+// v17.1: إظهار/إخفاء زر "تحرير الرسائل" حسب وجود PAT
+function msgEdUpdateButtonVisibility() {
+  var btn = el("msgsEditBtn");
+  if (!btn) return;
+  var hasToken = !!msgEdGetToken();
+  btn.style.display = hasToken ? "inline-block" : "none";
+}
+
 function msgEdUpdateTokenState() {
   var badge = el("msgEdTokenState");
   if (!badge) return;
@@ -4014,6 +4022,7 @@ function msgEdSaveToken() {
   try { localStorage.setItem(MSG_ED_TOKEN_KEY, t); } catch(e) { msgEdSetStatus("error", "تعذر حفظ الرمز في التخزين المحلي."); return; }
   inp.value = "";
   msgEdUpdateTokenState();
+  msgEdUpdateButtonVisibility(); // v17.1: إظهار زر التحرير بعد حفظ الرمز
   if (editorDirty) {
     msgEdSetStatus("success", "✅ تم حفظ الرمز. أنجز تعديلاتك ثم اضغط ☁️ حفظ التعديلات على GitHub.");
   } else {
@@ -4025,6 +4034,7 @@ function msgEdSaveToken() {
 function msgEdClearToken() {
   try { localStorage.removeItem(MSG_ED_TOKEN_KEY); } catch(e) {}
   msgEdUpdateTokenState();
+  msgEdUpdateButtonVisibility(); // v17.1: إخفاء زر التحرير بعد حذف الرمز
   msgEdSetStatus("loading", "🗑️ تم حذف الرمز من الجهاز — يمكنك إعادة تحميل القائمة للعودة لوضع القراءة فقط.");
 }
 
@@ -5272,7 +5282,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "17.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "17.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {
@@ -5444,6 +5454,9 @@ function registerServiceWorker() {
   else { requestLocation(); }
   // أداة الاختبار للمتصفح فقط — تُخفى داخل تطبيق أندرويد (الإشعارات النظامية تكفي)
   setTimeout(function() { if (!window.AndroidPrayer) { addTestControl(); createTestPanel(); } }, 1000);
+
+  // v17.1: إظهار/إخفاء زر "تحرير الرسائل" حسب وجود PAT
+  try { msgEdUpdateButtonVisibility(); } catch(e) {}
 
   // ===== تهيئة نظام التحديث التلقائي =====
   registerServiceWorker();
