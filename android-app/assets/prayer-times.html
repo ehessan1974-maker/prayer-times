@@ -1054,6 +1054,32 @@ body.smart .modal { scrollbar-gutter: stable; }
 .qb-dist strong { color:#065f46; font-family:monospace; font-size:13px; }
 .qb-status { font-size:13px; font-weight:700; min-height:20px; margin-bottom:6px; color:#b45309; }
 .qb-status.qb-aligned { color:#059669; }
+.qb-status-big {
+  font-size: 18px !important;
+  padding: 12px 16px !important;
+  background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+  border: 2px solid #f59e0b !important;
+  border-radius: 12px !important;
+  margin: 10px 0 !important;
+  text-align: center !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2) !important;
+  animation: qbPulse 1.5s ease-in-out infinite !important;
+}
+.qb-status-big.qb-aligned {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+  border-color: #059669 !important;
+  color: #064e3b !important;
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.3) !important;
+  animation: qbPulseSuccess 1s ease-in-out infinite !important;
+}
+@keyframes qbPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes qbPulseSuccess {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 16px rgba(5, 150, 105, 0.3); }
+  50% { transform: scale(1.05); box-shadow: 0 6px 24px rgba(5, 150, 105, 0.5); }
+}
 .qb-sensor { font-size:10px; color:#6b7280; margin-bottom:8px; }
 .qb-note { font-size:9px; color:#94a3b8; margin-top:8px; line-height:1.6; }
 
@@ -1400,8 +1426,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <div class="qb-status" id="qbStatus">--</div>
     <div class="qb-sensor" id="qbSensor"></div>
     <button class="btn btn-primary btn-sm" id="qbSensorBtn" onclick="qiblaEnableSensor()">🔄 تفعيل حساس الاتجاه</button>
-    <button class="btn btn-outline btn-sm" id="qbFlipBtn" onclick="qiblaToggleFlip()" style="margin-top:6px;">🔁 عكس اتجاه البوصلة (180°)</button>
-    <div class="qb-note">جدّه أعلى الهاتف أفقياً — يدور السهم الأحمر نحو القبلة وعلامة 🕋 على محيط القرص. عند تزامن السهم مع خط الأعلى فأنت واجه القبلة. دقة البوصلة تقريبية — قارن مع بوصلة جهازك للتحقق.<br><b>إن كان السهم يشير للاتجاه المعاكس تماماً (180°)</b> اضغط زر «🔁 عكس اتجاه البوصلة».</div>
+    <div class="qb-note">جدّد هاتفك أفقياً — السهم الأحمر وعلامة 🕋 يدوران تلقائياً نحو القبلة كيفما وجّهت جهازك. عندما تختفي علامة ⚠️ وتظهر ✅ فأنت واجه القبلة. دقة البوصلة تقريبية — قارن مع بوصلة جهازك للتحقق.</div>
   </div>
   </div></div>
 </div>
@@ -5009,27 +5034,6 @@ applyTheme(); // تطبيق فوري عند الإقلاع — قبل جلب ا�
 // ============================================================
 var KAABA_LAT = 21.4224779, KAABA_LNG = 39.8251832; // الكعبة المشرفة — مكة المكرمة
 var qiblaAngle = 0, qiblaHeading = null, qiblaLive = false, qiblaSensorTimer = null;
-var QIBLA_FLIP_KEY = "pt-qibla-flipped";
-var qiblaFlipped = false;
-
-// قراءة تفضيل "عكس البوصلة" من localStorage
-function qiblaLoadFlipPref() {
-  try { qiblaFlipped = (localStorage.getItem(QIBLA_FLIP_KEY) === "true"); } catch(e) {}
-  var btn = el("qbFlipBtn");
-  if (btn) {
-    btn.textContent = qiblaFlipped ? "🔁 إلغاء عكس الاتجاه (180°)" : "🔁 عكس اتجاه البوصلة (180°)";
-    btn.style.background = qiblaFlipped ? "#fef3c7" : "";
-    btn.style.borderColor = qiblaFlipped ? "#f59e0b" : "";
-  }
-}
-
-// تبديل تفضيل "عكس البوصلة"
-function qiblaToggleFlip() {
-  qiblaFlipped = !qiblaFlipped;
-  try { localStorage.setItem(QIBLA_FLIP_KEY, qiblaFlipped ? "true" : "false"); } catch(e) {}
-  qiblaLoadFlipPref();
-  qiblaRender();
-}
 
 // زاوية القبلة: الدائرة العظمى من الموقع إلى الكعبة (بالاتجاه مع عقارب الساعة من الشمال)
 function qiblaBearing(lat, lng) {
@@ -5075,28 +5079,34 @@ function qiblaCompute() {
 function qiblaRender() {
   qiblaBuildTicks();
   var hasH = qiblaLive && qiblaHeading !== null && qiblaHeading !== undefined;
-  // v16.5: إصلاح انعكاس بوصلة القبلة بمقدار 180°
-  // المشكلة: على بعض الأجهزة، السهم والكعبة كانا يشيران للاتجاه المعاكس تماماً (180°)
-  // الحل: زر "عكس اتجاه البوصلة" يضيف 180° على زاوية الدوران rot
-  // الصيغة الأساسية: rot = qiblaHeading - qiblaAngle (الكعبة في الأعلى عند توجيه الجهاز للقبلة)
-  // عند تفعيل qiblaFlipped: نضيف 180° لنعكس الاتجاه
-  var rot = (hasH ? qiblaHeading : 0) - qiblaAngle;
-  if (qiblaFlipped) {
-    rot = rot + 180; // إضافة 180° لعكس الاتجاه
-  }
+  // v16.6: المؤشر يشير للقبلة تلقائياً كيفما وجّهت الجهاز
+  // الكعبة في الأعلى افتراضياً (top:-104px) — عند rot=0 تشير للشمال
+  // نريد: الكعبة تشير للقبلة المطلقة (qiblaAngle° من الشمال)
+  // الصيغة: rot = qiblaHeading - qiblaAngle + 180
+  // - qiblaHeading - qiblaAngle: تعويض دوران الجهاز
+  // - +180: إصلاح انعكاس CSS (الكعبة في الأعلى بدل الأسفل)
+  var rot = (hasH ? qiblaHeading : 0) - qiblaAngle + 180;
   var rotor = el("qbRotor");
   if (rotor) qiblaSetRot(rotor, rot);
   var st = el("qbStatus"), sn = el("qbSensor");
   if (hasH) {
+    // الفرق بين اتجاه الجهاز والقبلة
     var diff = Math.abs(((qiblaAngle - qiblaHeading) % 360 + 540) % 360 - 180);
-    if (qiblaFlipped) diff = Math.abs(diff - 180); // عند العكس، الاختلاف يعكس هو الآخر
     if (st) {
-      if (diff < 4) { st.innerHTML = "✅ أنت الآن باتجاه القبلة"; st.className = "qb-status qb-aligned"; }
-      else { st.innerHTML = "دوّر جهازك حتى تتجه الكعبة 🕋 إلى الأعلى"; st.className = "qb-status"; }
+      if (diff < 5) {
+        st.innerHTML = "✅ أنت الآن في اتجاه القبلة";
+        st.className = "qb-status qb-aligned qb-status-big";
+      } else {
+        var turn = (qiblaAngle - qiblaHeading + 360) % 360;
+        var turnDir = turn < 180 ? "يميناً" : "يساراً";
+        var turnAmt = turn < 180 ? turn : (360 - turn);
+        st.innerHTML = "🧭 أدر جهازك " + Math.round(turnAmt) + "° " + turnDir + " للقبلة";
+        st.className = "qb-status qb-status-big";
+      }
     }
-    if (sn) sn.innerHTML = "الحساس نشط — اتجاه الجهاز: " + Math.round(qiblaHeading) + "° من الشمال" + (qiblaFlipped ? " (معكوس 180°)" : "");
+    if (sn) sn.innerHTML = "اتجاه جهازك: " + Math.round(qiblaHeading) + "° • القبلة: " + Math.round(qiblaAngle) + "° • الفرق: " + Math.round(diff) + "°";
   } else {
-    if (st) { st.innerHTML = "القرص ثابت: الشمال أعلى والقبلة عند علامة 🕋"; st.className = "qb-status"; }
+    if (st) { st.innerHTML = "📍 القرص ثابت — الشمال أعلى والقبلة عند علامة 🕋"; st.className = "qb-status qb-status-big"; }
     if (sn && !qiblaLive) sn.innerHTML = "بدون حساس اتجاه: واجه الشمال (ش) ثم أدِر نفسك " + qiblaAngle.toFixed(0) + "° يميناً";
   }
 }
@@ -5147,7 +5157,6 @@ function qiblaRefreshIfOpen() {
 }
 function openQibla() {
   qiblaLive = false; qiblaHeading = null;
-  qiblaLoadFlipPref(); // v16.4: تحميل تفضيل عكس البوصلة
   el("qiblaModal").classList.add("show");
   qiblaBuildTicks();
   qiblaCompute();
@@ -5257,7 +5266,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "16.5"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "16.6"; // النسخة الحالية — تُقارن مع version.json على GitHub
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {
@@ -5272,7 +5281,11 @@ function _ensureUpdateToast() {
       "border:1px solid rgba(255,255,255,.2);";
     t.innerHTML = "<div style='font-weight:700;margin-bottom:4px'>🔄 تحديث جديد متوفر</div>" +
       "<div style='font-size:12px;opacity:.95' id='updateToastSub'>اضغط هنا لإعادة التحميل</div>";
-    t.onclick = function() { applyAppUpdate(true); };
+    t.onclick = function() {
+      // v16.6: إخفاء الـ toast فوراً عند الضغط + تحديث فوري
+      hideUpdateToast();
+      applyAppUpdate(true);
+    };
     document.body.appendChild(t);
     _updateToastEl = t;
   } catch(e) {}
@@ -5284,7 +5297,7 @@ function showUpdateToast(newVersion) {
   if (!t) return;
   try {
     var sub = t.querySelector("#updateToastSub");
-    if (sub) sub.textContent = "النسخة الحالية: " + CURRENT_APP_VERSION + " → الجديدة: " + newVersion;
+    if (sub) sub.textContent = "النسخة الحالية: " + CURRENT_APP_VERSION + " → الجديدة: " + newVersion + " — اضغط للتحديث الآن";
   } catch(e) {}
   t.style.display = "block";
   t.style.animation = "ptSlideUp .35s ease";
@@ -5295,6 +5308,8 @@ function hideUpdateToast() {
 }
 
 function applyAppUpdate(userTriggered) {
+  // v16.6: إخفاء الـ toast فوراً
+  hideUpdateToast();
   // 1) تحديث النسخة المسجلة محلياً
   try { localStorage.setItem(APP_VERSION_KEY, CURRENT_APP_VERSION); } catch(e) {}
   // 2) محاولة إعلام Service Worker بتحديث الكاش

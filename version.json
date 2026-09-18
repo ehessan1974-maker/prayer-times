@@ -1,6 +1,6 @@
 {
-  "appVersion": "16.5",
+  "appVersion": "16.6",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-17T22:00:00Z",
-  "changelog": "إصلاح زر عكس البوصلة: إضافة 180° على زاوية الدوران بدلاً من عكس الحساس"
+  "releasedAt": "2026-09-17T23:00:00Z",
+  "changelog": "بوصلة القبلة: المؤشر يشير للقبلة تلقائياً + رسالة واضحة + toast يختفي فوراً"
 }
