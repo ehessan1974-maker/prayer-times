@@ -1021,6 +1021,7 @@ body.smart .modal { scrollbar-gutter: stable; }
   border:3px solid #059669;
   box-shadow: 0 4px 18px rgba(5,150,105,0.25), inset 0 0 14px rgba(5,150,105,0.12);
   overflow:hidden;
+  -webkit-transition: -webkit-transform 0.25s ease-out; transition: transform 0.25s ease-out;
 }
 .qb-tick { position:absolute; left:50%; top:50%; width:2px; height:8px; margin-left:-1px; margin-top:-4px; background:#94a3b8; border-radius:1px; }
 .qb-tick.qb-cardinal-tick { height:12px; width:3px; margin-left:-1.5px; background:#059669; }
@@ -5079,15 +5080,25 @@ function qiblaCompute() {
 function qiblaRender() {
   qiblaBuildTicks();
   var hasH = qiblaLive && qiblaHeading !== null && qiblaHeading !== undefined;
-  // v16.7: المؤشر يشير للقبلة تلقائياً + الكعبة في الأعلى عند المواجهة
-  // الكعبة موضوعة في الأعلى (top:-104px) — عند rot=0 تكون في الأعلى
-  // نريد: عندما يواجه المستخدم القبلة (heading = qiblaAngle)، الكعبة في الأعلى (rot=0)
-  // الصيغة: rot = qiblaHeading - qiblaAngle
-  // - عندما heading = qiblaAngle: rot = 0 → الكعبة في الأعلى ✅
-  // - عندما يدور الجهاز: rot يتغير → الكعبة تدور مع الجهاز تلقائياً
-  var rot = (hasH ? qiblaHeading : 0) - qiblaAngle;
+  // v16.8: المنطق البسيط — الكعبة تشير للقبلة دائماً، كيفما كان وضع الموبايل
+  //
+  // الطريقة: ندور القرص كله (ش/ق/ج/غ + الكعبة) بحيث شمال القرص = القبلة المطلقة
+  // - عند rot=0: شمال القرص = الشمال المطلق → الكعبة (في الأعلى) تشير للشمال
+  // - نريد: شمال القرص = القبلة → ندور القرص بـ qiblaAngle مع عقارب الساعة
+  // - لكن عندما يدور الجهاز، يجب أن يدور القرص معه (ليبقى شمال القرص مشيراً للقبلة المطلقة)
+  //   → نطرح qiblaHeading: dialRot = qiblaAngle - qiblaHeading
+  //
+  // النتيجة: الكعبة 🕋 والسهم الأحمر يشيران نحو القبلة المطلقة دائماً،
+  // كيفما كان وضع الموبايل.
+  var dialRot = qiblaAngle - (hasH ? qiblaHeading : 0);
+  var dial = el("qbDial");
+  if (dial) qiblaSetRot(dial, dialRot);
+
+  // الـ rotor ثابت دائماً (الكعبة في الأعلى على القرص الذي يدور)
+  // لا نحتاج لتدويره — الكعبة في الأعلى دائماً بالنسبة للقرص، والقرص يدور ككل
   var rotor = el("qbRotor");
-  if (rotor) qiblaSetRot(rotor, rot);
+  if (rotor) qiblaSetRot(rotor, 0);
+
   var st = el("qbStatus"), sn = el("qbSensor");
   if (hasH) {
     // الفرق بين اتجاه الجهاز والقبلة
@@ -5106,8 +5117,8 @@ function qiblaRender() {
     }
     if (sn) sn.innerHTML = "اتجاه جهازك: " + Math.round(qiblaHeading) + "° • القبلة: " + Math.round(qiblaAngle) + "° • الفرق: " + Math.round(diff) + "°";
   } else {
-    if (st) { st.innerHTML = "📍 القرص ثابت — الشمال أعلى والقبلة عند علامة 🕋"; st.className = "qb-status qb-status-big"; }
-    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس اتجاه: واجه الشمال (ش) ثم أدِر نفسك " + qiblaAngle.toFixed(0) + "° يميناً";
+    if (st) { st.innerHTML = "📍 القرص يشير للقبلة — الكعبة 🕋 في الأعلى دائماً"; st.className = "qb-status qb-status-big"; }
+    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس اتجاه: الكعبة 🕋 تشير للقبلة المطلقة";
   }
 }
 function qiblaOrientHandler(e) {
@@ -5266,7 +5277,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "16.7"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "16.8"; // النسخة الحالية — تُقارن مع version.json على GitHub
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {
