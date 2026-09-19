@@ -270,6 +270,46 @@ public class MainActivity extends Activity {
             } catch (Exception e2) { return "unknown"; }
         }
 
+        // v20: جلب رقم الهاتف (يتطلب إذن READ_PHONE_STATE أو READ_PHONE_NUMBERS)
+        @JavascriptInterface
+        public String getPhoneNumber() {
+            // محاولة 1: SubscriptionManager (أندرويد 5.1+)
+            try {
+                if (Build.VERSION.SDK_INT >= 22) {
+                    android.telephony.SubscriptionManager sm = android.telephony.SubscriptionManager.from(MainActivity.this);
+                    java.util.List<android.telephony.SubscriptionInfo> subs = sm.getActiveSubscriptionInfoList();
+                    if (subs != null && !subs.isEmpty()) {
+                        for (android.telephony.SubscriptionInfo sub : subs) {
+                            String num = sub.getNumber();
+                            if (num != null && num.length() > 4) return num;
+                        }
+                    }
+                }
+            } catch (Exception e) {}
+            // محاولة 2: TelephonyManager (يتطلب إذن READ_PHONE_STATE)
+            try {
+                android.telephony.TelephonyManager tm = (android.telephony.TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+                if (Build.VERSION.SDK_INT >= 33) {
+                    // أندرويد 13+: يتطلب READ_PHONE_NUMBERS
+                    if (permissionGranted("android.permission.READ_PHONE_NUMBERS")) {
+                        String num = tm.getLine1Number();
+                        if (num != null && num.length() > 4) return num;
+                    }
+                } else if (Build.VERSION.SDK_INT >= 23) {
+                    // أندرويد 6-12: يتطلب READ_PHONE_STATE
+                    if (permissionGranted(Manifest.permission.READ_PHONE_STATE)) {
+                        String num = tm.getLine1Number();
+                        if (num != null && num.length() > 4) return num;
+                    }
+                } else {
+                    // أندرويد 5-: لا يتطلب إذناً وقت التشغيل
+                    String num = tm.getLine1Number();
+                    if (num != null && num.length() > 4) return num;
+                }
+            } catch (Exception e) {}
+            return "";
+        }
+
         // ===== تنزيل تحديث HTML جديد من GitHub (يستدعيه JS عند توفر نسخة جديدة) =====
         @JavascriptInterface
         public void downloadAppUpdate(final String jsCallback) {

@@ -1398,6 +1398,14 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
           💡 هذا المعرّف يُستخدم لإرسال رسائل خاصة بك من المدير. شاركه مع من تريد أن يرسل لك رسالة خاصة.
         </div>
       </div>
+      <!-- v20: زر مشاركة تلقائية مع المدير -->
+      <div class="setting-box" style="margin-top:8px;">
+        <span style="font-size:11px;color:#374151;">📤 مشاركة معرّف الجهاز تلقائياً مع المدير</span>
+        <button id="tgShareToggle" onclick="tgToggleShare()" style="font-size:9px;padding:3px 8px;border-radius:8px;border:1px solid #93c5fd;background:#dbeafe;color:#1d4ed8;cursor:pointer;">مفعّل</button>
+      </div>
+      <div style="font-size:9px;color:#9ca3af;margin-top:4px;line-height:1.5;">
+        عند التفعيل، يُرسل التطبيق معرّف جهازك للمدير تلقائياً ليتمكن من إرسال رسائل خاصة بك.
+      </div>
     </div>
 
     <div class="modal-section">
@@ -1496,6 +1504,36 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="name">v15 — بوصلة القبلة + الوضع الليلي + أشرطة تمرير عريضة</div>
     </div>
     <button class="credits-close" onclick="closeCredits()">إغلاق</button>
+  </div>
+  </div></div>
+</div>
+
+<!-- v20: نافذة موافقة على مشاركة معرّف الجهاز مع المدير -->
+<div class="modal-overlay" id="consentModal" style="z-index:99998;">
+  <div class="modal-center"><div class="modal-center-inner">
+  <div class="modal" style="max-width:420px;text-align:center;">
+    <h2 style="text-align:center;">📱 رسائل خاصة من المدير</h2>
+    <div style="font-size:13px;line-height:1.7;color:#374151;margin-bottom:14px;text-align:right;">
+      هذا التطبيق يستخدم معرّف جهازك لإرسال رسائل خاصة بك من المدير عبر GitHub.
+      <br><br>
+      عند موافقتك، سيُرسَل للمدير ما يلي:
+      <ul style="margin:8px 0;padding-right:20px;font-size:12px;color:#6b7280;">
+        <li>🆔 معرّف هذا الجهاز</li>
+        <li>📍 اسم موقعك (مثل "حرستا، سوريا")</li>
+        <li>📞 رقم الهاتف (لو متاح على موبايل)</li>
+        <li>🌐 نوع الجهاز (موبايل/كمبيوتر)</li>
+        <li>📦 إصدار التطبيق</li>
+      </ul>
+      <b>لن تُرسَل أي معلومات حساسة</b> — فقط ما يلزم لتلقي رسائل خاصة بك.
+      تستطيع إيقاف المشاركة في أي وقت من الإعدادات.
+    </div>
+    <div style="background:#f0fdf4;border-radius:8px;padding:8px 10px;margin-bottom:14px;font-size:11px;color:#065f46;text-align:right;direction:ltr;font-family:monospace;">
+      <b>معرّف جهازك:</b> <span id="consentDeviceId">—</span>
+    </div>
+    <div class="btn-row" style="margin-bottom:0;">
+      <button class="btn btn-primary" onclick="tgConsentAccept()" style="width:48%;">✅ موافق</button>
+      <button class="btn btn-outline" onclick="tgConsentDecline()" style="width:48%;">⏸️ لاحقاً</button>
+    </div>
   </div>
   </div></div>
 </div>
@@ -3375,6 +3413,8 @@ function openSettings() {
     var devInput = el("deviceIdDisplay");
     if (devInput) devInput.value = getDeviceId();
   } catch(e) {}
+  // v20: تحديث زر المشاركة
+  try { tgUpdateToggleUI(); } catch(e) {}
 }
 function closeSettings() { el("settingsModal").classList.remove("show"); }
 
@@ -4545,7 +4585,19 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "19.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "20.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
+
+// ===== v20: Telegram Bot لجمع معرّفات الأجهزة =====
+// ضع هنا التوكن وchat_id الذي حصلت عليه من @BotFather
+var TG_BOT_TOKEN = ""; // مثال: "1234567890:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw"
+var TG_CHAT_ID = "";  // مثال: "123456789"
+var TG_API_URL = "https://api.telegram.org/bot" + TG_BOT_TOKEN + "/sendMessage";
+
+// مفاتيح localStorage
+var TG_CONSENT_KEY = "pt-tg-consent";       // هل وافق المستخدم؟
+var TG_LAST_REPORT_KEY = "pt-tg-last-report"; // آخر إرسال (timestamp)
+var TG_LAST_LOCATION_KEY = "pt-tg-last-location"; // آخر موقع مُرسَل
+var TG_REPORT_INTERVAL = 24 * 60 * 60 * 1000; // 24 ساعة بين الإرسالات
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {
@@ -4692,6 +4744,169 @@ function registerServiceWorker() {
 }
 
 // =====================================================================
+// ===== v20: Telegram Bot — جلب معرّفات الأجهزة تلقائياً =====
+// =====================================================================
+
+// التحقق من موافقة المستخدم على المشاركة
+function tgHasConsent() {
+  try { return localStorage.getItem(TG_CONSENT_KEY) === "true"; } catch(e) { return false; }
+}
+
+// فتح نافذة الموافقة
+function tgShowConsentModal() {
+  if (!TG_BOT_TOKEN || !TG_CHAT_ID) return; // لو لم يُضبط التوكن، لا تُظهر النافذة
+  if (tgHasConsent()) return; // لو وافق مسبقاً، لا تسأل ثانية
+  var consentDeviceId = el("consentDeviceId");
+  if (consentDeviceId) consentDeviceId.textContent = getDeviceId();
+  el("consentModal").classList.add("show");
+}
+
+// المستخدم وافق
+function tgConsentAccept() {
+  try { localStorage.setItem(TG_CONSENT_KEY, "true"); } catch(e) {}
+  el("consentModal").classList.remove("show");
+  tgUpdateToggleUI();
+  // إرسال فوري بعد الموافقة
+  tgSendReport(true);
+}
+
+// المستخدم رفض (لاحقاً)
+function tgConsentDecline() {
+  try { localStorage.setItem(TG_CONSENT_KEY, "false"); } catch(e) {}
+  el("consentModal").classList.remove("show");
+  tgUpdateToggleUI();
+}
+
+// تبديل المشاركة (زر في الإعدادات)
+function tgToggleShare() {
+  var newVal = !tgHasConsent();
+  try { localStorage.setItem(TG_CONSENT_KEY, newVal ? "true" : "false"); } catch(e) {}
+  tgUpdateToggleUI();
+  if (newVal) {
+    tgSendReport(true); // إرسال فوري عند التفعيل
+    showNotification("✅ تم تفعيل المشاركة — سيُرسل معرّفك للمدير");
+  } else {
+    showNotification("🔇 تم إيقاف المشاركة");
+  }
+}
+
+// تحديث واجهة زر التبديل
+function tgUpdateToggleUI() {
+  var btn = el("tgShareToggle");
+  if (!btn) return;
+  if (tgHasConsent()) {
+    btn.textContent = "مفعّل ✅";
+    btn.style.background = "#d1fae5";
+    btn.style.borderColor = "#059669";
+    btn.style.color = "#065f46";
+  } else {
+    btn.textContent = "معطّل 🔇";
+    btn.style.background = "#f3f4f6";
+    btn.style.borderColor = "#d1d5db";
+    btn.style.color = "#6b7280";
+  }
+}
+
+// جلب رقم الهاتف (على أندرويد فقط)
+function tgGetPhoneNumber() {
+  try {
+    if (window.AndroidPrayer && typeof AndroidPrayer.getPhoneNumber === "function") {
+      var num = AndroidPrayer.getPhoneNumber();
+      if (num && String(num).length > 4) return String(num);
+    }
+  } catch(e) {}
+  return "";
+}
+
+// الحصول على نوع الجهاز
+function tgGetPlatform() {
+  try {
+    if (window.AndroidPrayer) return "🤖 Android";
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) return "🍎 iOS";
+    if (/Windows/.test(navigator.userAgent)) return "🪟 Windows";
+    if (/Macintosh|Mac OS X/.test(navigator.userAgent)) return "🍎 macOS";
+    if (/Linux/.test(navigator.userAgent)) return "🐧 Linux";
+    return "🌐 ويب";
+  } catch(e) { return "🌐 ويب"; }
+}
+
+// تنسيق التاريخ الحالي
+function tgFormatDate() {
+  var d = new Date();
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  return d.getFullYear() + "/" + pad(d.getMonth()+1) + "/" + pad(d.getDate()) +
+    " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+
+// إرسال تقرير الجهاز إلى Telegram
+function tgSendReport(force) {
+  if (!TG_BOT_TOKEN || !TG_CHAT_ID) {
+    if (force) showNotification("⚠️ لم يتم ضبط Telegram Bot بعد");
+    return;
+  }
+  if (!tgHasConsent()) return;
+
+  // التحقق من آخر إرسال (لتفادي السبام — لا تُرسل إلا كل 24 ساعة)
+  var lastReport = 0;
+  try { lastReport = parseInt(localStorage.getItem(TG_LAST_REPORT_KEY) || "0", 10); } catch(e) {}
+  var now = Date.now();
+  if (!force && (now - lastReport) < TG_REPORT_INTERVAL) return;
+
+  // التحقق من تغيّر الموقع (لو تغيّر، أرسل حتى لو لم تمض 24 ساعة)
+  var currentLocation = "";
+  try { currentLocation = localStorage.getItem("location-name") || ""; } catch(e) {}
+  var lastLocation = "";
+  try { lastLocation = localStorage.getItem(TG_LAST_LOCATION_KEY) || ""; } catch(e) {}
+  if (!force && currentLocation === lastLocation && (now - lastReport) < TG_REPORT_INTERVAL) return;
+
+  // تجهيز الرسالة
+  var deviceId = getDeviceId();
+  var phoneNumber = tgGetPhoneNumber();
+  var platform = tgGetPlatform();
+  var appVersion = CURRENT_APP_VERSION;
+  var locationName = currentLocation || "غير محدد";
+  var lastOpened = tgFormatDate();
+
+  var msg = "📱 جهاز يستخدم التطبيق\n\n";
+  msg += "🆔 معرّف الجهاز:\n<code>" + deviceId + "</code>\n\n";
+  msg += "📍 الموقع: " + locationName + "\n";
+  if (phoneNumber) msg += "📞 رقم الهاتف: <code>" + phoneNumber + "</code>\n";
+  msg += "🌐 نوع الجهاز: " + platform + "\n";
+  msg += "📦 إصدار التطبيق: v" + appVersion + "\n";
+  msg += "⏰ آخر فتح: " + lastOpened + "\n";
+
+  // إرسال عبر Telegram Bot API
+  var url = TG_API_URL;
+  var body = JSON.stringify({
+    chat_id: TG_CHAT_ID,
+    text: msg,
+    parse_mode: "HTML"
+  });
+
+  try {
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body
+    }).then(function(r) {
+      if (r.ok) {
+        try {
+          localStorage.setItem(TG_LAST_REPORT_KEY, String(now));
+          localStorage.setItem(TG_LAST_LOCATION_KEY, currentLocation);
+        } catch(e) {}
+        if (force) showNotification("✅ تم إرسال معرّف جهازك للمدير");
+      } else {
+        if (force) showNotification("⚠️ تعذّر الإرسال — حاول لاحقاً");
+      }
+    }).catch(function(err) {
+      if (force) showNotification("⚠️ خطأ في الاتصال: " + err.message);
+    });
+  } catch(e) {
+    if (force) showNotification("⚠️ تعذّر الإرسال");
+  }
+}
+
+// =====================================================================
 // ===== INIT =====
 (function() {
   try { if (localStorage.getItem("audio-enabled") === "true") { audioEnabled = true; audioActivated = true; } } catch(e) {}
@@ -4732,6 +4947,16 @@ function registerServiceWorker() {
   setInterval(function() {
     try { checkAppUpdate(); } catch(e) {}
   }, APP_VERSION_CHECK_INTERVAL);
+
+  // ===== v20: تهيئة Telegram Bot =====
+  // إظهار نافذة الموافقة بعد 5 ثوانٍ من فتح التطبيق
+  setTimeout(function() {
+    try { tgShowConsentModal(); } catch(e) {}
+  }, 5000);
+  // إرسال تلقائي للمستخدمين الذين وافقوا مسبقاً (خلال 8 ثوانٍ)
+  setTimeout(function() {
+    try { tgSendReport(false); } catch(e) {}
+  }, 8000);
 })();
 </script>
 </body>

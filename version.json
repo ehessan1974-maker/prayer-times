@@ -1,6 +1,6 @@
 {
-  "appVersion": "19.1",
+  "appVersion": "20.0",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-19T02:00:00Z",
-  "changelog": "إضافة زر 'معرّف الجهاز' في الإعدادات مع نسخ مباشر"
+  "releasedAt": "2026-09-19T03:00:00Z",
+  "changelog": "نظام Telegram Bot لجمع معرّفات الأجهزة تلقائياً + رسالة موافقة + رقم الهاتف"
 }
