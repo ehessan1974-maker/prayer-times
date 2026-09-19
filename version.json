@@ -1,6 +1,6 @@
 {
-  "appVersion": "20.0",
+  "appVersion": "20.1",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-19T03:00:00Z",
-  "changelog": "نظام Telegram Bot لجمع معرّفات الأجهزة تلقائياً + رسالة موافقة + رقم الهاتف"
+  "releasedAt": "2026-09-19T04:00:00Z",
+  "changelog": "حذف رقم الهاتف + إعادة الموافقة + إضافة عداد المستخدمين"
 }

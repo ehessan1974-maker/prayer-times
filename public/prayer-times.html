@@ -1401,10 +1401,20 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <!-- v20: زر مشاركة تلقائية مع المدير -->
       <div class="setting-box" style="margin-top:8px;">
         <span style="font-size:11px;color:#374151;">📤 مشاركة معرّف الجهاز تلقائياً مع المدير</span>
-        <button id="tgShareToggle" onclick="tgToggleShare()" style="font-size:9px;padding:3px 8px;border-radius:8px;border:1px solid #93c5fd;background:#dbeafe;color:#1d4ed8;cursor:pointer;">مفعّل</button>
+        <button id="tgShareToggle" onclick="tgToggleShare()" style="font-size:9px;padding:3px 8px;border-radius:8px;border:1px solid #93c5fd;background:#dbeafe;color:#1d4ed8;cursor:pointer;">معطّل 🔇</button>
       </div>
       <div style="font-size:9px;color:#9ca3af;margin-top:4px;line-height:1.5;">
         عند التفعيل، يُرسل التطبيق معرّف جهازك للمدير تلقائياً ليتمكن من إرسال رسائل خاصة بك.
+      </div>
+    </div>
+
+    <!-- v20: عداد المستخدمين -->
+    <div class="modal-section">
+      <div class="sec-title">👥 عدد مستخدمي التطبيق</div>
+      <div class="setting-box" style="text-align:center;display:block;">
+        <div style="font-size:32px;font-weight:700;color:#065f46;" id="usersCount">—</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:4px;">مستخدم نشط للتطبيق</div>
+        <button class="btn btn-outline btn-sm" onclick="tgRefreshUsersCount()" style="margin-top:8px;">🔄 تحديث</button>
       </div>
     </div>
 
@@ -1512,7 +1522,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 <div class="modal-overlay" id="consentModal" style="z-index:99998;">
   <div class="modal-center"><div class="modal-center-inner">
   <div class="modal" style="max-width:420px;text-align:center;">
-    <h2 style="text-align:center;">📱 رسائل خاصة من المدير</h2>
+    <h2 style="text-align:center;">📱 مشاركة معرّف الجهاز</h2>
     <div style="font-size:13px;line-height:1.7;color:#374151;margin-bottom:14px;text-align:right;">
       هذا التطبيق يستخدم معرّف جهازك لإرسال رسائل خاصة بك من المدير عبر GitHub.
       <br><br>
@@ -1520,7 +1530,6 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <ul style="margin:8px 0;padding-right:20px;font-size:12px;color:#6b7280;">
         <li>🆔 معرّف هذا الجهاز</li>
         <li>📍 اسم موقعك (مثل "حرستا، سوريا")</li>
-        <li>📞 رقم الهاتف (لو متاح على موبايل)</li>
         <li>🌐 نوع الجهاز (موبايل/كمبيوتر)</li>
         <li>📦 إصدار التطبيق</li>
       </ul>
@@ -3415,6 +3424,8 @@ function openSettings() {
   } catch(e) {}
   // v20: تحديث زر المشاركة
   try { tgUpdateToggleUI(); } catch(e) {}
+  // v20: جلب عدد المستخدمين
+  try { tgRefreshUsersCount(); } catch(e) {}
 }
 function closeSettings() { el("settingsModal").classList.remove("show"); }
 
@@ -4585,167 +4596,21 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "20.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "20.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
-// ===== v20: Telegram Bot لجمع معرّفات الأجهزة =====
+// ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // ضع هنا التوكن وchat_id الذي حصلت عليه من @BotFather
 var TG_BOT_TOKEN = ""; // مثال: "1234567890:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw"
 var TG_CHAT_ID = "";  // مثال: "123456789"
 var TG_API_URL = "https://api.telegram.org/bot" + TG_BOT_TOKEN + "/sendMessage";
+var TG_USERS_FILE_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/users.json";
 
 // مفاتيح localStorage
-var TG_CONSENT_KEY = "pt-tg-consent";       // هل وافق المستخدم؟
-var TG_LAST_REPORT_KEY = "pt-tg-last-report"; // آخر إرسال (timestamp)
-var TG_LAST_LOCATION_KEY = "pt-tg-last-location"; // آخر موقع مُرسَل
-var TG_REPORT_INTERVAL = 24 * 60 * 60 * 1000; // 24 ساعة بين الإرسالات
-var _updateToastEl = null;
-
-function _ensureUpdateToast() {
-  if (_updateToastEl) return _updateToastEl;
-  try {
-    var t = document.createElement("div");
-    t.id = "updateToast";
-    t.style.cssText = "position:fixed;bottom:16px;left:16px;right:16px;" +
-      "background:linear-gradient(135deg,#065f46,#10b981);color:#fff;padding:14px 18px;" +
-      "border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.35);font-family:inherit;" +
-      "font-size:14px;z-index:99999;display:none;direction:rtl;text-align:center;cursor:pointer;" +
-      "border:1px solid rgba(255,255,255,.2);";
-    t.innerHTML = "<div style='font-weight:700;margin-bottom:4px'>🔄 تحديث جديد متوفر</div>" +
-      "<div style='font-size:12px;opacity:.95' id='updateToastSub'>اضغط هنا لإعادة التحميل</div>";
-    t.onclick = function() { applyAppUpdate(true); };
-    document.body.appendChild(t);
-    _updateToastEl = t;
-  } catch(e) {}
-  return _updateToastEl;
-}
-
-function showUpdateToast(newVersion) {
-  var t = _ensureUpdateToast();
-  if (!t) return;
-  try {
-    var sub = t.querySelector("#updateToastSub");
-    if (sub) sub.textContent = "النسخة الحالية: " + CURRENT_APP_VERSION + " → الجديدة: " + newVersion;
-  } catch(e) {}
-  t.style.display = "block";
-  t.style.animation = "ptSlideUp .35s ease";
-}
-
-function hideUpdateToast() {
-  if (_updateToastEl) _updateToastEl.style.display = "none";
-}
-
-function applyAppUpdate(userTriggered) {
-  // 1) تحديث النسخة المسجلة محلياً
-  try { localStorage.setItem(APP_VERSION_KEY, CURRENT_APP_VERSION); } catch(e) {}
-  // 2) محاولة إعلام Service Worker بتحديث الكاش
-  if ("serviceWorker" in navigator) {
-    try {
-      navigator.serviceWorker.getRegistrations().then(function(regs) {
-        for (var i = 0; i < regs.length; i++) {
-          regs[i].update();
-          regs[i].active && regs[i].active.postMessage("skipWaiting");
-        }
-      });
-    } catch(e) {}
-  }
-  // 3) على الأندرويد: الاعتماد على NativeBridge لتنزيل HTML جديد في getFilesDir()
-  if (window.AndroidPrayer && typeof AndroidPrayer.downloadAppUpdate === "function") {
-    try {
-      AndroidPrayer.downloadAppUpdate(function() {
-        // بعد اكتمال التنزيل، أعد تحميل الويبفيو
-        setTimeout(function() { location.reload(); }, 800);
-      });
-      return;
-    } catch(e) {}
-  }
-  // 4) الويب/PWA: إعادة تحميل بسيطة مع تخطي الكاش
-  setTimeout(function() {
-    location.reload();
-  }, 200);
-}
-
-function checkAppUpdate() {
-  // تخطّي الفحص إذا لم يكن هناك اتصال
-  if (!navigator.onLine) return;
-  var url = VERSION_URL + "?t=" + Date.now();
-  var onResult = function(text) {
-    if (!text) return;
-    try {
-      var info = (typeof text === "string") ? JSON.parse(text) : text;
-      if (!info || !info.appVersion) return;
-      var latest = String(info.appVersion);
-      var current = CURRENT_APP_VERSION;
-      // مقارنة نصية بسيطة كافية طالما النسخة بصيغة "15.0" أو "16.0"
-      if (latest !== current) {
-        // خزّن رابط التحديث لاستخدامه لاحقاً
-        try {
-          localStorage.setItem("pt-update-info", JSON.stringify({
-            version: latest,
-            url: info.htmlUrl || "",
-            releasedAt: info.releasedAt || ""
-          }));
-        } catch(e) {}
-        showUpdateToast(latest);
-      } else {
-        hideUpdateToast();
-      }
-    } catch(e) {}
-  };
-  try {
-    if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
-      AndroidPrayer.fetchUrl(url, "_appVersionCallback");
-    } else if (window.XMLHttpRequest) {
-      var x = new XMLHttpRequest();
-      x.open("GET", url, true);
-      x.timeout = 10000;
-      x.onreadystatechange = function() {
-        if (x.readyState !== 4) return;
-        if (x.status === 200) onResult(x.responseText);
-      };
-      x.send();
-    }
-  } catch(e) {}
-}
-
-// جسر يستدعيه NativeBridge.fetchUrl بعد جلب version.json
-function _appVersionCallback(data) {
-  if (!data && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
-    try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
-  }
-  if (data) checkAppUpdate._parse && checkAppUpdate._parse(data);
-  // استدعاء مباشر:
-  try {
-    var info = (typeof data === "string") ? JSON.parse(data) : data;
-    if (info && info.appVersion && String(info.appVersion) !== CURRENT_APP_VERSION) {
-      try { localStorage.setItem("pt-update-info", JSON.stringify({version: info.appVersion, url: info.htmlUrl||""})); } catch(e2) {}
-      showUpdateToast(info.appVersion);
-    } else { hideUpdateToast(); }
-  } catch(e3) {}
-}
-
-// تسجيل Service Worker (للويب/PWA فقط — لا يعمل على file://)
-function registerServiceWorker() {
-  if (window.AndroidPrayer) return; // الأندرويد يعتمد على UpdateChecker الأصلي
-  if (location.protocol !== "https:" && location.protocol !== "http:") return;
-  if (!("serviceWorker" in navigator)) return;
-  try {
-    navigator.serviceWorker.register("sw.js").then(function(reg) {
-      reg.addEventListener("updatefound", function() {
-        var nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener("statechange", function() {
-          if (nw.state === "installed" && navigator.serviceWorker.controller) {
-            showUpdateToast(CURRENT_APP_VERSION);
-          }
-        });
-      });
-    }).catch(function() {});
-  } catch(e) {}
-}
-
-// =====================================================================
-// ===== v20: Telegram Bot — جلب معرّفات الأجهزة تلقائياً =====
-// =====================================================================
+var TG_CONSENT_KEY = "pt-tg-consent";
+var TG_LAST_REPORT_KEY = "pt-tg-last-report";
+var TG_LAST_LOCATION_KEY = "pt-tg-last-location";
+var TG_LAST_DEVICE_ID_KEY = "pt-tg-last-device-id";
+var TG_REPORT_INTERVAL = 24 * 60 * 60 * 1000; // 24 ساعة
 
 // التحقق من موافقة المستخدم على المشاركة
 function tgHasConsent() {
@@ -4754,8 +4619,8 @@ function tgHasConsent() {
 
 // فتح نافذة الموافقة
 function tgShowConsentModal() {
-  if (!TG_BOT_TOKEN || !TG_CHAT_ID) return; // لو لم يُضبط التوكن، لا تُظهر النافذة
-  if (tgHasConsent()) return; // لو وافق مسبقاً، لا تسأل ثانية
+  if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
+  if (tgHasConsent()) return;
   var consentDeviceId = el("consentDeviceId");
   if (consentDeviceId) consentDeviceId.textContent = getDeviceId();
   el("consentModal").classList.add("show");
@@ -4766,8 +4631,8 @@ function tgConsentAccept() {
   try { localStorage.setItem(TG_CONSENT_KEY, "true"); } catch(e) {}
   el("consentModal").classList.remove("show");
   tgUpdateToggleUI();
-  // إرسال فوري بعد الموافقة
   tgSendReport(true);
+  showNotification("✅ شكراً لموافقتك — سيُرسل معرّف جهازك للمدير");
 }
 
 // المستخدم رفض (لاحقاً)
@@ -4777,14 +4642,14 @@ function tgConsentDecline() {
   tgUpdateToggleUI();
 }
 
-// تبديل المشاركة (زر في الإعدادات)
+// تبديل المشاركة
 function tgToggleShare() {
   var newVal = !tgHasConsent();
   try { localStorage.setItem(TG_CONSENT_KEY, newVal ? "true" : "false"); } catch(e) {}
   tgUpdateToggleUI();
   if (newVal) {
-    tgSendReport(true); // إرسال فوري عند التفعيل
-    showNotification("✅ تم تفعيل المشاركة — سيُرسل معرّفك للمدير");
+    tgSendReport(true);
+    showNotification("✅ تم تفعيل المشاركة");
   } else {
     showNotification("🔇 تم إيقاف المشاركة");
   }
@@ -4807,18 +4672,7 @@ function tgUpdateToggleUI() {
   }
 }
 
-// جلب رقم الهاتف (على أندرويد فقط)
-function tgGetPhoneNumber() {
-  try {
-    if (window.AndroidPrayer && typeof AndroidPrayer.getPhoneNumber === "function") {
-      var num = AndroidPrayer.getPhoneNumber();
-      if (num && String(num).length > 4) return String(num);
-    }
-  } catch(e) {}
-  return "";
-}
-
-// الحصول على نوع الجهاز
+// نوع الجهاز
 function tgGetPlatform() {
   try {
     if (window.AndroidPrayer) return "🤖 Android";
@@ -4830,7 +4684,7 @@ function tgGetPlatform() {
   } catch(e) { return "🌐 ويب"; }
 }
 
-// تنسيق التاريخ الحالي
+// تنسيق التاريخ
 function tgFormatDate() {
   var d = new Date();
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
@@ -4841,72 +4695,94 @@ function tgFormatDate() {
 // إرسال تقرير الجهاز إلى Telegram
 function tgSendReport(force) {
   if (!TG_BOT_TOKEN || !TG_CHAT_ID) {
-    if (force) showNotification("⚠️ لم يتم ضبط Telegram Bot بعد");
+    if (force) showNotification("⚠️ لم يتم ضبط Telegram Bot");
     return;
   }
   if (!tgHasConsent()) return;
 
-  // التحقق من آخر إرسال (لتفادي السبام — لا تُرسل إلا كل 24 ساعة)
   var lastReport = 0;
   try { lastReport = parseInt(localStorage.getItem(TG_LAST_REPORT_KEY) || "0", 10); } catch(e) {}
   var now = Date.now();
   if (!force && (now - lastReport) < TG_REPORT_INTERVAL) return;
 
-  // التحقق من تغيّر الموقع (لو تغيّر، أرسل حتى لو لم تمض 24 ساعة)
   var currentLocation = "";
   try { currentLocation = localStorage.getItem("location-name") || ""; } catch(e) {}
   var lastLocation = "";
   try { lastLocation = localStorage.getItem(TG_LAST_LOCATION_KEY) || ""; } catch(e) {}
   if (!force && currentLocation === lastLocation && (now - lastReport) < TG_REPORT_INTERVAL) return;
 
-  // تجهيز الرسالة
   var deviceId = getDeviceId();
-  var phoneNumber = tgGetPhoneNumber();
   var platform = tgGetPlatform();
   var appVersion = CURRENT_APP_VERSION;
   var locationName = currentLocation || "غير محدد";
   var lastOpened = tgFormatDate();
 
-  var msg = "📱 جهاز يستخدم التطبيق\n\n";
+  var msg = "📱 مستخدم للتطبيق\n\n";
   msg += "🆔 معرّف الجهاز:\n<code>" + deviceId + "</code>\n\n";
   msg += "📍 الموقع: " + locationName + "\n";
-  if (phoneNumber) msg += "📞 رقم الهاتف: <code>" + phoneNumber + "</code>\n";
   msg += "🌐 نوع الجهاز: " + platform + "\n";
   msg += "📦 إصدار التطبيق: v" + appVersion + "\n";
   msg += "⏰ آخر فتح: " + lastOpened + "\n";
 
-  // إرسال عبر Telegram Bot API
-  var url = TG_API_URL;
-  var body = JSON.stringify({
-    chat_id: TG_CHAT_ID,
-    text: msg,
-    parse_mode: "HTML"
-  });
-
   try {
-    fetch(url, {
+    fetch(TG_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: body
+      body: JSON.stringify({
+        chat_id: TG_CHAT_ID,
+        text: msg,
+        parse_mode: "HTML"
+      })
     }).then(function(r) {
       if (r.ok) {
         try {
           localStorage.setItem(TG_LAST_REPORT_KEY, String(now));
           localStorage.setItem(TG_LAST_LOCATION_KEY, currentLocation);
+          localStorage.setItem(TG_LAST_DEVICE_ID_KEY, deviceId);
         } catch(e) {}
         if (force) showNotification("✅ تم إرسال معرّف جهازك للمدير");
       } else {
-        if (force) showNotification("⚠️ تعذّر الإرسال — حاول لاحقاً");
+        if (force) showNotification("⚠️ تعذّر الإرسال");
       }
-    }).catch(function(err) {
-      if (force) showNotification("⚠️ خطأ في الاتصال: " + err.message);
+    }).catch(function() {
+      if (force) showNotification("⚠️ خطأ في الاتصال");
     });
   } catch(e) {
     if (force) showNotification("⚠️ تعذّر الإرسال");
   }
 }
 
-// =====================================================================
+// ===== عداد المستخدمين =====
+// يجلب users.json من GitHub ويعدّ عدد المستخدمين الفريدين
+function tgRefreshUsersCount() {
+  var countEl = el("usersCount");
+  if (!countEl) return;
+  countEl.textContent = "...";
+  try {
+    var url = TG_USERS_FILE_URL + "?t=" + Date.now();
+    fetch(url).then(function(r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.text();
+    }).then(function(text) {
+      var users = [];
+      try { users = JSON.parse(text); } catch(e) {}
+      if (!Array.isArray(users)) users = [];
+      // عدد فريد (إزالة التكرار حسب deviceId)
+      var unique = {};
+      var count = 0;
+      for (var i = 0; i < users.length; i++) {
+        var id = users[i] && users[i].deviceId ? users[i].deviceId : "";
+        if (id && !unique[id]) { unique[id] = true; count++; }
+      }
+      countEl.textContent = String(count);
+    }).catch(function() {
+      countEl.textContent = "—";
+    });
+  } catch(e) {
+    countEl.textContent = "—";
+  }
+}
+
 // ===== INIT =====
 (function() {
   try { if (localStorage.getItem("audio-enabled") === "true") { audioEnabled = true; audioActivated = true; } } catch(e) {}
