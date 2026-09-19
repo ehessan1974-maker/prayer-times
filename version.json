@@ -1,6 +1,6 @@
 {
-  "appVersion": "19.0",
+  "appVersion": "19.1",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-19T01:00:00Z",
-  "changelog": "حذف محرر الرسائل نهائياً — المدير يرسل الرسائل عبر GitHub مباشرة"
+  "releasedAt": "2026-09-19T02:00:00Z",
+  "changelog": "إضافة زر 'معرّف الجهاز' في الإعدادات مع نسخ مباشر"
 }

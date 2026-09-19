@@ -1387,6 +1387,20 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     </div>
 
     <div class="modal-section">
+      <div class="sec-title">📱 معرّف هذا الجهاز</div>
+      <div class="setting-box" style="display:block;">
+        <div style="font-size:10px;color:#6b7280;margin-bottom:4px;">معرّف فريد لجهازك — استخدمه لاستقبال رسائل خاصة بك:</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="text" id="deviceIdDisplay" readonly style="flex:1;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:11px;font-family:monospace;background:#f9fafb;color:#374151;text-align:left;direction:ltr;" />
+          <button class="btn btn-outline btn-sm" onclick="copyDeviceId()" id="copyDeviceIdBtn" style="white-space:nowrap;">📋 نسخ</button>
+        </div>
+        <div style="font-size:9px;color:#9ca3af;margin-top:4px;line-height:1.5;">
+          💡 هذا المعرّف يُستخدم لإرسال رسائل خاصة بك من المدير. شاركه مع من تريد أن يرسل لك رسالة خاصة.
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-section">
       <div class="sec-title">ℹ️ معلومات</div>
       <button class="btn btn-outline" style="width:100%;" onclick="closeSettings();openCredits();">حول البرنامج</button>
     </div>
@@ -3356,8 +3370,71 @@ function openSettings() {
   el("citySearchInput").value = ""; el("cityResults").innerHTML = ""; el("citySearchStatus").style.display = "none"; // v13
   renderSmartPrefButtons(); // v12: أزرار وضع الشاشة الذكية
   renderIqamaSettings(); renderAlertToggles(); updateAudioBtn();
+  // v19: عرض معرّف الجهاز
+  try {
+    var devInput = el("deviceIdDisplay");
+    if (devInput) devInput.value = getDeviceId();
+  } catch(e) {}
 }
 function closeSettings() { el("settingsModal").classList.remove("show"); }
+
+// v19: نسخ معرّف الجهاز
+function copyDeviceId() {
+  var devInput = el("deviceIdDisplay");
+  if (!devInput) return;
+  var id = devInput.value || "";
+  if (!id) { showNotification("⚠️ تعذّر الحصول على المعرّف"); return; }
+
+  // محاولة النسخ عبر Clipboard API
+  var done = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(id).then(function() {
+        showCopyDeviceIdSuccess();
+      }).catch(function() {
+        fallbackCopyDeviceId(id);
+      });
+      done = true;
+    }
+  } catch(e) {}
+  if (!done) fallbackCopyDeviceId(id);
+}
+
+function fallbackCopyDeviceId(id) {
+  try {
+    var devInput = el("deviceIdDisplay");
+    if (devInput) {
+      devInput.select();
+      devInput.setSelectionRange(0, 99999);
+      var ok = document.execCommand("copy");
+      if (ok) { showCopyDeviceIdSuccess(); return; }
+    }
+  } catch(e) {}
+  // لو فشل النسخ، اعرض المعرّف في prompt ليستطيع المستخدم نسخه يدوياً
+  try {
+    window.prompt("انسخ المعرّف التالي (Ctrl+C ثم Enter):", id);
+  } catch(e2) {
+    showNotification("⚠️ تعذّر النسخ — المعرّف: " + id);
+  }
+}
+
+function showCopyDeviceIdSuccess() {
+  var btn = el("copyDeviceIdBtn");
+  if (btn) {
+    var oldText = btn.textContent;
+    btn.textContent = "✅ تم النسخ";
+    btn.style.background = "#d1fae5";
+    btn.style.borderColor = "#059669";
+    btn.style.color = "#065f46";
+    setTimeout(function() {
+      btn.textContent = oldText;
+      btn.style.background = "";
+      btn.style.borderColor = "";
+      btn.style.color = "";
+    }, 2000);
+  }
+  showNotification("📋 تم نسخ المعرّف");
+}
 function changeCorrection(delta) {
   dateCorrection += delta;
   localStorage.setItem("hijri-date-correction", "" + dateCorrection);
@@ -4468,7 +4545,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "19.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "19.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {
