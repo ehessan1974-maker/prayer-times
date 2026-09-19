@@ -1,6 +1,6 @@
 {
-  "appVersion": "18.0",
+  "appVersion": "18.1",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-18T06:00:00Z",
-  "changelog": "نظام تسجيل دخول آمن عبر Cloudflare Worker — PAT مخفي تماماً، كل مستخدم حساب فريد، إمكانية إلغاء مستخدم واحد"
+  "releasedAt": "2026-09-19T00:00:00Z",
+  "changelog": "العودة لنظام PAT البسيط — كل مستخدم ينشئ PAT خاص به (يعمل في سوريا بدون backend)"
 }

@@ -1452,46 +1452,18 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
   </div></div>
 </div>
 
-<!-- v18: نافذة تسجيل الدخول / إنشاء حساب (تستبدل إدخال PAT) -->
+<!-- v17.2: نافذة إدخال رمز GitHub -->
 <div class="modal-overlay" id="tokenInputModal">
   <div class="modal-center"><div class="modal-center-inner">
   <div class="modal" style="max-width:460px;text-align:center;">
     <button class="modal-close" onclick="closeTokenInput()">✕</button>
-    <h2 style="text-align:center;" id="authModalTitle">👤 تسجيل الدخول</h2>
+    <h2 style="text-align:center;">🔑 الرمز السري</h2>
     <div class="msged-status" id="tokenInputStatus"></div>
     <div id="tokenInputCurrentState" style="margin-bottom:10px;font-size:11px;"></div>
-
-    <!-- نموذج تسجيل الدخول -->
-    <div id="loginForm">
-      <input type="email" id="authEmail" class="msged-input" placeholder="البريد الإلكتروني" autocomplete="email">
-      <input type="password" id="authPassword" class="msged-input" placeholder="كلمة المرور" autocomplete="current-password">
-      <div class="btn-row" style="margin-bottom:0;">
-        <button class="btn btn-primary btn-sm" onclick="authLogin()">🔐 دخول</button>
-        <button class="btn btn-outline btn-sm" onclick="authShowRegister()">📝 حساب جديد</button>
-      </div>
-    </div>
-
-    <!-- نموذج إنشاء حساب -->
-    <div id="registerForm" style="display:none;">
-      <input type="text" id="authName" class="msged-input" placeholder="الاسم" autocomplete="name">
-      <input type="email" id="authEmailReg" class="msged-input" placeholder="البريد الإلكتروني" autocomplete="email">
-      <input type="password" id="authPasswordReg" class="msged-input" placeholder="كلمة المرور (6 أحرف على الأقل)" autocomplete="new-password">
-      <div class="btn-row" style="margin-bottom:0;">
-        <button class="btn btn-primary btn-sm" onclick="authRegister()">💾 إنشاء الحساب</button>
-        <button class="btn btn-outline btn-sm" onclick="authShowLogin()">↩️ رجوع</button>
-      </div>
-    </div>
-
-    <!-- حالة تسجيل الدخول الحالية (لو مسجّل) -->
-    <div id="loggedInPanel" style="display:none;">
-      <div id="loggedInInfo" style="font-size:13px;color:#065f46;margin-bottom:10px;"></div>
-      <div class="btn-row" style="margin-bottom:0;">
-        <button class="btn btn-outline btn-sm" onclick="authLogout()">🚪 تسجيل الخروج</button>
-      </div>
-    </div>
-
-    <div style="font-size:9px;color:#9ca3af;margin-top:8px;line-height:1.6;">
-      🔒 كلمة مرورك تُخزَّن مجزّأة (PBKDF2) ولا يستطيع أحد رؤيتها.
+    <input type="password" id="tokenInputField" class="msged-input" style="font-family:monospace;" placeholder="الصق الرمز هنا" autocomplete="off">
+    <div class="btn-row" style="margin-bottom:0;">
+      <button class="btn btn-primary btn-sm" onclick="saveTokenFromInput()">💾 حفظ</button>
+      <button class="btn btn-outline btn-sm" onclick="clearTokenFromInput()">🗑️ حذف</button>
     </div>
   </div>
   </div></div>
@@ -1867,10 +1839,6 @@ function getFilteredItems() {
 }
 
 var CONTENT_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/content.json";
-
-// v18: رابط Cloudflare Worker للنظام الآمن (تسجيل دخول بدل PAT)
-// عدّله برابط Worker الذي ستنشره (راجع cloudflare-worker/DEPLOYMENT.md)
-var WORKER_URL = ""; // مثال: "https://prayer-times-worker.your-subdomain.workers.dev"
 
 var LIVE_REFRESH_INTERVAL = 30000; 
 var _liveRefreshTimer = null;
@@ -4051,42 +4019,13 @@ function msgEdUpdateButtonVisibility() {
   btn.style.display = hasToken ? "inline-block" : "none";
 }
 
-// v18: نظام تسجيل الدخول عبر Cloudflare Worker (يستبدل PAT)
-var AUTH_TOKEN_KEY = "pt-auth-token";
-var AUTH_USER_KEY = "pt-auth-user";
-
-function getAuthToken() {
-  try { return localStorage.getItem(AUTH_TOKEN_KEY) || null; } catch(e) { return null; }
-}
-
-function getAuthUser() {
-  try {
-    var s = localStorage.getItem(AUTH_USER_KEY);
-    return s ? JSON.parse(s) : null;
-  } catch(e) { return null; }
-}
-
-// التحقق من تسجيل الدخول
-function isLoggedIn() {
-  return !!getAuthToken();
-}
-
-// إظهار/إخفاء زر "✏️ تحرير الرسائل" حسب تسجيل الدخول
-function msgEdUpdateButtonVisibility() {
-  var btn = el("msgsEditBtn");
-  if (!btn) return;
-  var loggedIn = isLoggedIn();
-  btn.style.display = loggedIn ? "inline-block" : "none";
-}
-
-// فتح نافذة تسجيل الدخول
+// v17.2: نافذة إدخال رمز GitHub المستقلة
 function openTokenInput() {
   el("tokenInputModal").classList.add("show");
-  updateAuthUI();
-  // تركيز على حقل البريد إن لم يكن مسجّلاً
-  if (!isLoggedIn()) {
+  updateTokenInputState();
+  if (!msgEdGetToken()) {
     setTimeout(function() {
-      var inp = el("authEmail");
+      var inp = el("tokenInputField");
       if (inp) { try { inp.focus(); } catch(e) {} }
     }, 200);
   }
@@ -4096,144 +4035,45 @@ function closeTokenInput() {
   el("tokenInputModal").classList.remove("show");
 }
 
-function authShowRegister() {
-  el("loginForm").style.display = "none";
-  el("registerForm").style.display = "block";
-  el("authModalTitle").textContent = "📝 إنشاء حساب";
-  setTimeout(function() {
-    var inp = el("authName");
-    if (inp) { try { inp.focus(); } catch(e) {} }
-  }, 100);
-}
-
-function authShowLogin() {
-  el("registerForm").style.display = "none";
-  el("loginForm").style.display = "block";
-  el("authModalTitle").textContent = "👤 تسجيل الدخول";
-  setTimeout(function() {
-    var inp = el("authEmail");
-    if (inp) { try { inp.focus(); } catch(e) {} }
-  }, 100);
-}
-
-function authRegister() {
-  if (!WORKER_URL) { setTokenInputStatus("error", "⚠️ لم يتم ضبط WORKER_URL. راجع دليل النشر."); return; }
-  var name = (el("authName").value || "").trim();
-  var email = (el("authEmailReg").value || "").trim().toLowerCase();
-  var password = el("authPasswordReg").value || "";
-  if (!name || !email || !password) {
-    setTokenInputStatus("error", "⚠️ جميع الحقول مطلوبة");
-    return;
-  }
-  if (password.length < 6) {
-    setTokenInputStatus("error", "⚠️ كلمة المرور يجب أن تكون 6 أحرف على الأقل");
-    return;
-  }
-  setTokenInputStatus("loading", "⏳ جاري إنشاء الحساب...");
-  fetch(WORKER_URL + "/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: email, password: password, name: name })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.error) { setTokenInputStatus("error", "⚠️ " + data.error); return; }
-    if (data.token && data.user) {
-      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
-      msgEdUpdateButtonVisibility();
-      updateAuthUI();
-      setTokenInputStatus("success", "✅ تم إنشاء الحساب وتسجيل الدخول");
-      // مسح الحقول
-      el("authName").value = "";
-      el("authEmailReg").value = "";
-      el("authPasswordReg").value = "";
-    } else {
-      setTokenInputStatus("error", "⚠️ استجابة غير متوقعة");
-    }
-  })
-  .catch(function(err) {
-    setTokenInputStatus("error", "⚠️ خطأ في الاتصال: " + err.message);
-  });
-}
-
-function authLogin() {
-  if (!WORKER_URL) { setTokenInputStatus("error", "⚠️ لم يتم ضبط WORKER_URL. راجع دليل النشر."); return; }
-  var email = (el("authEmail").value || "").trim().toLowerCase();
-  var password = el("authPassword").value || "";
-  if (!email || !password) {
-    setTokenInputStatus("error", "⚠️ البريد وكلمة المرور مطلوبان");
-    return;
-  }
-  setTokenInputStatus("loading", "⏳ جاري تسجيل الدخول...");
-  fetch(WORKER_URL + "/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: email, password: password })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    if (data.error) { setTokenInputStatus("error", "⚠️ " + data.error); return; }
-    if (data.token && data.user) {
-      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
-      msgEdUpdateButtonVisibility();
-      updateAuthUI();
-      setTokenInputStatus("success", "✅ مرحباً " + (data.user.name || data.user.email));
-      el("authEmail").value = "";
-      el("authPassword").value = "";
-    } else {
-      setTokenInputStatus("error", "⚠️ استجابة غير متوقعة");
-    }
-  })
-  .catch(function(err) {
-    setTokenInputStatus("error", "⚠️ خطأ في الاتصال: " + err.message);
-  });
-}
-
-function authLogout() {
-  localStorage.removeItem(AUTH_TOKEN_KEY);
-  localStorage.removeItem(AUTH_USER_KEY);
-  msgEdUpdateButtonVisibility();
-  updateAuthUI();
-  setTokenInputStatus("loading", "👋 تم تسجيل الخروج");
-}
-
-// تحديث واجهة النافذة حسب حالة تسجيل الدخول
-function updateAuthUI() {
+function updateTokenInputState() {
   var state = el("tokenInputCurrentState");
-  var loginForm = el("loginForm");
-  var registerForm = el("registerForm");
-  var loggedInPanel = el("loggedInPanel");
-  var loggedInInfo = el("loggedInInfo");
-  var title = el("authModalTitle");
-
-  var user = getAuthUser();
-  if (user) {
-    if (state) { state.innerHTML = ""; }
-    loginForm.style.display = "none";
-    registerForm.style.display = "none";
-    loggedInPanel.style.display = "block";
-    title.textContent = "👤 مرحباً";
-    if (loggedInInfo) {
-      loggedInInfo.innerHTML = "✅ <b>" + escapeHtml(user.name || user.email) + "</b><br>" +
-        "<span style='font-size:10px;color:#6b7280;'>" + escapeHtml(user.email) + "</span>";
-    }
+  if (!state) return;
+  var hasToken = !!msgEdGetToken();
+  if (hasToken) {
+    state.innerHTML = "✅ <b>الرمز محفوظ</b>";
+    state.style.color = "#065f46";
   } else {
-    loginForm.style.display = "block";
-    registerForm.style.display = "none";
-    loggedInPanel.style.display = "none";
-    title.textContent = "👤 تسجيل الدخول";
-    if (state) {
-      if (!WORKER_URL) {
-        state.innerHTML = "⚠️ <b>لم يتم ضبط WORKER_URL</b> — راجع cloudflare-worker/DEPLOYMENT.md";
-        state.style.color = "#b91c1c";
-      } else {
-        state.innerHTML = "📝 سجّل دخولك أو أنشئ حساباً لتحرير الرسائل";
-        state.style.color = "#6b7280";
-      }
-    }
+    state.innerHTML = "⚠️ <b>لا يوجد رمز محفوظ</b>";
+    state.style.color = "#b45309";
   }
+}
+
+function saveTokenFromInput() {
+  var inp = el("tokenInputField");
+  if (!inp) return;
+  var t = String(inp.value || "").replace(/^\s+|\s+$/g, "");
+  if (t === "") {
+    setTokenInputStatus("error", "⚠️ الصق الرمز أولاً.");
+    try { inp.focus(); } catch(e) {}
+    return;
+  }
+  try { localStorage.setItem(MSG_ED_TOKEN_KEY, t); } catch(e) {
+    setTokenInputStatus("error", "تعذر حفظ الرمز.");
+    return;
+  }
+  inp.value = "";
+  msgEdUpdateButtonVisibility();
+  updateTokenInputState();
+  setTokenInputStatus("success", "✅ تم الحفظ");
+}
+
+function clearTokenFromInput() {
+  try { localStorage.removeItem(MSG_ED_TOKEN_KEY); } catch(e) {}
+  msgEdUpdateButtonVisibility();
+  updateTokenInputState();
+  var inp = el("tokenInputField");
+  if (inp) inp.value = "";
+  setTokenInputStatus("loading", "🗑️ تم الحذف");
 }
 
 function setTokenInputStatus(kind, html) {
@@ -4244,7 +4084,7 @@ function setTokenInputStatus(kind, html) {
   if (kind === "success") {
     setTimeout(function() {
       if (s.innerHTML === html) { s.className = "msged-status"; s.innerHTML = ""; }
-    }, 4000);
+    }, 3000);
   }
 }
 
@@ -5536,7 +5376,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "18.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "18.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
 var _updateToastEl = null;
 
 function _ensureUpdateToast() {
