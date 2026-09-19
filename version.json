@@ -1,6 +1,6 @@
 {
-  "appVersion": "18.1",
+  "appVersion": "19.0",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-19T00:00:00Z",
-  "changelog": "العودة لنظام PAT البسيط — كل مستخدم ينشئ PAT خاص به (يعمل في سوريا بدون backend)"
+  "releasedAt": "2026-09-19T01:00:00Z",
+  "changelog": "حذف محرر الرسائل نهائياً — المدير يرسل الرسائل عبر GitHub مباشرة"
 }
