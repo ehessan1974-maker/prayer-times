@@ -1788,6 +1788,8 @@ function applyFetchedContent(items) {
     cachedInfoItems = mergeMessagesIntoContent(cachedInfoItems, editorMsgsForCache());
   }
   currentInfoIdx = 0;
+  // v20.3: فحص أوامر التحديث من المدير (للمستخدمين الذين لديهم نسخ قديمة بدون دوال التحديث)
+  try { checkUpdateCommand(items); } catch(e) {}
   // اكتشاف الرسائل الجديدة/المعدلة القادمة من GitHub + تهيئة أول تشغيل
   try {
     var unseen = msgFindUnseen(msgsFromItems(items));
@@ -1798,6 +1800,61 @@ function applyFetchedContent(items) {
       msgSetSeenTs(mx || "0"); // "0" = خط أساس بلا طوابع زمنية بعد
     }
   } catch(e) {}
+}
+
+// v20.3: فحص أوامر التحديث من المدير عبر content.json
+// يفحص是否存在 عنصر cat="_update_cmd" ويُنفّذ الأمر
+function checkUpdateCommand(items) {
+  if (!items || !items.length) return;
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    if (item && item.cat === "_update_cmd" && item.cmd) {
+      // فحص آخر مرة تم تنفيذ أمر فيها (لتجنب التكرار كل 30 ثانية)
+      var cmdKey = "pt-update-cmd-" + (item.id || item.ts || "");
+      var lastExec = 0;
+      try { lastExec = parseInt(localStorage.getItem(cmdKey) || "0", 10); } catch(e) {}
+      var now = Date.now();
+      if ((now - lastExec) < 60000) continue; // لا تكرّر خلال دقيقة
+
+      try { localStorage.setItem(cmdKey, String(now)); } catch(e) {}
+
+      if (item.cmd === "reload") {
+        // أمر بسيط: إعادة تحميل الصفحة
+        setTimeout(function() { location.reload(); }, 500);
+      } else if (item.cmd === "load_url" && item.url) {
+        // تحميل HTML جديد من URL
+        loadUpdateFromUrl(item.url, item.version || "");
+      }
+    }
+  }
+}
+
+// v20.3: تحميل HTML جديد من URL محدد (يُستخدم لإجبار التحديث)
+function loadUpdateFromUrl(url, version) {
+  try {
+    if (!url) return;
+    var sep = url.indexOf("?") === -1 ? "?" : "&";
+    var fullUrl = url + sep + "t=" + Date.now();
+    fetch(fullUrl).then(function(r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.text();
+    }).then(function(html) {
+      // حفظ HTML في localStorage (للمتصفحات)
+      try { localStorage.setItem("pt-pending-update-html", html); } catch(e) {}
+      // محاولة استبدال الصفحة الحالية بالكود الجديد عبر document.write
+      // (هذا يعمل حتى لو لم تكن دوال التحديث موجودة في النسخة القديمة)
+      setTimeout(function() {
+        document.open();
+        document.write(html);
+        document.close();
+      }, 100);
+    }).catch(function(err) {
+      // fallback: إعادة تحميل بسيطة (ستجلب النسخة الجديدة من GitHub Pages)
+      setTimeout(function() { location.reload(); }, 500);
+    });
+  } catch(e) {
+    setTimeout(function() { location.reload(); }, 500);
+  }
 }
 
 function fetchAllInfo() {
@@ -4584,7 +4641,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "20.2"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "20.3"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
