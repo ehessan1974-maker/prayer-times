@@ -1,6 +1,6 @@
 {
-  "appVersion": "20.1",
+  "appVersion": "20.2",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-19T04:00:00Z",
-  "changelog": "حذف رقم الهاتف + إعادة الموافقة + إضافة عداد المستخدمين"
+  "releasedAt": "2026-09-19T05:00:00Z",
+  "changelog": "حذف عداد المستخدمين من التطبيق + تسريع التحديث (فحص كل دقيقة)"
 }

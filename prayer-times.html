@@ -1408,16 +1408,6 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       </div>
     </div>
 
-    <!-- v20: عداد المستخدمين -->
-    <div class="modal-section">
-      <div class="sec-title">👥 عدد مستخدمي التطبيق</div>
-      <div class="setting-box" style="text-align:center;display:block;">
-        <div style="font-size:32px;font-weight:700;color:#065f46;" id="usersCount">—</div>
-        <div style="font-size:11px;color:#6b7280;margin-top:4px;">مستخدم نشط للتطبيق</div>
-        <button class="btn btn-outline btn-sm" onclick="tgRefreshUsersCount()" style="margin-top:8px;">🔄 تحديث</button>
-      </div>
-    </div>
-
     <div class="modal-section">
       <div class="sec-title">ℹ️ معلومات</div>
       <button class="btn btn-outline" style="width:100%;" onclick="closeSettings();openCredits();">حول البرنامج</button>
@@ -3424,8 +3414,6 @@ function openSettings() {
   } catch(e) {}
   // v20: تحديث زر المشاركة
   try { tgUpdateToggleUI(); } catch(e) {}
-  // v20: جلب عدد المستخدمين
-  try { tgRefreshUsersCount(); } catch(e) {}
 }
 function closeSettings() { el("settingsModal").classList.remove("show"); }
 
@@ -4595,8 +4583,8 @@ function messageIsForMe(item) {
 // =====================================================================
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
-var APP_VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // كل 5 دقائق
-var CURRENT_APP_VERSION = "20.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
+var CURRENT_APP_VERSION = "20.2"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
@@ -4780,6 +4768,147 @@ function tgRefreshUsersCount() {
   } catch(e) {
     countEl.textContent = "—";
   }
+}
+
+// =====================================================================
+// ===== AUTO UPDATE — فحص version.json دورياً وتحديث التطبيق =====
+// =====================================================================
+
+var _updateToastEl = null;
+
+function _ensureUpdateToast() {
+  if (_updateToastEl) return _updateToastEl;
+  try {
+    var t = document.createElement("div");
+    t.id = "updateToast";
+    t.style.cssText = "position:fixed;bottom:16px;left:16px;right:16px;" +
+      "background:linear-gradient(135deg,#065f46,#10b981);color:#fff;padding:14px 18px;" +
+      "border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.35);font-family:inherit;" +
+      "font-size:14px;z-index:99999;display:none;direction:rtl;text-align:center;cursor:pointer;" +
+      "border:1px solid rgba(255,255,255,.2);";
+    t.innerHTML = "<div style='font-weight:700;margin-bottom:4px'>🔄 تحديث جديد متوفر</div>" +
+      "<div style='font-size:12px;opacity:.95' id='updateToastSub'>اضغط للتحديث الآن</div>";
+    t.onclick = function() {
+      hideUpdateToast();
+      applyAppUpdate(true);
+    };
+    document.body.appendChild(t);
+    _updateToastEl = t;
+  } catch(e) {}
+  return _updateToastEl;
+}
+
+function showUpdateToast(newVersion) {
+  var t = _ensureUpdateToast();
+  if (!t) return;
+  try {
+    var sub = t.querySelector("#updateToastSub");
+    if (sub) sub.textContent = "النسخة الحالية: " + CURRENT_APP_VERSION + " → الجديدة: " + newVersion + " — اضغط للتحديث الآن";
+  } catch(e) {}
+  t.style.display = "block";
+  t.style.animation = "ptSlideUp .35s ease";
+}
+
+function hideUpdateToast() {
+  if (_updateToastEl) _updateToastEl.style.display = "none";
+}
+
+function applyAppUpdate(userTriggered) {
+  hideUpdateToast();
+  try { localStorage.setItem(APP_VERSION_KEY, CURRENT_APP_VERSION); } catch(e) {}
+  if ("serviceWorker" in navigator) {
+    try {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        for (var i = 0; i < regs.length; i++) {
+          regs[i].update();
+          regs[i].active && regs[i].active.postMessage("skipWaiting");
+        }
+      });
+    } catch(e) {}
+  }
+  if (window.AndroidPrayer && typeof AndroidPrayer.downloadAppUpdate === "function") {
+    try {
+      AndroidPrayer.downloadAppUpdate(function() {
+        setTimeout(function() { location.reload(); }, 800);
+      });
+      return;
+    } catch(e) {}
+  }
+  setTimeout(function() {
+    location.reload();
+  }, 200);
+}
+
+function checkAppUpdate() {
+  if (!navigator.onLine) return;
+  var url = VERSION_URL + "?t=" + Date.now();
+  var onResult = function(text) {
+    if (!text) return;
+    try {
+      var info = (typeof text === "string") ? JSON.parse(text) : text;
+      if (!info || !info.appVersion) return;
+      var latest = String(info.appVersion);
+      var current = CURRENT_APP_VERSION;
+      if (latest !== current) {
+        try {
+          localStorage.setItem("pt-update-info", JSON.stringify({
+            version: latest,
+            url: info.htmlUrl || "",
+            releasedAt: info.releasedAt || ""
+          }));
+        } catch(e) {}
+        showUpdateToast(latest);
+      } else {
+        hideUpdateToast();
+      }
+    } catch(e) {}
+  };
+  try {
+    if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
+      AndroidPrayer.fetchUrl(url, "_appVersionCallback");
+    } else if (window.XMLHttpRequest) {
+      var x = new XMLHttpRequest();
+      x.open("GET", url, true);
+      x.timeout = 10000;
+      x.onreadystatechange = function() {
+        if (x.readyState !== 4) return;
+        if (x.status === 200) onResult(x.responseText);
+      };
+      x.send();
+    }
+  } catch(e) {}
+}
+
+function _appVersionCallback(data) {
+  if (!data && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+    try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
+  }
+  try {
+    var info = (typeof data === "string") ? JSON.parse(data) : data;
+    if (info && info.appVersion && String(info.appVersion) !== CURRENT_APP_VERSION) {
+      try { localStorage.setItem("pt-update-info", JSON.stringify({version: info.appVersion, url: info.htmlUrl||""})); } catch(e2) {}
+      showUpdateToast(info.appVersion);
+    } else { hideUpdateToast(); }
+  } catch(e3) {}
+}
+
+function registerServiceWorker() {
+  if (window.AndroidPrayer) return;
+  if (location.protocol !== "https:" && location.protocol !== "http:") return;
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    navigator.serviceWorker.register("sw.js").then(function(reg) {
+      reg.addEventListener("updatefound", function() {
+        var nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", function() {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) {
+            showUpdateToast(CURRENT_APP_VERSION);
+          }
+        });
+      });
+    }).catch(function() {});
+  } catch(e) {}
 }
 
 // ===== INIT =====
