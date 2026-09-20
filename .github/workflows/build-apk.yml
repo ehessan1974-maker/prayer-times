@@ -120,6 +120,7 @@ jobs:
         cp artifacts/prayer-times-signed.apk android-app/prayer-times.apk
         cp artifacts/prayer-times-signed.apk android-app/prayer-times-v${VERSION}.apk
         cp artifacts/prayer-times-signed.apk public/prayer-times-v${VERSION}.apk
-        git add android-app/prayer-times.apk android-app/prayer-times-v${VERSION}.apk public/prayer-times-v${VERSION}.apk
+        # استخدام -f لأن .gitignore يتجاهل ملفات APK
+        git add -f android-app/prayer-times.apk android-app/prayer-times-v${VERSION}.apk public/prayer-times-v${VERSION}.apk
         git commit -m "chore: build APK v${VERSION} [skip ci]" || echo "No changes to commit"
         git push origin HEAD:main || git push
