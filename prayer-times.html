@@ -4645,6 +4645,15 @@ function getDeviceId() {
 // audience: "*" | "all" | ["id1","id2"] | undefined => للجميع
 function messageIsForMe(item) {
   if (!item) return false;
+  // v20.7: فلترة حسب minAppVersion — لإخفاء الرسائل القديمة عن الإصدارات الحديثة
+  // هذا يسمح للمدير بإرسال رسائل جديدة تظهر فقط للإصدارات الحديثة
+  // الإصدارات القديمة لا تفهم هذا الحقل، فتتجاهله وتعرض الرسالة (سلوك قديم)
+  // لكن الإصدارات الحديثة سترى أن minAppVersion > إصدارها → تتجاهل الرسالة
+  if (item.minAppVersion) {
+    var minV = String(item.minAppVersion);
+    var myV = CURRENT_APP_VERSION;
+    if (compareVersions(myV, minV) < 0) return false; // إصداري أقدم من المطلوب
+  }
   if (!item.audience || item.audience === "*" || item.audience === "all") return true;
   var myId = getDeviceId();
   if (Object.prototype.toString.call(item.audience) === "[object Array]") {
@@ -4664,13 +4673,28 @@ function messageIsForMe(item) {
   return String(item.audience) === myId;
 }
 
+// v20.7: مقارنة أرقام الإصدارات (مثل "20.6" vs "20.7")
+// returns: -1 if a < b, 0 if a == b, 1 if a > b
+function compareVersions(a, b) {
+  var partsA = String(a).split(".");
+  var partsB = String(b).split(".");
+  var len = Math.max(partsA.length, partsB.length);
+  for (var i = 0; i < len; i++) {
+    var numA = parseInt(partsA[i] || "0", 10);
+    var numB = parseInt(partsB[i] || "0", 10);
+    if (numA < numB) return -1;
+    if (numA > numB) return 1;
+  }
+  return 0;
+}
+
 // =====================================================================
 // ===== AUTO UPDATE — فحص version.json دورياً وتحديث التطبيق =====
 // =====================================================================
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "20.6"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "20.7"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";

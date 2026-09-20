@@ -1,6 +1,6 @@
 {
-  "appVersion": "20.6",
+  "appVersion": "20.7",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-20T10:00:00Z",
-  "changelog": "تحسين إعادة المحاولة في _nativeContentCallback"
+  "releasedAt": "2026-09-20T11:00:00Z",
+  "changelog": "إضافة فلتر minAppVersion — للتحكم بإظهار الرسائل حسب إصدار التطبيق"
 }
