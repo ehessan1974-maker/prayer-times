@@ -1,6 +1,6 @@
 {
-  "appVersion": "20.3",
+  "appVersion": "20.4",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-19T06:00:00Z",
-  "changelog": "إضافة نظام أوامر التحديث عبر content.json (للمستخدمين الذين لديهم نسخ قديمة)"
+  "releasedAt": "2026-09-20T08:00:00Z",
+  "changelog": "إصلاح جلب content.json: إعادة المحاولة التلقائية عند الفشل + تقليل المهلة"
 }

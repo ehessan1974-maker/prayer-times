@@ -1901,7 +1901,10 @@ function _nativeContentCallback(data) {
     }
   }
   if (!data || data.length === 0) {
-    fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now());
+    // v20.4: انتظر قليلاً ثم أعد المحاولة عبر XHR
+    setTimeout(function() {
+      fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now());
+    }, 1000);
     return;
   }
   try {
@@ -1915,10 +1918,12 @@ function _nativeContentCallback(data) {
         startInfoCycle();
       }
     } else {
-      showDataErrorMessage();
+      // v20.4: محاولة إعادة الجلب عبر XHR
+      fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now());
     }
   } catch(e) {
-    showDataErrorMessage();
+    // v20.4: محاولة إعادة الجلب عبر XHR
+    fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now());
   }
 }
 
@@ -1930,10 +1935,11 @@ function showDataErrorMessage() {
   if (el("infoCatBar")) el("infoCatBar").style.display = "block";
 }
 
-function fetchContentJSONViaXHR(url) {
+function fetchContentJSONViaXHR(url, retryCount) {
+  retryCount = retryCount || 0;
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
-  xhr.timeout = 15000;
+  xhr.timeout = 10000; // v20.4: تقليل المهلة من 15 إلى 10 ثوانٍ
   xhr.onreadystatechange = function() {
     if (xhr.readyState === 4) {
       if (xhr.status === 200) {
@@ -1949,11 +1955,31 @@ function fetchContentJSONViaXHR(url) {
         } else {
           showDataErrorMessage();
         }
+      } else if (xhr.status === 0 && retryCount < 3) {
+        // v20.4: إعادة المحاولة عند فشل الاتصال (CORS أو شبكة)
+        setTimeout(function() {
+          fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now(), retryCount + 1);
+        }, 2000 * (retryCount + 1)); // 2s, 4s, 6s
       }
     }
   };
-  xhr.onerror = function() {};
-  xhr.ontimeout = function() {};
+  // v20.4: إعادة المحاولة عند الخطأ أو انتهاء المهلة
+  xhr.onerror = function() {
+    if (retryCount < 3) {
+      setTimeout(function() {
+        fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now(), retryCount + 1);
+      }, 2000 * (retryCount + 1));
+    } else {
+      showDataErrorMessage();
+    }
+  };
+  xhr.ontimeout = function() {
+    if (retryCount < 3) {
+      fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now(), retryCount + 1);
+    } else {
+      showDataErrorMessage();
+    }
+  };
   xhr.send();
 }
 
@@ -4641,7 +4667,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "20.3"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "20.4"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
