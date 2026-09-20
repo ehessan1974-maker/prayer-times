@@ -1870,12 +1870,9 @@ function fetchContentJSON() {
     return;
   }
   var url = CONTENT_URL + "?t=" + Date.now();
-  if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
-    try {
-      AndroidPrayer.fetchUrl(url, "_nativeContentCallback");
-      return;
-    } catch(e) {}
-  }
+  // v20.5: استخدام XHR مباشرة على كل المنصات (بما فيها أندرويد)
+  // لأن WebView يسمح بالوصول عبر setAllowUniversalAccessFromFileURLs(true)
+  // الجسر الأصلي AndroidPrayer.fetchUrl يفشل أحياناً بصمت
   fetchContentJSONViaXHR(url);
 }
 
@@ -4467,6 +4464,13 @@ function qiblaDistanceKm(lat, lng) {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 function qiblaCompute() {
+  // v20.5: التحقق من وجود إحداثيات صحيحة
+  if (typeof latitude !== "number" || typeof longitude !== "number" ||
+      isNaN(latitude) || isNaN(longitude)) {
+    var st = el("qbStatus");
+    if (st) { st.innerHTML = "⚠️ لم يتم تحديد موقعك بعد — انتظر تحديد الموقع"; st.className = "qb-status qb-status-big"; }
+    return;
+  }
   qiblaAngle = qiblaBearing(latitude, longitude);
   var km = qiblaDistanceKm(latitude, longitude);
   var kmTxt = ("" + km).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -4559,7 +4563,6 @@ function qiblaRefreshIfOpen() {
 function openQibla() {
   qiblaLive = false; qiblaHeading = null;
   el("qiblaModal").classList.add("show");
-  qiblaBuildTicks();
   qiblaCompute();
   qiblaRender();
   qiblaEnableSensor(); // محاولة تفعيل تلقائية للحساس
@@ -4667,7 +4670,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "20.4"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "20.5"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
