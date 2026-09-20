@@ -1257,7 +1257,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
         <span onclick="toggleCatFilter('hadith')" id="catBtn_hadith" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🕌 أحاديث</span>
         <span onclick="toggleCatFilter('quran')" id="catBtn_quran" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📖 قرآن</span>
         <span onclick="toggleCatFilter('azkar')" id="catBtn_azkar" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🤲 أذكار</span>
-        <span onclick="toggleCatFilter('messages')" id="catBtn_messages" style="display:inline-block;position:relative;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💬 رسائل<span id="msgNewDot" style="display:none;position:absolute;top:-7px;left:-7px;min-width:15px;height:15px;line-height:15px;text-align:center;background:#dc2626;color:white;border-radius:8px;font-size:8px;font-weight:700;padding:0 3px;-webkit-box-shadow:0 1px 3px rgba(0,0,0,0.4);box-shadow:0 1px 3px rgba(0,0,0,0.4);"></span></span>
+        <span onclick="toggleCatFilter('ehemessages')" id="catBtn_ehemessages" style="display:inline-block;position:relative;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💬 رسائل<span id="msgNewDot" style="display:none;position:absolute;top:-7px;left:-7px;min-width:15px;height:15px;line-height:15px;text-align:center;background:#dc2626;color:white;border-radius:8px;font-size:8px;font-weight:700;padding:0 3px;-webkit-box-shadow:0 1px 3px rgba(0,0,0,0.4);box-shadow:0 1px 3px rgba(0,0,0,0.4);"></span></span>
         <span onclick="toggleCatFilter('today')" id="catBtn_today" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📅 أحداث</span>
         <span onclick="toggleCatFilter('health')" id="catBtn_health" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💊 صحة</span>
         <span onclick="toggleCatFilter('food')" id="catBtn_food" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🍯 أطعمة</span>
@@ -1684,7 +1684,7 @@ var infoCycleProgressTimer = null;
 var infoCycleProgress = 0;
 var infoCatFilter = "all";
 var fullContentDB = null;
-var INFO_CATEGORIES = ["hadith","quran","azkar","dua","messages","today","health","food","jokes","world","wisdom","prophet","seasons","poetry","quran-tafseer","vitamins","stars"];
+var INFO_CATEGORIES = ["hadith","quran","azkar","dua","ehemessages","today","health","food","jokes","world","wisdom","prophet","seasons","poetry","quran-tafseer","vitamins","stars"];
 
 (function() {
   try {
@@ -1730,7 +1730,7 @@ function updateInfoToggleBtn() {
 
 function toggleCatFilter(cat) {
   infoCatFilter = cat;
-  if (cat === "messages") {
+  if (cat === "ehemessages") {
     try { msgMarkAllSeen(currentKnownMessages()); } catch(e) {}
   }
   var allBtns = document.querySelectorAll("[id^='catBtn_']");
@@ -2070,7 +2070,7 @@ function displayCurrentInfo() {
       var text = String(item.text || "");
       var src = item.src ? String(item.src) : "";
       var cardIdx = (copy === 0) ? i : (i + filtered.length);
-      var tsLine = (item.cat === "messages" && item.ts) ? '<div class="info-track-source" style="font-size:9px;opacity:.8;">🕐 ' + escapeHtml(String(item.ts)) + '</div>' : '';
+      var tsLine = (item.cat === "ehemessages" && item.ts) ? '<div class="info-track-source" style="font-size:9px;opacity:.8;">🕐 ' + escapeHtml(String(item.ts)) + '</div>' : '';
       html += '<div class="info-track-card" data-info-idx="' + cardIdx + '">' +
         '<span class="info-track-icon">' + icon + '</span>' +
         '<div class="info-track-text">' + escapeHtml(text) + '</div>' +
@@ -3865,7 +3865,7 @@ function msgsFromItems(arr) {
   var out = [];
   if (!arr || typeof arr.length !== "number") return out;
   for (var i = 0; i < arr.length; i++) {
-    if (arr[i] && arr[i].cat === "messages" && messageIsForMe(arr[i])) out.push(arr[i]);
+    if (arr[i] && arr[i].cat === "ehemessages" && messageIsForMe(arr[i])) out.push(arr[i]);
   }
   return out;
 }
@@ -3956,7 +3956,7 @@ function closeMsgAlertBubble(markSeen) {
 
 function viewNewMessages() {
   closeMsgAlertBubble(false);
-  if (infoCatFilter !== "messages") toggleCatFilter("messages");
+  if (infoCatFilter !== "ehemessages") toggleCatFilter("ehemessages");
   msgMarkAllSeen(currentKnownMessages());
 }
 
@@ -4694,7 +4694,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "20.7"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "20.8"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
