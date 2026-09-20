@@ -1,6 +1,6 @@
 {
-  "appVersion": "20.5",
+  "appVersion": "20.6",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-20T09:00:00Z",
-  "changelog": "إصلاح تحميل content.json على أندرويد + إصلاح خطأ البوصلة (qiblaBuildTicks محذوفة)"
+  "releasedAt": "2026-09-20T10:00:00Z",
+  "changelog": "تحسين إعادة المحاولة في _nativeContentCallback"
 }

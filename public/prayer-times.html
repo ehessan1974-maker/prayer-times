@@ -1898,10 +1898,10 @@ function _nativeContentCallback(data) {
     }
   }
   if (!data || data.length === 0) {
-    // v20.4: انتظر قليلاً ثم أعد المحاولة عبر XHR
+    // v20.6: إعادة المحاولة عبر XHR مباشرة (لا يعتمد على الجسر الأصلي)
     setTimeout(function() {
       fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now());
-    }, 1000);
+    }, 500);
     return;
   }
   try {
@@ -1915,11 +1915,11 @@ function _nativeContentCallback(data) {
         startInfoCycle();
       }
     } else {
-      // v20.4: محاولة إعادة الجلب عبر XHR
+      // v20.6: لو فشل parse، أعد الجلب عبر XHR
       fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now());
     }
   } catch(e) {
-    // v20.4: محاولة إعادة الجلب عبر XHR
+    // v20.6: لو حدث خطأ، أعد الجلب عبر XHR
     fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now());
   }
 }
@@ -4670,7 +4670,7 @@ function messageIsForMe(item) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "20.5"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "20.6"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
