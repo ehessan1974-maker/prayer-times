@@ -1,0 +1,105 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'prayer-times.html'
+      - 'android-app/**'
+      - 'android-studio/**'
+      - '.github/workflows/build-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        packages: 'tools platform-tools build-tools;34.0.0 platforms;android-34'
+
+    - name: Copy latest prayer-times.html to assets
+      run: |
+        mkdir -p android-studio/app/src/main/assets
+        cp -f prayer-times.html android-studio/app/src/main/assets/prayer-times.html
+
+    - name: Generate release keystore
+      run: |
+        cd android-studio
+        keytool -genkeypair -v \
+          -keystore app/release.keystore \
+          -alias prayer-times \
+          -keyalg RSA -keysize 2048 \
+          -validity 10950 \
+          -storepass ${{ secrets.KEYSTORE_PASS || 'prayertimes2026' }} \
+          -keypass ${{ secrets.KEYSTORE_PASS || 'prayertimes2026' }} \
+          -dname "CN=Prayer Times, OU=Apps, O=ehessan1974, L=Damascus, C=SY"
+
+    - name: Make gradlew executable
+      run: |
+        cd android-studio
+        chmod +x gradlew 2>/dev/null || true
+
+    - name: Build Release APK
+      working-directory: android-studio
+      run: |
+        # Generate gradlew if it doesn't exist
+        if [ ! -f gradlew ]; then
+          gradle wrapper --gradle-version 8.7
+        fi
+        ./gradlew assembleRelease --no-daemon
+
+    - name: Copy APK to known location
+      run: |
+        mkdir -p artifacts
+        cp android-studio/app/build/outputs/apk/release/app-release-unsigned.apk artifacts/prayer-times.apk || \
+        cp android-studio/app/build/outputs/apk/release/app-release.apk artifacts/prayer-times.apk || \
+        find android-studio/app/build/outputs -name "*.apk" -exec cp {} artifacts/prayer-times.apk \;
+
+    - name: Sign APK
+      run: |
+        cd artifacts
+        $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+          --ks ../android-studio/app/release.keystore \
+          --ks-pass "pass:${{ secrets.KEYSTORE_PASS || 'prayertimes2026' }}" \
+          --ks-key-alias prayer-times \
+          --key-pass "pass:${{ secrets.KEYSTORE_PASS || 'prayertimes2026' }}" \
+          --out prayer-times-signed.apk prayer-times.apk
+        $ANDROID_HOME/build-tools/34.0.0/apksigner verify prayer-times-signed.apk
+
+    - name: Rename APK with version
+      run: |
+        VERSION=$(grep 'versionName' android-studio/app/build.gradle | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        cp artifacts/prayer-times-signed.apk artifacts/prayer-times-v${VERSION}.apk
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: prayer-times-apk-v${{ env.VERSION }}
+        path: artifacts/prayer-times-*.apk
+        retention-days: 90
+
+    - name: Commit APK to repo
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        cp artifacts/prayer-times-signed.apk android-app/prayer-times.apk
+        cp artifacts/prayer-times-signed.apk android-app/prayer-times-v${VERSION}.apk
+        cp artifacts/prayer-times-signed.apk public/prayer-times-v${VERSION}.apk
+        git add android-app/prayer-times.apk android-app/prayer-times-v${VERSION}.apk public/prayer-times-v${VERSION}.apk
+        git commit -m "chore: build APK v${VERSION} [skip ci]" || echo "No changes to commit"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
