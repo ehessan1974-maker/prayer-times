@@ -112,6 +112,8 @@ jobs:
         retention-days: 90
 
     - name: Commit APK to repo
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
@@ -120,4 +122,4 @@ jobs:
         cp artifacts/prayer-times-signed.apk public/prayer-times-v${VERSION}.apk
         git add android-app/prayer-times.apk android-app/prayer-times-v${VERSION}.apk public/prayer-times-v${VERSION}.apk
         git commit -m "chore: build APK v${VERSION} [skip ci]" || echo "No changes to commit"
-        git push
+        git push origin HEAD:main || git push
