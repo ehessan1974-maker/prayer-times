@@ -11,7 +11,7 @@ android-studio/local.properties
 android-studio/app/release.keystore
 *.log
 next-env.d.ts
-src
+src/
 next.config.js
 tsconfig.json
 package.json
