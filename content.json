@@ -1558,6 +1558,13 @@
     "cat": "world"
   },
   {
+    "icon": "🔗",
+    "text": "رابط البرنامج: https://ehessan1974-maker.github.io/prayer-times/",
+    "src": "رابط دائم للتطبيق",
+    "cat": "ehemessages",
+    "ts": "2026/09/21 01:30"
+  },
+  {
     "icon": "💬",
     "text": "السلام عليكم",
     "src": "رسالة عائلية",
