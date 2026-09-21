@@ -2081,6 +2081,15 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
+// v22.4: تحويل الروابط في النص إلى روابط قابلة للنقر
+function linkifyText(text) {
+  var escaped = escapeHtml(text);
+  // تحويل الروابط (http/https) إلى <a> tags
+  return escaped.replace(/(https?:\/\/[^\s<]+)/g, function(url) {
+    return '<a href="' + url + '" target="_blank" rel="noopener" style="color:#059669;text-decoration:underline;cursor:pointer;" onclick="event.stopPropagation();">' + url + '</a>';
+  });
+}
+
 var infoScrollPaused = false;
 var _infoRedrawTimer = null;
 function scheduleInfoRedraw() {
@@ -2130,7 +2139,7 @@ function displayCurrentInfo() {
       var tsLine = (item.cat === "ehemessages" && item.ts) ? '<div class="info-track-source" style="font-size:9px;opacity:.8;">🕐 ' + escapeHtml(String(item.ts)) + '</div>' : '';
       html += '<div class="info-track-card" data-info-idx="' + cardIdx + '">' +
         '<span class="info-track-icon">' + icon + '</span>' +
-        '<div class="info-track-text">' + escapeHtml(text) + '</div>' +
+        '<div class="info-track-text">' + linkifyText(text) + '</div>' +
         (src ? '<div class="info-track-source">' + escapeHtml(src) + '</div>' : '') +
         tsLine +
         '</div>';
@@ -4812,7 +4821,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "22.3"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "22.4"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
