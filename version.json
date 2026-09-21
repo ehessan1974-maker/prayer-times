@@ -1,6 +1,6 @@
 {
-  "appVersion": "21.0",
+  "appVersion": "22.0",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-20T14:00:00Z",
-  "changelog": "إصلاح 4 مشاكل: رابط التحميل + toast التحديث + طريقة الحساب المصرية + جلب البيانات على J5"
+  "releasedAt": "2026-09-21T00:00:00Z",
+  "changelog": "بوصلة احترافية جديدة: قرص يدور مع الجهاز + مؤشر الكعبة + علامات الدرجة"
 }

@@ -1013,34 +1013,85 @@ body.smart *::-webkit-scrollbar { width: 20px; height: 20px; }
 body.smart *::-webkit-scrollbar-thumb { border-width: 4px; }
 body.smart .modal { scrollbar-gutter: stable; }
 
-/* ====== v17: اتجاه القبلة (سهم + خريطة) ====== */
-.qb-arrow-stage { display:flex; justify-content:center; padding:10px 0 6px; }
-.qb-arrow-circle {
-  position:relative; width:180px; height:180px; border-radius:50%;
+/* ====== v22: بوصلة القبلة الاحترافية ====== */
+.qb-compass-stage {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 20px;
+}
+.qb-compass-dial {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
   background: radial-gradient(circle, #ffffff 58%, #ecfdf5 100%);
-  border:3px solid #059669;
-  box-shadow: 0 4px 18px rgba(5,150,105,0.25), inset 0 0 14px rgba(5,150,105,0.12);
-  display:flex; align-items:center; justify-content:center;
-  overflow:hidden;
+  border: 4px solid #059669;
+  box-shadow: 0 6px 24px rgba(5,150,105,0.3), inset 0 0 20px rgba(5,150,105,0.12);
+  overflow: hidden;
+  transition: transform 0.2s ease-out;
 }
-.qb-cardinal {
-  position:absolute; font-size:14px; font-weight:bold; color:#059669;
+.qb-dir {
+  position: absolute;
+  font-size: 16px;
+  font-weight: bold;
+  color: #059669;
 }
-.qb-cardinal-n { top:6px; left:50%; transform:translateX(-50%); color:#dc2626; font-size:16px; }
-.qb-cardinal-s { bottom:6px; left:50%; transform:translateX(-50%); }
-.qb-cardinal-e { right:8px; top:50%; transform:translateY(-50%); }
-.qb-cardinal-w { left:8px; top:50%; transform:translateY(-50%); }
-.qb-arrow {
-  transition: transform 0.25s ease-out;
-  transform-origin: center;
-  display: flex; align-items: center; justify-content: center;
-  /* مؤشر النقطة المركزية */
-  position:relative;
+.qb-dir-n { top: 8px; left: 50%; transform: translateX(-50%); color: #dc2626; font-size: 18px; }
+.qb-dir-s { bottom: 8px; left: 50%; transform: translateX(-50%); }
+.qb-dir-e { right: 10px; top: 50%; transform: translateY(-50%); }
+.qb-dir-w { left: 10px; top: 50%; transform: translateY(-50%); }
+.qb-ticks {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
 }
-.qb-arrow::after {
-  content: ""; position:absolute; left:50%; top:50%; width:8px; height:8px;
-  margin:-4px 0 0 -4px; border-radius:50%; background:#059669;
-  border:2px solid #fff; box-shadow:0 0 4px rgba(0,0,0,0.3);
+.qb-tick {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 2px; height: 10px;
+  margin-left: -1px; margin-top: -130px;
+  background: #94a3b8;
+  transform-origin: 50% 130px;
+}
+.qb-tick.major {
+  height: 14px;
+  width: 3px;
+  margin-left: -1.5px;
+  background: #059669;
+}
+/* مؤشر الكعبة — يدور مع القرص */
+.qb-kaaba-marker {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 0;
+}
+.qb-kaaba-icon {
+  position: absolute;
+  font-size: 28px;
+  left: -16px;
+  top: -130px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+.qb-kaaba-line {
+  position: absolute;
+  left: -1px;
+  top: -100px;
+  width: 2px;
+  height: 100px;
+  background: linear-gradient(to bottom, #d4af37, #d4af37 30%, transparent);
+}
+/* السهم الثابت في الأعلى — لا يدور */
+.qb-fixed-arrow {
+  position: absolute;
+  top: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  color: #1f2937;
+  z-index: 10;
+  text-shadow: 0 2px 4px rgba(255,255,255,0.8);
+  pointer-events: none;
 }
 .qb-angle { font-size:14px; color:#065f46; font-weight:700; margin:2px 0; }
 .qb-angle strong { color:#dc2626; font-size:17px; font-family:monospace; }
@@ -1416,7 +1467,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
   </div></div>
 </div>
 
-<!-- v17: نافذة اتجاه القبلة (سهم + خريطة Google) -->
+<!-- v22: نافذة اتجاه القبلة (بوصلة احترافية) -->
 <div class="modal-overlay" id="qiblaModal">
   <div class="modal-center"><div class="modal-center-inner">
   <div class="modal" style="max-width:500px;text-align:center;">
@@ -1427,25 +1478,24 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <div class="qb-angle">زاوية القبلة من الشمال: <strong id="qbAngle">--</strong>°</div>
     <div class="qb-dist" id="qbDist">--</div>
 
-    <!-- السهم الذي يشير للقبلة -->
-    <div class="qb-arrow-stage">
-      <div class="qb-arrow-circle" id="qbArrowCircle">
-        <div class="qb-cardinal qb-cardinal-n">ش</div>
-        <div class="qb-cardinal qb-cardinal-s">ج</div>
-        <div class="qb-cardinal qb-cardinal-e">ق</div>
-        <div class="qb-cardinal qb-cardinal-w">غ</div>
-        <div class="qb-arrow" id="qbArrow">
-          <svg viewBox="0 0 100 100" width="80" height="80" style="display:block;">
-            <defs>
-              <linearGradient id="qbArrowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style="stop-color:#dc2626"/>
-                <stop offset="100%" style="stop-color:#991b1b"/>
-              </linearGradient>
-            </defs>
-            <path d="M50,8 L68,75 L50,62 L32,75 Z" fill="url(#qbArrowGrad)" stroke="#7f1d1d" stroke-width="2"/>
-          </svg>
+    <!-- البوصلة الدائرية -->
+    <div class="qb-compass-stage">
+      <div class="qb-compass-dial" id="qbDial">
+        <!-- علامات الاتجاهات الأربعة -->
+        <div class="qb-dir qb-dir-n">ش</div>
+        <div class="qb-dir qb-dir-e">ق</div>
+        <div class="qb-dir qb-dir-s">ج</div>
+        <div class="qb-dir qb-dir-w">غ</div>
+        <!-- علامات الدرجة -->
+        <div class="qb-ticks" id="qbTicks"></div>
+        <!-- مؤشر القبلة (الكعبة) — يدور مع القرص -->
+        <div class="qb-kaaba-marker" id="qbKaabaMarker">
+          <div class="qb-kaaba-icon">🕋</div>
+          <div class="qb-kaaba-line"></div>
         </div>
       </div>
+      <!-- السهم الثابت في الأعلى (يشير للأمام من الجهاز) -->
+      <div class="qb-fixed-arrow">▼</div>
     </div>
 
     <!-- رسالة الحالة -->
@@ -1467,7 +1517,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
               allowfullscreen></iframe>
     </div>
 
-    <div class="qb-note">السهم الأحمر يشير دائماً نحو القبلة، كيفما أدّرت الموبايل. الخريطة أعلاه تعرض المسار من موقعك إلى مكة المكرمة.</div>
+    <div class="qb-note">أدر جهازك حتى تتجه 🕋 الكعبة إلى الأعلى (مطابقة مع السهم الأسود الثابت). عندئذٍ يكون رأس جهازك في اتجاه القبلة.</div>
   </div>
   </div></div>
 </div>
@@ -4476,8 +4526,25 @@ function qiblaDistanceKm(lat, lng) {
   var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat * d2r) * Math.cos(KAABA_LAT * d2r) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
+function qiblaBuildTicks() {
+  var t = el("qbTicks");
+  if (!t || t.getAttribute("data-built")) return;
+  var html = "";
+  for (var i = 0; i < 72; i++) {
+    var major = (i % 9 === 0);
+    var deg = i * 5;
+    var tf = "rotate(" + deg + "deg)";
+    html += '<div class="qb-tick' + (major ? " major" : "") + '" style="transform:' + tf + ';"></div>';
+  }
+  t.innerHTML = html;
+  t.setAttribute("data-built", "1");
+}
+function qiblaSetRot(elm, deg) {
+  var v = "rotate(" + deg + "deg)";
+  elm.style.webkitTransform = v;
+  elm.style.transform = v;
+}
 function qiblaCompute() {
-  // v20.5: التحقق من وجود إحداثيات صحيحة
   if (typeof latitude !== "number" || typeof longitude !== "number" ||
       isNaN(latitude) || isNaN(longitude)) {
     var st = el("qbStatus");
@@ -4489,7 +4556,6 @@ function qiblaCompute() {
   var kmTxt = ("" + km).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   el("qbAngle").innerHTML = qiblaAngle.toFixed(1);
   el("qbDist").innerHTML = "المسافة إلى مكة المكرمة: <strong>" + kmTxt + "</strong> كم";
-  // v17: تحميل خريطة Google Maps بالمسار من موقعك إلى الكعبة
   var frame = el("qbMapFrame");
   if (frame) {
     var src = "https://www.google.com/maps?saddr=" + latitude + "," + longitude +
@@ -4500,13 +4566,13 @@ function qiblaCompute() {
 }
 function qiblaRender() {
   var hasH = qiblaLive && qiblaHeading !== null && qiblaHeading !== undefined;
-  // v17: السهم يشير للقبلة دائماً، كيفما أدّرت الموبايل
-  // السهم يدور بزاوية: qiblaAngle - deviceHeading
-  // - بدون حساس: السهم ثابت في زاوية qiblaAngle (يشير للقبلة المطلقة)
-  // - مع حساس: السهم يتبع القبلة، يدور عكس دوران الجهاز
-  var arrowRot = qiblaAngle - (hasH ? qiblaHeading : 0);
-  var arrow = el("qbArrow");
-  if (arrow) qiblaSetRot(arrow, arrowRot);
+  // v22: القرص يدور عكس اتجاه الجهاز، والكعبة مثبتة على القرص بزاوية القبلة
+  var dialRot = hasH ? -qiblaHeading : 0;
+  var dial = el("qbDial");
+  if (dial) qiblaSetRot(dial, dialRot);
+  // الكعبة مثبتة على القرص عند زاوية القبلة المطلقة من الشمال
+  var kaaba = el("qbKaabaMarker");
+  if (kaaba) qiblaSetRot(kaaba, qiblaAngle);
   var st = el("qbStatus"), sn = el("qbSensor");
   if (hasH) {
     var diff = Math.abs(((qiblaAngle - qiblaHeading) % 360 + 540) % 360 - 180);
@@ -4524,8 +4590,8 @@ function qiblaRender() {
     }
     if (sn) sn.innerHTML = "اتجاه جهازك: " + Math.round(qiblaHeading) + "° • القبلة: " + Math.round(qiblaAngle) + "° • الفرق: " + Math.round(diff) + "°";
   } else {
-    if (st) { st.innerHTML = "📍 السهم يشير للقبلة — فعّل حساس الاتجاه لتحريكه"; st.className = "qb-status qb-status-big"; }
-    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس: السهم ثابت في زاوية " + qiblaAngle.toFixed(0) + "° من الشمال";
+    if (st) { st.innerHTML = "📍 أدر جهازك حتى تتجه 🕋 إلى الأعلى"; st.className = "qb-status qb-status-big"; }
+    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس: الكعبة تشير للقبلة المطلقة (" + qiblaAngle.toFixed(0) + "° من الشمال)";
   }
 }
 function qiblaOrientHandler(e) {
@@ -4707,7 +4773,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "21.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "22.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
