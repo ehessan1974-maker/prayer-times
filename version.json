@@ -1,6 +1,6 @@
 {
-  "appVersion": "20.9",
+  "appVersion": "21.0",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "releasedAt": "2026-09-20T13:00:00Z",
-  "changelog": "إعادة أيقونة الجامع بمأذنتين"
+  "releasedAt": "2026-09-20T14:00:00Z",
+  "changelog": "إصلاح 4 مشاكل: رابط التحميل + toast التحديث + طريقة الحساب المصرية + جلب البيانات على J5"
 }

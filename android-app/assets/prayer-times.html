@@ -1653,7 +1653,7 @@ var CALC_METHODS = [
   {id:22, ar:"الشؤون الإسلامية — البرتغال"},
   {id:23, ar:"الأردن"}
 ];
-var PT_METHOD = 4, PT_SCHOOL = 0;
+var PT_METHOD = 5, PT_SCHOOL = 0; // v21: الهيئة المصرية العامة للمساحة (افتراضي)
 var geoName = "";          // v13: اسم الموقع المحدد تلقائياً عكسياً
 var cityResults = [];      // v13: نتائج بحث المدينة
 var citySearching = false;
@@ -1870,9 +1870,15 @@ function fetchContentJSON() {
     return;
   }
   var url = CONTENT_URL + "?t=" + Date.now();
-  // v20.5: استخدام XHR مباشرة على كل المنصات (بما فيها أندرويد)
-  // لأن WebView يسمح بالوصول عبر setAllowUniversalAccessFromFileURLs(true)
-  // الجسر الأصلي AndroidPrayer.fetchUrl يفشل أحياناً بصمت
+  // v21: العودة لاستخدام AndroidPrayer.fetchUrl كخيار أول على أندرويد
+  // لأن XHR من file:// قد يفشل على بعض أجهزة أندرويد القديمة (مثل سامسونج J5)
+  // لو فشل fetchUrl، يتم استخدام XHR كـ fallback تلقائياً
+  if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
+    try {
+      AndroidPrayer.fetchUrl(url, "_nativeContentCallback");
+      return;
+    } catch(e) {}
+  }
   fetchContentJSONViaXHR(url);
 }
 
@@ -2404,8 +2410,14 @@ function stopInfoRefresh() { if (infoRefreshTimer) { clearInterval(infoRefreshTi
     var sl = localStorage.getItem("manual-lat");
     var sm = localStorage.getItem("manual-lng");
     if (sl && sm) { latitude = parseFloat(sl); longitude = parseFloat(sm); isManualLocation = true; }
+    // v21: طريقة الحساب — لو لم يضبط المستخدم طريقة مخصصة، استخدم الهيئة المصرية (5)
     var smth = localStorage.getItem("pt-method");
-    if (smth !== null && !isNaN(parseInt(smth))) PT_METHOD = parseInt(smth);
+    var methodSet = localStorage.getItem("pt-method-set");
+    if (smth !== null && !isNaN(parseInt(smth)) && methodSet === "1") {
+      PT_METHOD = parseInt(smth); // المستخدم ضبط طريقة مخصصة
+    } else {
+      PT_METHOD = 5; // الهيئة المصرية العامة للمساحة (افتراضي)
+    }
     var ssch = localStorage.getItem("pt-school");
     if (ssch !== null && !isNaN(parseInt(ssch))) PT_SCHOOL = parseInt(ssch);
   } catch(e) {}
@@ -2917,6 +2929,7 @@ function applyCalcMethod() {
   try {
     localStorage.setItem("pt-method", "" + PT_METHOD);
     localStorage.setItem("pt-school", "" + PT_SCHOOL);
+    localStorage.setItem("pt-method-set", "1"); // v21: المستخدم ضبط طريقة مخصصة
   } catch(e) {}
   el("methodCurrent").textContent = calcMethodName(PT_METHOD) + (PT_SCHOOL === 1 ? " — عصر الحنفي" : "");
   fetchPrayerTimes();
@@ -4694,7 +4707,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "20.9"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "21.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
@@ -5051,10 +5064,8 @@ function registerServiceWorker() {
   registerServiceWorker();
   // فحص فوري عند الإقلاع
   setTimeout(function() {
-    try {
-      var savedVer = localStorage.getItem(APP_VERSION_KEY);
-      if (savedVer) CURRENT_APP_VERSION = savedVer;
-    } catch(e) {}
+    // v21: لا نقرأ savedVer من localStorage — نستخدم CURRENT_APP_VERSION من الكود الحالي فقط
+    // هذا يمنع ظهور toast التحديث بشكل متكرر بعد التحديث
     checkAppUpdate();
   }, 3000);
   // فحص دوري كل 5 دقائق
