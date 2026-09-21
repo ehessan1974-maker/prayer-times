@@ -1504,6 +1504,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 
     <!-- زر تفعيل الحساس -->
     <button class="btn btn-primary btn-sm" id="qbSensorBtn" onclick="qiblaEnableSensor()">🔄 تفعيل حساس الاتجاه</button>
+    <button class="btn btn-outline btn-sm" id="qbFlipBtn" onclick="qiblaToggleFlip()" style="margin-top:6px;">🔁 عكس اتجاه البوصلة</button>
 
     <!-- خريطة Google Maps: المسار من موقعك إلى مكة -->
     <div class="qb-map-section">
@@ -4596,8 +4597,30 @@ function qiblaRender() {
 }
 function qiblaOrientHandler(e) {
   var h = null;
-  if (typeof e.webkitCompassHeading === "number" && !isNaN(e.webkitCompassHeading)) h = e.webkitCompassHeading; // iOS
-  else if (e.alpha !== null && e.alpha !== undefined && !isNaN(e.alpha)) h = (360 - e.alpha) % 360; // Android
+  // iOS: webkitCompassHeading مباشر (0 = شمال، 90 = شرق)
+  if (typeof e.webkitCompassHeading === "number" && !isNaN(e.webkitCompassHeading)) {
+    h = e.webkitCompassHeading;
+  }
+  // Android: alpha يتزايد عكس عقارب الساعة
+  // alpha = 0 → الجهاز مواجه للشمال
+  // alpha = 90 → الجهاز مواجه للغرب (وليس الشرق!)
+  // لذلك: heading = (360 - alpha) % 360
+  // لكن على بعض الأجهزة alpha يتزايد مع عقارب الساعة (مثل iOS)
+  // فنحتاج تجربة كلا الاتجاهين
+  else if (e.alpha !== null && e.alpha !== undefined && !isNaN(e.alpha)) {
+    // v22.3: قيمة alpha على معظم أجهزة أندرويد تتزايد عكس عقارب الساعة
+    // heading = (360 - alpha) % 360
+    // لكن لو كان الشمال يشير للشرق، فهذا يعني أن alpha مع عقارب الساعة
+    // في تلك الحالة: heading = alpha مباشرة
+    var QIBLA_FLIP_KEY = "pt-qibla-flip";
+    var flip = false;
+    try { flip = (localStorage.getItem(QIBLA_FLIP_KEY) === "true"); } catch(e2) {}
+    if (flip) {
+      h = e.alpha % 360; // بعض الأجهزة تتزايد مع عقارب الساعة
+    } else {
+      h = (360 - e.alpha) % 360; // الافتراضي: عكس عقارب الساعة
+    }
+  }
   if (h === null) return;
   qiblaHeading = (h + 360) % 360;
   if (!qiblaLive) {
@@ -4616,6 +4639,22 @@ function qiblaAttach() {
       if (sn) sn.innerHTML = "⚠️ لم يُرصد حساس اتجاه في هذا الجهاز — الزاوية الثابتة أعلاه تعمل دائماً";
     }
   }, 1800);
+}
+
+// v22.3: عكس اتجاه البوصلة (لبعض أجهزة أندرويد التي تعكس alpha)
+function qiblaToggleFlip() {
+  var QIBLA_FLIP_KEY = "pt-qibla-flip";
+  var flip = false;
+  try { flip = (localStorage.getItem(QIBLA_FLIP_KEY) === "true"); } catch(e) {}
+  flip = !flip;
+  try { localStorage.setItem(QIBLA_FLIP_KEY, flip ? "true" : "false"); } catch(e) {}
+  var btn = el("qbFlipBtn");
+  if (btn) {
+    btn.textContent = flip ? "🔁 إلغاء العكس" : "🔁 عكس اتجاه البوصلة";
+    btn.style.background = flip ? "#fef3c7" : "";
+    btn.style.borderColor = flip ? "#f59e0b" : "";
+  }
+  qiblaRender();
 }
 function qiblaEnableSensor() {
   var sn = el("qbSensor");
@@ -4773,7 +4812,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "22.2"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "22.3"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
