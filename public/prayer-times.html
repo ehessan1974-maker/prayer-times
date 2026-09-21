@@ -2081,13 +2081,32 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-// v22.4: تحويل الروابط في النص إلى روابط قابلة للنقر
+// v22.5: تحويل الروابط في النص إلى روابط قابلة للنقر
 function linkifyText(text) {
   var escaped = escapeHtml(text);
   // تحويل الروابط (http/https) إلى <a> tags
   return escaped.replace(/(https?:\/\/[^\s<]+)/g, function(url) {
-    return '<a href="' + url + '" target="_blank" rel="noopener" style="color:#059669;text-decoration:underline;cursor:pointer;" onclick="event.stopPropagation();">' + url + '</a>';
+    return '<a href="' + url + '" target="_blank" rel="noopener" style="color:#059669;text-decoration:underline;cursor:pointer;" onclick="openLinkInNewTab(event, \'' + url + '\');">' + url + '</a>';
   });
+}
+
+// v22.5: فتح الرابط في صفحة جديدة مع إبقاء صفحة البرنامج مفتوحة
+function openLinkInNewTab(e, url) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  // على أندرويد: استخدم NativeBridge لفتح الرابط في المتصفح الافتراضي
+  if (window.AndroidPrayer && typeof AndroidPrayer.openExternalUrl === "function") {
+    try {
+      AndroidPrayer.openExternalUrl(url);
+      return;
+    } catch(err) {}
+  }
+  // على المتصفح: window.open يفتح تبويب جديد
+  try {
+    var w = window.open(url, '_blank');
+    if (w) return; // نجح
+  } catch(err2) {}
+  // fallback أخير: تغيير الموقع الحالي
+  window.location.href = url;
 }
 
 var infoScrollPaused = false;
@@ -4821,7 +4840,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "22.4"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "22.5"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";

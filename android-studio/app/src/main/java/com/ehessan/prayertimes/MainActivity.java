@@ -270,6 +270,16 @@ public class MainActivity extends Activity {
             } catch (Exception e2) { return "unknown"; }
         }
 
+        // ===== فتح رابط في المتصفح الافتراضي للجهاز (يُبقي التطبيق مفتوحاً) =====
+        @JavascriptInterface
+        public void openExternalUrl(String url) {
+            try {
+                Intent it = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(it);
+            } catch (Exception e) {}
+        }
+
         // ===== تنزيل تحديث HTML جديد من GitHub (يستدعيه JS عند توفر نسخة جديدة) =====
         @JavascriptInterface
         public void downloadAppUpdate(final String jsCallback) {
