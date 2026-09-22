@@ -129,10 +129,13 @@ public class MainActivity extends Activity {
             URL u = new URL(urlStr);
             conn = (HttpURLConnection) u.openConnection();
             conn.setRequestMethod("GET");
-            conn.setConnectTimeout(15000);
-            conn.setReadTimeout(15000);
+            conn.setConnectTimeout(30000);
+            conn.setReadTimeout(30000);
             conn.setInstanceFollowRedirects(true);
-            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) PrayerTimes/1.0");
+            // v23: User-Agent حقيقي لتجنب رفض GitHub raw
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+            conn.setRequestProperty("Accept", "application/json, text/plain, */*");
+            conn.setRequestProperty("Accept-Encoding", "identity");
             int code = conn.getResponseCode();
             if (code != 200) return "";
             InputStream is = conn.getInputStream();

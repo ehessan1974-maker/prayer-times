@@ -4629,24 +4629,17 @@ function qiblaOrientHandler(e) {
   if (typeof e.webkitCompassHeading === "number" && !isNaN(e.webkitCompassHeading)) {
     h = e.webkitCompassHeading;
   }
-  // Android: alpha يتزايد عكس عقارب الساعة
-  // alpha = 0 → الجهاز مواجه للشمال
-  // alpha = 90 → الجهاز مواجه للغرب (وليس الشرق!)
-  // لذلك: heading = (360 - alpha) % 360
-  // لكن على بعض الأجهزة alpha يتزايد مع عقارب الساعة (مثل iOS)
-  // فنحتاج تجربة كلا الاتجاهين
+  // v23: لو كان الحدث absolute (deviceorientationabsolute)، alpha يكون نسبة للشمال المطلق
+  // alpha = 0 → الجهاز مواجه للشمال، يتزايد عكس عقارب الساعة
+  // heading = (360 - alpha) % 360
   else if (e.alpha !== null && e.alpha !== undefined && !isNaN(e.alpha)) {
-    // v22.3: قيمة alpha على معظم أجهزة أندرويد تتزايد عكس عقارب الساعة
-    // heading = (360 - alpha) % 360
-    // لكن لو كان الشمال يشير للشرق، فهذا يعني أن alpha مع عقارب الساعة
-    // في تلك الحالة: heading = alpha مباشرة
     var QIBLA_FLIP_KEY = "pt-qibla-flip";
     var flip = false;
     try { flip = (localStorage.getItem(QIBLA_FLIP_KEY) === "true"); } catch(e2) {}
     if (flip) {
-      h = e.alpha % 360; // بعض الأجهزة تتزايد مع عقارب الساعة
+      h = e.alpha % 360;
     } else {
-      h = (360 - e.alpha) % 360; // الافتراضي: عكس عقارب الساعة
+      h = (360 - e.alpha) % 360;
     }
   }
   if (h === null) return;
@@ -4659,7 +4652,11 @@ function qiblaOrientHandler(e) {
 }
 function qiblaAttach() {
   try { window.removeEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e) {}
-  try { window.addEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e2) {}
+  try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandler, false); } catch(e3) {}
+  // v23: محاولة استخدام deviceorientationabsolute أولاً (يعطي قيم مطلقة من الشمال)
+  try { window.addEventListener("deviceorientationabsolute", qiblaOrientHandler, false); } catch(e2) {}
+  // fallback: deviceorientation العادي
+  try { window.addEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e4) {}
   if (qiblaSensorTimer) clearTimeout(qiblaSensorTimer);
   qiblaSensorTimer = setTimeout(function() {
     if (!qiblaLive) {
@@ -4716,6 +4713,7 @@ function openQibla() {
 function closeQibla() {
   el("qiblaModal").classList.remove("show");
   try { window.removeEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e) {}
+  try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandler, false); } catch(e3) {}
   qiblaLive = false; qiblaHeading = null;
   if (qiblaSensorTimer) { clearTimeout(qiblaSensorTimer); qiblaSensorTimer = null; }
 }
@@ -4840,7 +4838,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "22.6"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "23.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
