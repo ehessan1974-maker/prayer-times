@@ -1444,6 +1444,13 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <button class="btn btn-primary" onclick="refreshData();closeSettings();">تحديث المواقيت</button>
     </div>
 
+    <!-- v23.4: زر مسح الكاش -->
+    <div class="modal-section">
+      <div class="sec-title">🗑️ مسح الكاش</div>
+      <div class="sec-desc">امسح ذاكرة التخزين المؤقت للتطبيق قبل تثبيت نسخة جديدة. يحل مشاكل عدم ظهور التحديثات.</div>
+      <button class="btn btn-outline" style="width:100%;background:#fef2f2;color:#b91c1c;border-color:#fca5a5;" onclick="manualClearCache()">🗑️ مسح الكاش الآن</button>
+    </div>
+
     <div class="modal-section">
       <div class="sec-title">📱 معرّف هذا الجهاز</div>
       <div class="setting-box" style="display:block;">
@@ -4955,7 +4962,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "23.3"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "23.4"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
@@ -5184,30 +5191,91 @@ function hideUpdateToast() {
   if (_updateToastEl) _updateToastEl.style.display = "none";
 }
 
-function applyAppUpdate(userTriggered) {
-  hideUpdateToast();
-  try { localStorage.setItem(APP_VERSION_KEY, CURRENT_APP_VERSION); } catch(e) {}
-  if ("serviceWorker" in navigator) {
-    try {
-      navigator.serviceWorker.getRegistrations().then(function(regs) {
-        for (var i = 0; i < regs.length; i++) {
-          regs[i].update();
-          regs[i].active && regs[i].active.postMessage("skipWaiting");
-        }
-      });
-    } catch(e) {}
+// v23.4: مسح كل الكاش قبل التحديث
+function clearAllCachesAndReload() {
+  var stepsDone = 0;
+  var totalSteps = 3;
+
+  function checkDone() {
+    stepsDone++;
+    if (stepsDone >= totalSteps) {
+      // إعادة تحميل مع تخطي الكاش
+      setTimeout(function() {
+        window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+      }, 300);
+    }
   }
+
+  // 1. مسح Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      var promises = [];
+      for (var i = 0; i < regs.length; i++) {
+        promises.push(regs[i].unregister());
+      }
+      return Promise.all(promises);
+    }).then(function() { checkDone(); }).catch(function() { checkDone(); });
+  } else {
+    checkDone();
+  }
+
+  // 2. مسح كل الكاش (caches API)
+  if (window.caches) {
+    caches.keys().then(function(keys) {
+      return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+    }).then(function() { checkDone(); }).catch(function() { checkDone(); });
+  } else {
+    checkDone();
+  }
+
+  // 3. على أندرويد: تنزيل HTML جديد قبل إعادة التحميل
   if (window.AndroidPrayer && typeof AndroidPrayer.downloadAppUpdate === "function") {
     try {
       AndroidPrayer.downloadAppUpdate(function() {
-        setTimeout(function() { location.reload(); }, 800);
+        checkDone();
       });
-      return;
-    } catch(e) {}
+    } catch(e) { checkDone(); }
+  } else {
+    checkDone();
   }
-  setTimeout(function() {
-    location.reload();
-  }, 200);
+}
+
+function applyAppUpdate(userTriggered) {
+  hideUpdateToast();
+  clearAllCachesAndReload();
+}
+
+// v23.4: مسح الكاش يدوياً من الإعدادات
+function manualClearCache() {
+  showNotification("⏳ جارٍ مسح الكاش...");
+  var done = 0;
+  var need = 2;
+
+  function check() {
+    done++;
+    if (done >= need) {
+      showNotification("✅ تم مسح الكاش — سيتم إعادة التحميل");
+      setTimeout(function() {
+        window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+      }, 1500);
+    }
+  }
+
+  // 1. مسح Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      var promises = [];
+      for (var i = 0; i < regs.length; i++) promises.push(regs[i].unregister());
+      return Promise.all(promises);
+    }).then(function() { check(); }).catch(function() { check(); });
+  } else { check(); }
+
+  // 2. مسح كل الكاش (caches API)
+  if (window.caches) {
+    caches.keys().then(function(keys) {
+      return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+    }).then(function() { check(); }).catch(function() { check(); });
+  } else { check(); }
 }
 
 function checkAppUpdate() {
