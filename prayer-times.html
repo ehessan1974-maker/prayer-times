@@ -1184,6 +1184,19 @@ body.dark-mode #infoCatBar span[onclick^="toggleCatFilter"]#msgNewDot {
   background:#dc2626 !important;
   color:white !important;
 }
+/* v24: تأثير التحويم والضغط على أزرار التصنيف */
+#infoCatBar span[onclick^="toggleCatFilter"]:hover {
+  opacity: 0.75;
+  transform: scale(1.05);
+  transition: opacity 0.2s, transform 0.2s;
+}
+#infoCatBar span[onclick^="toggleCatFilter"]:active {
+  opacity: 0.6;
+  transform: scale(0.95);
+}
+#infoCatBar span[onclick^="toggleCatFilter"] {
+  transition: opacity 0.2s, transform 0.2s, background 0.2s, color 0.2s;
+}
 body.dark-mode .modal { background:#101b16; }
 body.dark-mode .modal h2 { color:#6ee7b7; }
 body.dark-mode .modal-close { background:#1a2a22; color:#e8f5ee; }
@@ -1844,10 +1857,10 @@ function toggleCatFilter(cat) {
   if (cat === "ehemessages") {
     try { msgMarkAllSeen(currentKnownMessages()); } catch(e) {}
   }
-  // v23.9: استخدام ألوان مختلفة حسب الوضع الليلي
+  // v24: ألوان مغايرة للزر النشط (ذهبي) والغير نشط
   var isDark = document.body.classList.contains("dark-mode");
-  var activeBg = isDark ? "#059669" : "#059669";
-  var activeColor = "white";
+  var activeBg = "#d4af37";        // ذهبي للزر النشط
+  var activeColor = "#1f2937";     // نص أسود على ذهبي
   var inactiveBg = isDark ? "#1f3a2c" : "white";
   var inactiveColor = isDark ? "#e8f5ee" : "#065f46";
   var allBtns = document.querySelectorAll("[id^='catBtn_']");
@@ -1857,9 +1870,13 @@ function toggleCatFilter(cat) {
     if (bCat === cat) {
       b.style.background = activeBg;
       b.style.color = activeColor;
+      b.style.borderColor = "#b8941f";
+      b.style.fontWeight = "700";
     } else {
       b.style.background = inactiveBg;
       b.style.color = inactiveColor;
+      b.style.borderColor = isDark ? "#2f7d5c" : "#a7f3d0";
+      b.style.fontWeight = "400";
     }
   }
   currentInfoIdx = 0;
@@ -4989,7 +5006,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "23.9"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "24.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
