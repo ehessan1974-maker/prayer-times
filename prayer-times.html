@@ -1504,7 +1504,6 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 
     <!-- زر تفعيل الحساس -->
     <button class="btn btn-primary btn-sm" id="qbSensorBtn" onclick="qiblaEnableSensor()">🔄 تفعيل حساس الاتجاه</button>
-    <button class="btn btn-outline btn-sm" id="qbFlipBtn" onclick="qiblaToggleFlip()" style="margin-top:6px;">🔁 عكس اتجاه البوصلة</button>
 
     <!-- خريطة Google Maps: المسار من موقعك إلى مكة -->
     <div class="qb-map-section">
@@ -1544,16 +1543,49 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 <!-- Credits Modal -->
 <div class="credits-modal" id="creditsModal">
   <div class="credits-center"><div class="credits-center-inner">
-  <div class="credits-content">
+  <div class="credits-content" style="max-width:500px;max-height:90vh;overflow-y:auto;">
     <div class="icon">🕌</div>
+    <h2 style="text-align:center;font-size:22px;font-weight:800;color:#064e3b;margin-bottom:20px;">مواقيت الصلاة</h2>
+
     <div class="credits-item">
       <div class="role">💻 البرمجة والتصميم</div>
       <div class="name">د. إحسان العبد الله</div>
     </div>
+
     <div class="credits-item">
       <div class="role">🚀 الإصدار</div>
-      <div class="name">v15 — بوصلة القبلة + الوضع الليلي + أشرطة تمرير عريضة</div>
+      <div class="name" id="creditsVersion">v23.0</div>
     </div>
+
+    <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;color:#374151;">
+      <h3 style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:10px;">📋 مميزات التطبيق</h3>
+      <div style="padding-right:10px;">
+        <p>🕌 <b>مواقيت الصلاة:</b> حساب دقيق لمواعيد الصلوات الخمس حسب إحداثيات موقعك الجغرافي</p>
+        <p>🔔 <b>الأذان والإقامة:</b> إشعارات الأذان والإقامة مع أصوات مميزة واختيار المؤذن المفضل</p>
+        <p>⏰ <b>تنبيهات ثلاثية المراحل:</b> تنبيهات ذكية متعددة المراحل قبل كل صلاة لضمان عدم النسيان</p>
+        <p>🌐 <b>تعدد المصادر:</b> دعم عدة مصالح لحساب المواقيت مثل أم القرى والرابطة والجامعة الإسلامية والهيئة المصرية العامة للمساحة</p>
+        <p>🌅 <b>تنبيه شروق الشمس:</b> تنبيه خاص عند شروق الشمس كمرجع لوقت انتهاء صلاة الفجر</p>
+        <p>⚙️ <b>إعدادات متقدمة:</b> تخصيص شامل للإعدادات بما يتناسب مع طريقة حسابك المفضلة وموقعك</p>
+        <p>🧭 <b>بوصلة القبلة التفاعلية:</b> بوصلة احترافية تشير نحو القبلة مع خريطة المسار إلى الكعبة</p>
+        <p>🌙 <b>الوضع الليلي/النهاري:</b> واجهة مريحة للعين في كل الأوقات</p>
+        <p>📜 <b>الشريط المتحرك:</b> أحاديث وأدعية وأذكار ومعلومات إسلامية متجددة</p>
+        <p>🔄 <b>تحديث تلقائي:</b> يتم تحديث التطبيق والمحتوى تلقائياً من GitHub</p>
+        <p>📱 <b>دعم أندرويد 4.4+:</b> يعمل على الأجهزة القديمة والحديثة</p>
+        <p>🌐 <b>يعمل على كل الأجهزة:</b> موبايل، تابلت، كمبيوتر، شاشات ذكية</p>
+        <p>🌍 <b>بحث عالمي عن المدن:</b> ابحث عن أي مدينة عالمياً بالعربية أو الإنجليزية</p>
+        <p>📅 <b>التاريخ الهجري والميلادي:</b> مع إمكانية تصحيح التاريخ الهجري</p>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;color:#374151;">
+      <h3 style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:10px;">📞 التواصل</h3>
+      <p>للاستفسارات والاقتراحات: عبر رسائل الشريط المتحرك في التطبيق</p>
+    </div>
+
+    <div style="margin-top:16px;text-align:center;font-size:11px;color:#9ca3af;">
+      &copy; 2026 مواقيت الصلاة — جميع الحقوق محفوظة
+    </div>
+
     <button class="credits-close" onclick="closeCredits()">إغلاق</button>
   </div>
   </div></div>
@@ -3718,7 +3750,14 @@ function refreshData() { fetchPrayerTimes(); }
   if (saved) { try { var pos = JSON.parse(saved); btn.style.left = pos.left; btn.style.top = pos.top; btn.style.right = "auto"; } catch(e) {} }
 })();
 
-function openCredits() { el("creditsModal").classList.add("show"); }
+function openCredits() {
+  // v23.1: عرض رقم الإصدار الحالي تلقائياً
+  try {
+    var vEl = el("creditsVersion");
+    if (vEl) vEl.textContent = "v" + CURRENT_APP_VERSION;
+  } catch(e) {}
+  el("creditsModal").classList.add("show");
+}
 function closeCredits() { el("creditsModal").classList.remove("show"); }
 
 el("settingsModal").addEventListener("click", function(e) { if (e.target === this) closeSettings(); });
@@ -4629,18 +4668,9 @@ function qiblaOrientHandler(e) {
   if (typeof e.webkitCompassHeading === "number" && !isNaN(e.webkitCompassHeading)) {
     h = e.webkitCompassHeading;
   }
-  // v23: لو كان الحدث absolute (deviceorientationabsolute)، alpha يكون نسبة للشمال المطلق
-  // alpha = 0 → الجهاز مواجه للشمال، يتزايد عكس عقارب الساعة
-  // heading = (360 - alpha) % 360
+  // Android: alpha يتزايد عكس عقارب الساعة
   else if (e.alpha !== null && e.alpha !== undefined && !isNaN(e.alpha)) {
-    var QIBLA_FLIP_KEY = "pt-qibla-flip";
-    var flip = false;
-    try { flip = (localStorage.getItem(QIBLA_FLIP_KEY) === "true"); } catch(e2) {}
-    if (flip) {
-      h = e.alpha % 360;
-    } else {
-      h = (360 - e.alpha) % 360;
-    }
+    h = (360 - e.alpha) % 360;
   }
   if (h === null) return;
   qiblaHeading = (h + 360) % 360;
@@ -4666,21 +4696,6 @@ function qiblaAttach() {
   }, 1800);
 }
 
-// v22.3: عكس اتجاه البوصلة (لبعض أجهزة أندرويد التي تعكس alpha)
-function qiblaToggleFlip() {
-  var QIBLA_FLIP_KEY = "pt-qibla-flip";
-  var flip = false;
-  try { flip = (localStorage.getItem(QIBLA_FLIP_KEY) === "true"); } catch(e) {}
-  flip = !flip;
-  try { localStorage.setItem(QIBLA_FLIP_KEY, flip ? "true" : "false"); } catch(e) {}
-  var btn = el("qbFlipBtn");
-  if (btn) {
-    btn.textContent = flip ? "🔁 إلغاء العكس" : "🔁 عكس اتجاه البوصلة";
-    btn.style.background = flip ? "#fef3c7" : "";
-    btn.style.borderColor = flip ? "#f59e0b" : "";
-  }
-  qiblaRender();
-}
 function qiblaEnableSensor() {
   var sn = el("qbSensor");
   if (sn) sn.innerHTML = "جارٍ طلب تفعيل الحساس...";
@@ -4838,7 +4853,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "23.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "23.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
