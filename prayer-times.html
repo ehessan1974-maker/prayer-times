@@ -3605,12 +3605,12 @@ function renderTimeOffsetsSettings() {
 function updateTimeOffset(key, val) {
   var v = parseInt(val, 10);
   if (isNaN(v)) v = 0;
-  v = Math.max(-60, Math.min(60, v)); // الحد بين -60 و +60
+  v = Math.max(-60, Math.min(60, v));
   timeOffsets[key] = v;
   saveTimeOffsets();
   renderTimeOffsetsSettings();
-  // إعادة تطبيق التصحيح على المواقيت الحالية
-  fetchPrayerTimes();
+  // v23.5: تطبيق التصحيح مباشرة بدلاً من إعادة الجلب
+  applyTimeOffsetsToCurrentTimings();
 }
 
 function adjustTimeOffset(key, delta) {
@@ -3619,7 +3619,7 @@ function adjustTimeOffset(key, delta) {
   timeOffsets[key] = v;
   saveTimeOffsets();
   renderTimeOffsetsSettings();
-  fetchPrayerTimes();
+  applyTimeOffsetsToCurrentTimings();
 }
 
 function resetTimeOffsets() {
@@ -3627,7 +3627,17 @@ function resetTimeOffsets() {
   for (var i = 0; i < keys.length; i++) timeOffsets[keys[i]] = 0;
   saveTimeOffsets();
   renderTimeOffsetsSettings();
-  fetchPrayerTimes();
+  applyTimeOffsetsToCurrentTimings();
+}
+
+// v23.5: تطبيق التصحيح على المواقيت الحالية وإعادة الرسم
+function applyTimeOffsetsToCurrentTimings() {
+  if (prayerData && prayerData.timings) {
+    extractTimings(prayerData);
+    render();
+  } else {
+    fetchPrayerTimes();
+  }
 }
 function updateIqama(key, val) {
   iqamaOffsets[key] = Math.max(1, Math.min(60, parseInt(val) || 10));
@@ -4962,7 +4972,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "23.4"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "23.5"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
