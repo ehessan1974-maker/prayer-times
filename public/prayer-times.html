@@ -2496,12 +2496,47 @@ function startInfoRefresh() {
 }
 function stopInfoRefresh() { if (infoRefreshTimer) { clearInterval(infoRefreshTimer); infoRefreshTimer = null; } }
 
+// v23.6: متغيرات تصحيح المواقيت — تُعرّف قبل التهيئة
+var TIME_OFFSETS_KEY = "pt-time-offsets";
+var timeOffsets = {};
+
+function loadTimeOffsets() {
+  try { timeOffsets = JSON.parse(localStorage.getItem(TIME_OFFSETS_KEY) || "{}"); } catch(e) { timeOffsets = {}; }
+  var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+  for (var i = 0; i < keys.length; i++) {
+    if (typeof timeOffsets[keys[i]] !== "number") timeOffsets[keys[i]] = 0;
+  }
+}
+
+function saveTimeOffsets() {
+  try { localStorage.setItem(TIME_OFFSETS_KEY, JSON.stringify(timeOffsets)); } catch(e) {}
+}
+
+function applyTimeOffsets() {
+  var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var offset = timeOffsets[k] || 0;
+    if (offset === 0) continue;
+    if (!prayerTimings[k]) continue;
+    var parts = prayerTimings[k].split(":");
+    var h = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10);
+    var totalMin = h * 60 + m + offset;
+    while (totalMin < 0) totalMin += 1440;
+    while (totalMin >= 1440) totalMin -= 1440;
+    var nh = Math.floor(totalMin / 60);
+    var nm = totalMin % 60;
+    prayerTimings[k] = (nh < 10 ? "0" + nh : nh) + ":" + (nm < 10 ? "0" + nm : nm);
+  }
+}
+
 // ===== INIT STATE =====
 (function() {
   try { dateCorrection = parseInt(localStorage.getItem("hijri-date-correction") || "0"); } catch(e) { dateCorrection = 0; }
   try { iqamaOffsets = JSON.parse(localStorage.getItem("iqama-offsets") || "{}"); } catch(e) { iqamaOffsets = {}; }
   if (!iqamaOffsets.Fajr) { iqamaOffsets = { Fajr:30, Dhuhr:20, Asr:20, Maghrib:10, Isha:10 }; }
-  // v23.2: تحميل تصحيح المواقيت الدائم
+  // v23.6: تحميل تصحيح المواقيت بعد تعريف المتغيرات
   loadTimeOffsets();
   
   // ✅ تهيئة إعدادات التنبيهات الجديدة (أذان، دعاء، إقامة، منبه)
@@ -2717,44 +2752,6 @@ function extractTimings(data) {
   syncAlarmsToNative();
 }
 
-// v23.2: تصحيح دائم للمواقيت (يُطبق بعد كل جلب من API)
-var TIME_OFFSETS_KEY = "pt-time-offsets";
-var timeOffsets = {};
-
-function loadTimeOffsets() {
-  try { timeOffsets = JSON.parse(localStorage.getItem(TIME_OFFSETS_KEY) || "{}"); } catch(e) { timeOffsets = {}; }
-  // قيم افتراضية: 0 لكل الصلوات
-  var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
-  for (var i = 0; i < keys.length; i++) {
-    if (typeof timeOffsets[keys[i]] !== "number") timeOffsets[keys[i]] = 0;
-  }
-}
-
-function saveTimeOffsets() {
-  try { localStorage.setItem(TIME_OFFSETS_KEY, JSON.stringify(timeOffsets)); } catch(e) {}
-}
-
-// تطبيق التصحيح على prayerTimings
-function applyTimeOffsets() {
-  var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
-  for (var i = 0; i < keys.length; i++) {
-    var k = keys[i];
-    var offset = timeOffsets[k] || 0;
-    if (offset === 0) continue; // لا تصحيح
-    if (!prayerTimings[k]) continue;
-    // تحويل الوقت إلى دقائق، إضافة التصحيح، إعادة التحويل
-    var parts = prayerTimings[k].split(":");
-    var h = parseInt(parts[0], 10);
-    var m = parseInt(parts[1], 10);
-    var totalMin = h * 60 + m + offset;
-    // معالجة الالتفاف حول منتصف الليل
-    while (totalMin < 0) totalMin += 1440;
-    while (totalMin >= 1440) totalMin -= 1440;
-    var nh = Math.floor(totalMin / 60);
-    var nm = totalMin % 60;
-    prayerTimings[k] = (nh < 10 ? "0" + nh : nh) + ":" + (nm < 10 ? "0" + nm : nm);
-  }
-}
 
 // ===== NATIVE ALARM SYNC =====
 // قراءة أوقات صلاة يوم معين من الذاكرة المؤقتة المحلية (جلب الغد التلقائي يخزنها)
@@ -4972,7 +4969,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "23.5"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "23.6"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
