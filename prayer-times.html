@@ -1856,28 +1856,26 @@ function toggleCatFilter(cat) {
   if (cat === "ehemessages") {
     try { msgMarkAllSeen(currentKnownMessages()); } catch(e) {}
   }
-  // v24.2: ألوان مغايرة للزر النشط (ذهبي) والغير نشط — مع !important لضمان الظهور
+  // v25: ألوان أصلية — نشط: أخضر، غير نشط: أبيض/داكن حسب الوضع
   var isDark = document.body.classList.contains("dark-mode");
   var allBtns = document.querySelectorAll("[id^='catBtn_']");
   for (var i = 0; i < allBtns.length; i++) {
     var b = allBtns[i];
     var bCat = b.id.replace("catBtn_", "");
     if (bCat === cat) {
-      // زر نشط: ذهبي واضح
-      b.style.setProperty("background", "#d4af37", "important");
-      b.style.setProperty("color", "#1f2937", "important");
-      b.style.setProperty("border-color", "#b8941f", "important");
+      b.style.background = "#059669";
+      b.style.color = "white";
+      b.style.borderColor = "#059669";
       b.style.fontWeight = "700";
     } else {
-      // أزرار غير نشطة
       if (isDark) {
-        b.style.setProperty("background", "#1f3a2c", "important");
-        b.style.setProperty("color", "#e8f5ee", "important");
-        b.style.setProperty("border-color", "#2f7d5c", "important");
+        b.style.background = "#1f3a2c";
+        b.style.color = "#e8f5ee";
+        b.style.borderColor = "#2f7d5c";
       } else {
-        b.style.setProperty("background", "white", "important");
-        b.style.setProperty("color", "#065f46", "important");
-        b.style.setProperty("border-color", "#a7f3d0", "important");
+        b.style.background = "white";
+        b.style.color = "#065f46";
+        b.style.borderColor = "#a7f3d0";
       }
       b.style.fontWeight = "400";
     }
@@ -2007,12 +2005,16 @@ function fetchContentJSON() {
     return;
   }
   var url = CONTENT_URL + "?t=" + Date.now();
-  // v21: العودة لاستخدام AndroidPrayer.fetchUrl كخيار أول على أندرويد
-  // لأن XHR من file:// قد يفشل على بعض أجهزة أندرويد القديمة (مثل سامسونج J5)
-  // لو فشل fetchUrl، يتم استخدام XHR كـ fallback تلقائياً
+  // v25: على أندرويد، نحاول fetchUrl مع timeout fallback إلى XHR
   if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
     try {
       AndroidPrayer.fetchUrl(url, "_nativeContentCallback");
+      // v25: لو لم يصل رد خلال 5 ثوانٍ، نحاول XHR مباشرة
+      setTimeout(function() {
+        if (!cachedInfoItems || cachedInfoItems.length === 0) {
+          fetchContentJSONViaXHR(url);
+        }
+      }, 5000);
       return;
     } catch(e) {}
   }
@@ -4820,11 +4822,12 @@ function qiblaRender() {
 }
 function qiblaOrientHandler(e) {
   var h = null;
-  // iOS: webkitCompassHeading مباشر (0 = شمال، 90 = شرق)
+  // iOS: webkitCompassHeading مباشر
   if (typeof e.webkitCompassHeading === "number" && !isNaN(e.webkitCompassHeading)) {
     h = e.webkitCompassHeading;
   }
   // Android: alpha يتزايد عكس عقارب الساعة
+  // heading = (360 - alpha) % 360
   else if (e.alpha !== null && e.alpha !== undefined && !isNaN(e.alpha)) {
     h = (360 - e.alpha) % 360;
   }
@@ -5009,7 +5012,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "24.2"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
