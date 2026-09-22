@@ -1856,25 +1856,29 @@ function toggleCatFilter(cat) {
   if (cat === "ehemessages") {
     try { msgMarkAllSeen(currentKnownMessages()); } catch(e) {}
   }
-  // v24: ألوان مغايرة للزر النشط (ذهبي) والغير نشط
+  // v24.2: ألوان مغايرة للزر النشط (ذهبي) والغير نشط — مع !important لضمان الظهور
   var isDark = document.body.classList.contains("dark-mode");
-  var activeBg = "#d4af37";        // ذهبي للزر النشط
-  var activeColor = "#1f2937";     // نص أسود على ذهبي
-  var inactiveBg = isDark ? "#1f3a2c" : "white";
-  var inactiveColor = isDark ? "#e8f5ee" : "#065f46";
   var allBtns = document.querySelectorAll("[id^='catBtn_']");
   for (var i = 0; i < allBtns.length; i++) {
     var b = allBtns[i];
     var bCat = b.id.replace("catBtn_", "");
     if (bCat === cat) {
-      b.style.background = activeBg;
-      b.style.color = activeColor;
-      b.style.borderColor = "#b8941f";
+      // زر نشط: ذهبي واضح
+      b.style.setProperty("background", "#d4af37", "important");
+      b.style.setProperty("color", "#1f2937", "important");
+      b.style.setProperty("border-color", "#b8941f", "important");
       b.style.fontWeight = "700";
     } else {
-      b.style.background = inactiveBg;
-      b.style.color = inactiveColor;
-      b.style.borderColor = isDark ? "#2f7d5c" : "#a7f3d0";
+      // أزرار غير نشطة
+      if (isDark) {
+        b.style.setProperty("background", "#1f3a2c", "important");
+        b.style.setProperty("color", "#e8f5ee", "important");
+        b.style.setProperty("border-color", "#2f7d5c", "important");
+      } else {
+        b.style.setProperty("background", "white", "important");
+        b.style.setProperty("color", "#065f46", "important");
+        b.style.setProperty("border-color", "#a7f3d0", "important");
+      }
       b.style.fontWeight = "400";
     }
   }
@@ -5005,7 +5009,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "24.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "24.2"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
