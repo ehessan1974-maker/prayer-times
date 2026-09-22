@@ -878,13 +878,13 @@
             <div class="download-card animate-in delay-1">
                 <div class="version-badge">
                     <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--green-600);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                    الإصدار 23.3
+                    الإصدار <span id="versionDisplay">23.6</span>
                 </div>
                 <h2>مواقيت الصلاة</h2>
                 <div class="file-info">
                     <span>
                         <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                        حجم الملف: 2.7 ميجابايت
+                        حجم الملف: <span id="apkSize">2.7</span> ميجابايت
                     </span>
                     <span>
                         <svg viewBox="0 0 24 24"><path d="M21 10.12h-6.78l2.74-2.82c-2.73-2.7-7.15-2.8-9.88-.1-2.73 2.71-2.73 7.08 0 9.79s7.15 2.71 9.88 0C18.32 15.65 19 14.08 19 12.1h2c0 2.48-.94 4.95-2.83 6.83-3.73 3.73-9.78 3.73-13.51 0-3.73-3.73-3.73-9.78 0-13.51 3.73-3.73 9.78-3.73 13.51 0L21 2v8.12z"/></svg>
@@ -892,7 +892,7 @@
                     </span>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
-                    <a href="https://github.com/ehessan1974-maker/prayer-times/raw/main/public/prayer-times-v23.3.apk" class="btn-download" download style="width:100%;justify-content:center;font-size:14px;padding:14px 20px;">
+                    <a id="downloadApkBtn" href="https://github.com/ehessan1974-maker/prayer-times/raw/main/public/prayer-times-v23.6.apk" class="btn-download" download style="width:100%;justify-content:center;font-size:14px;padding:14px 20px;">
                         <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                         تحميل التطبيق ( يتطلب نظام أندرويد 4.4 " KitKat " أو أحدث )
                     </a>
@@ -1143,6 +1143,39 @@
             &copy; 2026 مواقيت الصلاة - جميع الحقوق محفوظة
         </div>
     </footer>
+
+<script>
+// v23.7: تحديث تلقائي لرقم الإصدار ورابط APK من version.json
+(function() {
+  var versionUrl = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json?t=" + Date.now();
+  fetch(versionUrl).then(function(r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).then(function(info) {
+    var ver = info.appVersion;
+    if (!ver) return;
+    // تحديث رقم الإصدار المعروض
+    var vEl = document.getElementById("versionDisplay");
+    if (vEl) vEl.textContent = ver;
+    // تحديث رابط تحميل APK
+    var apkUrl = "https://github.com/ehessan1974-maker/prayer-times/raw/main/public/prayer-times-v" + ver + ".apk";
+    var btn = document.getElementById("downloadApkBtn");
+    if (btn) btn.href = apkUrl;
+    // التحقق من وجود APK فعلياً وتحديث حجم الملف
+    fetch("https://api.github.com/repos/ehessan1974-maker/prayer-times/contents/public/prayer-times-v" + ver + ".apk")
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && data.size) {
+          var sizeMB = (data.size / 1048576).toFixed(1);
+          var sizeEl = document.getElementById("apkSize");
+          if (sizeEl) sizeEl.textContent = sizeMB;
+        }
+      }).catch(function() {});
+  }).catch(function() {
+    // fallback: لو فشل الجلب، نستخدم القيم المكتوبة في HTML
+  });
+})();
+</script>
 
 </body>
 </html>
