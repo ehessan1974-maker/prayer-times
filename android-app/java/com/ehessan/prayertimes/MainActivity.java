@@ -40,6 +40,17 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // v25.2: ضروري لأجهزة Android 5.x مثل Samsung J5
+        // تفعيل TLS 1.2 على HttpsURLConnection (و WebView XHR على Android 5.x)
+        // بدون هذا النداء، يفشل جلب content.json و version.json على هذه الأجهزة
+        try {
+            Tls12Helper.enable();
+            android.util.Log.i("PrayerTimes", "TLS 1.2 helper enabled");
+        } catch (Throwable t) {
+            android.util.Log.e("PrayerTimes", "TLS 1.2 helper failed", t);
+        }
+
         webView = new WebView(this);
         setContentView(webView);
 
@@ -137,6 +148,7 @@ public class MainActivity extends Activity {
             conn.setRequestProperty("Accept", "application/json, text/plain, */*");
             conn.setRequestProperty("Accept-Encoding", "identity");
             int code = conn.getResponseCode();
+            android.util.Log.i("PrayerTimes", "httpGet " + urlStr + " → " + code);
             if (code != 200) return "";
             InputStream is = conn.getInputStream();
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -144,8 +156,11 @@ public class MainActivity extends Activity {
             int n;
             while ((n = is.read(buf)) > 0) bos.write(buf, 0, n);
             is.close();
-            return new String(bos.toByteArray(), "UTF-8");
+            String result = new String(bos.toByteArray(), "UTF-8");
+            android.util.Log.i("PrayerTimes", "httpGot " + result.length() + " bytes");
+            return result;
         } catch (Exception e) {
+            android.util.Log.e("PrayerTimes", "httpGet FAILED for " + urlStr + " — " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
             return "";
         } finally {
             try { if (conn != null) conn.disconnect(); } catch (Exception e2) {}
