@@ -1406,6 +1406,13 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     </div>
 
     <div class="modal-section">
+      <div class="sec-title">⏱️ تصحيح دائم لمواقيت الأذان (بالدقائق)</div>
+      <div class="sec-desc">صحّح موعد كل صلاة بشكل دائم. مثلاً: -10 لتقديم الأذان 10 دقائق، +5 لتأخيره 5 دقائق.</div>
+      <div id="timeOffsetsSettings"></div>
+      <button class="btn btn-amber" style="width:100%;margin-top:8px;" onclick="resetTimeOffsets()">إعادة تعيين التصحيح</button>
+    </div>
+
+    <div class="modal-section">
       <div class="sec-title">🕌 فواصل الإقامة (بالدقائق)</div>
       <div id="iqamaSettings"></div>
     </div>
@@ -2487,6 +2494,8 @@ function stopInfoRefresh() { if (infoRefreshTimer) { clearInterval(infoRefreshTi
   try { dateCorrection = parseInt(localStorage.getItem("hijri-date-correction") || "0"); } catch(e) { dateCorrection = 0; }
   try { iqamaOffsets = JSON.parse(localStorage.getItem("iqama-offsets") || "{}"); } catch(e) { iqamaOffsets = {}; }
   if (!iqamaOffsets.Fajr) { iqamaOffsets = { Fajr:30, Dhuhr:20, Asr:20, Maghrib:10, Isha:10 }; }
+  // v23.2: تحميل تصحيح المواقيت الدائم
+  loadTimeOffsets();
   
   // ✅ تهيئة إعدادات التنبيهات الجديدة (أذان، دعاء، إقامة، منبه)
   try { alertSettings = JSON.parse(localStorage.getItem("alert-settings") || "{}"); } catch(e) { alertSettings = {}; }
@@ -2696,7 +2705,48 @@ function extractTimings(data) {
     var m = raw ? raw.match(/^(\d{1,2}:\d{2})/) : null;
     prayerTimings[k] = m ? m[1] : "";
   }
+  // v23.2: تطبيق التصحيح الدائم للمواقيت
+  applyTimeOffsets();
   syncAlarmsToNative();
+}
+
+// v23.2: تصحيح دائم للمواقيت (يُطبق بعد كل جلب من API)
+var TIME_OFFSETS_KEY = "pt-time-offsets";
+var timeOffsets = {};
+
+function loadTimeOffsets() {
+  try { timeOffsets = JSON.parse(localStorage.getItem(TIME_OFFSETS_KEY) || "{}"); } catch(e) { timeOffsets = {}; }
+  // قيم افتراضية: 0 لكل الصلوات
+  var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+  for (var i = 0; i < keys.length; i++) {
+    if (typeof timeOffsets[keys[i]] !== "number") timeOffsets[keys[i]] = 0;
+  }
+}
+
+function saveTimeOffsets() {
+  try { localStorage.setItem(TIME_OFFSETS_KEY, JSON.stringify(timeOffsets)); } catch(e) {}
+}
+
+// تطبيق التصحيح على prayerTimings
+function applyTimeOffsets() {
+  var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var offset = timeOffsets[k] || 0;
+    if (offset === 0) continue; // لا تصحيح
+    if (!prayerTimings[k]) continue;
+    // تحويل الوقت إلى دقائق، إضافة التصحيح، إعادة التحويل
+    var parts = prayerTimings[k].split(":");
+    var h = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10);
+    var totalMin = h * 60 + m + offset;
+    // معالجة الالتفاف حول منتصف الليل
+    while (totalMin < 0) totalMin += 1440;
+    while (totalMin >= 1440) totalMin -= 1440;
+    var nh = Math.floor(totalMin / 60);
+    var nm = totalMin % 60;
+    prayerTimings[k] = (nh < 10 ? "0" + nh : nh) + ":" + (nm < 10 ? "0" + nm : nm);
+  }
 }
 
 // ===== NATIVE ALARM SYNC =====
@@ -3521,6 +3571,57 @@ function renderIqamaSettings() {
   }
   container.innerHTML = html;
 }
+
+// v23.2: تصحيح دائم لمواقيت الأذان
+function renderTimeOffsetsSettings() {
+  var container = el("timeOffsetsSettings");
+  if (!container) return;
+  container.style.display = "block";
+  var html = "";
+  for (var i = 0; i < PRAYER_ORDER.length; i++) {
+    var k = PRAYER_ORDER[i];
+    if (k === "Sunrise") continue;
+    var val = timeOffsets[k] || 0;
+    var color = val < 0 ? "#dc2626" : (val > 0 ? "#059669" : "#6b7280");
+    html += '<div class="setting-box" style="display:table;">' +
+            '<span style="display:table-cell;vertical-align:middle;font-size:13px;color:#374151;">' + PRAYER_NAMES[k] + '</span>' +
+            '<div style="display:table-cell;vertical-align:middle;text-align:left;">' +
+            '<button onclick="adjustTimeOffset(\'' + k + '\',-1)" style="border:1px solid #d1d5db;border-radius:6px 0 0 6px;background:#fee2e2;color:#b91c1c;width:30px;height:28px;font-size:16px;cursor:pointer;">−</button>' +
+            '<input type="number" value="' + val + '" onchange="updateTimeOffset(\'' + k + '\',this.value)" style="width:50px;text-align:center;border:1px solid #d1d5db;border-left:none;border-right:none;padding:4px;font-size:14px;font-family:monospace;height:28px;color:' + color + ';" />' +
+            '<button onclick="adjustTimeOffset(\'' + k + '\',1)" style="border:1px solid #d1d5db;border-radius:0 6px 6px 0;background:#dcfce7;color:#166534;width:30px;height:28px;font-size:16px;cursor:pointer;">+</button>' +
+            '<span style="font-size:10px;color:#9ca3af;margin-right:6px;">دقيقة</span>' +
+            '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+function updateTimeOffset(key, val) {
+  var v = parseInt(val, 10);
+  if (isNaN(v)) v = 0;
+  v = Math.max(-60, Math.min(60, v)); // الحد بين -60 و +60
+  timeOffsets[key] = v;
+  saveTimeOffsets();
+  renderTimeOffsetsSettings();
+  // إعادة تطبيق التصحيح على المواقيت الحالية
+  fetchPrayerTimes();
+}
+
+function adjustTimeOffset(key, delta) {
+  var v = (timeOffsets[key] || 0) + delta;
+  v = Math.max(-60, Math.min(60, v));
+  timeOffsets[key] = v;
+  saveTimeOffsets();
+  renderTimeOffsetsSettings();
+  fetchPrayerTimes();
+}
+
+function resetTimeOffsets() {
+  var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+  for (var i = 0; i < keys.length; i++) timeOffsets[keys[i]] = 0;
+  saveTimeOffsets();
+  renderTimeOffsetsSettings();
+  fetchPrayerTimes();
+}
 function updateIqama(key, val) {
   iqamaOffsets[key] = Math.max(1, Math.min(60, parseInt(val) || 10));
   localStorage.setItem("iqama-offsets", JSON.stringify(iqamaOffsets));
@@ -3611,6 +3712,7 @@ function openSettings() {
   el("citySearchInput").value = ""; el("cityResults").innerHTML = ""; el("citySearchStatus").style.display = "none"; // v13
   renderSmartPrefButtons(); // v12: أزرار وضع الشاشة الذكية
   renderIqamaSettings(); renderAlertToggles(); updateAudioBtn();
+  renderTimeOffsetsSettings(); // v23.2: عرض تصحيح المواقيت
   // v19: عرض معرّف الجهاز
   try {
     var devInput = el("deviceIdDisplay");
@@ -4853,7 +4955,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "23.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "23.2"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
