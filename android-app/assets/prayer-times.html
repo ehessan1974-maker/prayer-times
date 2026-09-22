@@ -1037,10 +1037,10 @@ body.smart .modal { scrollbar-gutter: stable; }
   font-weight: bold;
   color: #059669;
 }
-.qb-dir-n { top: 8px; left: 50%; transform: translateX(-50%); color: #dc2626; font-size: 18px; }
-.qb-dir-s { bottom: 8px; left: 50%; transform: translateX(-50%); }
-.qb-dir-e { right: 10px; top: 50%; transform: translateY(-50%); }
-.qb-dir-w { left: 10px; top: 50%; transform: translateY(-50%); }
+.qb-dir-n { bottom: 8px; left: 50%; transform: translateX(-50%); color: #dc2626; font-size: 18px; }
+.qb-dir-s { top: 8px; left: 50%; transform: translateX(-50%); }
+.qb-dir-e { left: 10px; top: 50%; transform: translateY(-50%); }
+.qb-dir-w { right: 10px; top: 50%; transform: translateY(-50%); }
 .qb-ticks {
   position: absolute;
   top: 0; left: 0;
@@ -1557,7 +1557,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
               allowfullscreen></iframe>
     </div>
 
-    <div class="qb-note">أدر جهازك حتى تتجه 🕋 الكعبة إلى الأعلى (مطابقة مع السهم الأسود الثابت). عندئذٍ يكون رأس جهازك في اتجاه القبلة.</div>
+    <div class="qb-note">الشمال (ش) في أسفل القرص • أدر جهازك حتى تتجه 🕋 إلى الأعلى (مطابقةً مع السهم ▼). عندئذٍ يكون رأس جهازك في اتجاه القبلة. زاوية القبلة تُحسب من موقعك الحالي إلى الكعبة المشرّفة.</div>
   </div>
   </div></div>
 </div>
@@ -4792,13 +4792,15 @@ function qiblaCompute() {
 }
 function qiblaRender() {
   var hasH = qiblaLive && qiblaHeading !== null && qiblaHeading !== undefined;
-  // v22: القرص يدور عكس اتجاه الجهاز، والكعبة مثبتة على القرص بزاوية القبلة
-  var dialRot = hasH ? -qiblaHeading : 0;
+  // v25.1: الشمال في أسفل القرص — القرص يدور عكس اتجاه الجهاز مع إزاحة 180°
+  // ليظل الشمال يشير دائماً إلى الشمال الحقيقي
+  var dialRot = hasH ? (180 - qiblaHeading) : 0;
   var dial = el("qbDial");
   if (dial) qiblaSetRot(dial, dialRot);
-  // الكعبة مثبتة على القرص عند زاوية القبلة المطلقة من الشمال
+  // v25.1: الكعبة على القرص عند زاوية (القبلة + 180°) لأن الشمال في أسفل القرص
+  // فحين يدور الجهاز ويواجه المستخدم القبلة، تأتي الكعبة في أعلى الشاشة (عند السهم الثابت ▼)
   var kaaba = el("qbKaabaMarker");
-  if (kaaba) qiblaSetRot(kaaba, qiblaAngle);
+  if (kaaba) qiblaSetRot(kaaba, qiblaAngle + 180);
   var st = el("qbStatus"), sn = el("qbSensor");
   if (hasH) {
     var diff = Math.abs(((qiblaAngle - qiblaHeading) % 360 + 540) % 360 - 180);
@@ -4816,8 +4818,8 @@ function qiblaRender() {
     }
     if (sn) sn.innerHTML = "اتجاه جهازك: " + Math.round(qiblaHeading) + "° • القبلة: " + Math.round(qiblaAngle) + "° • الفرق: " + Math.round(diff) + "°";
   } else {
-    if (st) { st.innerHTML = "📍 أدر جهازك حتى تتجه 🕋 إلى الأعلى"; st.className = "qb-status qb-status-big"; }
-    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس: الكعبة تشير للقبلة المطلقة (" + qiblaAngle.toFixed(0) + "° من الشمال)";
+    if (st) { st.innerHTML = "📍 أدر جهازك حتى تتجه 🕋 إلى الأعلى (عند السهم ▼)"; st.className = "qb-status qb-status-big"; }
+    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس: 🕋 تشير للقبلة المطلقة (" + qiblaAngle.toFixed(0) + "° من الشمال • الشمال في أسفل القرص)";
   }
 }
 function qiblaOrientHandler(e) {
@@ -5012,7 +5014,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.0"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.1"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
