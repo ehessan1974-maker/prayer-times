@@ -1166,52 +1166,67 @@ body.smart .modal { scrollbar-gutter: stable; }
   white-space: nowrap;
 }
 
-/* البوصلة المصغّرة — تحت الخريطة مباشرة، الشمال عند الأسفل */
-.qb-mini-compass {
+/* v25.7: بوصلة مصغّرة مدمجة مع موقعك (في أسفل السهم) — الشمال يدور معها */
+.qb-route-tail-compass {
   position: relative;
-  width: 130px;
-  height: 130px;
-  margin: 14px auto 4px;
+  width: 90px;
+  height: 90px;
+  margin: 6px auto 0;
   border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 58%, #ecfdf5 100%);
+  background: radial-gradient(circle, rgba(255,255,255,0.95) 58%, rgba(236,253,245,0.9) 100%);
   border: 3px solid #059669;
-  box-shadow: 0 4px 16px rgba(5,150,105,0.25), inset 0 0 12px rgba(5,150,105,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 0 8px rgba(5,150,105,0.15);
   overflow: hidden;
   transition: transform 0.2s ease-out;
 }
-.qb-mini-dir {
+.qb-tail-dir {
   position: absolute;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: bold;
   color: #059669;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
 }
-.qb-mini-dir-n { bottom: 6px; left: 50%; transform: translateX(-50%); color: #dc2626; font-size: 15px; }
-.qb-mini-dir-s { top: 6px; left: 50%; transform: translateX(-50%); }
-.qb-mini-dir-e { left: 6px; top: 50%; transform: translateY(-50%); }
-.qb-mini-dir-w { right: 6px; top: 50%; transform: translateY(-50%); }
-.qb-mini-center {
+/* v25.7: الشمال في أسفل البوصلة المصغّرة (عند موقعك) */
+.qb-tail-dir-n { bottom: 4px; left: 50%; transform: translateX(-50%); color: #dc2626; font-size: 14px; }
+.qb-tail-dir-s { top: 4px; left: 50%; transform: translateX(-50%); }
+.qb-tail-dir-e { left: 4px; top: 50%; transform: translateY(-50%); }
+.qb-tail-dir-w { right: 4px; top: 50%; transform: translateY(-50%); }
+.qb-tail-center {
   position: absolute;
   top: 50%; left: 50%;
-  width: 12px; height: 12px;
-  margin-left: -6px; margin-top: -6px;
+  width: 10px; height: 10px;
+  margin-left: -5px; margin-top: -5px;
   border-radius: 50%;
   background: #059669;
   border: 2px solid white;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
-/* علامة الشمال الثابتة — تشير دائماً للأسفل (إطار البوصلة) */
-.qb-north-marker {
-  position: absolute;
-  bottom: -2px;
-  left: 50%;
-  transform: translateX(-50%);
+/* v25.7: علامة الشمال الثابتة — أسفل موقعك مباشرة (في أسفل الموبايل = بداية السهم) */
+.qb-north-fixed-marker {
+  position: relative;
+  margin: 6px auto 0;
   width: 0;
   height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 12px solid #dc2626;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 14px solid #dc2626;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
   z-index: 5;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+}
+.qb-north-fixed-marker::after {
+  content: "الشمال";
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: white;
+  background: #dc2626;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 .qb-angle { font-size:14px; color:#065f46; font-weight:700; margin:2px 0; }
@@ -1638,7 +1653,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <div class="qb-angle">زاوية القبلة من الشمال: <strong id="qbAngle">--</strong>°</div>
     <div class="qb-dist" id="qbDist">--</div>
 
-    <!-- v25.6: الخريطة + السهم فوقها في حاوية واحدة -->
+    <!-- v25.7: الخريطة + السهم فوقها + علامة الشمال عند بداية السهم (موقعك) -->
     <div class="qb-compass-stage">
       <!-- حاوية موحّدة: خريطة Google Maps + السهم فوقها -->
       <div class="qb-map-arrow-container">
@@ -1660,24 +1675,23 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
             <div class="qb-route-arrow-top"></div>
             <div class="qb-route-line"></div>
           </div>
-          <!-- ذيل السهم: موقعك الحالي (في الأسفل) -->
+          <!-- ذيل السهم: موقعك الحالي + علامة الشمال (في الأسفل) -->
           <div class="qb-route-tail">
             <div class="qb-route-tail-pin">📍</div>
             <div class="qb-route-tail-label">موقعك</div>
+            <!-- v25.7: علامة الشمال مدمجة مع موقعك (تدور مع البوصلة) -->
+            <div class="qb-route-tail-compass" id="qbDial">
+              <div class="qb-tail-dir qb-tail-dir-n">ش</div>
+              <div class="qb-tail-dir qb-tail-dir-e">ق</div>
+              <div class="qb-tail-dir qb-tail-dir-s">ج</div>
+              <div class="qb-tail-dir qb-tail-dir-w">غ</div>
+              <div class="qb-tail-center"></div>
+            </div>
+            <!-- علامة الشمال الثابتة — أسفل موقعك مباشرة -->
+            <div class="qb-north-fixed-marker" title="الشمال الحقيقي"></div>
           </div>
         </div>
       </div>
-
-      <!-- البوصلة المصغّرة: تحت الخريطة، الشمال عند الأسفل -->
-      <div class="qb-mini-compass" id="qbDial">
-        <div class="qb-mini-dir qb-mini-dir-n">ش</div>
-        <div class="qb-mini-dir qb-mini-dir-e">ق</div>
-        <div class="qb-mini-dir qb-mini-dir-s">ج</div>
-        <div class="qb-mini-dir qb-mini-dir-w">غ</div>
-        <div class="qb-mini-center"></div>
-      </div>
-      <!-- علامة الشمال الثابتة — في أسفل البوصلة دائماً -->
-      <div class="qb-north-marker" title="الشمال"></div>
     </div>
 
     <!-- رسالة الحالة -->
@@ -1687,7 +1701,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <!-- زر تفعيل الحساس -->
     <button class="btn btn-primary btn-sm" id="qbSensorBtn" onclick="qiblaEnableSensor()">🔄 تفعيل حساس الاتجاه</button>
 
-    <div class="qb-note">📍 السهم الأسفل = موقعك الحالي على الخريطة • 🕋 السهم الأعلى = مكة المكرمة على الخريطة • 🔴 علامة الشمال في أسفل البوصلة. أدر جهازك حتى تتجه 🕋 مكة في أعلى الجهاز (رأس السهم) — عندئذٍ يكون اتجاهك هو اتجاه القبلة.</div>
+    <div class="qb-note">📍 السهم الأسفل = موقعك الحالي على الخريطة (بداية الخط) • 🕋 السهم الأعلى = مكة المكرمة على الخريطة (نهاية الخط) • 🔴 الشمال في أسفل الموبايل عند موقعك (عند بداية الخط). أدر جهازك حتى تتجه 🕋 مكة في أعلى الجهاز (رأس السهم) — عندئذٍ يكون اتجاهك هو اتجاه القبلة.</div>
   </div>
   </div></div>
 </div>
@@ -5184,7 +5198,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.6"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.7"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
