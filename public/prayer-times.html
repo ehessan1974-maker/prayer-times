@@ -1257,21 +1257,28 @@ body.smart .modal { scrollbar-gutter: stable; }
 }
 
 /* v25.9: الخط الأحمر الثابت في وسط الشاشة — يدور مع البوصلة */
+/* v25.11: الخط متقطع (مثل الخط الأخضر) ليطابقه بصرياً عند مواجهة القبلة */
 .qb-fixed-red-line {
   position: absolute;
   top: 5%;
   left: 50%;
-  width: 4px;
+  width: 6px;
   height: 90%;
-  background: linear-gradient(to bottom, #dc2626, #dc2626);
+  background: transparent;
   border-radius: 2px;
-  box-shadow: 0 0 12px rgba(220, 38, 38, 0.8), 0 0 6px white;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.6), 0 0 6px white;
   transform-origin: center center;
   transform: translateX(-50%);
   z-index: 4;
   pointer-events: none;
-  /* السهم الأحمر العلوي */
-  background-image: linear-gradient(to bottom, transparent 0%, transparent 5%, #dc2626 5%, #dc2626 95%, transparent 95%);
+  /* v25.11: استخدام خط متقطع متطابق مع الخط الأخضر */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #dc2626 0,
+    #dc2626 10px,
+    transparent 10px,
+    transparent 16px
+  );
 }
 .qb-fixed-red-line::before {
   content: "";
@@ -1745,10 +1752,10 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 
         <!-- v25.10: طبقة رسم خط القبلة فوق الخريطة (SVG) — بدون قلب -->
         <svg class="qb-svg-overlay" id="qbSvgOverlay" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-          <!-- الخط الوهمي: من موقعك (أسفل الحاوية) إلى مكة (أعلى الحاوية) -->
+          <!-- v25.11: الخط الأخضر بنفس نمط التقطيع (10px متصل، 6px فارغ) ليطابق الخط الأحمر -->
           <line id="qbQiblaLine" x1="50%" y1="95%" x2="50%" y2="5%"
-                stroke="#059669" stroke-width="6" stroke-linecap="round"
-                stroke-dasharray="2,0"
+                stroke="#059669" stroke-width="6" stroke-linecap="butt"
+                stroke-dasharray="10, 6"
                 style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" />
           <!-- دائرة موقعك (أسفل الحاوية — شمال الخريطة) -->
           <circle id="qbUserPoint" cx="50%" cy="95%" r="10" fill="#dc2626" stroke="white" stroke-width="3" />
@@ -5410,7 +5417,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.10"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.11"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
