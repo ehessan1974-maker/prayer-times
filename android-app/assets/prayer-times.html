@@ -1231,6 +1231,74 @@ body.smart .modal { scrollbar-gutter: stable; }
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
+/* v25.9: طبقة SVG لرسم خط القبلة فوق الخريطة */
+.qb-svg-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  /* السماح للخط بالدوران حول مركز الحاوية */
+  transform-origin: center center;
+  transition: transform 0.15s ease-out;
+}
+
+/* v25.9: الخط الأحمر الثابت في وسط الشاشة — يدور مع البوصلة */
+.qb-fixed-red-line {
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  width: 4px;
+  height: 90%;
+  background: linear-gradient(to bottom, #dc2626, #dc2626);
+  border-radius: 2px;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.8), 0 0 6px white;
+  transform-origin: center center;
+  transform: translateX(-50%);
+  z-index: 4;
+  pointer-events: none;
+  /* السهم الأحمر العلوي */
+  background-image: linear-gradient(to bottom, transparent 0%, transparent 5%, #dc2626 5%, #dc2626 95%, transparent 95%);
+}
+.qb-fixed-red-line::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 14px solid #dc2626;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+.qb-fixed-red-line::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 14px solid #dc2626;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+
+/* v25.9: بوصلة مصغّرة في الزاوية */
+.qb-corner-compass {
+  position: absolute !important;
+  bottom: 10px !important;
+  left: 10px !important;
+  width: 70px !important;
+  height: 70px !important;
+  margin: 0 !important;
+  z-index: 5;
+}
+
 .qb-angle { font-size:14px; color:#065f46; font-weight:700; margin:2px 0; }
 .qb-angle strong { color:#dc2626; font-size:17px; font-family:monospace; }
 .qb-dist { font-size:12px; color:#6b7280; margin-bottom:6px; }
@@ -1655,45 +1723,44 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <div class="qb-angle">زاوية القبلة من الشمال: <strong id="qbAngle">--</strong>°</div>
     <div class="qb-dist" id="qbDist">--</div>
 
-    <!-- v25.8: الخريطة + السهم فوقها (موقعك في الأعلى، مكة في الأسفل) -->
+    <!-- v25.9: الخريطة + خط القبلة الوهمي + الخط الأحمر الثابت في وسط الشاشة -->
     <div class="qb-compass-stage">
-      <!-- حاوية موحّدة: خريطة Google Maps + السهم فوقها -->
-      <div class="qb-map-arrow-container">
-        <!-- خريطة Google Maps: المسار من موقعك إلى مكة، تملأ الحاوية -->
-        <iframe class="qb-map-frame" id="qbMapFrame"
-                frameborder="0"
-                style="border:0;"
-                src=""
-                allowfullscreen></iframe>
-        <!-- تدرّج خفيف على الحواف لتحسين تباين السهم فوق الخريطة -->
-        <div class="qb-map-overlay-gradient"></div>
-        <!-- v25.8: السهم العمودي فوق الخريطة: من موقعك (أعلى) إلى مكة (أسفل) -->
-        <div class="qb-route">
-          <!-- رأس السهم: موقعك الحالي (في الأعلى) -->
-          <div class="qb-route-head">📍</div>
-          <div class="qb-route-head-label">موقعك</div>
-          <!-- جسم السهم: خط عمودي مع سهم في الأسفل -->
-          <div class="qb-route-line-wrap">
-            <div class="qb-route-line"></div>
-            <div class="qb-route-arrow-bottom"></div>
-          </div>
-          <!-- ذيل السهم: مكة المكرمة (في الأسفل) -->
-          <div class="qb-route-tail">
-            <div class="qb-route-tail-pin">🕋</div>
-            <div class="qb-route-tail-label">مكة المكرمة</div>
-            <!-- v25.8: علامة الشمال مدمجة مع موقعك (في الأعلى) -->
-            <div class="qb-route-tail-compass" id="qbDial">
-              <div class="qb-tail-dir qb-tail-dir-n">ش</div>
-              <div class="qb-tail-dir qb-tail-dir-e">ق</div>
-              <div class="qb-tail-dir qb-tail-dir-s">ج</div>
-              <div class="qb-tail-dir qb-tail-dir-w">غ</div>
-              <div class="qb-tail-center"></div>
-            </div>
-          </div>
+      <!-- v25.9: علامة الشمال الثابتة فوق الحاوية -->
+      <div class="qb-north-fixed-marker" title="الشمال الحقيقي"></div>
+
+      <!-- حاوية الخريطة + الخطوط -->
+      <div class="qb-map-arrow-container" id="qbMapContainer">
+        <!-- v25.9: خريطة Leaflet/OpenStreetMap بدلاً من Google Maps -->
+        <!-- تسمح برسم خط مستقيم من موقعك إلى مكة فوقها -->
+        <div id="qbLeafletMap" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;"></div>
+
+        <!-- v25.9: طبقة رسم خط القبلة فوق الخريطة (SVG) -->
+        <svg class="qb-svg-overlay" id="qbSvgOverlay" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+          <!-- الخط الوهمي: من موقعك (أعلى الحاوية) إلى مكة (أسفل الحاوية) — رسم مستقيم -->
+          <line id="qbQiblaLine" x1="50%" y1="5%" x2="50%" y2="95%"
+                stroke="#059669" stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="2,0"
+                style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" />
+          <!-- دائرة موقعك (أعلى) -->
+          <circle id="qbUserPoint" cx="50%" cy="5%" r="10" fill="#dc2626" stroke="white" stroke-width="3" />
+          <text id="qbUserText" x="50%" y="2%" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="bold" style="filter: drop-shadow(0 1px 2px white);">📍 موقعك</text>
+          <!-- دائرة مكة (أسفل) -->
+          <circle id="qbKaabaPoint" cx="50%" cy="95%" r="10" fill="#059669" stroke="white" stroke-width="3" />
+          <text id="qbKaabaText" x="50%" y="100%" text-anchor="middle" fill="#059669" font-size="11" font-weight="bold" style="filter: drop-shadow(0 1px 2px white);">🕋 مكة</text>
+        </svg>
+
+        <!-- v25.9: الخط الأحمر الثابت في وسط الشاشة (السهم الذي تدوره لمطابقته مع الخط الوهمي) -->
+        <div class="qb-fixed-red-line"></div>
+
+        <!-- v25.9: بوصلة مصغّرة مدمجة في الزاوية -->
+        <div class="qb-route-tail-compass qb-corner-compass" id="qbDial">
+          <div class="qb-tail-dir qb-tail-dir-n">ش</div>
+          <div class="qb-tail-dir qb-tail-dir-e">ق</div>
+          <div class="qb-tail-dir qb-tail-dir-s">ج</div>
+          <div class="qb-tail-dir qb-tail-dir-w">غ</div>
+          <div class="qb-tail-center"></div>
         </div>
       </div>
-      <!-- v25.8: علامة الشمال الثابتة — فوق الحاوية مباشرة (عند موقعك = أعلى الموبايل) -->
-      <div class="qb-north-fixed-marker" title="الشمال الحقيقي"></div>
     </div>
 
     <!-- رسالة الحالة -->
@@ -1703,7 +1770,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <!-- زر تفعيل الحساس -->
     <button class="btn btn-primary btn-sm" id="qbSensorBtn" onclick="qiblaEnableSensor()">🔄 تفعيل حساس الاتجاه</button>
 
-    <div class="qb-note">🔴 الشمال في أعلى الموبايل (عند موقعك 📍) • 🕋 مكة في أسفل الموبايل (نهاية السهم). أدر جهازك حتى تتجه 🕋 مكة نحو أسفل الجهاز — عندئذٍ تكون في اتجاه القبلة (الجنوب من سوريا).</div>
+    <div class="qb-note">🟢 الخط الأخضر = اتجاه القبلة من موقعك إلى مكة (يدور مع الجهاز) • 🔴 الخط الأحمر = ثابت في وسط الشاشة • أدر جهازك حتى يتطابق الخط الأحمر مع الخط الأخضر = أنت الآن في اتجاه القبلة. 🔴 الشمال في أعلى الموبايل (عند موقعك 📍).</div>
   </div>
   </div></div>
 </div>
@@ -4966,47 +5033,173 @@ function qiblaCompute() {
   var kmTxt = ("" + km).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   el("qbAngle").innerHTML = qiblaAngle.toFixed(1);
   el("qbDist").innerHTML = "المسافة إلى مكة المكرمة: <strong>" + kmTxt + "</strong> كم";
-  var frame = el("qbMapFrame");
-  if (frame) {
-    // v25.6: استخدام عرض الاتجاهات (directions) الذي يعرض المسار ويضبط الخريطة تلقائياً
-    // لتناسب المسار من موقعك إلى مكة — فتكون نقطة البداية (موقعك) في أسفل الخريطة
-    // والنهاية (مكة) في أعلاها تقريباً
-    var src = "https://www.google.com/maps?saddr=" + latitude + "," + longitude +
-              "&daddr=" + KAABA_LAT + "," + KAABA_LNG +
-              "&dirflg=w" +  // وضع المشي لرؤية المسار المستقيم
-              "&output=embed";
-    if (frame.src !== src) frame.src = src;
+
+  // v25.9: تهيئة خريطة Leaflet مع رسم خط مستقيم من موقعك إلى مكة
+  qiblaInitLeafletMap();
+}
+
+// v25.9: تهيئة خريطة Leaflet/OpenStreetMap ورسم خط مستقيم من موقعك إلى مكة
+var _qiblaLeafletMap = null;
+var _qiblaLeafletInited = false;
+var _qiblaLeafletLoadingTried = false;
+
+function qiblaInitLeafletMap() {
+  // تحميل Leaflet CDN مرة واحدة فقط
+  if (typeof window.L === "undefined") {
+    if (_qiblaLeafletLoadingTried) return;
+    _qiblaLeafletLoadingTried = true;
+    qiblaLoadLeafletCSS();
+    qiblaLoadLeafletJS(function() {
+      _qiblaLeafletLoadingTried = false;
+      qiblaInitLeafletMap();
+    });
+    return;
   }
+  if (_qiblaLeafletInited) {
+    // فقط حدّث الموقع إن وُجدت الخريطة
+    if (_qiblaLeafletMap) {
+      try {
+        _qiblaLeafletMap.setView([latitude, longitude], 5);
+      } catch(e) {}
+    }
+    return;
+  }
+  var container = el("qbLeafletMap");
+  if (!container) return;
+  try {
+    _qiblaLeafletMap = L.map(container, {
+      zoomControl: false,
+      attributionControl: true,
+      scrollWheelZoom: false,
+      dragging: false,
+      doubleClickZoom: false,
+      touchZoom: false,
+      boxZoom: false,
+      keyboard: false
+    }).setView([latitude, longitude], 5);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap",
+      maxZoom: 19
+    }).addTo(_qiblaLeafletMap);
+
+    // علامة موقعك
+    L.circleMarker([latitude, longitude], {
+      radius: 8,
+      color: "#dc2626",
+      fillColor: "#dc2626",
+      fillOpacity: 1,
+      weight: 3
+    }).addTo(_qiblaLeafletMap).bindPopup("📍 موقعك");
+
+    // علامة مكة
+    L.circleMarker([KAABA_LAT, KAABA_LNG], {
+      radius: 8,
+      color: "#059669",
+      fillColor: "#059669",
+      fillOpacity: 1,
+      weight: 3
+    }).addTo(_qiblaLeafletMap).bindPopup("🕋 مكة المكرمة");
+
+    // الخط المستقيم من موقعك إلى مكة
+    L.polyline([
+      [latitude, longitude],
+      [KAABA_LAT, KAABA_LNG]
+    ], {
+      color: "#059669",
+      weight: 4,
+      opacity: 0.8,
+      dashArray: "10, 6"
+    }).addTo(_qiblaLeafletMap);
+
+    // ضبط الخريطة لتظهر النقطتين
+    _qiblaLeafletMap.fitBounds([
+      [latitude, longitude],
+      [KAABA_LAT, KAABA_LNG]
+    ], { padding: [30, 30] });
+
+    _qiblaLeafletInited = true;
+  } catch(e) {
+    var st = el("qbStatus");
+    if (st) { st.innerHTML = "⚠️ تعذر تحميل الخريطة — تأكد من اتصال الإنترنت"; }
+  }
+}
+
+function qiblaLoadLeafletCSS() {
+  if (document.getElementById("qbLeafletCSS")) return;
+  var link = document.createElement("link");
+  link.id = "qbLeafletCSS";
+  link.rel = "stylesheet";
+  link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+  link.crossOrigin = "";
+  document.head.appendChild(link);
+}
+
+function qiblaLoadLeafletJS(callback) {
+  if (document.getElementById("qbLeafletJS")) {
+    // بانتظار التحميل
+    var wait = setInterval(function() {
+      if (typeof window.L !== "undefined") {
+        clearInterval(wait);
+        callback();
+      }
+    }, 100);
+    return;
+  }
+  var script = document.createElement("script");
+  script.id = "qbLeafletJS";
+  script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  script.crossOrigin = "";
+  script.onload = callback;
+  script.onerror = function() {
+    var st = el("qbStatus");
+    if (st) { st.innerHTML = "⚠️ تعذر تحميل مكتبة الخريطة — حاول مرة أخرى"; }
+  };
+  document.head.appendChild(script);
 }
 function qiblaRender() {
   var hasH = qiblaLive && qiblaHeading !== null && qiblaHeading !== undefined;
-  // v25.8: موقعك في الأعلى (الشمال الحقيقي)، مكة في الأسفل (اتجاه القبلة من سوريا جنوباً)
-  // البوصلة المصغّرة تدور لتظل علامة الشمال (ش) في الأعلى (عند موقعك)
-  // السهم العمودي ثابت — يشير من موقعك (أعلى) إلى مكة (أسفل)
-  // v25.1: القرص يدور عكس اتجاه الجهاز مع إزاحة 180° ليظل يشير للشمال الحقيقي
-  // لكن الآن الشمال في الأعلى، لذا نستخدم -qiblaHeading (بدون إزاحة 180°)
+  // v25.9: تصميم جديد — خطان:
+  // 1. الخط الأخضر الوهمي (qbSvgOverlay) — يمثل اتجاه القبلة الحقيقي من موقعك إلى مكة
+  //    يدور عكس اتجاه الجهاز ليظل يشير للقبلة الحقيقية
+  // 2. الخط الأحمر الثابت (qb-fixed-red-line) — ثابت في وسط الشاشة عمودياً
+  //    المستخدم يدور جهازه حتى يتطابق الخط الأحمر مع الخط الأخضر = اتجاه القبلة
+
+  // v25.9: الخط الوهمي يدور بزاوية = -(qiblaAngle - qiblaHeading)
+  // عندما يواجه المستخدم القبلة، heading = qiblaAngle، فيكون الدوران = 0
+  // فيتطابق الخط الأخضر مع الخط الأحمر الثابت
+  var svgRot = hasH ? (qiblaHeading - qiblaAngle) : 0;
+  var svgOverlay = el("qbSvgOverlay");
+  if (svgOverlay) {
+    var transform = "rotate(" + svgRot + "deg)";
+    svgOverlay.style.webkitTransform = transform;
+    svgOverlay.style.transform = transform;
+  }
+
+  // البوصلة المصغّرة تدور مع -qiblaHeading (الشمال في الأعلى)
   var dialRot = hasH ? (-qiblaHeading) : 0;
   var dial = el("qbDial");
   if (dial) qiblaSetRot(dial, dialRot);
+
   var st = el("qbStatus"), sn = el("qbSensor");
   if (hasH) {
     var diff = Math.abs(((qiblaAngle - qiblaHeading) % 360 + 540) % 360 - 180);
     if (st) {
       if (diff < 5) {
-        st.innerHTML = "✅ أنت الآن في اتجاه القبلة — 🕋 مكة في أسفل الجهاز";
+        st.innerHTML = "✅ الخطان متطابقان — أنت الآن في اتجاه القبلة";
         st.className = "qb-status qb-aligned qb-status-big";
       } else {
         var turn = (qiblaAngle - qiblaHeading + 360) % 360;
         var turnDir = turn < 180 ? "يميناً" : "يساراً";
         var turnAmt = turn < 180 ? turn : (360 - turn);
-        st.innerHTML = "🧭 أدر جهازك " + Math.round(turnAmt) + "° " + turnDir + " حتى يصبح 🕋 مكة في أسفل الجهاز";
+        st.innerHTML = "🧭 أدر جهازك " + Math.round(turnAmt) + "° " + turnDir + " حتى يتطابق الخط الأحمر مع الخط الأخضر";
         st.className = "qb-status qb-status-big";
       }
     }
     if (sn) sn.innerHTML = "اتجاه جهازك: " + Math.round(qiblaHeading) + "° • القبلة: " + Math.round(qiblaAngle) + "° • الفرق: " + Math.round(diff) + "°";
   } else {
-    if (st) { st.innerHTML = "📍 🕋 مكة في أسفل الجهاز • أدر جهازك حتى تتجه 🕋 نحو الأسفل"; st.className = "qb-status qb-status-big"; }
-    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس: زاوية القبلة " + qiblaAngle.toFixed(0) + "° من الشمال الحقيقي • 📍 موقعك في الأعلى (الشمال)، 🕋 مكة في الأسفل";
+    if (st) { st.innerHTML = "📍 أدر جهازك حتى يتطابق الخط الأحمر (الثابت) مع الخط الأخضر (اتجاه القبلة)"; st.className = "qb-status qb-status-big"; }
+    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس: زاوية القبلة " + qiblaAngle.toFixed(0) + "° من الشمال الحقيقي • الخط الأخضر يشير من موقعك إلى مكة، الخط الأحمر ثابت في وسط الشاشة";
   }
 }
 function qiblaOrientHandler(e) {
@@ -5201,7 +5394,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.8"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.9"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
