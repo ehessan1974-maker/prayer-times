@@ -1807,6 +1807,11 @@ var infoCycleProgressTimer = null;
 var infoCycleProgress = 0;
 var infoCatFilter = "all";
 var fullContentDB = null;
+// v25.3: تعريف احتياطي لمتغيرات محرر الرسائل المحذوف في v19.0
+// لمنع ReferenceError في أي مراجع متبقية في دوال لم تُحذف
+var editorMsgs = null;
+var editorDirty = false;
+var msgEdLastSaveAt = 0;
 var INFO_CATEGORIES = ["hadith","quran","azkar","dua","ehemessages","today","health","food","jokes","world","wisdom","prophet","seasons","poetry","quran-tafseer","vitamins","stars"];
 
 (function() {
@@ -1914,14 +1919,10 @@ var CONTENT_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-ti
 var LIVE_REFRESH_INTERVAL = 30000; 
 var _liveRefreshTimer = null;
 
-// دمج المحتوى القادم من GitHub مع رسائل المحرر غير المحفوظة
-// حتى لا تمسح المزامنة الحية التعديلات المحلية من الشريط المتحرك
+// v25.3: محرر الرسائل حُذف في v19.0 — لا حاجة لدمج التعديلات المحلية
+// الأخطاء السابقة (editorMsgs غير معرّف) كانت تمنع displayCurrentInfo() من العمل
 function applyFetchedContent(items) {
   cachedInfoItems = items;
-  if (editorMsgs && editorMsgs.length > 0 &&
-      (editorDirty || (Date.now() - msgEdLastSaveAt) < 180000)) {
-    cachedInfoItems = mergeMessagesIntoContent(cachedInfoItems, editorMsgsForCache());
-  }
   currentInfoIdx = 0;
   // v20.3: فحص أوامر التحديث من المدير (للمستخدمين الذين لديهم نسخ قديمة بدون دوال التحديث)
   try { checkUpdateCommand(items); } catch(e) {}
@@ -4182,7 +4183,7 @@ function msgFindUnseen(msgs) {
 }
 
 function currentKnownMessages() {
-  if (editorMsgs && (editorDirty || (Date.now() - msgEdLastSaveAt) < 180000)) return editorMsgsForCache();
+  // v25.3: محرر الرسائل حُذف في v19.0 — لا تعديلات محلية بعد الآن
   return msgsFromItems(cachedInfoItems);
 }
 
@@ -5014,7 +5015,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.2"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.3"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";

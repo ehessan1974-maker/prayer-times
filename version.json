@@ -1,1 +1,1 @@
-{"appVersion":"25.2","htmlUrl":"https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html","releasedAt":"2026-09-23T11:00:00Z","changelog":"إصلاح جلب البيانات في Samsung J5 (تفعيل TLS 1.2 على Android 5.x) + إصلاح البوصلة (الشمال في الأسفل)"}
+{"appVersion":"25.3","htmlUrl":"https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html","releasedAt":"2026-09-23T12:00:00Z","changelog":"إصلاح عدم ظهور البيانات تلقائياً (ReferenceError في editorMsgs المحذوف) + إصلاح Samsung J5 + البوصلة"}
