@@ -5119,16 +5119,9 @@ function qiblaInitLeafletMap() {
       weight: 3
     }).addTo(_qiblaLeafletMap).bindPopup("🕋 مكة المكرمة");
 
-    // الخط المستقيم من موقعك إلى مكة
-    L.polyline([
-      [latitude, longitude],
-      [KAABA_LAT, KAABA_LNG]
-    ], {
-      color: "#059669",
-      weight: 4,
-      opacity: 0.8,
-      dashArray: "10, 6"
-    }).addTo(_qiblaLeafletMap);
+    // v25.13: حذف polyline من الخريطة — الخط الأخضر الوهمي مرسوم فوق الخريطة في طبقة SVG
+    // ولا يتأثر بقلب الخريطة 180°، بينما polyline داخل الخريطة يبدو مكسوراً بسبب القلب
+    // الخط الأخضر الوحيد الآن هو qbQiblaLine في SVG overlay
 
     // ضبط الخريطة لتظهر النقطتين
     _qiblaLeafletMap.fitBounds([
@@ -5453,7 +5446,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.12"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.13"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
