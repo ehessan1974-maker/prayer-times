@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مواقيت الصلاة - تحميل التطبيق</title>
+    <!-- v25.4: منع كاش المتصفح لضمان رؤية أحدث إصدار دائماً -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
         /* ===== Reset & Base ===== */
         *, *::before, *::after {
@@ -878,7 +882,7 @@
             <div class="download-card animate-in delay-1">
                 <div class="version-badge">
                     <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--green-600);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                    الإصدار <span id="versionDisplay">23.6</span>
+                    الإصدار <span id="versionDisplay">25.4</span>
                 </div>
                 <h2>مواقيت الصلاة</h2>
                 <div class="file-info">
@@ -892,7 +896,7 @@
                     </span>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
-                    <a id="downloadApkBtn" href="https://github.com/ehessan1974-maker/prayer-times/raw/main/public/prayer-times-v23.6.apk" class="btn-download" download style="width:100%;justify-content:center;font-size:14px;padding:14px 20px;">
+                    <a id="downloadApkBtn" href="https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v25.4.apk" class="btn-download" download style="width:100%;justify-content:center;font-size:14px;padding:14px 20px;">
                         <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                         تحميل التطبيق ( يتطلب نظام أندرويد 4.4 " KitKat " أو أحدث )
                     </a>
@@ -1184,35 +1188,49 @@
     </footer>
 
 <script>
-// v23.7: تحديث تلقائي لرقم الإصدار ورابط APK من version.json
+// v25.4: تحديث تلقائي لرقم الإصدار ورابط APK من version.json
+// تغييرات v25.4:
+// 1. جلب version.json من نفس origin (Pages) بدلاً من raw.githubusercontent.com
+//    - أسرع (لا يوجد كاش CDN منفصل، Pages يُحدّث فوراً بعد الـ push)
+//    - لا يخضع لـ CORS cross-origin
+// 2. fallback إلى raw.githubusercontent.com لو فشل Pages
+// 3. إزالة اعتماد GitHub API (محدود بـ 60 طلب/ساعة لكل IP)
+//    حجم APK الآن مُخزَّن في version.json نفسه
+// 4. cache-busting قوي مع Date.now()
 (function() {
-  var versionUrl = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json?t=" + Date.now();
-  fetch(versionUrl).then(function(r) {
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    return r.json();
-  }).then(function(info) {
+  var versionUrl = "./version.json?t=" + Date.now();
+  var versionUrlFallback = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json?t=" + Date.now();
+  function applyInfo(info) {
+    if (!info || !info.appVersion) return;
     var ver = info.appVersion;
-    if (!ver) return;
     // تحديث رقم الإصدار المعروض
     var vEl = document.getElementById("versionDisplay");
     if (vEl) vEl.textContent = ver;
-    // تحديث رابط تحميل APK
-    var apkUrl = "https://github.com/ehessan1974-maker/prayer-times/raw/main/public/prayer-times-v" + ver + ".apk";
+    // تحديث رابط تحميل APK (يفضّل raw.githubusercontent لأن github.com/raw/ قد يعرض صفحة HTML أولاً)
+    var apkUrl = info.apkUrl || ("https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v" + ver + ".apk");
     var btn = document.getElementById("downloadApkBtn");
     if (btn) btn.href = apkUrl;
-    // التحقق من وجود APK فعلياً وتحديث حجم الملف
-    fetch("https://api.github.com/repos/ehessan1974-maker/prayer-times/contents/public/prayer-times-v" + ver + ".apk")
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data && data.size) {
-          var sizeMB = (data.size / 1048576).toFixed(1);
-          var sizeEl = document.getElementById("apkSize");
-          if (sizeEl) sizeEl.textContent = sizeMB;
-        }
-      }).catch(function() {});
-  }).catch(function() {
-    // fallback: لو فشل الجلب، نستخدم القيم المكتوبة في HTML
-  });
+    // تحديث حجم الملف إن وُجد في version.json
+    if (info.apkSizeMB) {
+      var sizeEl = document.getElementById("apkSize");
+      if (sizeEl) sizeEl.textContent = info.apkSizeMB;
+    }
+  }
+  fetch(versionUrl, { cache: "no-store" })
+    .then(function(r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
+    .then(applyInfo)
+    .catch(function() {
+      // fallback: محاولة raw.githubusercontent.com
+      return fetch(versionUrlFallback, { cache: "no-store" })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(applyInfo)
+        .catch(function() {
+          // fallback نهائي: القيم الافتراضية في HTML تبقى كما هي
+        });
+    });
 })();
 </script>
 
