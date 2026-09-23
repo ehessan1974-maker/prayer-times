@@ -1231,6 +1231,18 @@ body.smart .modal { scrollbar-gutter: stable; }
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
+/* v25.10: علامة الشمال في أسفل الموبايل — تحت الحاوية */
+.qb-north-at-bottom {
+  margin: 6px auto 0 !important;
+  /* السهم يشير للأسفل (نحو أعلى الخريطة المقلوبة = الشمال الحقيقي) */
+  border-top: 14px solid #dc2626 !important;
+  border-bottom: 0 !important;
+}
+.qb-north-at-bottom::before {
+  top: auto !important;
+  bottom: -22px !important;
+}
+
 /* v25.9: طبقة SVG لرسم خط القبلة فوق الخريطة */
 .qb-svg-overlay {
   position: absolute;
@@ -1723,36 +1735,33 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <div class="qb-angle">زاوية القبلة من الشمال: <strong id="qbAngle">--</strong>°</div>
     <div class="qb-dist" id="qbDist">--</div>
 
-    <!-- v25.9: الخريطة + خط القبلة الوهمي + الخط الأحمر الثابت في وسط الشاشة -->
+    <!-- v25.10: الخريطة مقلوبة 180° (شمالها في أسفل الموبايل، جنوبها في أعلى الموبايل) -->
     <div class="qb-compass-stage">
-      <!-- v25.9: علامة الشمال الثابتة فوق الحاوية -->
-      <div class="qb-north-fixed-marker" title="الشمال الحقيقي"></div>
-
       <!-- حاوية الخريطة + الخطوط -->
       <div class="qb-map-arrow-container" id="qbMapContainer">
-        <!-- v25.9: خريطة Leaflet/OpenStreetMap بدلاً من Google Maps -->
-        <!-- تسمح برسم خط مستقيم من موقعك إلى مكة فوقها -->
-        <div id="qbLeafletMap" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;"></div>
+        <!-- v25.10: خريطة Leaflet مقلوبة 180° (شمال في الأسفل، جنوب في الأعلى) -->
+        <!-- حتى يكون موقعك (شمال سوريا) في أسفل الموبايل، ومكة (جنوباً) في أعلى الموبايل -->
+        <div id="qbLeafletMap" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;transform:rotate(180deg);"></div>
 
-        <!-- v25.9: طبقة رسم خط القبلة فوق الخريطة (SVG) -->
+        <!-- v25.10: طبقة رسم خط القبلة فوق الخريطة (SVG) — بدون قلب -->
         <svg class="qb-svg-overlay" id="qbSvgOverlay" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-          <!-- الخط الوهمي: من موقعك (أعلى الحاوية) إلى مكة (أسفل الحاوية) — رسم مستقيم -->
-          <line id="qbQiblaLine" x1="50%" y1="5%" x2="50%" y2="95%"
+          <!-- الخط الوهمي: من موقعك (أسفل الحاوية) إلى مكة (أعلى الحاوية) -->
+          <line id="qbQiblaLine" x1="50%" y1="95%" x2="50%" y2="5%"
                 stroke="#059669" stroke-width="6" stroke-linecap="round"
                 stroke-dasharray="2,0"
                 style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" />
-          <!-- دائرة موقعك (أعلى) -->
-          <circle id="qbUserPoint" cx="50%" cy="5%" r="10" fill="#dc2626" stroke="white" stroke-width="3" />
-          <text id="qbUserText" x="50%" y="2%" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="bold" style="filter: drop-shadow(0 1px 2px white);">📍 موقعك</text>
-          <!-- دائرة مكة (أسفل) -->
-          <circle id="qbKaabaPoint" cx="50%" cy="95%" r="10" fill="#059669" stroke="white" stroke-width="3" />
-          <text id="qbKaabaText" x="50%" y="100%" text-anchor="middle" fill="#059669" font-size="11" font-weight="bold" style="filter: drop-shadow(0 1px 2px white);">🕋 مكة</text>
+          <!-- دائرة موقعك (أسفل الحاوية — شمال الخريطة) -->
+          <circle id="qbUserPoint" cx="50%" cy="95%" r="10" fill="#dc2626" stroke="white" stroke-width="3" />
+          <text id="qbUserText" x="50%" y="90%" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="bold" style="filter: drop-shadow(0 1px 2px white);">📍 موقعك</text>
+          <!-- دائرة مكة (أعلى الحاوية — جنوب الخريطة) -->
+          <circle id="qbKaabaPoint" cx="50%" cy="5%" r="10" fill="#059669" stroke="white" stroke-width="3" />
+          <text id="qbKaabaText" x="50%" y="3%" text-anchor="middle" fill="#059669" font-size="11" font-weight="bold" style="filter: drop-shadow(0 1px 2px white);">🕋 مكة</text>
         </svg>
 
-        <!-- v25.9: الخط الأحمر الثابت في وسط الشاشة (السهم الذي تدوره لمطابقته مع الخط الوهمي) -->
+        <!-- v25.10: الخط الأحمر الثابت في وسط الشاشة -->
         <div class="qb-fixed-red-line"></div>
 
-        <!-- v25.9: بوصلة مصغّرة مدمجة في الزاوية -->
+        <!-- v25.10: بوصلة مصغّرة مدمجة في الزاوية -->
         <div class="qb-route-tail-compass qb-corner-compass" id="qbDial">
           <div class="qb-tail-dir qb-tail-dir-n">ش</div>
           <div class="qb-tail-dir qb-tail-dir-e">ق</div>
@@ -1761,6 +1770,8 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
           <div class="qb-tail-center"></div>
         </div>
       </div>
+      <!-- v25.10: علامة الشمال تحت الحاوية (شمال الخريطة = أسفل الموبايل) -->
+      <div class="qb-north-fixed-marker qb-north-at-bottom" title="الشمال الحقيقي"></div>
     </div>
 
     <!-- رسالة الحالة -->
@@ -1770,7 +1781,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <!-- زر تفعيل الحساس -->
     <button class="btn btn-primary btn-sm" id="qbSensorBtn" onclick="qiblaEnableSensor()">🔄 تفعيل حساس الاتجاه</button>
 
-    <div class="qb-note">🟢 الخط الأخضر = اتجاه القبلة من موقعك إلى مكة (يدور مع الجهاز) • 🔴 الخط الأحمر = ثابت في وسط الشاشة • أدر جهازك حتى يتطابق الخط الأحمر مع الخط الأخضر = أنت الآن في اتجاه القبلة. 🔴 الشمال في أعلى الموبايل (عند موقعك 📍).</div>
+    <div class="qb-note">🟢 الخط الأخضر = اتجاه القبلة من موقعك إلى مكة • 🔴 الخط الأحمر = ثابت في وسط الشاشة • أدر جهازك حتى يتطابق الخط الأحمر مع الخط الأخضر = أنت في اتجاه القبلة. 🔴 الشمال في أسفل الموبايل (عند موقعك 📍)، 🕋 مكة في أعلى الموبايل (جنوباً).</div>
   </div>
   </div></div>
 </div>
@@ -5118,6 +5129,11 @@ function qiblaInitLeafletMap() {
       [KAABA_LAT, KAABA_LNG]
     ], { padding: [30, 30] });
 
+    // v25.10: تأكيد حجم الخريطة بعد التحميل (مهم بعد rotate(180deg))
+    setTimeout(function() {
+      try { _qiblaLeafletMap.invalidateSize(); } catch(e) {}
+    }, 200);
+
     _qiblaLeafletInited = true;
   } catch(e) {
     var st = el("qbStatus");
@@ -5394,7 +5410,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.9"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.10"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
