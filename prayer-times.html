@@ -1558,6 +1558,10 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
         <span onclick="toggleCatFilter('hadith')" id="catBtn_hadith" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🕌 أحاديث</span>
         <span onclick="toggleCatFilter('quran')" id="catBtn_quran" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📖 قرآن</span>
         <span onclick="toggleCatFilter('azkar')" id="catBtn_azkar" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🤲 أذكار</span>
+        <span onclick="toggleCatFilter('azkar-after-prayer')" id="catBtn_azkar-after-prayer" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🕌 بعد الصلاة</span>
+        <span onclick="toggleCatFilter('azkar-morning')" id="catBtn_azkar-morning" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🌅 الصباح</span>
+        <span onclick="toggleCatFilter('azkar-evening')" id="catBtn_azkar-evening" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🌙 المساء</span>
+        <span onclick="toggleCatFilter('azkar-friday')" id="catBtn_azkar-friday" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🕌 الجمعة</span>
         <span onclick="toggleCatFilter('ehemessages')" id="catBtn_ehemessages" style="display:inline-block;position:relative;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💬 رسائل<span id="msgNewDot" style="display:none;position:absolute;top:-7px;left:-7px;min-width:15px;height:15px;line-height:15px;text-align:center;background:#dc2626;color:white;border-radius:8px;font-size:8px;font-weight:700;padding:0 3px;-webkit-box-shadow:0 1px 3px rgba(0,0,0,0.4);box-shadow:0 1px 3px rgba(0,0,0,0.4);"></span></span>
         <span onclick="toggleCatFilter('today')" id="catBtn_today" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📅 أحداث</span>
         <span onclick="toggleCatFilter('health')" id="catBtn_health" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💊 صحة</span>
@@ -2039,7 +2043,7 @@ var fullContentDB = null;
 var editorMsgs = null;
 var editorDirty = false;
 var msgEdLastSaveAt = 0;
-var INFO_CATEGORIES = ["hadith","quran","azkar","dua","ehemessages","today","health","food","jokes","world","wisdom","prophet","seasons","poetry","quran-tafseer","vitamins","stars"];
+var INFO_CATEGORIES = ["hadith","quran","azkar","azkar-after-prayer","azkar-morning","azkar-evening","azkar-friday","dua","ehemessages","today","health","food","jokes","world","wisdom","prophet","seasons","poetry","quran-tafseer","vitamins","stars"];
 
 (function() {
   try {
@@ -5430,7 +5434,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.14"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.15"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
