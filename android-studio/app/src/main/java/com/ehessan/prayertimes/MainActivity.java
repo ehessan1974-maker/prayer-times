@@ -298,6 +298,20 @@ public class MainActivity extends Activity {
             } catch (Exception e) {}
         }
 
+        // ===== v25.5: إجراء مكالمة هاتفية — يستدعيه JS عند الضغط على رقم هاتف =====
+        @JavascriptInterface
+        public void callPhone(String phone) {
+            try {
+                // تنظيف الرقم من المسافات والشرطات
+                String cleanNum = phone.replaceAll("[\\s\\-().]", "");
+                Intent it = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + cleanNum));
+                it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(it);
+            } catch (Exception e) {
+                android.util.Log.e("PrayerTimes", "callPhone FAILED for " + phone + " — " + e.getMessage(), e);
+            }
+        }
+
         // ===== تنزيل تحديث HTML جديد من GitHub (يستدعيه JS عند توفر نسخة جديدة) =====
         @JavascriptInterface
         public void downloadAppUpdate(final String jsCallback) {
