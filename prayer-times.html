@@ -2635,15 +2635,23 @@ function initDragScroll() {
     var fullH = track.scrollHeight;
     return fullH > 10 ? fullH / 2 : track.scrollHeight;
   }
-  // v25.21: قراءة الموضع الفعلي للأنيميشن باستخدام getBoundingClientRect
-  // getComputedStyle لا يعكس القيم أثناء الأنيميشن، لكن getBoundingClientRect نعم
+  // v25.23: قراءة الموضع الفعلي للأنيميشن بشكل صحيح
+  // trackRect.top - windowRect.top يُرجع قيمة موجبة، لكن currentOffset يجب أن تكون سالبة
+  // (translateY سالبة لتحريك المحتوى لأعلى)
   function getCurrentAnimationOffset() {
     try {
-      // قارن موضع track الحالي مع موضع windowEl
       var trackRect = track.getBoundingClientRect();
       var windowRect = windowEl.getBoundingClientRect();
-      // الفرق = الإزاحة العمودية الحالية
-      return trackRect.top - windowRect.top;
+      // الإزاحة سالبة (لأن المحتوى يتحرك لأعلى)
+      // نطبّعها ضمن نطاق [-oneCopy, 0] لمطابقة سلوك applyOffset
+      var oneCopy = getOneCopyHeight();
+      if (oneCopy <= 0) return 0;
+      var raw = trackRect.top - windowRect.top;
+      // تحويل القيمة الموجبة إلى سالبة وتطبيعها ضمن نطاق [-oneCopy, 0]
+      var wrapped = raw;
+      wrapped = ((wrapped % oneCopy) + oneCopy) % oneCopy;
+      if (wrapped > 0) wrapped -= oneCopy;
+      return wrapped;
     } catch(e) {}
     return 0;
   }
@@ -2659,9 +2667,7 @@ function initDragScroll() {
   }
   function enableInertialMode() {
     if (card.classList.contains("inertial-scroll")) return;
-    // v25.21: اقرأ الموضع الحالي قبل تفعيل inertial-scroll
-    // لأن تفعيل inertial-scroll يوقف الأنيميشن (animation: none !important)
-    // وهذا يعيد track لموضعه 0 — لذا نحفظ الموضع قبل التفعيل ونطبّقه بعده مباشرة
+    // v25.23: اقرأ الموضع الحالي قبل تفعيل inertial-scroll
     var preservedOffset = getCurrentAnimationOffset();
     card.classList.add("inertial-scroll");
     // طبّق الموضع المحفوظ فوراً بعد إيقاف الأنيميشن
@@ -2683,21 +2689,35 @@ function initDragScroll() {
     momentumActive = false;
     var oneCopy = getOneCopyHeight();
     if (oneCopy > 0) {
-      var progress = -currentOffset / oneCopy; 
+      // v25.23: حساب نسبة التقدم في التمرير من currentOffset
+      // currentOffset سالبة دائماً [-oneCopy, 0]
+      var progress = -currentOffset / oneCopy;
       if (progress < 0) progress = 0;
-      if (progress >= 0.999) progress = 0; 
+      if (progress >= 0.999) progress = 0;
       var durationStr = track.style.animationDuration || "";
       var durationSec = parseFloat(durationStr);
       if (!durationSec || isNaN(durationSec) || durationSec < 1) durationSec = 90;
+      // v25.23: animation-delay سالب يبدأ الأنيميشن من منتصفه
+      // مثال: progress=0.5, duration=90s → delay=-45s → الأنيميشن يبدأ من 50%
       var delaySec = -progress * durationSec;
       track.style.webkitAnimationDelay = delaySec + "s";
       track.style.animationDelay = delaySec + "s";
     }
-    track.style.webkitTransform = "";
-    track.style.transform = "";
+    // v25.23: لا نمسح transform فوراً — نتركه حتى يبدأ الأنيميشن
+    // هذا يمنع القفزة للبداية. سيمسحه الأنيميشن تلقائياً عند بدئه
     card.classList.remove("inertial-scroll");
     card.classList.remove("dragging");
     track.classList.remove("smooth-decel");
+    // انتظر قليلاً ثم امسح transform — بعد أن يبدأ الأنيميشن من الموضع الصحيح
+    setTimeout(function() {
+      try {
+        track.style.webkitTransform = "";
+        track.style.transform = "";
+        // إعادة تعيين animation-delay بعد فترة وجيزة لمنع تكرار البدء من نفس النقطة
+        track.style.webkitAnimationDelay = "";
+        track.style.animationDelay = "";
+      } catch(e) {}
+    }, 100);
   }
   function momentumLoop() {
     if (!momentumActive) return;
@@ -5541,7 +5561,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.22"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.23"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
