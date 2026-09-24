@@ -1170,6 +1170,7 @@ body.smart .modal { scrollbar-gutter: stable; }
 }
 
 /* v25.7: بوصلة مصغّرة مدمجة مع موقعك (في أسفل السهم) — الشمال يدور معها */
+/* v25.7: بوصلة مصغّرة مدمجة مع موقعك (في أسفل السهم) — الشمال يدور معها */
 .qb-route-tail-compass {
   position: relative;
   width: 90px;
@@ -1180,7 +1181,7 @@ body.smart .modal { scrollbar-gutter: stable; }
   border: 3px solid #059669;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 0 8px rgba(5,150,105,0.15);
   overflow: hidden;
-  /* v25.22: انتقال أبطأ (0.5s بدلاً من 0.3s) لتقليل الارتعاش */
+  /* v25.26: انتقال ناعم (0.5s) لتقليل الارتعاش */
   transition: transform 0.5s ease-out;
 }
 .qb-tail-dir {
@@ -5304,8 +5305,10 @@ function qiblaRender() {
     redLine.style.transform = redTransform;
   }
 
-  // البوصلة المصغّرة تدور مع الموبايل
-  var dialRot = hasH ? (-qiblaHeading) : 0;
+  // v25.26: البوصلة المصغّرة تدور مع الموبايل
+  // الحاوية الرئيسية مقلوبة 180°، لذا نضيف 180° لتعويض القلب
+  // النتيجة: الشمال (ش) يبقى في أسفل البوصلة على الشاشة
+  var dialRot = hasH ? (180 - qiblaHeading) : 180;
   var dial = el("qbDial");
   if (dial) qiblaSetRot(dial, dialRot);
 
@@ -5570,7 +5573,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.25"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.26"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
