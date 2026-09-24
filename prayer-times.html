@@ -2544,6 +2544,10 @@ function renderInfo() {
 function nextInfo() {
   var card = el("infoCard");
   if (!card) return;
+  // v25.19: تجاهل النقرة إن كانت بعد سحب (لمنع تبديل الحالة بعد التمرير)
+  if (card._wasActualClick && !card._wasActualClick()) {
+    return; // كان سحباً، تجاهل النقرة
+  }
   infoScrollPaused = !infoScrollPaused;
   if (infoScrollPaused) {
     card.classList.add("paused");
@@ -2619,14 +2623,41 @@ function initDragScroll() {
   var startY = 0;
   var startOffset = 0;
   var currentOffset = 0;
-  var velocity = 0;              
+  var velocity = 0;
   var momentumRAF = null;
   var momentumActive = false;
-  var velocitySamples = [];      
+  var velocitySamples = [];
+  // v25.19: لتتبع ما إذا حدث سحب فعلي (لمنع nextInfo() بعد السحب)
+  var dragActuallyMoved = false;
+  var dragStartThreshold = 5; // عدد البكسلات التي يجب تحريكها ليُعتبر سحباً
 
   function getOneCopyHeight() {
     var fullH = track.scrollHeight;
     return fullH > 10 ? fullH / 2 : track.scrollHeight;
+  }
+  // v25.19: قراءة موضع التمرير الحالي من الأنيميشن (للحفاظ على موضع العرض عند بدء السحب)
+  function getCurrentAnimationOffset() {
+    // محاولة قراءة التحويل الحالي من النمط المُطبَّق
+    var oneCopy = getOneCopyHeight();
+    if (oneCopy <= 0) return 0;
+    // إذا كان الوضع العادي (الأنيميشن يعمل)، نقرأ الموضع التقريبي من الوقت المنقضي
+    // السرعة = oneCopy / durationSec
+    // الموضع = -(elapsed * oneCopy / durationSec) % oneCopy
+    try {
+      var cs = window.getComputedStyle(track);
+      var transform = cs.getPropertyValue("transform") || cs.getPropertyValue("-webkit-transform");
+      if (transform && transform !== "none" && transform.indexOf("matrix") !== -1) {
+        // matrix(1, 0, 0, 1, 0, Y) → Y هو الإزاحة العمودية
+        var match = transform.match(/matrix\(([^)]+)\)/);
+        if (match) {
+          var parts = match[1].split(",").map(function(x) { return parseFloat(x.trim()); });
+          if (parts.length >= 6 && !isNaN(parts[5])) {
+            return parts[5]; // Y translation
+          }
+        }
+      }
+    } catch(e) {}
+    return 0;
   }
   function applyOffset(off) {
     var oneCopy = getOneCopyHeight();
@@ -2641,7 +2672,12 @@ function initDragScroll() {
   function enableInertialMode() {
     if (card.classList.contains("inertial-scroll")) return;
     card.classList.add("inertial-scroll");
-    applyOffset(0);
+    // v25.19: بدلاً من applyOffset(0)، نقرأ الموضع الحالي من الأنيميشن
+    // ونبدأ السحب من نفس الموضع — هذا يحافظ على موضع العرض
+    var preservedOffset = getCurrentAnimationOffset();
+    currentOffset = preservedOffset;
+    track.style.webkitTransform = "translateY(" + preservedOffset + "px)";
+    track.style.transform = "translateY(" + preservedOffset + "px)";
   }
   var restoreTimer = null;
   function scheduleRestore(delay) {
@@ -2717,6 +2753,7 @@ function initDragScroll() {
     isDragging = true;
     startY = clientY;
     velocitySamples = [{ t: Date.now(), y: clientY }];
+    dragActuallyMoved = false; // v25.19: إعادة تعيين
     enableInertialMode();
     startOffset = currentOffset;
     card.classList.add("dragging");
@@ -2731,6 +2768,8 @@ function initDragScroll() {
     velocitySamples.push({ t: now, y: clientY });
     while (velocitySamples.length > VELOCITY_SAMPLE_MAX) velocitySamples.shift();
     var dy = clientY - startY;
+    // v25.19: تتبع ما إذا حدث سحب فعلي
+    if (Math.abs(dy) > dragStartThreshold) dragActuallyMoved = true;
     applyOffset(startOffset + dy);
     velocity = computeVelocityFromSamples(now);
   }
@@ -2740,6 +2779,10 @@ function initDragScroll() {
     card.classList.remove("dragging");
     var finalV = computeVelocityFromSamples(Date.now());
     startMomentum(finalV);
+  }
+  // v25.19: التحقق من أن النقرة لم تكن سحباً (لمنع nextInfo() بعد السحب)
+  function wasActualClick() {
+    return !dragActuallyMoved;
   }
   var touchStartHandler = function(e) { if (e.touches && e.touches.length > 0) startDrag(e.touches[0].clientY); };
   var touchMoveHandler = function(e) { if (!isDragging) return; if (e.touches && e.touches.length > 0) { moveDrag(e.touches[0].clientY); e.preventDefault(); } };
@@ -2784,6 +2827,9 @@ function initDragScroll() {
   document.addEventListener("mousemove", mouseMoveHandler);
   document.addEventListener("mouseup", mouseUpHandler);
   card.addEventListener("wheel", wheelHandler, { passive: false });
+  // v25.19: تخزين مرجع لـ wasActualClick على card
+  // حتى يتمكن nextInfo() من التحقق إن كان النقر حقيقياً أم بعد سحب
+  card._wasActualClick = wasActualClick;
   card._inertiaCleanup = function() {
     card.removeEventListener("touchstart", touchStartHandler);
     card.removeEventListener("touchmove", touchMoveHandler);
@@ -5471,7 +5517,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.18"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.19"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
