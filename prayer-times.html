@@ -1180,8 +1180,8 @@ body.smart .modal { scrollbar-gutter: stable; }
   border: 3px solid #059669;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 0 8px rgba(5,150,105,0.15);
   overflow: hidden;
-  /* v25.17: انتقال أبطأ لتقليل الارتعاش */
-  transition: transform 0.3s ease-out;
+  /* v25.22: انتقال أبطأ (0.5s بدلاً من 0.3s) لتقليل الارتعاش */
+  transition: transform 0.5s ease-out;
 }
 .qb-tail-dir {
   position: absolute;
@@ -1256,8 +1256,8 @@ body.smart .modal { scrollbar-gutter: stable; }
   pointer-events: none;
   /* السماح للخط بالدوران حول مركز الحاوية */
   transform-origin: center center;
-  /* v25.17: انتقال أبطأ وأكثر نعومة لتقليل الارتعاش البصري */
-  transition: transform 0.3s ease-out;
+  /* v25.22: انتقال أبطأ وأكثر نعومة (0.5s بدلاً من 0.3s) */
+  transition: transform 0.5s ease-out;
 }
 
 /* v25.9: الخط الأحمر الثابت في وسط الشاشة — يدور مع البوصلة */
@@ -1755,8 +1755,8 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <!-- حاوية الخريطة + الخطوط -->
       <div class="qb-map-arrow-container" id="qbMapContainer">
         <!-- v25.14: خريطة Leaflet — دورانها يُتحكم به من qiblaRender (180° أساسي + heading) -->
-        <!-- v25.17: خريطة Leaflet — مع انتقال CSS ناعم لتقليل الارتعاش -->
-        <div id="qbLeafletMap" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;transform:rotate(180deg);transition:transform 0.3s ease-out;"></div>
+        <!-- v25.22: خريطة Leaflet — مع انتقال CSS ناعم (0.5s) لتقليل الارتعاش -->
+        <div id="qbLeafletMap" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;transform:rotate(180deg);transition:transform 0.5s ease-out;"></div>
 
         <!-- v25.14: حذف الخط الأخضر الوهمي من طبقة SVG — الخط الأخضر الحقيقي مرسوم على الخريطة -->
         <!-- طبقة SVG فارغة الآن (تُستخدم فقط للدوران في qiblaRender لكنها لا ترسم خطاً) -->
@@ -5061,6 +5061,8 @@ applyTheme(); // تطبيق فوري عند الإقلاع — قبل جلب ا�
 var KAABA_LAT = 21.4224779, KAABA_LNG = 39.8251832; // الكعبة المشرفة — مكة المكرمة
 var qiblaAngle = 0, qiblaHeading = null, qiblaLive = false, qiblaSensorTimer = null;
 var qiblaLastUpdateAt = 0; // v25.17: لتخفيف الحساسية (throttle)
+// v25.22: متوسط متحرك أقوى (median filter + low-pass filter)
+var qiblaRecentHeadings = []; // آخر 5 قراءات للحصول على الوسيط (median)
 
 // زاوية القبلة: الدائرة العظمى من الموقع إلى الكعبة (بالاتجاه مع عقارب الساعة من الشمال)
 function qiblaBearing(lat, lng) {
@@ -5313,34 +5315,51 @@ function qiblaOrientHandler(e) {
   if (h === null) return;
   var rawHeading = (h + 360) % 360;
 
-  // v25.17: تخفيف حساسية البوصلة (anti-jitter / smoothing)
-  // 1. تجاهل التحديثات المتكررة جداً (throttle إلى ~50ms بين التحديثات)
+  // v25.22: تخفيف حساسية البوصلة (أقوى من v25.17)
+  // 1. throttle أبطأ (100ms بدلاً من 50ms) — يقلل عدد التحديثات للنصف
   var now = Date.now();
-  if (qiblaLastUpdateAt && (now - qiblaLastUpdateAt) < 50) return;
+  if (qiblaLastUpdateAt && (now - qiblaLastUpdateAt) < 100) return;
   qiblaLastUpdateAt = now;
 
-  // 2. تجاهل التغييرات الصغيرة جداً (تحت 0.5°) — لكن نسمح بها أول مرة
+  // 2. تجاهل التغييرات الصغيرة جداً (تحت 1° بدلاً من 0.5°) — لكن نسمح بها أول مرة
   if (qiblaHeading !== null && qiblaHeading !== undefined) {
     // حساب الفرق مع مراعاة الالتفاف الدائري (0-360)
     var diff = Math.abs(((rawHeading - qiblaHeading + 540) % 360) - 180);
-    if (diff < 0.5) return; // تجاهل الاهتزازات الصغيرة
+    if (diff < 1) return; // تجاهل الاهتزازات الصغيرة
   }
 
-  // 3. low-pass filter (متوسط متحرك دائري)
-  // إذا كانت القيمة السابقة معروفة، ندمج القيمة الجديدة مع القديمة
-  // مع وزن صغير للقيمة الجديدة (0.2 = 20% جديد + 80% قديم)
-  // هذا يقلل الارتعاش بشكل كبير
+  // 3. median filter: احفظ آخر 5 قراءات وخذ الوسيط
+  // هذا يزيل القيم الشاذة (spikes) بشكل فعال
+  qiblaRecentHeadings.push(rawHeading);
+  if (qiblaRecentHeadings.length > 5) qiblaRecentHeadings.shift();
+
+  var filteredHeading = rawHeading;
+  if (qiblaRecentHeadings.length >= 3) {
+    // حساب الوسيط الدائري (circular median)
+    // نحول كل زاوية إلى متجهين (sin, cos)، نحسب المتوسط، نعود للزاوية
+    var sumSin = 0, sumCos = 0;
+    for (var i = 0; i < qiblaRecentHeadings.length; i++) {
+      var rad = qiblaRecentHeadings[i] * Math.PI / 180;
+      sumSin += Math.sin(rad);
+      sumCos += Math.cos(rad);
+    }
+    var avgRad = Math.atan2(sumSin / qiblaRecentHeadings.length, sumCos / qiblaRecentHeadings.length);
+    filteredHeading = (avgRad * 180 / Math.PI + 360) % 360;
+  }
+
+  // 4. low-pass filter أقوى (0.08 بدلاً من 0.2 — فقط 8% جديد + 92% قديم)
+  // هذا يجعل المؤشر يتحرك ببطء ونعومة
   if (qiblaHeading !== null && qiblaHeading !== undefined) {
     // حساب الفرق بين الجديد والقديم (مع مراعاة الالتفاف)
-    var d = rawHeading - qiblaHeading;
+    var d = filteredHeading - qiblaHeading;
     if (d > 180) d -= 360;
     if (d < -180) d += 360;
     // تطبيق low-pass filter
-    var smoothed = qiblaHeading + (d * 0.2);
+    var smoothed = qiblaHeading + (d * 0.08);
     qiblaHeading = (smoothed + 360) % 360;
   } else {
     // أول قيمة — لا smoothing
-    qiblaHeading = rawHeading;
+    qiblaHeading = filteredHeading;
   }
 
   if (!qiblaLive) {
@@ -5522,7 +5541,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.21"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.22"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
