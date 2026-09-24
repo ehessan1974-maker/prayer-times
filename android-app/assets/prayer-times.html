@@ -5517,7 +5517,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.19"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.20"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
@@ -5739,7 +5739,8 @@ function showUpdateToast(newVersion) {
   if (!t) return;
   try {
     var sub = t.querySelector("#updateToastSub");
-    if (sub) sub.textContent = "النسخة الحالية: " + CURRENT_APP_VERSION + " → الجديدة: " + newVersion + " — اضغط للتحديث الآن";
+    // v25.20: نص أوضح — "لديك X، التحديث الجديد Y" (لا غموض)
+    if (sub) sub.textContent = "لديك v" + CURRENT_APP_VERSION + " — التحديث الجديد: v" + newVersion + " — اضغط للتحديث الآن";
   } catch(e) {}
   t.style.display = "block";
   t.style.animation = "ptSlideUp .35s ease";
@@ -5846,7 +5847,11 @@ function checkAppUpdate() {
       if (!info || !info.appVersion) return;
       var latest = String(info.appVersion);
       var current = CURRENT_APP_VERSION;
-      if (latest !== current) {
+      // v25.20: مقارنة رقمية بدلاً من نصية — فقط أظهر التوست إذا كانت النسخة الجديدة أحدث
+      // (وليس مجرد مختلفة) — هذا يمنع ظهور التوست إذا كان لدى المستخدم نسخة أحدث من version.json
+      var cmp = compareVersions(latest, current);
+      if (cmp > 0) {
+        // latest أحدث من current — أظهر التوست
         try {
           localStorage.setItem("pt-update-info", JSON.stringify({
             version: latest,
@@ -5856,6 +5861,7 @@ function checkAppUpdate() {
         } catch(e) {}
         showUpdateToast(latest);
       } else {
+        // latest == current أو latest أقدم — أخفِ التوست
         hideUpdateToast();
       }
     } catch(e) {}
@@ -5882,10 +5888,16 @@ function _appVersionCallback(data) {
   }
   try {
     var info = (typeof data === "string") ? JSON.parse(data) : data;
-    if (info && info.appVersion && String(info.appVersion) !== CURRENT_APP_VERSION) {
-      try { localStorage.setItem("pt-update-info", JSON.stringify({version: info.appVersion, url: info.htmlUrl||""})); } catch(e2) {}
-      showUpdateToast(info.appVersion);
-    } else { hideUpdateToast(); }
+    if (info && info.appVersion) {
+      // v25.20: مقارنة رقمية — فقط أظهر التوست إذا كانت النسخة الجديدة أحدث
+      var cmp = compareVersions(String(info.appVersion), CURRENT_APP_VERSION);
+      if (cmp > 0) {
+        try { localStorage.setItem("pt-update-info", JSON.stringify({version: info.appVersion, url: info.htmlUrl||""})); } catch(e2) {}
+        showUpdateToast(info.appVersion);
+      } else {
+        hideUpdateToast();
+      }
+    }
   } catch(e3) {}
 }
 
