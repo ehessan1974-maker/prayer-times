@@ -765,6 +765,8 @@ body.dark-mode .msged-audience-add-name { background:#0f1f18; color:#e2e8f0; bor
   margin-top: 2px;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  /* v25.18: الحفاظ على فواصل الأسطر (\n) في النصوص */
+  white-space: pre-line;
 }
 .info-track-card .info-track-source {
   font-size: 9px;
@@ -5469,7 +5471,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.17"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.18"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
