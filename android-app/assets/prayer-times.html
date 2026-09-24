@@ -5225,9 +5225,13 @@ function qiblaInitLeafletMap() {
       [KAABA_LAT, KAABA_LNG]
     ], { padding: [30, 30] });
 
-    // v25.10: تأكيد حجم الخريطة بعد التحميل (مهم بعد rotate(180deg))
+    // v25.28: حساب المواضع الفعلية للمستخدم ومكة على الشاشة
+    // وضبط الخط الأحمر ليتطابق معها
     setTimeout(function() {
-      try { _qiblaLeafletMap.invalidateSize(); } catch(e) {}
+      try {
+        _qiblaLeafletMap.invalidateSize();
+        qiblaUpdateRedLinePosition();
+      } catch(e) {}
     }, 200);
 
     _qiblaLeafletInited = true;
@@ -5235,6 +5239,72 @@ function qiblaInitLeafletMap() {
     var st = el("qbStatus");
     if (st) { st.innerHTML = "⚠️ تعذر تحميل الخريطة — تأكد من اتصال الإنترنت"; }
   }
+}
+
+// v25.28: حساب المواضع الفعلية للمستخدم ومكة على الشاشة
+// وضبط الخط الأحمر ليتطابق مع موضع المستخدم الفعلي على الخريطة
+function qiblaUpdateRedLinePosition() {
+  if (!_qiblaLeafletMap) return;
+  try {
+    var container = el("qbMapContainer") || _qiblaLeafletMap.getContainer();
+    if (!container) return;
+    var containerH = container.clientHeight;
+    if (containerH <= 0) return;
+
+    // الحصول على مواضع البكسل للمستخدم ومكة على الخريطة
+    var userPoint = _qiblaLeafletMap.latLngToContainerPoint([latitude, longitude]);
+    var kaabaPoint = _qiblaLeafletMap.latLngToContainerPoint([KAABA_LAT, KAABA_LNG]);
+
+    // الخريطة مقلوبة 180°، لذا المواضع معكوسة
+    // userPoint.y هو المسافة من أعلى الخريطة الأصلية
+    // بعد قلب 180°: أعلى الخريطة يصبح أسفل الشاشة والعكس
+    // الموضع الفعلي على الشاشة = containerH - userPoint.y
+    var userScreenY = containerH - userPoint.y;
+    var kaabaScreenY = containerH - kaabaPoint.y;
+
+    // تحويل إلى نسبة مئوية من ارتفاع الحاوية
+    var userPct = (userScreenY / containerH) * 100;
+    var kaabaPct = (kaabaScreenY / containerH) * 100;
+
+    // ضمان أن userPct > kaabaPct (المستخدم أسفل، مكة أعلى)
+    if (userPct < kaabaPct) {
+      var tmp = userPct;
+      userPct = kaabaPct;
+      kaabaPct = tmp;
+    }
+
+    // حساب ارتفاع الخط كنسبة مئوية
+    var lineHeight = userPct - kaabaPct;
+    if (lineHeight < 10) lineHeight = 10; // حد أدنى
+
+    // تحديث موضع الخط الأحمر
+    var redLine = document.querySelector(".qb-fixed-red-line");
+    if (redLine) {
+      // bottom = المسافة من أسفل الحاوية إلى بداية الخط (عند موقعك)
+      // = 100 - userPct (لأن userPct هو المسافة من الأعلى)
+      var bottomPct = 100 - userPct;
+      redLine.style.bottom = bottomPct + "%";
+      redLine.style.height = lineHeight + "%";
+    }
+
+    // تحديث مواضع دوائر SVG لتتطابق مع المواضع الفعلية
+    var userCircle = el("qbUserPoint");
+    if (userCircle) {
+      userCircle.setAttribute("cy", userPct + "%");
+    }
+    var userText = el("qbUserText");
+    if (userText) {
+      userText.setAttribute("y", (userPct - 5) + "%");
+    }
+    var kaabaCircle = el("qbKaabaPoint");
+    if (kaabaCircle) {
+      kaabaCircle.setAttribute("cy", kaabaPct + "%");
+    }
+    var kaabaText = el("qbKaabaText");
+    if (kaabaText) {
+      kaabaText.setAttribute("y", (kaabaPct - 2) + "%");
+    }
+  } catch(e) {}
 }
 
 function qiblaLoadLeafletCSS() {
@@ -5575,7 +5645,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.27"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.28"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
