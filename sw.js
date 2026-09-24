@@ -8,7 +8,7 @@
    على NativeBridge.getDeviceId بدلاً من هذا).
    ======================================================================== */
 
-var SW_CACHE = "prayer-times-v64";
+var SW_CACHE = "prayer-times-v65";
 var APP_SHELL = [
   "./",
   "./prayer-times.html",
