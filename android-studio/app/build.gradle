@@ -10,8 +10,8 @@ android {
         applicationId "com.ehessan.prayertimes"
         minSdk 19
         targetSdk 34
-        versionCode 74
-        versionName "25.26"
+        versionCode 75
+        versionName "25.27"
     }
 
     signingConfigs {

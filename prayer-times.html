@@ -1259,25 +1259,25 @@ body.smart .modal { scrollbar-gutter: stable; }
   transform-origin: center center;
 }
 
-/* v25.9: الخط الأحمر — يدور مع الموبايل */
-/* v25.11: الخط متقطع (مثل الخط الأخضر) ليطابقه بصرياً عند مواجهة القبلة */
-/* v25.25: الخط يدور مع الموبايل — انتقال ناعم */
+/* v25.27: الخط الأحمر — من موقعك (أسفل) إلى مكة (أعلى) مع مثلث عند مكة */
+/* الخط يدور مع الموبايل — بدايته عند موقعك ونهايته بسهم نحو مكة */
 .qb-fixed-red-line {
   position: absolute;
-  top: 5%;
+  bottom: 5%;   /* v25.27: يبدأ من موقعك في الأسفل */
   left: 50%;
   width: 6px;
+  /* v25.27: ارتفاع الخط يصل من 5% (موقعك) إلى 95% (مكة) = 90% من الارتفاع */
   height: 90%;
   background: transparent;
   border-radius: 2px;
   box-shadow: 0 0 12px rgba(220, 38, 38, 0.6), 0 0 6px white;
-  transform-origin: center center;
+  transform-origin: bottom center; /* v25.27: يدور حول نقطة موقعك في الأسفل */
   transform: translateX(-50%);
   z-index: 4;
   pointer-events: none;
   /* v25.25: انتقال ناعم للدوران مع الموبايل */
   transition: transform 0.5s ease-out;
-  /* v25.11: استخدام خط متقطع متطابق مع الخط الأخضر */
+  /* v25.11: خط متقطع متطابق مع الخط الأخضر */
   background-image: repeating-linear-gradient(
     to bottom,
     #dc2626 0,
@@ -1286,31 +1286,33 @@ body.smart .modal { scrollbar-gutter: stable; }
     transparent 16px
   );
 }
+/* v25.27: مثلث (سهم) في أعلى الخط — عند مكة المكرمة */
 .qb-fixed-red-line::before {
   content: "";
   position: absolute;
-  top: -8px;
+  top: -14px;          /* فوق بداية الخط */
   left: 50%;
   transform: translateX(-50%);
   width: 0;
   height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 14px solid #dc2626;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 18px solid #dc2626;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
+/* v25.27: نقطة في أسفل الخط — عند موقعك */
 .qb-fixed-red-line::after {
   content: "";
   position: absolute;
-  bottom: -8px;
+  bottom: -6px;
   left: 50%;
   transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 14px solid #dc2626;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+  width: 14px;
+  height: 14px;
+  background: #dc2626;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
 }
 
 /* v25.9: بوصلة مصغّرة في الزاوية */
@@ -5573,7 +5575,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.26"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.27"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
