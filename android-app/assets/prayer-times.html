@@ -2689,35 +2689,40 @@ function initDragScroll() {
     momentumActive = false;
     var oneCopy = getOneCopyHeight();
     if (oneCopy > 0) {
-      // v25.23: حساب نسبة التقدم في التمرير من currentOffset
-      // currentOffset سالبة دائماً [-oneCopy, 0]
+      // v25.24: حساب نسبة التقدم في التمرير من currentOffset
       var progress = -currentOffset / oneCopy;
       if (progress < 0) progress = 0;
       if (progress >= 0.999) progress = 0;
       var durationStr = track.style.animationDuration || "";
       var durationSec = parseFloat(durationStr);
       if (!durationSec || isNaN(durationSec) || durationSec < 1) durationSec = 90;
-      // v25.23: animation-delay سالب يبدأ الأنيميشن من منتصفه
-      // مثال: progress=0.5, duration=90s → delay=-45s → الأنيميشن يبدأ من 50%
+      // v25.24: animation-delay سالب يبدأ الأنيميشن من منتصفه
       var delaySec = -progress * durationSec;
       track.style.webkitAnimationDelay = delaySec + "s";
       track.style.animationDelay = delaySec + "s";
     }
-    // v25.23: لا نمسح transform فوراً — نتركه حتى يبدأ الأنيميشن
-    // هذا يمنع القفزة للبداية. سيمسحه الأنيميشن تلقائياً عند بدئه
-    card.classList.remove("inertial-scroll");
-    card.classList.remove("dragging");
-    track.classList.remove("smooth-decel");
-    // انتظر قليلاً ثم امسح transform — بعد أن يبدأ الأنيميشن من الموضع الصحيح
-    setTimeout(function() {
-      try {
+    // v25.24: استخدم requestAnimationFrame لضمان تطبيق animation-delay
+    // قبل إزالة inertial-scroll وقبل مسح transform
+    // هذا يمنع القفزة اللحظية للبداية
+    requestAnimationFrame(function() {
+      // إزالة inertial-scroll لإعادة تفعيل الأنيميشن
+      card.classList.remove("inertial-scroll");
+      card.classList.remove("dragging");
+      track.classList.remove("smooth-decel");
+      // طلب إطار آخر لضمان أن المتصفح طبّق الأنيميشن مع animation-delay
+      requestAnimationFrame(function() {
+        // الآن امسح transform — الأنيميشن يجب أن يكون بدأ من الموضع الصحيح
         track.style.webkitTransform = "";
         track.style.transform = "";
-        // إعادة تعيين animation-delay بعد فترة وجيزة لمنع تكرار البدء من نفس النقطة
-        track.style.webkitAnimationDelay = "";
-        track.style.animationDelay = "";
-      } catch(e) {}
-    }, 100);
+        // امسح animation-delay بعد فترة وجيزة
+        setTimeout(function() {
+          try {
+            track.style.webkitAnimationDelay = "";
+            track.style.animationDelay = "";
+          } catch(e) {}
+        }, 200);
+      });
+    });
   }
   function momentumLoop() {
     if (!momentumActive) return;
@@ -5561,7 +5566,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.23"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.24"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
