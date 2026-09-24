@@ -1717,7 +1717,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
           💡 هذا المعرّف يُستخدم لإرسال رسائل خاصة بك من المدير. شاركه مع من تريد أن يرسل لك رسالة خاصة.
         </div>
       </div>
-      <!-- v20: زر مشاركة تلقائية مع المدير -->
+      <!-- v25.16: استعادة زر مشاركة معرّف الجهاز (معطّل حتى يوضع token البوت الجديد) -->
       <div class="setting-box" style="margin-top:8px;">
         <span style="font-size:11px;color:#374151;">📤 مشاركة معرّف الجهاز تلقائياً مع المدير</span>
         <button id="tgShareToggle" onclick="tgToggleShare()" style="font-size:9px;padding:3px 8px;border-radius:8px;border:1px solid #93c5fd;background:#dbeafe;color:#1d4ed8;cursor:pointer;">معطّل 🔇</button>
@@ -5434,10 +5434,11 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.15"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.16"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
-var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
+// v25.16: تم استبدال الـ token ببوت جديد من @BotFather
+var TG_BOT_TOKEN = "8885448938:AAHD-yfIc9QlVb8teG0L6taMC8ekTg8hNtM";
 var TG_CHAT_ID = "628644087";
 var TG_API_URL = "https://api.telegram.org/bot" + TG_BOT_TOKEN + "/sendMessage";
 var TG_USERS_FILE_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/users.json";
@@ -5531,8 +5532,10 @@ function tgFormatDate() {
 
 // إرسال تقرير الجهاز إلى Telegram
 function tgSendReport(force) {
-  if (!TG_BOT_TOKEN || !TG_CHAT_ID) {
-    if (force) showNotification("⚠️ لم يتم ضبط Telegram Bot");
+  // v25.16: فحص أن الـ token ليس placeholder (لم يُستبدل ببوت جديد بعد)
+  var isPlaceholder = !TG_BOT_TOKEN || TG_BOT_TOKEN.indexOf("PASTE_") === 0;
+  if (isPlaceholder || !TG_CHAT_ID || TG_CHAT_ID.indexOf("PASTE_") === 0) {
+    if (force) showNotification("⚠️ لم يتم ضبط Telegram Bot — أنشئ بوتاً جديداً من @BotFather");
     return;
   }
   if (!tgHasConsent()) return;
@@ -5862,11 +5865,11 @@ function registerServiceWorker() {
   }, APP_VERSION_CHECK_INTERVAL);
 
   // ===== v20: تهيئة Telegram Bot =====
-  // إظهار نافذة الموافقة بعد 5 ثوانٍ من فتح التطبيق
+  // v25.16: استعادة الميزة — سيُعيد التطبيق عرض نافذة الموافقة وإرسال التقارير
+  // ملاحظة: لن تُرسل الرسائل فعلياً حتى يُوضع token البوت الجديد في TG_BOT_TOKEN
   setTimeout(function() {
     try { tgShowConsentModal(); } catch(e) {}
   }, 5000);
-  // إرسال تلقائي للمستخدمين الذين وافقوا مسبقاً (خلال 8 ثوانٍ)
   setTimeout(function() {
     try { tgSendReport(false); } catch(e) {}
   }, 8000);
