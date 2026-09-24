@@ -1247,6 +1247,7 @@ body.smart .modal { scrollbar-gutter: stable; }
 }
 
 /* v25.9: طبقة SVG لرسم خط القبلة فوق الخريطة */
+/* v25.25: SVG ثابت — لا يدور */
 .qb-svg-overlay {
   position: absolute;
   top: 0; left: 0;
@@ -1254,14 +1255,12 @@ body.smart .modal { scrollbar-gutter: stable; }
   height: 100%;
   z-index: 2;
   pointer-events: none;
-  /* السماح للخط بالدوران حول مركز الحاوية */
   transform-origin: center center;
-  /* v25.22: انتقال أبطأ وأكثر نعومة (0.5s بدلاً من 0.3s) */
-  transition: transform 0.5s ease-out;
 }
 
-/* v25.9: الخط الأحمر الثابت في وسط الشاشة — يدور مع البوصلة */
+/* v25.9: الخط الأحمر — يدور مع الموبايل */
 /* v25.11: الخط متقطع (مثل الخط الأخضر) ليطابقه بصرياً عند مواجهة القبلة */
+/* v25.25: الخط يدور مع الموبايل — انتقال ناعم */
 .qb-fixed-red-line {
   position: absolute;
   top: 5%;
@@ -1275,6 +1274,8 @@ body.smart .modal { scrollbar-gutter: stable; }
   transform: translateX(-50%);
   z-index: 4;
   pointer-events: none;
+  /* v25.25: انتقال ناعم للدوران مع الموبايل */
+  transition: transform 0.5s ease-out;
   /* v25.11: استخدام خط متقطع متطابق مع الخط الأخضر */
   background-image: repeating-linear-gradient(
     to bottom,
@@ -1755,8 +1756,8 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <!-- حاوية الخريطة + الخطوط -->
       <div class="qb-map-arrow-container" id="qbMapContainer">
         <!-- v25.14: خريطة Leaflet — دورانها يُتحكم به من qiblaRender (180° أساسي + heading) -->
-        <!-- v25.22: خريطة Leaflet — مع انتقال CSS ناعم (0.5s) لتقليل الارتعاش -->
-        <div id="qbLeafletMap" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;transform:rotate(180deg);transition:transform 0.5s ease-out;"></div>
+        <!-- v25.25: خريطة Leaflet — ثابتة عند 180° (لا تدور مع الموبايل) -->
+        <div id="qbLeafletMap" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;transform:rotate(180deg);"></div>
 
         <!-- v25.14: حذف الخط الأخضر الوهمي من طبقة SVG — الخط الأخضر الحقيقي مرسوم على الخريطة -->
         <!-- طبقة SVG فارغة الآن (تُستخدم فقط للدوران في qiblaRender لكنها لا ترسم خطاً) -->
@@ -1793,7 +1794,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <!-- زر تفعيل الحساس -->
     <button class="btn btn-primary btn-sm" id="qbSensorBtn" onclick="qiblaEnableSensor()">🔄 تفعيل حساس الاتجاه</button>
 
-    <div class="qb-note">🔴 الخط الأحمر = ثابت في وسط الشاشة (يمثل اتجاه رأس الموبايل) • 🟢 الخط الأخضر على الخريطة = يصل بين موقعك ومكة ويدور مع الخريطة (التي تدور مع الموبايل) • أدر جهازك حتى يتطابق الخط الأخضر مع الخط الأحمر = أنت في اتجاه القبلة.</div>
+    <div class="qb-note">🟢 الخريطة والخط الأخضر ثابتان (كالبوصلة المغناطيسية) • 🔴 الخط الأحمر يدور مع الموبايل — أدر جهازك حتى يتطابق الخط الأحمر مع الخط الأخضر = أنت في اتجاه القبلة.</div>
   </div>
   </div></div>
 </div>
@@ -5267,40 +5268,43 @@ function qiblaLoadLeafletJS(callback) {
 }
 function qiblaRender() {
   var hasH = qiblaLive && qiblaHeading !== null && qiblaHeading !== undefined;
-  // v25.14: تصميم بوصلة مغناطيسية حقيقية:
-  // 1. الخط الأحمر (qb-fixed-red-line) — ثابت دائماً في وسط الشاشة عمودياً
-  //    يمثل اتجاه رأس الموبايل (لأنه ثابت، وأنت تحمل الموبايل، فهو = اتجاه رأس الموبايل)
-  // 2. الخريطة (مع الخط الأخضر polyline عليها) — تدور مع الموبايل
-  //    تدور عكس اتجاه الجهاز لتظل الخريطة مشيرة للواقع
-  //    الخط الأخضر على الخريطة يمثل اتجاه القبلة الحقيقي على الأرض
-  //    عند مواجهة القبلة: الخط الأخضر على الخريطة يتطابق مع الخط الأحمر الثابت
+  // v25.25: تصميم بوصلة مغناطيسية حقيقية:
+  // 1. الخريطة (مع الخط الأخضر عليها) — ثابتة دائماً
+  //    مقلوبة 180° (شمال في أسفل الموبايل، جنوب في الأعلى)
+  //    الخط الأخضر على الخريطة يصل بين موقعك ومكة — ثابت
+  // 2. الخط الأحمر — يدور مع الموبايل
+  //    يمثل اتجاه رأس الموبايل
+  //    عند مواجهة القبلة: الخط الأحمر يتطابق مع الخط الأخضر
 
-  // v25.14: الخريطة مقلوبة 180° أساساً (شمال في أسفل الموبايل)
-  // لذا دورانها الكلي = 180° (القلب الأساسي) + (-qiblaHeading) (تدور عكس الموبايل)
-  // عند مواجهة الشمال (heading=0): دوران = 180° → الخريطة مقلوبة (شمال في الأسفل)
-  // عند مواجهة القبلة (heading=qiblaAngle): دوران = 180° - qiblaAngle
-  //   الخط الأخضر على الخريطة يتجه من موقعك إلى مكة، ويصبح عمودياً (يتطابق مع الخط الأحمر)
+  // v25.25: الخريطة ثابتة عند 180° (مقلوبة — شمال في الأسفل)
   var mapContainer = el("qbLeafletMap");
   if (mapContainer) {
-    var mapRot = hasH ? (180 - qiblaHeading) : 180;
-    var mapTransform = "rotate(" + mapRot + "deg)";
+    var mapTransform = "rotate(180deg)";
     mapContainer.style.webkitTransform = mapTransform;
     mapContainer.style.transform = mapTransform;
   }
 
-  // v25.14: SVG overlay يدور مع الخريطة (نفس الدوران)
-  // حتى تبقى الدوائر (موقعك ومكة) في مواضعها على الخريطة
+  // v25.25: SVG overlay ثابت (لا يدور) — الدوائر في مواضعها
   var svgOverlay = el("qbSvgOverlay");
   if (svgOverlay) {
-    var svgRot = hasH ? (180 - qiblaHeading) : 180;
-    // لكن SVG overlay لم يكن مقلوباً 180° أصلاً، فقط الخريطة مقلوبة
-    // لذا دوران SVG = -qiblaHeading (بدون 180°)
-    var svgTransform = "rotate(" + (-qiblaHeading || 0) + "deg)";
-    svgOverlay.style.webkitTransform = svgTransform;
-    svgOverlay.style.transform = svgTransform;
+    svgOverlay.style.webkitTransform = "rotate(0deg)";
+    svgOverlay.style.transform = "rotate(0deg)";
   }
 
-  // البوصلة المصغّرة تدور مع الموبايل (تمثل اتجاه رأس الموبايل)
+  // v25.25: الخط الأحمر يدور مع الموبايل
+  // عند heading=0 (مواجهة الشمال): الخط يشير للأسفل (نحو الشمال في أسفل الشاشة) = -180°
+  // عند heading=180 (مواجهة الجنوب): الخط يشير للأعلى (نحو الجنوب في أعلى الشاشة) = 0°
+  // عند heading=qiblaAngle: الخط يشير نحو مكة = يتطابق مع الخط الأخضر
+  // الصيغة: redRot = qiblaHeading - 180
+  var redLine = document.querySelector(".qb-fixed-red-line");
+  if (redLine) {
+    var redRot = hasH ? (qiblaHeading - 180) : 0;
+    var redTransform = "translateX(-50%) rotate(" + redRot + "deg)";
+    redLine.style.webkitTransform = redTransform;
+    redLine.style.transform = redTransform;
+  }
+
+  // البوصلة المصغّرة تدور مع الموبايل
   var dialRot = hasH ? (-qiblaHeading) : 0;
   var dial = el("qbDial");
   if (dial) qiblaSetRot(dial, dialRot);
@@ -5316,14 +5320,14 @@ function qiblaRender() {
         var turn = (qiblaAngle - qiblaHeading + 360) % 360;
         var turnDir = turn < 180 ? "يميناً" : "يساراً";
         var turnAmt = turn < 180 ? turn : (360 - turn);
-        st.innerHTML = "🧭 أدر جهازك " + Math.round(turnAmt) + "° " + turnDir + " حتى يتطابق الخط الأخضر على الخريطة مع الخط الأحمر الثابت";
+        st.innerHTML = "🧭 أدر جهازك " + Math.round(turnAmt) + "° " + turnDir + " حتى يتطابق الخط الأحمر (الذي يدور) مع الخط الأخضر (الثابت على الخريطة)";
         st.className = "qb-status qb-status-big";
       }
     }
     if (sn) sn.innerHTML = "اتجاه جهازك: " + Math.round(qiblaHeading) + "° • القبلة: " + Math.round(qiblaAngle) + "° • الفرق: " + Math.round(diff) + "°";
   } else {
-    if (st) { st.innerHTML = "📍 الخط الأحمر ثابت في وسط الشاشة • الخريطة مع الخط الأخضر تدور مع الموبايل — أدر جهازك حتى يتطابق الخط الأخضر (على الخريطة) مع الخط الأحمر (الثابت)"; st.className = "qb-status qb-status-big"; }
-    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس: زاوية القبلة " + qiblaAngle.toFixed(0) + "° من الشمال الحقيقي • الخط الأخضر على الخريطة يدور مع الموبايل، الخط الأحمر ثابت";
+    if (st) { st.innerHTML = "📍 الخريطة والخط الأخضر ثابتان • الخط الأحمر يدور مع الموبايل — أدر جهازك حتى يتطابق الخط الأحمر مع الخط الأخضر"; st.className = "qb-status qb-status-big"; }
+    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس: زاوية القبلة " + qiblaAngle.toFixed(0) + "° من الشمال الحقيقي • الخط الأخضر ثابت على الخريطة، الخط الأحمر يدور مع الموبايل";
   }
 }
 function qiblaOrientHandler(e) {
@@ -5566,7 +5570,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.24"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.25"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
