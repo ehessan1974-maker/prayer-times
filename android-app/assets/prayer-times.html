@@ -2635,27 +2635,15 @@ function initDragScroll() {
     var fullH = track.scrollHeight;
     return fullH > 10 ? fullH / 2 : track.scrollHeight;
   }
-  // v25.19: قراءة موضع التمرير الحالي من الأنيميشن (للحفاظ على موضع العرض عند بدء السحب)
+  // v25.21: قراءة الموضع الفعلي للأنيميشن باستخدام getBoundingClientRect
+  // getComputedStyle لا يعكس القيم أثناء الأنيميشن، لكن getBoundingClientRect نعم
   function getCurrentAnimationOffset() {
-    // محاولة قراءة التحويل الحالي من النمط المُطبَّق
-    var oneCopy = getOneCopyHeight();
-    if (oneCopy <= 0) return 0;
-    // إذا كان الوضع العادي (الأنيميشن يعمل)، نقرأ الموضع التقريبي من الوقت المنقضي
-    // السرعة = oneCopy / durationSec
-    // الموضع = -(elapsed * oneCopy / durationSec) % oneCopy
     try {
-      var cs = window.getComputedStyle(track);
-      var transform = cs.getPropertyValue("transform") || cs.getPropertyValue("-webkit-transform");
-      if (transform && transform !== "none" && transform.indexOf("matrix") !== -1) {
-        // matrix(1, 0, 0, 1, 0, Y) → Y هو الإزاحة العمودية
-        var match = transform.match(/matrix\(([^)]+)\)/);
-        if (match) {
-          var parts = match[1].split(",").map(function(x) { return parseFloat(x.trim()); });
-          if (parts.length >= 6 && !isNaN(parts[5])) {
-            return parts[5]; // Y translation
-          }
-        }
-      }
+      // قارن موضع track الحالي مع موضع windowEl
+      var trackRect = track.getBoundingClientRect();
+      var windowRect = windowEl.getBoundingClientRect();
+      // الفرق = الإزاحة العمودية الحالية
+      return trackRect.top - windowRect.top;
     } catch(e) {}
     return 0;
   }
@@ -2671,10 +2659,12 @@ function initDragScroll() {
   }
   function enableInertialMode() {
     if (card.classList.contains("inertial-scroll")) return;
-    card.classList.add("inertial-scroll");
-    // v25.19: بدلاً من applyOffset(0)، نقرأ الموضع الحالي من الأنيميشن
-    // ونبدأ السحب من نفس الموضع — هذا يحافظ على موضع العرض
+    // v25.21: اقرأ الموضع الحالي قبل تفعيل inertial-scroll
+    // لأن تفعيل inertial-scroll يوقف الأنيميشن (animation: none !important)
+    // وهذا يعيد track لموضعه 0 — لذا نحفظ الموضع قبل التفعيل ونطبّقه بعده مباشرة
     var preservedOffset = getCurrentAnimationOffset();
+    card.classList.add("inertial-scroll");
+    // طبّق الموضع المحفوظ فوراً بعد إيقاف الأنيميشن
     currentOffset = preservedOffset;
     track.style.webkitTransform = "translateY(" + preservedOffset + "px)";
     track.style.transform = "translateY(" + preservedOffset + "px)";
@@ -2750,12 +2740,15 @@ function initDragScroll() {
     momentumRAF = requestAnimationFrame(momentumLoop);
   }
   function startDrag(clientY) {
+    // v25.21: لا نفعّل inertial mode هنا — فقط نسجّل بداية اللمس
+    // سنفعّله فقط عند moveDrag إذا تجاوز الحركة العتبة
+    // هذا يمنع توقف الأنيميشن عند النقر العادي
     isDragging = true;
     startY = clientY;
     velocitySamples = [{ t: Date.now(), y: clientY }];
-    dragActuallyMoved = false; // v25.19: إعادة تعيين
-    enableInertialMode();
-    startOffset = currentOffset;
+    dragActuallyMoved = false;
+    // لا نستدعي enableInertialMode() هنا!
+    startOffset = 0; // سيُقرأ من الأنيميشن عند أول moveDrag فعلي
     card.classList.add("dragging");
     track.classList.remove("smooth-decel");
     if (momentumRAF) { cancelAnimationFrame(momentumRAF); momentumRAF = null; }
@@ -2768,15 +2761,27 @@ function initDragScroll() {
     velocitySamples.push({ t: now, y: clientY });
     while (velocitySamples.length > VELOCITY_SAMPLE_MAX) velocitySamples.shift();
     var dy = clientY - startY;
-    // v25.19: تتبع ما إذا حدث سحب فعلي
-    if (Math.abs(dy) > dragStartThreshold) dragActuallyMoved = true;
-    applyOffset(startOffset + dy);
-    velocity = computeVelocityFromSamples(now);
+    // v25.21: فعّل inertial mode فقط عند أول حركة فعلية تتجاوز العتبة
+    // عند التفعيل، احفظ الموضع الحالي للأنيميشن وابدأ منه
+    if (!dragActuallyMoved && Math.abs(dy) > dragStartThreshold) {
+      dragActuallyMoved = true;
+      enableInertialMode(); // يقرأ الموضع الحالي ويطبّقه
+      startOffset = currentOffset; // الآن startOffset = الموضع المحفوظ
+    }
+    if (dragActuallyMoved) {
+      applyOffset(startOffset + dy);
+      velocity = computeVelocityFromSamples(now);
+    }
   }
   function endDrag() {
     if (!isDragging) return;
     isDragging = false;
     card.classList.remove("dragging");
+    // v25.21: إذا لم يحدث سحب فعلي، لا تبدأ momentum — الأنيميشن لم يتوقف أصلاً
+    if (!dragActuallyMoved) {
+      // نقرة بسيطة — لا شيء يجب فعله هنا (nextInfo سيتولاها)
+      return;
+    }
     var finalV = computeVelocityFromSamples(Date.now());
     startMomentum(finalV);
   }
@@ -5517,7 +5522,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.20"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.21"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather

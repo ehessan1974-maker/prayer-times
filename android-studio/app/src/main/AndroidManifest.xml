@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.ehessan.prayertimes"
-    android:versionCode="68"
-    android:versionName="25.20">
+    android:versionCode="69"
+    android:versionName="25.21">
 
     <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="34"/>
 
