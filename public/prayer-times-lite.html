@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>مواقيت الصلاة</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: Tahoma, Arial, sans-serif;
+  background: #f0fdf4;
+  color: #1f2937;
+  direction: rtl;
+  text-align: center;
+  padding: 8px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+.header {
+  background: linear-gradient(135deg, #065f46, #059669);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 12px rgba(5,150,105,0.3);
+}
+.header h1 { font-size: 20px; font-weight: 800; }
+.header .date { font-size: 12px; opacity: 0.9; margin-top: 4px; }
+.location { font-size: 13px; margin: 8px 0; color: #065f46; font-weight: 700; }
+.prayer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0;
+}
+.prayer-card {
+  background: white;
+  border: 2px solid #d1fae5;
+  border-radius: 12px;
+  padding: 12px 8px;
+  transition: all 0.3s;
+}
+.prayer-card.active {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-color: #f59e0b;
+  box-shadow: 0 4px 12px rgba(245,158,11,0.3);
+}
+.prayer-name { font-size: 14px; font-weight: 700; color: #064e3b; margin-bottom: 4px; }
+.prayer-time { font-size: 18px; font-weight: 800; color: #059669; font-family: monospace; }
+.prayer-card.active .prayer-name { color: #b45309; }
+.prayer-card.active .prayer-time { color: #d97706; }
+.next-info {
+  background: white;
+  border-radius: 12px;
+  padding: 10px;
+  margin: 8px 0;
+  font-size: 13px;
+  border: 2px solid #d1fae5;
+}
+.next-info strong { color: #059669; }
+.info-section {
+  background: linear-gradient(135deg, #fefce8, #fffbeb);
+  border-top: 2px solid #fde68a;
+  border-bottom: 2px solid #fde68a;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 12px;
+  min-height: 80px;
+}
+.info-card {
+  text-align: right;
+  padding: 8px 12px;
+  direction: rtl;
+}
+.info-text { font-size: 13px; color: #78350f; font-weight: 600; line-height: 1.8; }
+.info-source { font-size: 10px; color: #b45309; opacity: 0.7; margin-top: 4px; }
+.info-icon { font-size: 20px; margin-left: 6px; }
+.update-toast {
+  position: fixed; bottom: 16px; left: 16px; right: 16px;
+  background: linear-gradient(135deg, #065f46, #10b981); color: white;
+  padding: 14px; border-radius: 14px; font-size: 14px; z-index: 9999;
+  display: none; text-align: center; cursor: pointer;
+  box-shadow: 0 8px 28px rgba(0,0,0,.35);
+}
+.error-msg { color: #dc2626; font-size: 12px; padding: 10px; }
+.loading { color: #6b7280; font-size: 12px; padding: 20px; }
+.footer { font-size: 10px; color: #9ca3af; margin-top: 10px; padding: 8px; }
+.dark-overlay { display: none; }
+.dark-mode body { background: #0d1512; color: #e8f5ee; }
+.dark-mode .header { background: linear-gradient(135deg, #064e3b, #065f46); }
+.dark-mode .prayer-card { background: #16241d; border-color: #2b4a3a; }
+.dark-mode .prayer-card.active { background: linear-gradient(135deg, #2c2009, #251c0c); border-color: #6b5416; }
+.dark-mode .prayer-name { color: #6ee7b7; }
+.dark-mode .prayer-time { color: #a7f3d0; }
+.dark-mode .next-info { background: #16241d; border-color: #2b4a3a; color: #e8f5ee; }
+.dark-mode .info-section { background: linear-gradient(135deg, #1a1a06, #1f1c09); border-color: #6b5416; }
+.dark-mode .info-text { color: #fde68a; }
+.dark-mode .info-source { color: #fbbf24; }
+.dark-mode .location { color: #6ee7b7; }
+.dark-mode .footer { color: #6b7280; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🕌 مواقيت الصلاة</h1>
+  <div class="date" id="dateDisplay">--</div>
+</div>
+
+<div class="location" id="locationDisplay">📍 جارٍ تحديد الموقع...</div>
+
+<div class="next-info" id="nextInfo" style="display:none;">
+  الصلاة القادمة: <strong id="nextPrayerName">--</strong> • <strong id="nextPrayerTime">--</strong>
+</div>
+
+<div class="prayer-grid" id="prayerGrid">
+  <div class="prayer-card"><div class="prayer-name">🌅 الفجر</div><div class="prayer-time" id="Fajr">--:--</div></div>
+  <div class="prayer-card"><div class="prayer-name">☀️ الشروق</div><div class="prayer-time" id="Sunrise">--:--</div></div>
+  <div class="prayer-card"><div class="prayer-name">🕌 الظهر</div><div class="prayer-time" id="Dhuhr">--:--</div></div>
+  <div class="prayer-card"><div class="prayer-name">🕌 العصر</div><div class="prayer-time" id="Asr">--:--</div></div>
+  <div class="prayer-card"><div class="prayer-name">🕌 المغرب</div><div class="prayer-time" id="Maghrib">--:--</div></div>
+  <div class="prayer-card"><div class="prayer-name">🌙 العشاء</div><div class="prayer-time" id="Isha">--:--</div></div>
+</div>
+
+<div class="info-section">
+  <div class="info-card" id="infoCard">
+    <div class="info-text" id="infoText"><span class="info-icon">📖</span> جارٍ تحميل المحتوى...</div>
+    <div class="info-source" id="infoSource"></div>
+  </div>
+</div>
+
+<div class="footer">
+  مواقيت الصلاة v25.36 Lite — د. إحسان عبد المحسن العبد الله
+</div>
+
+<div class="update-toast" id="updateToast" onclick="applyUpdate()">
+  🔄 تحديث جديد متوفر — اضغط للتحديث
+</div>
+
+<script>
+// ========================================
+// prayer-times-lite.html — نسخة مبسطة للأجهزة القديمة (Android 4.2.2+)
+// ميزات: مواقيت الصلاة + أذكار + تحديث تلقائي
+// لا تشمل: بوصلة، خريطة، Service Worker، Leaflet
+// ========================================
+
+var PT_METHOD = 3; // رابطة العالم الإسلامي
+var PT_SCHOOL = 0; //_STANDARD
+var KAABA_LAT = 21.4224779, KAABA_LNG = 39.8251832;
+var latitude = null, longitude = null;
+var prayerData = null;
+var cachedInfoItems = [];
+var currentInfoIdx = 0;
+var CURRENT_APP_VERSION = "25.36";
+var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
+var CONTENT_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/content.json";
+
+var PRAYER_NAMES = { Fajr:"الفجر", Sunrise:"الشروق", Dhuhr:"الظهر", Asr:"العصر", Maghrib:"المغرب", Isha:"العشاء" };
+var PRAYER_ORDER = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+var HIJRI_MONTHS = ["محرم","صفر","ربيع الأول","ربيع الثاني","جمادى الأولى","جمادى الثانية","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
+var DAY_NAMES = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+
+function el(id) { return document.getElementById(id); }
+function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+// ===== الموقع =====
+function requestLocation() {
+  if (window.AndroidPrayer) {
+    // على أندرويد، NativeBridge قد يوفر الموقع لاحقاً
+    // نحاول navigator.geolocation أولاً
+  }
+  if (navigator.geolocation) {
+    try {
+      navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError, {
+        enableHighAccuracy: true, timeout: 15000, maximumAge: 60000
+      });
+    } catch(e) { onLocationError(e); }
+  } else {
+    onLocationError({ message: "لا يدعم الموقع" });
+  }
+}
+
+function onLocationSuccess(pos) {
+  latitude = pos.coords.latitude;
+  longitude = pos.coords.longitude;
+  el("locationDisplay").textContent = "📍 " + latitude.toFixed(4) + "°, " + longitude.toFixed(4) + "°";
+  fetchPrayerTimes();
+}
+
+function onLocationError(err) {
+  // fallback: دمشق
+  latitude = 33.5138;
+  longitude = 36.2765;
+  el("locationDisplay").textContent = "📍 دمشق (افتراضي)";
+  fetchPrayerTimes();
+}
+
+// ===== مواقيت الصلاة =====
+function fetchPrayerTimes() {
+  var dd = new Date();
+  var ddStr = pad(dd.getDate()) + "-" + pad(dd.getMonth()+1) + "-" + dd.getFullYear();
+  var url = "https://api.aladhan.com/v1/timings/" + ddStr + "?latitude=" + latitude + "&longitude=" + longitude + "&method=" + PT_METHOD + "&school=" + PT_SCHOOL;
+
+  // على أندرويد: استخدم NativeBridge (مع Tls12Helper)
+  if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
+    try {
+      AndroidPrayer.fetchUrl(url, "_prayerTimesCallback");
+      return;
+    } catch(e) {}
+  }
+  // fallback: XHR
+  fetchPrayerViaXHR(url);
+}
+
+function fetchPrayerViaXHR(url) {
+  try {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.timeout = 15000;
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status === 200) {
+        _processPrayerTimes(xhr.responseText);
+      } else {
+        el("locationDisplay").textContent = "⚠️ تعذر جلب المواقيت — أعد المحاولة";
+      }
+    };
+    xhr.send();
+  } catch(e) {
+    el("locationDisplay").textContent = "⚠️ خطأ في الاتصال";
+  }
+}
+
+function _prayerTimesCallback(data) {
+  if (!data && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+    try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
+  }
+  if (data && data.length > 0) {
+    _processPrayerTimes(data);
+  } else {
+    el("locationDisplay").textContent = "⚠️ تعذر جلب المواقيت";
+  }
+}
+
+function _processPrayerTimes(text) {
+  try {
+    var j = (typeof text === "string") ? JSON.parse(text) : text;
+    prayerData = j.data;
+    renderPrayerTimes();
+    renderDate();
+    updateNextPrayer();
+  } catch(e) {
+    el("locationDisplay").textContent = "⚠️ تعذر تحليل المواقيت";
+  }
+}
+
+function renderPrayerTimes() {
+  if (!prayerData || !prayerData.timings) return;
+  var t = prayerData.timings;
+  for (var i = 0; i < PRAYER_ORDER.length; i++) {
+    var k = PRAYER_ORDER[i];
+    var time = t[k] || "--:--";
+    // إزالة التوقيت (GMT+3)
+    time = time.split(" ")[0];
+    el(k).textContent = time;
+  }
+}
+
+function renderDate() {
+  if (!prayerData || !prayerData.date) return;
+  var hd = prayerData.date.hijri;
+  var gd = prayerData.date.gregorian;
+  var today = new Date();
+  var dayName = DAY_NAMES[today.getDay()];
+  var hDay = parseInt(hd.day), hMonth = parseInt(hd.month.number) - 1, hYear = parseInt(hd.year);
+  el("dateDisplay").textContent = dayName + " " + hDay + " " + HIJRI_MONTHS[hMonth] + " " + hYear + "هـ";
+}
+
+function updateNextPrayer() {
+  if (!prayerData || !prayerData.timings) return;
+  var now = new Date();
+  var nowMinutes = now.getHours() * 60 + now.getMinutes();
+  var t = prayerData.timings;
+
+  for (var i = 0; i < PRAYER_ORDER.length; i++) {
+    var k = PRAYER_ORDER[i];
+    if (k === "Sunrise") continue;
+    var time = (t[k] || "").split(" ")[0];
+    var parts = time.split(":");
+    if (parts.length < 2) continue;
+    var pMin = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    if (pMin > nowMinutes) {
+      el("nextPrayerName").textContent = PRAYER_NAMES[k];
+      el("nextPrayerTime").textContent = time;
+      el("nextInfo").style.display = "block";
+
+      // تمييز الصلاة الحالية
+      var cards = document.querySelectorAll(".prayer-card");
+      for (var c = 0; c < cards.length; c++) cards[c].classList.remove("active");
+      // الصلاة السابقة هي "الحالية"
+      if (i > 0) {
+        var prevKey = PRAYER_ORDER[i - 1];
+        var prevCard = el(prevKey);
+        if (prevCard && prevCard.parentElement) prevCard.parentElement.classList.add("active");
+      }
+      return;
+    }
+  }
+  // إذا انتهت كل الصلوات، التالي هو الفجر غداً
+  el("nextPrayerName").textContent = "الفجر (غداً)";
+  el("nextPrayerTime").textContent = (t["Fajr"] || "--:--").split(" ")[0];
+  el("nextInfo").style.display = "block";
+}
+
+// ===== الأذكار والمحتوى =====
+function fetchContent() {
+  if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
+    try {
+      AndroidPrayer.fetchUrl(CONTENT_URL, "_contentCallback");
+      return;
+    } catch(e) {}
+  }
+  // fallback XHR
+  try {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", CONTENT_URL, true);
+    xhr.timeout = 15000;
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status === 200) {
+        _processContent(xhr.responseText);
+      }
+    };
+    xhr.send();
+  } catch(e) {}
+}
+
+function _contentCallback(data) {
+  if (!data && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+    try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
+  }
+  if (data && data.length > 0) {
+    _processContent(data);
+  }
+}
+
+function _processContent(text) {
+  try {
+    var items = (typeof text === "string") ? JSON.parse(text) : text;
+    if (items && items.length > 0) {
+      cachedInfoItems = items;
+      currentInfoIdx = 0;
+      displayInfo();
+      // تدوير المحتوى كل 10 ثوان
+      setInterval(function() {
+        currentInfoIdx = (currentInfoIdx + 1) % cachedInfoItems.length;
+        displayInfo();
+      }, 10000);
+    }
+  } catch(e) {}
+}
+
+function displayInfo() {
+  if (!cachedInfoItems || cachedInfoItems.length === 0) return;
+  var item = cachedInfoItems[currentInfoIdx];
+  var icon = item.icon || "📖";
+  var text = item.text || "";
+  // إذا كان text مصفوفة، ادمجها
+  if (typeof text === "object" && text.join) text = text.join("\n");
+  var src = item.src || "";
+  el("infoText").innerHTML = '<span class="info-icon">' + icon + '</span> ' + escapeHtml(text).replace(/\n/g, "<br>");
+  if (src) el("infoSource").textContent = src;
+  else el("infoSource").textContent = "";
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// ===== التحديث التلقائي =====
+function checkAppUpdate() {
+  if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
+    try {
+      AndroidPrayer.fetchUrl(VERSION_URL + "?t=" + Date.now(), "_versionCallback");
+      return;
+    } catch(e) {}
+  }
+}
+
+function _versionCallback(data) {
+  if (!data && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+    try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
+  }
+  if (!data) return;
+  try {
+    var info = (typeof data === "string") ? JSON.parse(data) : data;
+    if (info && info.appVersion) {
+      var latest = String(info.appVersion);
+      if (latest !== CURRENT_APP_VERSION) {
+        el("updateToast").style.display = "block";
+      }
+    }
+  } catch(e) {}
+}
+
+function applyUpdate() {
+  el("updateToast").style.display = "none";
+  if (window.AndroidPrayer && typeof AndroidPrayer.downloadAppUpdate === "function") {
+    try {
+      AndroidPrayer.downloadAppUpdate(function(success) {
+        if (window.AndroidPrayer && typeof AndroidPrayer.reloadUpdatedHtml === "function") {
+          try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e) {}
+        }
+        // fallback: أعد التحميل
+        window.location.reload();
+      });
+      return;
+    } catch(e) {}
+  }
+  window.location.reload();
+}
+
+// ===== الوضع الليلي =====
+function toggleTheme() {
+  try {
+    var isDark = document.body.className.indexOf("dark-mode") !== -1;
+    if (isDark) {
+      document.body.className = document.body.className.replace(/\s*dark-mode/g, "");
+    } else {
+      document.body.className += " dark-mode";
+    }
+  } catch(e) {}
+}
+
+// ===== التهيئة =====
+function init() {
+  requestLocation();
+  fetchContent();
+  // فحص التحديث بعد 5 ثوان
+  setTimeout(checkAppUpdate, 5000);
+  // فحص دوري كل دقيقتين
+  setInterval(checkAppUpdate, 120000);
+  // تحديث الصلاة القادمة كل دقيقة
+  setInterval(updateNextPrayer, 60000);
+}
+
+// تشغيل
+init();
+</script>
+</body>
+</html>

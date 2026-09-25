@@ -26,6 +26,9 @@ public class UpdateChecker {
             "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
     private static final String HTML_URL =
             "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html";
+    // v25.36: نسخة مبسطة للأجهزة القديمة (Android 4.2.2+)
+    private static final String LITE_HTML_URL =
+            "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times-lite.html";
     private static final long INTERVAL_MS = 5 * 60 * 1000; // 5 دقائق
     private static final String PREF_NAME = "pt-prefs";
     private static final String PREF_LAST_VERSION = "last-known-app-version";
@@ -80,6 +83,23 @@ public class UpdateChecker {
             // استبدال ذري
             if (out.exists()) out.delete();
             tmp.renameTo(out);
+
+            // v25.36: نزّل أيضاً النسخة المبسطة (Lite) للأجهزة القديمة
+            try {
+                String liteHtml = httpGet(LITE_HTML_URL + "?t=" + System.currentTimeMillis());
+                if (liteHtml != null && liteHtml.length() > 1000) {
+                    File liteOut = new File(ctx.getFilesDir(), "prayer-times-lite.html");
+                    File liteTmp = new File(ctx.getFilesDir(), "prayer-times-lite.html.tmp");
+                    FileOutputStream liteFos = new FileOutputStream(liteTmp);
+                    liteFos.write(liteHtml.getBytes("UTF-8"));
+                    liteFos.flush();
+                    liteFos.close();
+                    if (liteOut.exists()) liteOut.delete();
+                    liteTmp.renameTo(liteOut);
+                }
+            } catch(Exception e2) {
+                // ليس ضرورياً — النسخة المبسطة اختيارية
+            }
 
             // حفظ النسخة الجديدة
             ctx.getSharedPreferences(PREF_NAME, 0).edit()
