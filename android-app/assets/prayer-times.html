@@ -1847,7 +1847,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 
     <div class="credits-item">
       <div class="role">🚀 الإصدار</div>
-      <div class="name" id="creditsVersion">v25.32</div>
+      <div class="name" id="creditsVersion">v25.33</div>
     </div>
 
     <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;" class="credits-text">
@@ -5658,7 +5658,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.32"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.33"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
@@ -5942,6 +5942,31 @@ function clearAllCachesAndReload() {
 
 function applyAppUpdate(userTriggered) {
   hideUpdateToast();
+  // v25.33: على أندرويد، حمّل التحديث أولاً ثم أعد التحميل من الملف المحدّث
+  // المشكلة السابقة: clearAllCachesAndReload فقط يُعيد تحميل الصفحة الحالية
+  // لكن الملف المحدّث في getFilesDir لا يُحمَّل حتى إعادة تشغيل التطبيق
+  if (window.AndroidPrayer) {
+    showNotification("⏳ جارٍ تحميل التحديث...");
+    // 1. حمّل HTML الجديد من GitHub
+    if (typeof AndroidPrayer.downloadAppUpdate === "function") {
+      try {
+        AndroidPrayer.downloadAppUpdate(function(success) {
+          // 2. بعد التحميل، اقرأ الملف المحدّث وأعد تحميل WebView منه
+          if (window.AndroidPrayer && typeof AndroidPrayer.reloadUpdatedHtml === "function") {
+            try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e3) {}
+          }
+          // fallback: امسح الكاش وأعد التحميل
+          clearAllCachesAndReload();
+        });
+        return;
+      } catch(e) {}
+    }
+    // fallback: امسح الكاش وأعد التحميل
+    if (typeof AndroidPrayer.reloadUpdatedHtml === "function") {
+      try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e2) {}
+    }
+  }
+  // على المتصفح: امسح الكاش وأعد التحميل
   clearAllCachesAndReload();
 }
 

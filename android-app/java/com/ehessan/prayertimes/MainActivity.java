@@ -329,5 +329,30 @@ public class MainActivity extends Activity {
                 }
             }).start();
         }
+
+        // v25.33: إعادة تحميل WebView من الملف المحدّث في getFilesDir
+        // بدلاً من إعادة تحميل الصفحة الحالية (القديمة)
+        @JavascriptInterface
+        public void reloadUpdatedHtml() {
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    try {
+                        File updatedHtml = new File(getFilesDir(), "prayer-times.html");
+                        if (updatedHtml.exists() && updatedHtml.length() > 1000) {
+                            // حمّل الملف المحدّث
+                            webView.loadUrl("file://" + updatedHtml.getAbsolutePath() + "?t=" + System.currentTimeMillis());
+                            android.util.Log.i("PrayerTimes", "✓ Reloaded updated HTML from getFilesDir");
+                        } else {
+                            // لا يوجد ملف محدّث — أعد تحميل الصفحة الحالية
+                            webView.reload();
+                            android.util.Log.i("PrayerTimes", "No updated HTML found, reloaded current page");
+                        }
+                    } catch (Exception e) {
+                        android.util.Log.e("PrayerTimes", "reloadUpdatedHtml failed: " + e.getMessage(), e);
+                        try { webView.reload(); } catch(Exception e2) {}
+                    }
+                }
+            });
+        }
     }
 }
