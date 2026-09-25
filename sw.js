@@ -1,14 +1,9 @@
 /* ========================================================================
    Service Worker — prayer-times
-   يقوم بـ:
-   1) تخزين prayer-times.html مؤقتاً (cache-first) للعمل دون اتصال.
-   2) فحص version.json دورياً وعند اكتشاف نسخة جديدة يُخطر الصفحة
-      ليعيد المستخدم التحميل أو يُعاد التحميل تلقائياً.
-   يعمل فقط على بروتوكول https/http — لا يعمل مع file:// (الأندرويد يعتمد
-   على NativeBridge.getDeviceId بدلاً من هذا).
+   v25.31: إصلاح أخطاء FetchEvent — معالجة أخطاء الشبكة
    ======================================================================== */
 
-var SW_CACHE = "prayer-times-v78";
+var SW_CACHE = "prayer-times-v79";
 var APP_SHELL = [
   "./",
   "./prayer-times.html",
@@ -42,10 +37,30 @@ self.addEventListener("fetch", function(event) {
   var req = event.request;
   if (req.method !== "GET") return;
 
-  // لا تخزّن طلبات GitHub raw (تُجلب دائماً طازجة)
   var url = new URL(req.url);
-  if (url.hostname.indexOf("raw.githubusercontent.com") !== -1) {
-    event.respondWith(fetch(req));
+
+  // v25.31: لطلات raw.githubusercontent.com و cdn.jsdelivr.net و api.telegram.org
+  // حاول fetch، وإن فشل بسبب الشبكة، ارجع للكاش أو استجابة فارغة
+  // هذا يمنع أخطاء "Uncaught (in promise) TypeError: Failed to fetch"
+  if (url.hostname.indexOf("raw.githubusercontent.com") !== -1 ||
+      url.hostname.indexOf("cdn.jsdelivr.net") !== -1 ||
+      url.hostname.indexOf("api.telegram.org") !== -1 ||
+      url.hostname.indexOf("unpkg.com") !== -1 ||
+      url.hostname.indexOf("openstreetmap.org") !== -1) {
+    event.respondWith(
+      fetch(req).catch(function(err) {
+        // v25.31: عند فشل الشبكة، ارجع للكاش إن وُجد
+        return caches.match(req).then(function(cached) {
+          if (cached) return cached;
+          // إن لم يوجد كاش، ارجع استجابة فارغة بدلاً من خطأ
+          return new Response("", {
+            status: 503,
+            statusText: "Service Unavailable",
+            headers: { "Content-Type": "text/plain" }
+          });
+        });
+      })
+    );
     return;
   }
 
@@ -60,7 +75,14 @@ self.addEventListener("fetch", function(event) {
           });
         }
         return resp;
-      }).catch(function() { return cached; });
+      }).catch(function() {
+        // v25.31: عند فشل الشبكة، ارجع للكاش
+        return cached || new Response("", {
+          status: 503,
+          statusText: "Service Unavailable",
+          headers: { "Content-Type": "text/plain" }
+        });
+      });
       return cached || network;
     })
   );
