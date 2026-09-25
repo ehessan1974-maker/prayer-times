@@ -23,9 +23,9 @@ import java.net.URL;
 public class UpdateChecker {
 
     private static final String VERSION_URL =
-            "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
+            "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
     private static final String HTML_URL =
-            "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html";
+            "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html";
     private static final long INTERVAL_MS = 5 * 60 * 1000; // 5 دقائق
     private static final String PREF_NAME = "pt-prefs";
     private static final String PREF_LAST_VERSION = "last-known-app-version";

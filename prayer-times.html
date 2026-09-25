@@ -1847,7 +1847,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 
     <div class="credits-item">
       <div class="role">🚀 الإصدار</div>
-      <div class="name" id="creditsVersion">v25.30</div>
+      <div class="name" id="creditsVersion">v25.32</div>
     </div>
 
     <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;" class="credits-text">
@@ -2167,7 +2167,7 @@ function getFilteredItems() {
   return filtered;
 }
 
-var CONTENT_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/content.json";
+var CONTENT_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/content.json";
 
 var LIVE_REFRESH_INTERVAL = 30000; 
 var _liveRefreshTimer = null;
@@ -5655,10 +5655,10 @@ function compareVersions(a, b) {
 // =====================================================================
 // ===== AUTO UPDATE — فحص version.json دورياً وتحديث التطبيق =====
 // =====================================================================
-var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
+var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.31"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.32"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
