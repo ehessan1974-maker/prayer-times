@@ -1442,6 +1442,20 @@ body.dark-mode .setting-box span, body.dark-mode .setting-box strong { color:#e8
 body.dark-mode .toggle-row .t-name { color:#e8f5ee; }
 body.dark-mode .toggle-label { color:#9fb8ab !important; }
 body.dark-mode .method-select, body.dark-mode .loc-inputs input, body.dark-mode .modal input[type="text"], body.dark-mode .modal input[type="number"] { background:#0f1a15; border-color:#2b4a3a; color:#e8f5ee; }
+/* v25.34: إصلاح ألوان تصحيح المواقيت وفواصل الإقامة في الوضع الليلي */
+body.dark-mode #timeOffsetsSettings span[style*="color:#374151"],
+body.dark-mode #iqamaSettings span[style*="color:#374151"] { color:#e8f5ee !important; }
+body.dark-mode #timeOffsetsSettings span[style*="color:#9ca3af"],
+body.dark-mode #iqamaSettings span[style*="color:#9ca3af"] { color:#9fb8ab !important; }
+body.dark-mode #timeOffsetsSettings button { background:#1a2a22 !important; color:#e8f5ee !important; border-color:#2b4a3a !important; }
+body.dark-mode #timeOffsetsSettings input[type="number"],
+body.dark-mode #iqamaSettings input[type="number"] { background:#0f1a15 !important; border-color:#2b4a3a !important; color:#6ee7b7 !important; }
+/* v25.34: إصلاح ألوان النصوص الثانوية في الإعدادات للوضع الليلي */
+body.dark-mode .modal div[style*="color:#374151"] { color:#e8f5ee !important; }
+body.dark-mode .modal div[style*="color:#6b7280"] { color:#9fb8ab !important; }
+body.dark-mode .modal span[style*="color:#374151"] { color:#e8f5ee !important; }
+body.dark-mode .modal span[style*="color:#6b7280"] { color:#9fb8ab !important; }
+body.dark-mode .modal input[style*="color:#374151"] { color:#e8f5ee !important; }
 body.dark-mode .city-result { background:#16241d; border-color:#234536; }
 body.dark-mode .city-result:hover { background:#1f3527; }
 body.dark-mode .cr-name { color:#e8f5ee; }
@@ -1847,7 +1861,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 
     <div class="credits-item">
       <div class="role">🚀 الإصدار</div>
-      <div class="name" id="creditsVersion">v25.33</div>
+      <div class="name" id="creditsVersion">v25.34</div>
     </div>
 
     <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;" class="credits-text">
@@ -5658,7 +5672,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.33"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.34"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
