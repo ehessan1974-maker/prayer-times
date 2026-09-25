@@ -600,6 +600,10 @@ body.dark-mode .msged-audience-add-name { background:#0f1f18; color:#e2e8f0; bor
 }
 .credits-item .role { font-size: 12px; color: #059669; font-weight: 600; margin-bottom: 4px; }
 .credits-item .name { font-size: 15px; color: #064e3b; font-weight: 700; }
+/* v25.30: ألوان نصوص لوحة حول البرنامج — الوضع النهاري */
+.credits-text { color: #374151; }
+.credits-text h3 { color: #065f46; }
+.credits-text b { color: #064e3b; }
 .credits-close {
   margin-top: 20px; padding: 10px 24px; border-radius: 50px;
   background: #059669; color: white; border: none; font-family: inherit;
@@ -1456,6 +1460,15 @@ body.dark-mode .credits-item { background:rgba(21,32,27,0.85); }
 body.dark-mode .credits-item .role { color:#9fb8ab; }
 body.dark-mode .credits-item .name { color:#e8f5ee; }
 body.dark-mode .credits-close { background:#15201b; color:#a7d7bf; }
+/* v25.30: تحسين ألوان النصوص في لوحة حول البرنامج للوضع الليلي */
+body.dark-mode .credits-content h2 { color:#6ee7b7 !important; }
+body.dark-mode .credits-content h3 { color:#6ee7b7 !important; }
+body.dark-mode .credits-content p { color:#e8f5ee !important; }
+body.dark-mode .credits-content b { color:#a7f3d0 !important; }
+body.dark-mode .credits-content .credits-text { color:#e8f5ee !important; }
+body.dark-mode .credits-content .credits-text h3 { color:#6ee7b7 !important; }
+body.dark-mode .credits-content .credits-text b { color:#a7f3d0 !important; }
+body.dark-mode .credits-content .icon { filter: brightness(1.2); }
 body.dark-mode .header-ramadan { background:linear-gradient(to right,#0f241a,#12241c,#0f241a); border-color:#234536; }
 body.dark-mode .header-ramadan .hr-title { color:#6ee7b7; }
 body.dark-mode .header-ramadan.ramadan-active { background:linear-gradient(to right,#251c0c,#2c2009,#251c0c); border-color:#6b5416; }
@@ -1829,16 +1842,16 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 
     <div class="credits-item">
       <div class="role">💻 البرمجة والتصميم</div>
-      <div class="name">د. إحسان العبد الله</div>
+      <div class="name">د. إحسان عبد المحسن العبد الله</div>
     </div>
 
     <div class="credits-item">
       <div class="role">🚀 الإصدار</div>
-      <div class="name" id="creditsVersion">v23.0</div>
+      <div class="name" id="creditsVersion">v25.30</div>
     </div>
 
-    <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;color:#374151;">
-      <h3 style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:10px;">📋 مميزات التطبيق</h3>
+    <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;" class="credits-text">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:10px;">📋 مميزات التطبيق</h3>
       <div style="padding-right:10px;">
         <p>🕌 <b>مواقيت الصلاة:</b> حساب دقيق لمواعيد الصلوات الخمس حسب إحداثيات موقعك الجغرافي</p>
         <p>🔔 <b>الأذان والإقامة:</b> إشعارات الأذان والإقامة مع أصوات مميزة واختيار المؤذن المفضل</p>
@@ -1857,8 +1870,8 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       </div>
     </div>
 
-    <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;color:#374151;">
-      <h3 style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:10px;">📞 التواصل</h3>
+    <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;" class="credits-text">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:10px;">📞 التواصل</h3>
       <p>للاستفسارات والاقتراحات: عبر رسائل الشريط المتحرك في التطبيق</p>
     </div>
 
@@ -5645,7 +5658,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.29"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.30"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather
