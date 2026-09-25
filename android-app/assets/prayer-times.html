@@ -1861,7 +1861,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 
     <div class="credits-item">
       <div class="role">🚀 الإصدار</div>
-      <div class="name" id="creditsVersion">v25.34</div>
+      <div class="name" id="creditsVersion">v25.35</div>
     </div>
 
     <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;" class="credits-text">
@@ -3374,9 +3374,30 @@ function searchCity() {
   box.innerHTML = "";
   st.style.display = "block";
   st.textContent = "⏳ جاري البحث عن «" + q + "»...";
+  var url = "https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(q) + "&count=8&language=ar&format=json";
+
+  // v25.35: على أندرويد، استخدم NativeBridge (مع Tls12Helper) بدلاً من XHR
+  // هذا يحل مشكلة Samsung J5 (Android 5.x) التي تفشل في TLS 1.2
+  if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
+    try {
+      AndroidPrayer.fetchUrl(url, "_citySearchCallback");
+      // fallback: إذا لم يصل رد خلال 12 ثانية، حاول XHR
+      setTimeout(function() {
+        if (citySearching) {
+          searchCityViaXHR(url, st, box);
+        }
+      }, 12000);
+      return;
+    } catch(e) {}
+  }
+  searchCityViaXHR(url, st, box);
+}
+
+// v25.35: XHR fallback للبحث عن المدن
+function searchCityViaXHR(url, st, box) {
   var xhr = new XMLHttpRequest();
   xhr.timeout = 12000;
-  xhr.open("GET", "https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(q) + "&count=8&language=ar&format=json", true);
+  xhr.open("GET", url, true);
   xhr.onreadystatechange = function() {
     if (xhr.readyState !== 4) return;
     citySearching = false;
@@ -3384,7 +3405,7 @@ function searchCity() {
       try {
         var j = JSON.parse(xhr.responseText);
         cityResults = (j.results || []).slice(0, 8);
-        if (!cityResults.length) { st.textContent = "❌ لا نتائج لـ «" + q + "» — جرّب اسماً آخر"; return; }
+        if (!cityResults.length) { st.textContent = "❌ لا نتائج — جرّب اسماً آخر"; return; }
         st.style.display = "none";
         var html = "";
         for (var i = 0; i < cityResults.length; i++) {
@@ -3402,6 +3423,45 @@ function searchCity() {
     }
   };
   try { xhr.send(); } catch(e) { citySearching = false; st.textContent = "⚠️ فشل البحث"; }
+}
+
+// v25.35: callback من NativeBridge.fetchUrl لنتائج البحث
+function _citySearchCallback(data) {
+  if (!data) {
+    if (window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+      try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
+    }
+  }
+  citySearching = false;
+  if (!data || data.length === 0) {
+    var st = el("citySearchStatus");
+    if (st) st.textContent = "⚠️ فشل البحث — تحقق من الاتصال بالإنترنت";
+    return;
+  }
+  try {
+    var j = (typeof data === "string") ? JSON.parse(data) : data;
+    cityResults = (j.results || []).slice(0, 8);
+    var st = el("citySearchStatus");
+    var box = el("cityResults");
+    if (!cityResults.length) {
+      if (st) st.textContent = "❌ لا نتائج — جرّب اسماً آخر";
+      return;
+    }
+    if (st) st.style.display = "none";
+    var html = "";
+    for (var i = 0; i < cityResults.length; i++) {
+      var r = cityResults[i];
+      var sub = [r.admin1, r.country].filter(Boolean).join("، ");
+      html += '<div class="city-result" onclick="pickCity(' + i + ')">' +
+              '<div class="cr-name">📍 ' + r.name + '</div>' +
+              (sub ? '<div class="cr-sub">' + sub + '</div>' : '') +
+              '</div>';
+    }
+    if (box) box.innerHTML = html;
+  } catch(e) {
+    var st2 = el("citySearchStatus");
+    if (st2) st2.textContent = "⚠️ تعذر تحليل نتيجة البحث";
+  }
 }
 function pickCity(i) {
   var r = cityResults[i]; if (!r) return;
@@ -3468,28 +3528,58 @@ function reverseGeoName(la, ln) {
 
 // نسخة احتياطية: BigDataCloud (إن فشل Nominatim)
 function reverseGeoNameFallbackBigDataCloud(la, ln) {
+  var url = "https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + la + "&longitude=" + ln + "&localityLanguage=ar";
+  // v25.35: على أندرويد، استخدم NativeBridge (مع Tls12Helper)
+  if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
+    try {
+      AndroidPrayer.fetchUrl(url, "_reverseGeoCallback");
+      return;
+    } catch(e) {}
+  }
+  reverseGeoViaXHR(url);
+}
+
+// v25.35: XHR fallback لـ reverse geocode
+function reverseGeoViaXHR(url) {
   try {
     var xhr = new XMLHttpRequest();
     xhr.timeout = 8000;
-    xhr.open("GET", "https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + la + "&longitude=" + ln + "&localityLanguage=ar", true);
+    xhr.open("GET", url, true);
     xhr.onreadystatechange = function() {
       if (xhr.readyState !== 4) return;
       if (xhr.status === 200) {
-        try {
-          var j = JSON.parse(xhr.responseText);
-          var parts = [];
-          var city = j.city || j.locality || "";
-          var reg = j.principalSubdivision || "";
-          var ctry = j.countryName || "";
-          if (city) parts.push(city);
-          else if (reg) parts.push(reg);
-          if (ctry && parts.length && parts[0] !== ctry) parts.push(ctry);
-          if (parts.length && !geoName) { geoName = parts.join("، "); renderLocation(); }
-        } catch(e) {}
+        _processReverseGeo(xhr.responseText);
       }
     };
     xhr.send();
   } catch(e) {}
+}
+
+// v25.35: معالجة نتيجة reverse geocode (مشتركة)
+function _processReverseGeo(text) {
+  try {
+    var j = (typeof text === "string") ? JSON.parse(text) : text;
+    var parts = [];
+    var city = j.city || j.locality || "";
+    var reg = j.principalSubdivision || "";
+    var ctry = j.countryName || "";
+    if (city) parts.push(city);
+    else if (reg) parts.push(reg);
+    if (ctry && parts.length && parts[0] !== ctry) parts.push(ctry);
+    if (parts.length && !geoName) { geoName = parts.join("، "); renderLocation(); }
+  } catch(e) {}
+}
+
+// v25.35: callback من NativeBridge لـ reverse geocode
+function _reverseGeoCallback(data) {
+  if (!data) {
+    if (window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+      try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
+    }
+  }
+  if (data && data.length > 0) {
+    _processReverseGeo(data);
+  }
 }
 
 // ===== v13: طريقة الحساب =====
@@ -5672,7 +5762,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.34"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.35"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.16: تم استبدال الـ token ببوت جديد من @BotFather

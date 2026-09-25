@@ -3,7 +3,7 @@
    v25.31: إصلاح أخطاء FetchEvent — معالجة أخطاء الشبكة
    ======================================================================== */
 
-var SW_CACHE = "prayer-times-v82";
+var SW_CACHE = "prayer-times-v83";
 var APP_SHELL = [
   "./",
   "./prayer-times.html",
