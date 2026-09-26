@@ -5802,18 +5802,19 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.37"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.38"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
 // ويمكن لأي شخص استخدامه لإرسال رسائل باسم البوت.
 // طرق التفعيل بعد هذه النسخة:
-//   (أ) الطريقة الموصى بها: انشر cloudflare-worker وضع سرّيه TG_BOT_TOKEN و TG_CHAT_ID
-//       عبر `wrangler secret put`، ثم ضع رابط الـ worker في TG_WORKER_URL أدناه —
-//       فيعمل الإرسال لكل المستخدمين دون كشف أي سر في الكود.
+//   (أ) الطريقة المفعّلة (v25.38): وسيط منشور على Deno Deploy يحتفظ بسرّيه
+//       TG_BOT_TOKEN و TG_CHAT_ID كمتغيرات بيئة، ويستقبل POST /api/tg-report
+//       بالشكل {text} ويعيد الإرسال إلى تيليجرام — فيعمل الإرسال لكل
+//       المستخدمين دون كشف أي سر في الكود. (بديل مكافئ: cloudflare-worker/)
 //   (ب) مؤقتاً على جهاز المدير فقط (لن يعمل على أجهزة المستخدمين):
 //       localStorage.setItem("pt-tg-admin-cfg", JSON.stringify({token:"123:ABC", chatId:"..."}))
-var TG_WORKER_URL = ""; // مثال: "https://prayer-times-worker.username.workers.dev"
+var TG_WORKER_URL = "https://arid-badger-8563.ehessan1974-maker.deno.net"; // وسيط الإشعارات (Deno Deploy) — v25.38
 var TG_ADMIN_CFG_KEY = "pt-tg-admin-cfg";
 var TG_USERS_FILE_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/users.json";
 
@@ -5929,7 +5930,7 @@ function tgSendReport(force) {
     endpoint = "https://api.telegram.org/bot" + creds.token + "/sendMessage";
   }
   if (!endpoint) {
-    if (force) showNotification("⚠️ الإرسال معطّل — انشر cloudflare-worker واضبط TG_WORKER_URL");
+    if (force) showNotification("⚠️ الإرسال معطّل — لم يُضبط وسيط الإشعارات (TG_WORKER_URL)");
     return;
   }
   if (!tgHasConsent()) return;
