@@ -79,12 +79,8 @@ public class MainActivity extends Activity {
         });
         webView.addJavascriptInterface(new NativeBridge(), "AndroidPrayer");
         // تحميل نسخة محدَّثة من HTML إن وُجدت في getFilesDir()، وإلا fallback للأصل في assets/
-        File updatedHtml = new File(getFilesDir(), "prayer-times.html");
-        if (updatedHtml.exists() && updatedHtml.length() > 1000) {
-            webView.loadUrl("file://" + updatedHtml.getAbsolutePath());
-        } else {
-            webView.loadUrl("file:///android_asset/prayer-times.html");
-        }
+        // v25.37: يحترم تفضيل use-lite (النسخة المبسطة للأجهزة الضعيفة)
+        loadAppHtml();
 
         tts = new PrayerTts(getApplicationContext());
         requestRuntimePermissions();
@@ -105,6 +101,32 @@ public class MainActivity extends Activity {
         if (tts != null) tts.shutdown();
         if (webView != null) webView.destroy();
         super.onDestroy();
+    }
+
+    // ===== v25.37: مبدّل النسخة الكاملة/المبسطة =====
+    private boolean isLitePreferred() {
+        try {
+            return getSharedPreferences("pt-prefs", 0).getBoolean("use-lite", false);
+        } catch (Exception e) { return false; }
+    }
+
+    private void setLitePreferred(boolean lite) {
+        try {
+            getSharedPreferences("pt-prefs", 0).edit().putBoolean("use-lite", lite).apply();
+        } catch (Exception e) {}
+    }
+
+    /** يحمّل النسخة المختارة: filesDir أولاً ثم assets — يحترم تفضيل use-lite */
+    private void loadAppHtml() {
+        boolean lite = isLitePreferred();
+        String fileName = lite ? "prayer-times-lite.html" : "prayer-times.html";
+        File updated = new File(getFilesDir(), fileName);
+        if (updated.exists() && updated.length() > 1000) {
+            webView.loadUrl("file://" + updated.getAbsolutePath());
+        } else {
+            webView.loadUrl("file:///android_asset/" + fileName);
+        }
+        android.util.Log.i("PrayerTimes", "Loaded " + (lite ? "LITE" : "FULL") + " HTML: " + fileName);
     }
 
     private boolean permissionGranted(String perm) {
@@ -332,16 +354,19 @@ public class MainActivity extends Activity {
 
         // v25.33: إعادة تحميل WebView من الملف المحدّث في getFilesDir
         // بدلاً من إعادة تحميل الصفحة الحالية (القديمة)
+        // v25.37: يحترم تفضيل use-lite — يعيد تحميل النسخة المختارة نفسها
         @JavascriptInterface
         public void reloadUpdatedHtml() {
             runOnUiThread(new Runnable() {
                 public void run() {
                     try {
-                        File updatedHtml = new File(getFilesDir(), "prayer-times.html");
+                        boolean lite = isLitePreferred();
+                        String fileName = lite ? "prayer-times-lite.html" : "prayer-times.html";
+                        File updatedHtml = new File(getFilesDir(), fileName);
                         if (updatedHtml.exists() && updatedHtml.length() > 1000) {
                             // حمّل الملف المحدّث
                             webView.loadUrl("file://" + updatedHtml.getAbsolutePath() + "?t=" + System.currentTimeMillis());
-                            android.util.Log.i("PrayerTimes", "✓ Reloaded updated HTML from getFilesDir");
+                            android.util.Log.i("PrayerTimes", "✓ Reloaded updated " + (lite ? "LITE" : "FULL") + " HTML from getFilesDir");
                         } else {
                             // لا يوجد ملف محدّث — أعد تحميل الصفحة الحالية
                             webView.reload();
@@ -353,6 +378,38 @@ public class MainActivity extends Activity {
                     }
                 }
             });
+        }
+
+        // ===== v25.37: التبديل إلى النسخة المبسطة (Lite) للأجهزة الضعيفة =====
+        @JavascriptInterface
+        public void switchToLite() {
+            setLitePreferred(true);
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    try { loadAppHtml(); } catch (Exception e) {
+                        android.util.Log.e("PrayerTimes", "switchToLite failed: " + e.getMessage(), e);
+                    }
+                }
+            });
+        }
+
+        // ===== v25.37: العودة إلى النسخة الكاملة =====
+        @JavascriptInterface
+        public void switchToFull() {
+            setLitePreferred(false);
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    try { loadAppHtml(); } catch (Exception e) {
+                        android.util.Log.e("PrayerTimes", "switchToFull failed: " + e.getMessage(), e);
+                    }
+                }
+            });
+        }
+
+        // ===== v25.37: هل النسخة المبسطة مفعّلة حالياً؟ =====
+        @JavascriptInterface
+        public boolean isUsingLite() {
+            return isLitePreferred();
         }
     }
 }

@@ -61,6 +61,13 @@ wrangler secret put GH_PAT
 # سلسلة عشوائية لتوقيع JWT (40 حرف على الأقل)
 wrangler secret put JWT_SECRET
 # الصق سلسلة عشوائية (مثلاً: openssl rand -hex 32)
+
+# v25.37: وسيط تيليجرام لتقارير الأجهزة (اختياري — يفعّل ميزة معرّفات الأجهزة)
+wrangler secret put TG_BOT_TOKEN
+# الصق توكن البوت من @BotFather: 123456789:ABCdef...
+
+wrangler secret put TG_CHAT_ID
+# الصق معرّف محادثة المدير (من @userinfobot مثلاً): 123456789
 ```
 
 ### 7️⃣ نشر الـ Worker
@@ -102,7 +109,15 @@ curl https://prayer-times-worker.your-subdomain.workers.dev/messages
 var WORKER_URL = "https://prayer-times-worker.your-subdomain.workers.dev";
 ```
 
-أضعف هذا المتغيّر في بداية ملف `prayer-times.html`.
+و v25.37: لتفعيل تقارير الأجهزة عبر الوسيط الآمن، ضع الرابط نفسه في:
+
+```javascript
+var TG_WORKER_URL = "https://prayer-times-worker.your-subdomain.workers.dev";
+```
+
+بعد ذلك تُرسل تقارير الأجهزة عبر `POST /api/tg-report` — والتوكن محفوظ كـ secret على الـ worker ولا يظهر في كود التطبيق إطلاقاً.
+
+ضع هذا المتغيّر في بداية ملف `prayer-times.html`.
 
 ---
 
@@ -173,6 +188,12 @@ curl -X POST https://prayer-times-worker.your-subdomain.workers.dev/admin/restor
 
 ### المشكلة: `JWT_SECRET secret not found`
 شغّل: `wrangler secret put JWT_SECRET` وأدخل سلسلة عشوائية (40+ حرف).
+
+### المشكلة: تقارير تيليجرام لا تصل (v25.37+)
+تأكد من:
+- `wrangler secret put TG_BOT_TOKEN` و `wrangler secret put TG_CHAT_ID`
+- `TG_WORKER_URL` في `prayer-times.html` يشير لرابط الـ worker الصحيح
+- حد المعدل: 8 طلبات لكل IP كل 10 دقائق (كافٍ لخاصية تقارير كل 24 ساعة)
 
 ### المشكلة: المستخدمون لا يستطيعون الحفظ
 تأكد من أن:

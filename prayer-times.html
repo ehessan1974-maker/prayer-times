@@ -13,6 +13,7 @@
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
 <!-- v15: أشرطة تمرير عريضة وواضحة (الإعدادات وكل المناطق القابلة للتمرير) — تحكم أسهل بالفأرة واللمس والشاشة الذكية -->
+<!-- v25.37: [أمني] إزالة توكن تيليجرام من الكود (الإرسال عبر worker أو إعداد المدير) + مبدّل النسخة المبسطة Lite في الإعدادات + إصلاح فلتر رسائل الـ worker + إكمال ملفات build-apk.sh -->
 <!-- v12: وضع الشاشة الذكية — لوحة 1600×900 ملء الشاشة بلا تمرير + خط الثلث المضمّن (v8) -->
 <!-- خط الثلث لاسم اليوم — مضمّن Base64 يعمل بلا إنترنت (v8) -->
 <style>
@@ -1762,6 +1763,13 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       </div>
     </div>
 
+    <!-- v25.37: مبدّل النسخة المبسطة للأجهزة الضعيفة -->
+    <div class="modal-section">
+      <div class="sec-title">🪶 النسخة المبسطة (Lite)</div>
+      <div class="sec-desc">نسخة خفيفة جداً للأجهزة القديمة والضعيفة: مواقيت + أذان + شريط معلومات، بدون خريطة القبلة والبوصلة والرسوم الثقيلة.</div>
+      <button id="liteSwitchBtn" class="btn btn-outline" style="width:100%;background:#f0fdf4;color:#047857;border-color:#6ee7b7;" onclick="switchLiteVersion()">🪶 التبديل إلى النسخة المبسطة</button>
+    </div>
+
     <div class="modal-section">
       <div class="sec-title">ℹ️ معلومات</div>
       <button class="btn btn-outline" style="width:100%;" onclick="closeSettings();openCredits();">حول البرنامج</button>
@@ -1861,7 +1869,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 
     <div class="credits-item">
       <div class="role">🚀 الإصدار</div>
-      <div class="name" id="creditsVersion">v25.36</div>
+      <div class="name" id="creditsVersion">v25.37</div>
     </div>
 
     <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;" class="credits-text">
@@ -2096,7 +2104,6 @@ function toggleOnlineInfo() {
   updateInfoToggleBtn();
   if (onlineInfoEnabled) {
     fetchAllInfo();
-    startInfoCycle();
     startInfoRefresh();
     startLiveRefresh();
   } else {
@@ -2104,7 +2111,6 @@ function toggleOnlineInfo() {
     el("infoSection").style.display = "none";
     el("infoCatBar").style.display = "none";
     stopInfoRefresh();
-    stopInfoCycle();
     stopLiveRefresh();
   }
 }
@@ -2325,7 +2331,6 @@ function _nativeContentCallback(data) {
         el("infoSection").style.display = "block";
         if (el("infoCatBar")) el("infoCatBar").style.display = "block";
         displayCurrentInfo();
-        startInfoCycle();
       }
     } else {
       // v20.6: لو فشل parse، أعد الجلب عبر XHR
@@ -2360,7 +2365,6 @@ function fetchContentJSONViaXHR(url, retryCount) {
             el("infoSection").style.display = "block";
             if (el("infoCatBar")) el("infoCatBar").style.display = "block";
             displayCurrentInfo();
-            startInfoCycle();
           }
         } else {
           showDataErrorMessage();
@@ -2904,12 +2908,9 @@ function initDragScroll() {
     if (restoreTimer) { clearTimeout(restoreTimer); restoreTimer = null; }
   };
 }
-function slideToNextInfo() { }
-function startInfoCycle() { }
-function stopInfoCycle() { }
-function startCycleProgress() { }
-function stopCycleProgress() { if (el("infoProgressBar")) el("infoProgressBar").style.width = "0%"; }
-function resetCycleProgress() { }
+// v25.37: حُذفت الـ stubs الفارغة (slideToNextInfo, startInfoCycle, stopInfoCycle,
+// startCycleProgress, stopCycleProgress, resetCycleProgress) — كانت بقايا تصميم قديم
+// ولا تُنفّذ شيئاً
 
 function startInfoRefresh() {
   stopInfoRefresh();
@@ -3983,7 +3984,6 @@ function render() {
     if (onlineInfoEnabled && navigator.onLine) {
       fetchAllInfo();
       startInfoRefresh();
-      startInfoCycle();
       startLiveRefresh();
     }
     if (!audioActivated && audioEnabled === false) {
@@ -4247,8 +4247,48 @@ function openSettings() {
   } catch(e) {}
   // v20: تحديث زر المشاركة
   try { tgUpdateToggleUI(); } catch(e) {}
+  // v25.37: تحديث زر التبديل للنسخة المبسطة
+  try { updateLiteSwitchBtn(); } catch(e) {}
 }
 function closeSettings() { el("settingsModal").classList.remove("show"); }
+
+// ===== v25.37: التبديل بين النسخة الكاملة والنسخة المبسطة (Lite) =====
+// أندرويد: عبر NativeBridge.switchToLite/switchToFull (يحفظ التفضيل ويعيد التحميل)
+// الويب: تحويل مباشر إلى prayer-times-lite.html / prayer-times.html
+function switchLiteVersion() {
+  var isAndroid = window.AndroidPrayer && typeof AndroidPrayer.switchToLite === "function";
+  var usingLite = false;
+  try { usingLite = isAndroid && AndroidPrayer.isUsingLite && AndroidPrayer.isUsingLite(); } catch(e) {}
+  if (isAndroid) {
+    if (!usingLite) {
+      if (!confirm("التبديل إلى النسخة المبسطة؟\n\nنسخة خفيفة تناسب الأجهزة القديمة: مواقيت + أذان + شريط معلومات فقط.\nيمكنك العودة للنسخة الكاملة من الإعدادات في أي وقت.")) return;
+      try { AndroidPrayer.switchToLite(); } catch(e) { showNotification("⚠️ تعذّر التبديل"); }
+    } else {
+      if (!confirm("العودة إلى النسخة الكاملة؟\n\nتشمل كل المزايا: بوصلة القبلة، الخريطة، الشاشة الذكية والمزيد.")) return;
+      try { AndroidPrayer.switchToFull(); } catch(e) { showNotification("⚠️ تعذّر التبديل"); }
+    }
+  } else {
+    // وضع الويب — التبديل بين الملفين في نفس المجلد
+    var target = location.pathname.indexOf("prayer-times-lite") !== -1 ? "prayer-times.html" : "prayer-times-lite.html";
+    if (!confirm("التبديل بين النسختين؟\nسيفتح: " + target)) return;
+    try { window.location.href = target; } catch(e) {}
+  }
+}
+
+// v25.37: تحديث نص زر التبديل حسب الحالة الحالية (كاملة/مبسطة)
+function updateLiteSwitchBtn() {
+  var btn = el("liteSwitchBtn");
+  if (!btn) return;
+  var usingLite = false;
+  try { usingLite = window.AndroidPrayer && AndroidPrayer.isUsingLite && AndroidPrayer.isUsingLite(); } catch(e) {}
+  if (usingLite) {
+    btn.innerHTML = "⚡ العودة إلى النسخة الكاملة";
+    btn.style.background = "#eff6ff"; btn.style.color = "#1d4ed8"; btn.style.borderColor = "#93c5fd";
+  } else {
+    btn.innerHTML = "🪶 التبديل إلى النسخة المبسطة";
+    btn.style.background = "#f0fdf4"; btn.style.color = "#047857"; btn.style.borderColor = "#6ee7b7";
+  }
+}
 
 // v19: نسخ معرّف الجهاز
 function copyDeviceId() {
@@ -5762,14 +5802,32 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.36"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.37"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
-// v25.16: تم استبدال الـ token ببوت جديد من @BotFather
-var TG_BOT_TOKEN = "8885448938:AAHD-yfIc9QlVb8teG0L6taMC8ekTg8hNtM";
-var TG_CHAT_ID = "628644087";
-var TG_API_URL = "https://api.telegram.org/bot" + TG_BOT_TOKEN + "/sendMessage";
+// v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
+// ويمكن لأي شخص استخدامه لإرسال رسائل باسم البوت.
+// طرق التفعيل بعد هذه النسخة:
+//   (أ) الطريقة الموصى بها: انشر cloudflare-worker وضع سرّيه TG_BOT_TOKEN و TG_CHAT_ID
+//       عبر `wrangler secret put`، ثم ضع رابط الـ worker في TG_WORKER_URL أدناه —
+//       فيعمل الإرسال لكل المستخدمين دون كشف أي سر في الكود.
+//   (ب) مؤقتاً على جهاز المدير فقط (لن يعمل على أجهزة المستخدمين):
+//       localStorage.setItem("pt-tg-admin-cfg", JSON.stringify({token:"123:ABC", chatId:"..."}))
+var TG_WORKER_URL = ""; // مثال: "https://prayer-times-worker.username.workers.dev"
+var TG_ADMIN_CFG_KEY = "pt-tg-admin-cfg";
 var TG_USERS_FILE_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/users.json";
+
+// جلب بيانات الإرسال: من إعداد المدير المحلي (ب) — أو عبر الـ worker (أ) دون بيانات محلية
+function tgGetCreds() {
+  try {
+    var raw = localStorage.getItem(TG_ADMIN_CFG_KEY);
+    if (raw) {
+      var c = JSON.parse(raw);
+      if (c && c.token && c.chatId) return { token: String(c.token), chatId: String(c.chatId) };
+    }
+  } catch(e) {}
+  return null;
+}
 
 // مفاتيح localStorage
 var TG_CONSENT_KEY = "pt-tg-consent";
@@ -5785,7 +5843,8 @@ function tgHasConsent() {
 
 // فتح نافذة الموافقة
 function tgShowConsentModal() {
-  if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
+  // v25.37: تُعرض النافذة إن وُجدت وسيلة إرسال (worker أو إعداد المدير)
+  if (!TG_WORKER_URL && !tgGetCreds()) return;
   if (tgHasConsent()) return;
   var consentDeviceId = el("consentDeviceId");
   if (consentDeviceId) consentDeviceId.textContent = getDeviceId();
@@ -5860,10 +5919,17 @@ function tgFormatDate() {
 
 // إرسال تقرير الجهاز إلى Telegram
 function tgSendReport(force) {
-  // v25.16: فحص أن الـ token ليس placeholder (لم يُستبدل ببوت جديد بعد)
-  var isPlaceholder = !TG_BOT_TOKEN || TG_BOT_TOKEN.indexOf("PASTE_") === 0;
-  if (isPlaceholder || !TG_CHAT_ID || TG_CHAT_ID.indexOf("PASTE_") === 0) {
-    if (force) showNotification("⚠️ لم يتم ضبط Telegram Bot — أنشئ بوتاً جديداً من @BotFather");
+  // v25.37: الإرسال إما عبر الـ worker (السرّ على الخادم) أو بإعداد المدير المحلي
+  var creds = tgGetCreds();
+  var endpoint = null;
+  var payload = null;
+  if (TG_WORKER_URL) {
+    endpoint = TG_WORKER_URL.replace(/\/+$/, "") + "/api/tg-report";
+  } else if (creds) {
+    endpoint = "https://api.telegram.org/bot" + creds.token + "/sendMessage";
+  }
+  if (!endpoint) {
+    if (force) showNotification("⚠️ الإرسال معطّل — انشر cloudflare-worker واضبط TG_WORKER_URL");
     return;
   }
   if (!tgHasConsent()) return;
@@ -5892,15 +5958,22 @@ function tgSendReport(force) {
   msg += "📦 إصدار التطبيق: v" + appVersion + "\n";
   msg += "⏰ آخر فتح: " + lastOpened + "\n";
 
+  if (TG_WORKER_URL) {
+    // عبر الوسيط: يرسل نص الرسالة فقط — الوسيط يضيف chat_id من سرّاته
+    payload = JSON.stringify({ text: msg });
+  } else {
+    payload = JSON.stringify({
+      chat_id: creds.chatId,
+      text: msg,
+      parse_mode: "HTML"
+    });
+  }
+
   try {
-    fetch(TG_API_URL, {
+    fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: TG_CHAT_ID,
-        text: msg,
-        parse_mode: "HTML"
-      })
+      body: payload
     }).then(function(r) {
       if (r.ok) {
         try {
@@ -5920,36 +5993,8 @@ function tgSendReport(force) {
   }
 }
 
-// ===== عداد المستخدمين =====
-// يجلب users.json من GitHub ويعدّ عدد المستخدمين الفريدين
-function tgRefreshUsersCount() {
-  var countEl = el("usersCount");
-  if (!countEl) return;
-  countEl.textContent = "...";
-  try {
-    var url = TG_USERS_FILE_URL + "?t=" + Date.now();
-    fetch(url).then(function(r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.text();
-    }).then(function(text) {
-      var users = [];
-      try { users = JSON.parse(text); } catch(e) {}
-      if (!Array.isArray(users)) users = [];
-      // عدد فريد (إزالة التكرار حسب deviceId)
-      var unique = {};
-      var count = 0;
-      for (var i = 0; i < users.length; i++) {
-        var id = users[i] && users[i].deviceId ? users[i].deviceId : "";
-        if (id && !unique[id]) { unique[id] = true; count++; }
-      }
-      countEl.textContent = String(count);
-    }).catch(function() {
-      countEl.textContent = "—";
-    });
-  } catch(e) {
-    countEl.textContent = "—";
-  }
-}
+// v25.37: حُذفت tgRefreshUsersCount — كانت تستهدف عنصر #usersCount غير موجود
+// ولا يستدعيها أحد بعد حذف واجهة عدّاد المستخدمين
 
 // =====================================================================
 // ===== AUTO UPDATE — فحص version.json دورياً وتحديث التطبيق =====
@@ -6230,8 +6275,8 @@ function registerServiceWorker() {
   }, APP_VERSION_CHECK_INTERVAL);
 
   // ===== v20: تهيئة Telegram Bot =====
-  // v25.16: استعادة الميزة — سيُعيد التطبيق عرض نافذة الموافقة وإرسال التقارير
-  // ملاحظة: لن تُرسل الرسائل فعلياً حتى يُوضع token البوت الجديد في TG_BOT_TOKEN
+  // v25.37: لا يوجد توكن في الكود — الإرسال يعمل بعد نشر الـ worker وضبط TG_WORKER_URL،
+  // أو محلياً على جهاز المدير عبر مفتاح pt-tg-admin-cfg (انظر أعلاه)
   setTimeout(function() {
     try { tgShowConsentModal(); } catch(e) {}
   }, 5000);

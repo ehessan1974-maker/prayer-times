@@ -1,16 +1,21 @@
 #!/bin/bash
 # ===== بناء تطبيق مواقيت الصلاة APK =====
 # يتطلب: OpenJRE 21+ (java, keytool)، ecj.jar، Android build-tools 34 + platform android-34
+# المسارات الافتراضية أدناه قابلة للتجاوز عبر متغيرات البيئة (بدون تعديل السكربت):
+#   PT_SDK=/مسار/.android-sdk  PT_BT=/مسار/build-tools/34.0.0  \
+#   PT_PLATFORM=/مسار/android.jar  PT_ECJ=/مسار/ecj.jar  KS_PASS=كلمة_السر  ./build-apk.sh
 set -e
 
 PROJ="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$PROJ")"
-SDK=/home/z/my-project/.android-sdk
-BT="$SDK/build-tools/android-14"
-PLATFORM="$SDK/platforms/android-34/android.jar"
-ECJ="$SDK/ecj.jar"
+SDK="${PT_SDK:-/home/z/my-project/.android-sdk}"
+BT="${PT_BT:-$SDK/build-tools/android-14}"
+PLATFORM="${PT_PLATFORM:-$SDK/platforms/android-34/android.jar}"
+ECJ="${PT_ECJ:-$SDK/ecj.jar}"
 KEYSTORE="$PROJ/prayer-times.keystore"
-KS_PASS="prayertimes2026"
+# v25.37 [أمني]: كلمة السر لم تعد مكتوبة في السكربت — مرّرها عبر متغير البيئة KS_PASS
+# مثال: KS_PASS=xxxx ./build-apk.sh   (استخدم نفس كلمة السر المعروفة حتى يبقى التوقيع متطابقاً)
+KS_PASS="${KS_PASS:-}"
 PKG_DIR="com/ehessan/prayertimes"
 OUT="$PROJ/build"
 
@@ -21,11 +26,22 @@ mkdir -p "$PROJ/assets"
 cp -f "$ROOT/prayer-times.html" "$PROJ/assets/prayer-times.html"
 
 if [ ! -f "$KEYSTORE" ]; then
+  if [ -z "$KS_PASS" ]; then
+    echo "خطأ: لا يوجد keystore ولم تُمرَّر كلمة السر." >&2
+    echo "الاستخدام: KS_PASS=<كلمة_السر> ./build-apk.sh" >&2
+    exit 1
+  fi
   echo "==> توليد مفتاح التوقيع (أول مرة فقط)"
   keytool -genkeypair -v -keystore "$KEYSTORE" -alias prayertimes \
     -keyalg RSA -keysize 2048 -validity 10950 \
     -storepass "$KS_PASS" -keypass "$KS_PASS" \
     -dname "CN=Prayer Times, OU=Apps, O=ehessan1974, L=Damascus, C=SY"
+fi
+
+if [ -z "$KS_PASS" ]; then
+  echo "خطأ: مرّر كلمة سر الـ keystore عبر متغير البيئة KS_PASS" >&2
+  echo "الاستخدام: KS_PASS=<كلمة_السر> ./build-apk.sh" >&2
+  exit 1
 fi
 
 echo "==> 2/7 aapt2 compile"
@@ -52,7 +68,9 @@ java -jar "$ECJ" -1.8 -nowarn \
   "$PROJ/java/$PKG_DIR/AlarmReceiver.java" \
   "$PROJ/java/$PKG_DIR/BootReceiver.java" \
   "$PROJ/java/$PKG_DIR/PrayerAudioService.java" \
-  "$PROJ/java/$PKG_DIR/KeepAliveService.java"
+  "$PROJ/java/$PKG_DIR/KeepAliveService.java" \
+  "$PROJ/java/$PKG_DIR/Tls12Helper.java" \
+  "$PROJ/java/$PKG_DIR/UpdateChecker.java"
 
 echo "==> 5/7 d8 (تحويل إلى dex)"
 CLASSLIST=$(find "$OUT/classes" -name "*.class" | tr '\n' ' ')

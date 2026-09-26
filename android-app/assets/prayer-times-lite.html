@@ -130,7 +130,8 @@ body {
 </div>
 
 <div class="footer">
-  مواقيت الصلاة v25.36 Lite — د. إحسان عبد المحسن العبد الله
+  مواقيت الصلاة v25.37 Lite — د. إحسان عبد المحسن العبد الله
+  <div style="margin-top:6px;"><button onclick="switchToFullVersion()" style="font-size:11px;padding:6px 14px;border-radius:10px;border:1px solid #93c5fd;background:#eff6ff;color:#1d4ed8;cursor:pointer;">⚡ التبديل إلى النسخة الكاملة</button></div>
 </div>
 
 <div class="update-toast" id="updateToast" onclick="applyUpdate()">
@@ -151,7 +152,7 @@ var latitude = null, longitude = null;
 var prayerData = null;
 var cachedInfoItems = [];
 var currentInfoIdx = 0;
-var CURRENT_APP_VERSION = "25.36";
+var CURRENT_APP_VERSION = "25.37";
 var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
 var CONTENT_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/content.json";
 
@@ -435,6 +436,17 @@ function toggleTheme() {
       document.body.className += " dark-mode";
     }
   } catch(e) {}
+}
+
+// ===== v25.37: العودة إلى النسخة الكاملة =====
+// أندرويد: عبر NativeBridge.switchToFull (يحفظ التفضيل ويعيد التحميل)
+// الويب: تحويل مباشر إلى prayer-times.html
+function switchToFullVersion() {
+  if (window.AndroidPrayer && typeof AndroidPrayer.switchToFull === "function") {
+    if (!confirm("العودة إلى النسخة الكاملة؟\n\nتشمل كل المزايا: بوصلة القبلة، الخريطة، الشاشة الذكية والمزيد.")) return;
+    try { AndroidPrayer.switchToFull(); return; } catch(e) {}
+  }
+  try { window.location.href = "prayer-times.html"; } catch(e) {}
 }
 
 // ===== التهيئة =====

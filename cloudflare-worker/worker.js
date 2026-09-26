@@ -29,6 +29,12 @@
  *   GET  /admin/users  [admin token]                  → {users: [...]}
  *   POST /admin/revoke {email}   [admin token]        → {success}
  *   POST /admin/restore {email} [admin token]        → {success}
+ *   POST /api/tg-report {text}                       → {success}  (v25.37: وسيط تيليجرام)
+ *
+ * v25.37: أُضيف /api/tg-report — وسيط آمن لإرسال تقارير الأجهزة إلى تيليجرام
+ *   دون كشف توكن البوت في كود التطبيق العام. متغيرات سرّية مطلوبة:
+ *   - TG_BOT_TOKEN: توكن البوت من @BotFather
+ *   - TG_CHAT_ID: معرّف محادثة المدير
  */
 
 // ===== Utilities =====
@@ -365,8 +371,10 @@ async function handleSaveMessages(request, env) {
     try { parsed = JSON.parse(currentContent); }
     catch (e) { parsed = []; }
 
-    // استبدال رسائل category=messages بالرسائل الجديدة
-    const nonMessages = parsed.filter(item => item && item.cat !== 'messages');
+    // استبدال رسائل category=ehemessages بالرسائل الجديدة
+    // v25.37: إصلاح — كان الفلتر يفحص 'messages' بينما التطبيق يستخدم 'ehemessages'
+    // فتتراكم النسخ المكررة بدل استبدال الرسائل
+    const nonMessages = parsed.filter(item => item && item.cat !== 'ehemessages');
     const newContent = nonMessages.concat(body.messages);
     const newJsonString = JSON.stringify(newContent, null, 2);
 
@@ -424,6 +432,58 @@ async function handleAdminRestore(request, env) {
   return jsonResponse({ success: true, email });
 }
 
+// ===== Telegram relay (v25.37) =====
+// يرسل تقرير الجهاز إلى تيليجرام نيابة عن التطبيق دون كشف التوكن
+// حماية أساسية: حد الحجم + حد المعدل البسيط لكل IP
+const tgRateMap = new Map();
+function tgRateLimited(ip) {
+  const now = Date.now();
+  const windowMs = 10 * 60 * 1000; // نافذة 10 دقائق
+  const maxReq = 8;                // 8 طلبات كحد أقصى لكل IP في النافذة
+  const entry = tgRateMap.get(ip);
+  if (!entry || now - entry.start > windowMs) {
+    tgRateMap.set(ip, { start: now, count: 1 });
+    if (tgRateMap.size > 5000) tgRateMap.clear();
+    return false;
+  }
+  entry.count++;
+  return entry.count > maxReq;
+}
+
+async function handleTgReport(request, env) {
+  if (!env.TG_BOT_TOKEN || !env.TG_CHAT_ID) {
+    return jsonResponse({ error: 'Telegram relay غير مفعّل — ضع TG_BOT_TOKEN و TG_CHAT_ID كـ secrets' }, 503);
+  }
+
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  if (tgRateLimited(ip)) {
+    return jsonResponse({ error: 'تم تجاوز حد الإرسال — حاول لاحقاً' }, 429);
+  }
+
+  let body;
+  try { body = await request.json(); }
+  catch (e) { return jsonResponse({ error: 'invalid JSON' }, 400); }
+
+  const text = String(body.text || '');
+  if (!text || text.length > 3000) {
+    return jsonResponse({ error: 'الحقل text مطلوب (حتى 3000 حرف)' }, 400);
+  }
+
+  try {
+    const resp = await fetch(`https://api.telegram.org/bot${env.TG_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: env.TG_CHAT_ID, text }),
+    });
+    if (!resp.ok) {
+      return jsonResponse({ error: 'Telegram API ' + resp.status }, 502);
+    }
+    return jsonResponse({ success: true });
+  } catch (e) {
+    return jsonResponse({ error: 'فشل الإرسال: ' + e.message }, 502);
+  }
+}
+
 // ===== Main entry =====
 
 export default {
@@ -454,6 +514,9 @@ export default {
       // Authenticated endpoints
       if (path === '/me' && method === 'GET') return await handleMe(request, env);
       if (path === '/messages' && method === 'POST') return await handleSaveMessages(request, env);
+
+      // Telegram relay (v25.37)
+      if (path === '/api/tg-report' && method === 'POST') return await handleTgReport(request, env);
 
       // Admin endpoints
       if (path === '/admin/users' && method === 'GET') return await handleAdminListUsers(request, env);
