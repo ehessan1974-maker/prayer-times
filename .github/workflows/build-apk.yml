@@ -51,17 +51,21 @@ jobs:
         mkdir -p android-studio/app/src/main/assets
         cp -f prayer-times.html android-studio/app/src/main/assets/prayer-times.html
 
-    - name: Generate release keystore
+    - name: Restore release keystore from Secrets
+      env:
+        KEYSTORE_B64: ${{ secrets.KEYSTORE_BASE64 }}
+        KS_PASS: ${{ secrets.KS_PASS }}
       run: |
-        cd android-studio
-        keytool -genkeypair -v \
-          -keystore app/release.keystore \
-          -alias prayer-times \
-          -keyalg RSA -keysize 2048 \
-          -validity 10950 \
-          -storepass prayertimes2026 \
-          -keypass prayertimes2026 \
-          -dname "CN=Prayer Times, OU=Apps, O=ehessan1974, L=Damascus, C=SY"
+        # v25.37 [أمني]: لا كلمات سر في هذا الملف — keystore الثابت الحقيقي يأتي من Secrets
+        # (Settings → Secrets and variables → Actions → KEYSTORE_BASE64 و KS_PASS)
+        # بحيث يكون توقيع APK الـ CI مطابقاً لتوقيع الإصدارات السابقة ويعمل كتحديث مباشر
+        if [ -z "$KEYSTORE_B64" ] || [ -z "$KS_PASS" ]; then
+          echo "::error::أضف السرّين KEYSTORE_BASE64 (base64 لملف keystore) و KS_PASS أولاً"
+          exit 1
+        fi
+        echo "$KEYSTORE_B64" | base64 -d > android-studio/app/release.keystore
+        keytool -list -keystore android-studio/app/release.keystore -storepass "$KS_PASS" -alias prayertimes >/dev/null
+        echo "✅ Keystore restored and verified (alias: prayertimes)"
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
@@ -87,19 +91,22 @@ jobs:
         cp "$APK" artifacts/prayer-times.apk
 
     - name: Sign APK
+      env:
+        KS_PASS: ${{ secrets.KS_PASS }}
       run: |
         cd artifacts
         $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
           --ks ../android-studio/app/release.keystore \
-          --ks-pass pass:prayertimes2026 \
-          --ks-key-alias prayer-times \
-          --key-pass pass:prayertimes2026 \
+          --ks-pass "pass:$KS_PASS" \
+          --ks-key-alias prayertimes \
+          --key-pass "pass:$KS_PASS" \
           --out prayer-times-signed.apk prayer-times.apk
         $ANDROID_HOME/build-tools/34.0.0/apksigner verify prayer-times-signed.apk && echo "✅ APK signed successfully"
 
     - name: Rename APK with version
       run: |
-        VERSION=$(grep 'versionName' android-studio/app/build.gradle | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        # المصدر الرسمي للإصدار هو version.json وليس build.gradle
+        VERSION=$(jq -r .appVersion version.json)
         echo "VERSION=$VERSION" >> $GITHUB_ENV
         cp artifacts/prayer-times-signed.apk artifacts/prayer-times-v${VERSION}.apk
         ls -la artifacts/
