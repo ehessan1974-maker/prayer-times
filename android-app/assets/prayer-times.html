@@ -1451,6 +1451,12 @@ body.dark-mode #iqamaSettings span[style*="color:#9ca3af"] { color:#9fb8ab !impo
 body.dark-mode #timeOffsetsSettings button { background:#1a2a22 !important; color:#e8f5ee !important; border-color:#2b4a3a !important; }
 body.dark-mode #timeOffsetsSettings input[type="number"],
 body.dark-mode #iqamaSettings input[type="number"] { background:#0f1a15 !important; border-color:#2b4a3a !important; color:#6ee7b7 !important; }
+/* v25.40: ألوان دلالية لمدخلات تصحيح المواقيت في الوضع الليلي — السالب أحمر والموجب أخضر */
+body.dark-mode #timeOffsetsSettings input[type="number"][style*="color:#dc2626"] { color:#f87171 !important; }
+body.dark-mode #timeOffsetsSettings input[type="number"][style*="color:#059669"] { color:#6ee7b7 !important; }
+body.dark-mode #timeOffsetsSettings input[type="number"][style*="color:#6b7280"] { color:#9fb8ab !important; }
+/* v25.40: توضيح خط معرّف الجهاز في الوضع الليلي */
+body.dark-mode #deviceIdDisplay { color:#e8f5ee !important; background:#0f1a15 !important; border-color:#2b4a3a !important; }
 /* v25.34: إصلاح ألوان النصوص الثانوية في الإعدادات للوضع الليلي */
 body.dark-mode .modal div[style*="color:#374151"] { color:#e8f5ee !important; }
 body.dark-mode .modal div[style*="color:#6b7280"] { color:#9fb8ab !important; }
@@ -1746,7 +1752,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="setting-box" style="display:block;">
         <div style="font-size:10px;color:#6b7280;margin-bottom:4px;">معرّف فريد لجهازك — استخدمه لاستقبال رسائل خاصة بك:</div>
         <div style="display:flex;gap:6px;align-items:center;">
-          <input type="text" id="deviceIdDisplay" readonly style="flex:1;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:11px;font-family:monospace;background:#f9fafb;color:#374151;text-align:left;direction:ltr;" />
+          <input type="text" id="deviceIdDisplay" readonly style="flex:1;padding:7px 9px;border:1px solid #9ca3af;border-radius:6px;font-size:13px;font-family:monospace;font-weight:700;letter-spacing:0.5px;background:#f9fafb;color:#111827;text-align:left;direction:ltr;" />
           <button class="btn btn-outline btn-sm" onclick="copyDeviceId()" id="copyDeviceIdBtn" style="white-space:nowrap;">📋 نسخ</button>
         </div>
         <div style="font-size:9px;color:#9ca3af;margin-top:4px;line-height:1.5;">
@@ -4121,7 +4127,7 @@ function renderTimeOffsetsSettings() {
             '<span style="display:table-cell;vertical-align:middle;font-size:13px;color:#374151;">' + PRAYER_NAMES[k] + '</span>' +
             '<div style="display:table-cell;vertical-align:middle;text-align:left;">' +
             '<button onclick="adjustTimeOffset(\'' + k + '\',-1)" style="border:1px solid #d1d5db;border-radius:6px 0 0 6px;background:#fee2e2;color:#b91c1c;width:30px;height:28px;font-size:16px;cursor:pointer;">−</button>' +
-            '<input type="number" value="' + val + '" onchange="updateTimeOffset(\'' + k + '\',this.value)" style="width:50px;text-align:center;border:1px solid #d1d5db;border-left:none;border-right:none;padding:4px;font-size:14px;font-family:monospace;height:28px;color:' + color + ';" />' +
+            '<input type="number" value="' + val + '" onchange="updateTimeOffset(\'' + k + '\',this.value)" style="width:50px;text-align:center;border:1px solid #d1d5db;border-left:none;border-right:none;padding:4px;font-size:14px;font-family:monospace;height:28px;font-weight:' + (val < 0 ? '700' : '400') + ';color:' + color + ';" />' +
             '<button onclick="adjustTimeOffset(\'' + k + '\',1)" style="border:1px solid #d1d5db;border-radius:0 6px 6px 0;background:#dcfce7;color:#166534;width:30px;height:28px;font-size:16px;cursor:pointer;">+</button>' +
             '<span style="font-size:10px;color:#9ca3af;margin-right:6px;">دقيقة</span>' +
             '</div></div>';
@@ -5819,7 +5825,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.39"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.40"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
