@@ -152,7 +152,7 @@ var latitude = null, longitude = null;
 var prayerData = null;
 var cachedInfoItems = [];
 var currentInfoIdx = 0;
-var CURRENT_APP_VERSION = "25.44";
+var CURRENT_APP_VERSION = "25.45";
 // v25.43: مصادر متعددة — إذا فشل jsDelivr نجرّب GitHub Pages ثم raw مباشرة
 var UPDATE_SOURCE_URLS = [
   "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json",
@@ -170,31 +170,59 @@ function el(id) { return document.getElementById(id); }
 function pad(n) { return n < 10 ? "0" + n : "" + n; }
 
 // ===== الموقع =====
+// v25.45: عرض فوري بآخر إحداثيات معروفة + مراقب تعليق — بعض أجهزة أندرويد
+// لا تعيد getCurrentPosition أي رد إطلاقاً فتبقى الشاشة فارغة حتى التحديث اليدوي
 function requestLocation() {
-  if (window.AndroidPrayer) {
-    // على أندرويد، NativeBridge قد يوفر الموقع لاحقاً
-    // نحاول navigator.geolocation أولاً
-  }
+  try {
+    var ll = localStorage.getItem("last-lat"), lm = localStorage.getItem("last-lng");
+    if (ll && lm) {
+      var flt = parseFloat(ll), fln = parseFloat(lm);
+      if (!isNaN(flt) && !isNaN(fln)) { latitude = flt; longitude = fln; fetchPrayerTimes(); }
+    }
+  } catch(e) {}
+  var settled = false;
+  var locWatchdog = setTimeout(function() {
+    if (settled) return; settled = true;
+    onLocationError({ message: "تعليق تحديد الموقع" });
+  }, 15000);
   if (navigator.geolocation) {
     try {
-      navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError, {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        if (settled) return; settled = true; clearTimeout(locWatchdog);
+        onLocationSuccess(pos);
+      }, function(err) {
+        if (settled) return; settled = true; clearTimeout(locWatchdog);
+        onLocationError(err);
+      }, {
         enableHighAccuracy: true, timeout: 15000, maximumAge: 60000
       });
-    } catch(e) { onLocationError(e); }
+    } catch(e) { if (!settled) { settled = true; clearTimeout(locWatchdog); onLocationError(e); } }
   } else {
-    onLocationError({ message: "لا يدعم الموقع" });
+    if (!settled) { settled = true; clearTimeout(locWatchdog); onLocationError({ message: "لا يدعم الموقع" }); }
   }
 }
 
 function onLocationSuccess(pos) {
   latitude = pos.coords.latitude;
   longitude = pos.coords.longitude;
+  try {
+    // v25.45: احفظ آخر إحداثيات ناجحة للاقلاع السريع في المرة القادمة
+    localStorage.setItem("last-lat", latitude.toString());
+    localStorage.setItem("last-lng", longitude.toString());
+  } catch(e) {}
   el("locationDisplay").textContent = "📍 " + latitude.toFixed(4) + "°, " + longitude.toFixed(4) + "°";
   fetchPrayerTimes();
 }
 
 function onLocationError(err) {
-  // fallback: دمشق
+  // fallback: آخر موقع معروف ثم دمشق
+  try {
+    var ll = localStorage.getItem("last-lat"), lm = localStorage.getItem("last-lng");
+    if (ll && lm) {
+      var flt = parseFloat(ll), fln = parseFloat(lm);
+      if (!isNaN(flt) && !isNaN(fln)) { latitude = flt; longitude = fln; el("locationDisplay").textContent = "📍 آخر موقع معروف"; fetchPrayerTimes(); return; }
+    }
+  } catch(e) {}
   latitude = 33.5138;
   longitude = 36.2765;
   el("locationDisplay").textContent = "📍 دمشق (افتراضي)";

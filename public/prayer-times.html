@@ -3042,6 +3042,15 @@ function applyTimeOffsets() {
     var sl = localStorage.getItem("manual-lat");
     var sm = localStorage.getItem("manual-lng");
     if (sl && sm) { latitude = parseFloat(sl); longitude = parseFloat(sm); isManualLocation = true; }
+    // v25.45: استعادة آخر إحداثيات GPS ناجحة — ليُعرض الكاش فوراً عند الإقلاع بدل الشاشة الفارغة
+    else {
+      var ll = localStorage.getItem("last-lat");
+      var lm = localStorage.getItem("last-lng");
+      if (ll && lm) {
+        var flt = parseFloat(ll), fln = parseFloat(lm);
+        if (!isNaN(flt) && !isNaN(fln)) { latitude = flt; longitude = fln; }
+      }
+    }
     // v21: طريقة الحساب — لو لم يضبط المستخدم طريقة مخصصة، استخدم الهيئة المصرية (5)
     var smth = localStorage.getItem("pt-method");
     var methodSet = localStorage.getItem("pt-method-set");
@@ -3352,18 +3361,37 @@ function hasTimings() {
 // ===== LOCATION =====
 function requestLocation() {
   locError = null;
-  if (!navigator.geolocation) { locError = "المتصفح لا يدعم تحديد الموقع"; renderLocation(); fetchPrayerTimes(); return; }
+  // v25.45 [إصلاح حرج]: على بعض أجهزة أندرويد (موقع النظام مطفأ/إذن معلّق/WebView قديم)
+  // لا يعيد getCurrentPosition أي رد إطلاقاً: لا نجاح ولا خطأ ولا انتهاء مهلة 15 ثانية —
+  // كانت النتيجة شاشة فارغة حتى الضغط اليدوي على «تحديث المواقيت».
+  // المراقب أدناه يضمن أن fetchPrayerTimes() يُستدعى دائماً بأي إحداثيات متاحة.
+  var settled = false;
+  var locWatchdog = setTimeout(function() {
+    if (settled) return;
+    settled = true;
+    locError = "تعذر تحديد الموقع تلقائياً — تُعرض المواقيت بآخر موقع معروف";
+    renderLocation();
+    fetchPrayerTimes();
+  }, 20000);
+  if (!navigator.geolocation) { clearTimeout(locWatchdog); locError = "المتصفح لا يدعم تحديد الموقع"; renderLocation(); fetchPrayerTimes(); return; }
   // v16.1: تفعيل الدقة العالية + إلغاء الكاش للحصول على موقع دقيق
   navigator.geolocation.getCurrentPosition(
     function(pos) {
+      if (settled) return; settled = true; clearTimeout(locWatchdog);
       latitude = pos.coords.latitude; longitude = pos.coords.longitude;
       isManualLocation = false;
-      try { localStorage.removeItem("manual-lat"); localStorage.removeItem("manual-lng"); } catch(e) {}
+      try {
+        localStorage.removeItem("manual-lat"); localStorage.removeItem("manual-lng");
+        // v25.45: احفظ آخر إحداثيات ناجحة — للاقلاع السريع (عرض الكاش فوراً) في المرة القادمة
+        localStorage.setItem("last-lat", latitude.toString());
+        localStorage.setItem("last-lng", longitude.toString());
+      } catch(e) {}
       geoName = ""; reverseGeoName(latitude, longitude); // v13: اسم الموقع تلقائياً بعد الجغرافيا
       qiblaRefreshIfOpen(); // v14: تحديث البوصلة إن كانت مفتوحة
       locError = null; fetchPrayerTimes();
     },
     function(err) {
+      if (settled) return; settled = true; clearTimeout(locWatchdog);
       var msgs = { 1:"تم رفض إذن تحديد الموقع", 2:"الموقع غير متاح", 3:"انتهت مهلة طلب الموقع" };
       locError = msgs[err.code] || "فشل في تحديد الموقع";
       renderLocation(); fetchPrayerTimes();
@@ -5859,7 +5887,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.44"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.45"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
@@ -6348,7 +6376,7 @@ function registerServiceWorker() {
   }
   initDragScroll();
   if (isManualLocation) { fetchPrayerTimes(); }
-  else { requestLocation(); }
+  else { fetchPrayerTimes(); requestLocation(); } // v25.45: عرض فوري من الكاش/آخر موقع معروف ثم تحسين بالـ GPS
   // أداة الاختبار للمتصفح فقط — تُخفى داخل تطبيق أندرويد (الإشعارات النظامية تكفي)
   setTimeout(function() { if (!window.AndroidPrayer) { addTestControl(); createTestPanel(); } }, 1000);
 
