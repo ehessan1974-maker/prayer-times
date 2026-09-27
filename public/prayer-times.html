@@ -1770,6 +1770,13 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <button class="btn btn-primary" onclick="refreshData();closeSettings();">تحديث المواقيت</button>
     </div>
 
+    <!-- v25.43: فحص التحديثات يدوياً مع رسائل صريحة بدل الصمت -->
+    <div class="modal-section">
+      <div class="sec-title">🔄 فحص التحديثات</div>
+      <div class="sec-desc">يفحص ثلاثة مصادر بالترتيب (jsDelivr ثم GitHub Pages ثم GitHub مباشرة) ويخبرك بالنتيجة صراحة: لا مزيد من التحديثات الصامتة الضائعة.</div>
+      <button class="btn btn-outline" style="width:100%;background:#f0fdf4;color:#065f46;border-color:#86efac;" onclick="manualCheckAppUpdate()">🔄 فحص التحديثات الآن</button>
+    </div>
+
     <!-- v23.4: زر مسح الكاش -->
     <div class="modal-section">
       <div class="sec-title">🗑️ مسح الكاش</div>
@@ -5844,10 +5851,16 @@ function compareVersions(a, b) {
 // =====================================================================
 // ===== AUTO UPDATE — فحص version.json دورياً وتحديث التطبيق =====
 // =====================================================================
-var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
+// v25.43: مصادر تحديث متعددة — إذا فشل jsDelivr (حجب/تعثر شبكة/كاش قديم) نجرّب GitHub Pages ثم raw مباشرة.
+// الفحص يبدأ بالمصدر الذي نجح آخر مرة (_updateSourceIdx لاصق).
+var UPDATE_SOURCE_URLS = [
+  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json",
+  "https://ehessan1974-maker.github.io/prayer-times/version.json",
+  "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json"
+];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.42"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.43"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
@@ -6198,68 +6211,101 @@ function manualClearCache() {
   } else { check(); }
 }
 
-function checkAppUpdate() {
-  if (!navigator.onLine) return;
-  var url = VERSION_URL + "?t=" + Date.now();
-  var onResult = function(text) {
-    if (!text) return;
-    try {
-      var info = (typeof text === "string") ? JSON.parse(text) : text;
-      if (!info || !info.appVersion) return;
-      var latest = String(info.appVersion);
-      var current = CURRENT_APP_VERSION;
-      // v25.20: مقارنة رقمية بدلاً من نصية — فقط أظهر التوست إذا كانت النسخة الجديدة أحدث
-      // (وليس مجرد مختلفة) — هذا يمنع ظهور التوست إذا كان لدى المستخدم نسخة أحدث من version.json
-      var cmp = compareVersions(latest, current);
-      if (cmp > 0) {
-        // latest أحدث من current — أظهر التوست
-        try {
-          localStorage.setItem("pt-update-info", JSON.stringify({
-            version: latest,
-            url: info.htmlUrl || "",
-            releasedAt: info.releasedAt || ""
-          }));
-        } catch(e) {}
-        showUpdateToast(latest);
-      } else {
-        // latest == current أو latest أقدم — أخفِ التوست
-        hideUpdateToast();
-      }
-    } catch(e) {}
-  };
+// v25.43: حالة سلسلة الفحص متعدد المصادر
+var _updateSourceIdx = 0;   // المصدر الذي نجح آخر مرة — الفحص التالي يبدأ به
+var _updateTriedCount = 0;  // كم مصدراً جُرّب في الفحص الحالي
+var _updateCurrentIdx = 0;  // المصدر الجاري حالياً
+var _updateManual = false;  // فحص يدوي (من زر الإعدادات) — يُظهر رسائل صريحة
+
+function _updateCheckFinished(ok, info) {
+  if (!_updateManual) return;
+  _updateManual = false;
+  if (!ok) {
+    showNotification("❌ تعذر الاتصال بمصادر التحديث الثلاثة — تحقق من اتصال الإنترنت وحاول مجدداً");
+    return;
+  }
+  var cmp = compareVersions(String(info.appVersion), CURRENT_APP_VERSION);
+  if (cmp > 0) {
+    showNotification("🔄 يوجد تحديث جديد v" + info.appVersion + " — اضغط الشريط الأخضر أسفل الشاشة");
+  } else {
+    showNotification("✅ أنت على أحدث نسخة (v" + CURRENT_APP_VERSION + ") — الفحص تم بنجاح");
+  }
+}
+
+function _updateTryNextSource() {
+  _updateTriedCount++;
+  if (_updateTriedCount >= UPDATE_SOURCE_URLS.length) {
+    _updateCheckFinished(false, null);
+    return;
+  }
+  _updateCurrentIdx = (_updateCurrentIdx + 1) % UPDATE_SOURCE_URLS.length;
+  _doCheckFrom(_updateCurrentIdx);
+}
+
+function _doCheckFrom(idx) {
+  var url = UPDATE_SOURCE_URLS[idx] + "?t=" + Date.now();
   try {
     if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
       AndroidPrayer.fetchUrl(url, "_appVersionCallback");
     } else if (window.XMLHttpRequest) {
       var x = new XMLHttpRequest();
+      var settled = false;
+      function fail() { if (settled) return; settled = true; _updateTryNextSource(); }
       x.open("GET", url, true);
-      x.timeout = 10000;
+      x.timeout = 8000;
       x.onreadystatechange = function() {
-        if (x.readyState !== 4) return;
-        if (x.status === 200) onResult(x.responseText);
+        if (x.readyState !== 4 || settled) return;
+        if (x.status === 200) { settled = true; _appVersionCallback(x.responseText); }
+        else fail();
       };
+      x.ontimeout = fail;
+      x.onerror = fail;
       x.send();
+    } else {
+      _updateTryNextSource();
     }
-  } catch(e) {}
+  } catch(e) { _updateTryNextSource(); }
+}
+
+function checkAppUpdate() {
+  if (!navigator.onLine) { _updateCheckFinished(false, null); return; }
+  _updateTriedCount = 0;
+  _updateCurrentIdx = _updateSourceIdx;
+  _doCheckFrom(_updateCurrentIdx);
+}
+
+// v25.43: فحص يدوي من الإعدادات — يخبر المستخدم بالنتيجة صراحة بدل الصمت
+function manualCheckAppUpdate() {
+  _updateManual = true;
+  showNotification("⏳ جارٍ فحص التحديثات عبر 3 مصادر...");
+  checkAppUpdate();
 }
 
 function _appVersionCallback(data) {
-  if (!data && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+  if ((!data || data === "") && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
     try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
   }
+  var info = null;
   try {
-    var info = (typeof data === "string") ? JSON.parse(data) : data;
-    if (info && info.appVersion) {
-      // v25.20: مقارنة رقمية — فقط أظهر التوست إذا كانت النسخة الجديدة أحدث
-      var cmp = compareVersions(String(info.appVersion), CURRENT_APP_VERSION);
-      if (cmp > 0) {
-        try { localStorage.setItem("pt-update-info", JSON.stringify({version: info.appVersion, url: info.htmlUrl||""})); } catch(e2) {}
-        showUpdateToast(info.appVersion);
-      } else {
-        hideUpdateToast();
-      }
-    }
-  } catch(e3) {}
+    info = (typeof data === "string") ? JSON.parse(data) : data;
+    if (!info || !info.appVersion) info = null;
+  } catch(e) { info = null; }
+  if (!info) {
+    // هذا المصدر فشل أو أعطى بيانات غير صالحة — جرّب المصدر التالي
+    _updateTryNextSource();
+    return;
+  }
+  // نجح هذا المصدر — اجعله الافتراضي للفحص القادم
+  _updateSourceIdx = _updateCurrentIdx;
+  // v25.20: مقارنة رقمية — فقط أظهر التوست إذا كانت النسخة الجديدة أحدث
+  var cmp = compareVersions(String(info.appVersion), CURRENT_APP_VERSION);
+  if (cmp > 0) {
+    try { localStorage.setItem("pt-update-info", JSON.stringify({version: info.appVersion, url: info.htmlUrl||"", releasedAt: info.releasedAt||""})); } catch(e2) {}
+    showUpdateToast(String(info.appVersion));
+  } else {
+    hideUpdateToast();
+  }
+  _updateCheckFinished(true, info);
 }
 
 function registerServiceWorker() {

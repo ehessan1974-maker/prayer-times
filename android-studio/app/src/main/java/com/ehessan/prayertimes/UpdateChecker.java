@@ -22,13 +22,23 @@ import java.net.URL;
  */
 public class UpdateChecker {
 
-    private static final String VERSION_URL =
-            "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
-    private static final String HTML_URL =
-            "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html";
+    // v25.43: مصادر متعددة — إذا فشل jsDelivr (حجب/تعثر شبكة) نجرّب GitHub Pages ثم raw مباشرة
+    private static final String[] VERSION_URLS = {
+            "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json",
+            "https://ehessan1974-maker.github.io/prayer-times/version.json",
+            "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json"
+    };
+    private static final String[] HTML_URLS = {
+            "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html",
+            "https://ehessan1974-maker.github.io/prayer-times/prayer-times.html",
+            "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html"
+    };
     // v25.36: نسخة مبسطة للأجهزة القديمة (Android 4.2.2+)
-    private static final String LITE_HTML_URL =
-            "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times-lite.html";
+    private static final String[] LITE_HTML_URLS = {
+            "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times-lite.html",
+            "https://ehessan1974-maker.github.io/prayer-times/prayer-times-lite.html",
+            "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times-lite.html"
+    };
     private static final long INTERVAL_MS = 5 * 60 * 1000; // 5 دقائق
     private static final String PREF_NAME = "pt-prefs";
     private static final String PREF_LAST_VERSION = "last-known-app-version";
@@ -57,7 +67,7 @@ public class UpdateChecker {
      */
     public static boolean checkAndDownload(Context ctx, String jsToastCallback) {
         try {
-            String versionJson = httpGet(VERSION_URL + "?t=" + System.currentTimeMillis());
+            String versionJson = httpGetAny(VERSION_URLS);
             if (versionJson == null || versionJson.length() == 0) return false;
 
             JSONObject info = new JSONObject(versionJson);
@@ -69,8 +79,8 @@ public class UpdateChecker {
 
             if (latest.equals(known)) return false; // لا تحديث جديد
 
-            // نزّل HTML الجديد
-            String html = httpGet(HTML_URL + "?t=" + System.currentTimeMillis());
+            // نزّل HTML الجديد (يجرّب المصادر بالترتيب حتى ينجح واحد)
+            String html = httpGetAny(HTML_URLS);
             if (html == null || html.length() < 1000) return false;
 
             File out = new File(ctx.getFilesDir(), "prayer-times.html");
@@ -86,7 +96,7 @@ public class UpdateChecker {
 
             // v25.36: نزّل أيضاً النسخة المبسطة (Lite) للأجهزة القديمة
             try {
-                String liteHtml = httpGet(LITE_HTML_URL + "?t=" + System.currentTimeMillis());
+                String liteHtml = httpGetAny(LITE_HTML_URLS);
                 if (liteHtml != null && liteHtml.length() > 1000) {
                     File liteOut = new File(ctx.getFilesDir(), "prayer-times-lite.html");
                     File liteTmp = new File(ctx.getFilesDir(), "prayer-times-lite.html.tmp");
@@ -110,6 +120,15 @@ public class UpdateChecker {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /** v25.43: يجرّب المصادر بالترتيب ويعيد أول استجابة غير فارغة — cache-busting لكل محاولة */
+    private static String httpGetAny(String[] urls) {
+        for (String u : urls) {
+            String r = httpGet(u + (u.contains("?") ? "&" : "?") + "t=" + System.currentTimeMillis());
+            if (r != null && r.length() > 0) return r;
+        }
+        return "";
     }
 
     private static String httpGet(String urlStr) {

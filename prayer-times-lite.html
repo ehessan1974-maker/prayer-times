@@ -152,8 +152,13 @@ var latitude = null, longitude = null;
 var prayerData = null;
 var cachedInfoItems = [];
 var currentInfoIdx = 0;
-var CURRENT_APP_VERSION = "25.42";
-var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
+var CURRENT_APP_VERSION = "25.43";
+// v25.43: مصادر متعددة — إذا فشل jsDelivr نجرّب GitHub Pages ثم raw مباشرة
+var UPDATE_SOURCE_URLS = [
+  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json",
+  "https://ehessan1974-maker.github.io/prayer-times/version.json",
+  "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json"
+];
 var CONTENT_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/content.json";
 
 var PRAYER_NAMES = { Fajr:"الفجر", Sunrise:"الشروق", Dhuhr:"الظهر", Asr:"العصر", Maghrib:"المغرب", Isha:"العشاء" };
@@ -383,30 +388,48 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-// ===== التحديث التلقائي =====
+// ===== التحديث التلقائي (v25.43: سلسلة مصادر بديلة بدل مصدر واحد صامت) =====
+var _liteUpdateIdx = 0;   // المصدر الذي نجح آخر مرة
+var _liteUpdateTried = 0; // كم مصدراً جُرّب
+var _liteUpdateCur = 0;   // المصدر الجاري
+
 function checkAppUpdate() {
-  if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
-    try {
-      AndroidPrayer.fetchUrl(VERSION_URL + "?t=" + Date.now(), "_versionCallback");
-      return;
-    } catch(e) {}
-  }
+  _liteUpdateTried = 0;
+  _liteUpdateCur = _liteUpdateIdx;
+  _liteDoCheck();
+}
+
+function _liteDoCheck() {
+  var url = UPDATE_SOURCE_URLS[_liteUpdateCur] + "?t=" + Date.now();
+  try {
+    if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
+      AndroidPrayer.fetchUrl(url, "_versionCallback");
+    }
+  } catch(e) {}
 }
 
 function _versionCallback(data) {
-  if (!data && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+  if ((!data || data === "") && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
     try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
   }
-  if (!data) return;
+  var info = null;
   try {
-    var info = (typeof data === "string") ? JSON.parse(data) : data;
-    if (info && info.appVersion) {
-      var latest = String(info.appVersion);
-      if (latest !== CURRENT_APP_VERSION) {
-        el("updateToast").style.display = "block";
-      }
+    info = (typeof data === "string") ? JSON.parse(data) : data;
+    if (!info || !info.appVersion) info = null;
+  } catch(e) { info = null; }
+  if (!info) {
+    // هذا المصدر فشل — جرّب التالي
+    _liteUpdateTried++;
+    if (_liteUpdateTried < UPDATE_SOURCE_URLS.length) {
+      _liteUpdateCur = (_liteUpdateCur + 1) % UPDATE_SOURCE_URLS.length;
+      _liteDoCheck();
     }
-  } catch(e) {}
+    return;
+  }
+  _liteUpdateIdx = _liteUpdateCur;
+  if (String(info.appVersion) !== CURRENT_APP_VERSION) {
+    el("updateToast").style.display = "block";
+  }
 }
 
 function applyUpdate() {
