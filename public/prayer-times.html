@@ -2162,7 +2162,7 @@ function toggleCatFilter(cat) {
   el("infoSection").style.display = "block";
   if (el("infoCatBar")) el("infoCatBar").style.display = "block";
   var filtered = getFilteredItems();
-  displayCurrentInfo();
+  displayCurrentInfo(true); // v25.39: إعادة رسم قسرية عند تبديل القسم حتى مع الإيقاف المؤقت
   if (cachedInfoItems.length === 0) {
     fetchContentJSON();
   }
@@ -2529,12 +2529,19 @@ function applyConstantScrollSpeed(trackEl) {
   trackEl.style.animationDuration = durationSec + "s";
 }
 
-function displayCurrentInfo() {
+function displayCurrentInfo(force) {
   if (!onlineInfoEnabled) return;
   el("infoSection").style.display = "block";
   el("infoCatBar").style.display = "block";
   var track = el("infoTrack");
   if (!track) return;
+  // v25.39: التحديث الدوري (كل 30 ثانية) كان يعيد بناء المحتوى فيقتل أي سحب جارٍ
+  // ويعيد الحركة — لا تُقاطع العرض أثناء الإيقاف المؤقت أو أثناء السحب/القصور الذاتي
+  var _infoCardEl = el("infoCard");
+  if (!force) {
+    if (infoScrollPaused && track.querySelector(".info-track-card")) return;
+    if (_infoCardEl && (_infoCardEl.classList.contains("inertial-scroll") || _infoCardEl.classList.contains("dragging"))) return;
+  }
   if (cachedInfoItems.length === 0) {
     track.innerHTML = '<div style="text-align:center;padding:30px 10px;color:#6b7280;font-size:11px;">⏳ جاري تحميل البيانات من GitHub...</div>';
     return;
@@ -2665,6 +2672,8 @@ function initDragScroll() {
   // v25.19: لتتبع ما إذا حدث سحب فعلي (لمنع nextInfo() بعد السحب)
   var dragActuallyMoved = false;
   var dragStartThreshold = 5; // عدد البكسلات التي يجب تحريكها ليُعتبر سحباً
+  // v25.39: عدّاد تسلسل لإلغاء سلاسل الاستعادة المعلّقة (rAF) عند بدء تفاعل جديد
+  var restoreSeq = 0;
 
   function getOneCopyHeight() {
     var fullH = track.scrollHeight;
@@ -2701,6 +2710,7 @@ function initDragScroll() {
     track.style.transform = "translateY(" + wrapped + "px)";
   }
   function enableInertialMode() {
+    restoreSeq++; // v25.39: ألغِ أي استعادة معلّقة قبل تفعيل الوضع اليدوي
     if (card.classList.contains("inertial-scroll")) return;
     // v25.23: اقرأ الموضع الحالي قبل تفعيل inertial-scroll
     var preservedOffset = getCurrentAnimationOffset();
@@ -2722,6 +2732,9 @@ function initDragScroll() {
     if (restoreTimer) { clearTimeout(restoreTimer); restoreTimer = null; }
     if (momentumRAF) { cancelAnimationFrame(momentumRAF); momentumRAF = null; }
     momentumActive = false;
+    // v25.39: لا تستعد أثناء سحب نشط — endDrag سيعيد الجدولة بعد انتهائه
+    if (isDragging) return;
+    var seq = ++restoreSeq;
     var oneCopy = getOneCopyHeight();
     if (oneCopy > 0) {
       // v25.24: حساب نسبة التقدم في التمرير من currentOffset
@@ -2738,24 +2751,23 @@ function initDragScroll() {
     }
     // v25.24: استخدم requestAnimationFrame لضمان تطبيق animation-delay
     // قبل إزالة inertial-scroll وقبل مسح transform
-    // هذا يمنع القفزة اللحظية للبداية
     requestAnimationFrame(function() {
+      // v25.39: تجاهل إذا بدأ تفاعل جديد قبل تنفيذ الإطار
+      if (seq !== restoreSeq || isDragging) return;
       // إزالة inertial-scroll لإعادة تفعيل الأنيميشن
       card.classList.remove("inertial-scroll");
       card.classList.remove("dragging");
       track.classList.remove("smooth-decel");
       // طلب إطار آخر لضمان أن المتصفح طبّق الأنيميشن مع animation-delay
       requestAnimationFrame(function() {
+        if (seq !== restoreSeq || isDragging) return; // v25.39
         // الآن امسح transform — الأنيميشن يجب أن يكون بدأ من الموضع الصحيح
         track.style.webkitTransform = "";
         track.style.transform = "";
-        // امسح animation-delay بعد فترة وجيزة
-        setTimeout(function() {
-          try {
-            track.style.webkitAnimationDelay = "";
-            track.style.animationDelay = "";
-          } catch(e) {}
-        }, 200);
+        // v25.39 — الإصلاح الجوهري: لم نعد نمسح animation-delay بعد 200ms!
+        // مسح الـ delay كان يُرجع وقت الأنيميشن إلى الصفر فيقفز المحتوى إلى
+        // البداية (وخاصة وهو موقوف بالضغط فيتجمد هناك). القيمة تُكتب من جديد
+        // تلقائياً في كل استعادة لاحقة، فلا حاجة لمسحها إطلاقاً.
       });
     });
   }
@@ -2814,6 +2826,9 @@ function initDragScroll() {
     if (momentumRAF) { cancelAnimationFrame(momentumRAF); momentumRAF = null; }
     momentumActive = false;
     velocity = 0;
+    // v25.39: ألغِ أي استعادة معلّقة كي لا تعيد الأنيميشن في منتصف اللمس/السحب
+    if (restoreTimer) { clearTimeout(restoreTimer); restoreTimer = null; }
+    restoreSeq++;
   }
   function moveDrag(clientY) {
     if (!isDragging) return;
@@ -2839,7 +2854,9 @@ function initDragScroll() {
     card.classList.remove("dragging");
     // v25.21: إذا لم يحدث سحب فعلي، لا تبدأ momentum — الأنيميشن لم يتوقف أصلاً
     if (!dragActuallyMoved) {
-      // نقرة بسيطة — لا شيء يجب فعله هنا (nextInfo سيتولاها)
+      // v25.39: نقرة بسيطة — لكن إن بقي وضع inertial مفعّلاً من تفاعل سابق
+      // (مثلاً عجلة الفأرة ثم نقرة سريعة) فأعد جدولة الاستعادة حتى لا يعلق الوضع اليدوي
+      if (card.classList.contains("inertial-scroll")) scheduleRestore(50);
       return;
     }
     var finalV = computeVelocityFromSamples(Date.now());
@@ -5802,7 +5819,7 @@ function compareVersions(a, b) {
 var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.38"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.39"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
