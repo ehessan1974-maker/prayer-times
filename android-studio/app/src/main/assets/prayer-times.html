@@ -13,6 +13,7 @@
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
 <!-- v15: أشرطة تمرير عريضة وواضحة (الإعدادات وكل المناطق القابلة للتمرير) — تحكم أسهل بالفأرة واللمس والشاشة الذكية -->
+<!-- v25.37: [أمني] إزالة توكن تيليجرام من الكود (الإرسال عبر worker أو إعداد المدير) + مبدّل النسخة المبسطة Lite في الإعدادات + إصلاح فلتر رسائل الـ worker + إكمال ملفات build-apk.sh -->
 <!-- v12: وضع الشاشة الذكية — لوحة 1600×900 ملء الشاشة بلا تمرير + خط الثلث المضمّن (v8) -->
 <!-- خط الثلث لاسم اليوم — مضمّن Base64 يعمل بلا إنترنت (v8) -->
 <style>
@@ -600,6 +601,10 @@ body.dark-mode .msged-audience-add-name { background:#0f1f18; color:#e2e8f0; bor
 }
 .credits-item .role { font-size: 12px; color: #059669; font-weight: 600; margin-bottom: 4px; }
 .credits-item .name { font-size: 15px; color: #064e3b; font-weight: 700; }
+/* v25.30: ألوان نصوص لوحة حول البرنامج — الوضع النهاري */
+.credits-text { color: #374151; }
+.credits-text h3 { color: #065f46; }
+.credits-text b { color: #064e3b; }
 .credits-close {
   margin-top: 20px; padding: 10px 24px; border-radius: 50px;
   background: #059669; color: white; border: none; font-family: inherit;
@@ -765,6 +770,8 @@ body.dark-mode .msged-audience-add-name { background:#0f1f18; color:#e2e8f0; bor
   margin-top: 2px;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  /* v25.18: الحفاظ على فواصل الأسطر (\n) في النصوص */
+  white-space: pre-line;
 }
 .info-track-card .info-track-source {
   font-size: 9px;
@@ -1013,35 +1020,317 @@ body.smart *::-webkit-scrollbar { width: 20px; height: 20px; }
 body.smart *::-webkit-scrollbar-thumb { border-width: 4px; }
 body.smart .modal { scrollbar-gutter: stable; }
 
-/* ====== v17: اتجاه القبلة (سهم + خريطة) ====== */
-.qb-arrow-stage { display:flex; justify-content:center; padding:10px 0 6px; }
-.qb-arrow-circle {
-  position:relative; width:180px; height:180px; border-radius:50%;
-  background: radial-gradient(circle, #ffffff 58%, #ecfdf5 100%);
-  border:3px solid #059669;
-  box-shadow: 0 4px 18px rgba(5,150,105,0.25), inset 0 0 14px rgba(5,150,105,0.12);
-  display:flex; align-items:center; justify-content:center;
-  overflow:hidden;
+/* ====== v25.6: بوصلة القبلة الجديدة (السهم فوق الخريطة) ====== */
+.qb-compass-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 12px;
 }
-.qb-cardinal {
-  position:absolute; font-size:14px; font-weight:bold; color:#059669;
+
+/* v25.6: حاوية الخريطة + السهم معاً */
+.qb-map-arrow-container {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  height: 460px;
+  margin: 8px auto;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 3px solid #059669;
+  box-shadow: 0 6px 20px rgba(5,150,105,0.3);
+  background: #e6f4ec;
 }
-.qb-cardinal-n { top:6px; left:50%; transform:translateX(-50%); color:#dc2626; font-size:16px; }
-.qb-cardinal-s { bottom:6px; left:50%; transform:translateX(-50%); }
-.qb-cardinal-e { right:8px; top:50%; transform:translateY(-50%); }
-.qb-cardinal-w { left:8px; top:50%; transform:translateY(-50%); }
-.qb-arrow {
-  transition: transform 0.25s ease-out;
-  transform-origin: center;
-  display: flex; align-items: center; justify-content: center;
-  /* مؤشر النقطة المركزية */
-  position:relative;
+
+/* خريطة Google Maps — تملأ الحاوية بالكامل */
+.qb-map-frame {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  /* شفافية خفيفة لتبرز الخريطة لكن يبقى السهم مرئياً فوقها */
+  opacity: 1;
 }
-.qb-arrow::after {
-  content: ""; position:absolute; left:50%; top:50%; width:8px; height:8px;
-  margin:-4px 0 0 -4px; border-radius:50%; background:#059669;
-  border:2px solid #fff; box-shadow:0 0 4px rgba(0,0,0,0.3);
+
+/* v25.8: تدرّج خفيف على الحواف لمحاكاة عمق — أخضر في الأعلى (موقعك)، أحمر في الأسفل (مكة) */
+.qb-map-overlay-gradient {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(to top,
+    rgba(5, 150, 105, 0.15) 0%,
+    transparent 15%,
+    transparent 85%,
+    rgba(220, 38, 38, 0.15) 100%);
+  z-index: 2;
 }
+
+/* السهم العمودي فوق الخريطة */
+.qb-route {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* v25.8: رأس السهم = موقعك الحالي (في الأعلى فوق الخريطة) */
+.qb-route-head {
+  font-size: 36px;
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.5)) drop-shadow(0 0 4px white);
+  text-align: center;
+  line-height: 1;
+  z-index: 4;
+}
+.qb-route-head-label {
+  font-size: 11px;
+  color: white;
+  background: #dc2626; /* أحمر = الشمال = موقعك في الأعلى */
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+  margin-top: 2px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  white-space: nowrap;
+}
+
+/* v25.8: جسم السهم — الخط أولاً ثم سهم في الأسفل */
+.qb-route-line-wrap {
+  position: relative;
+  flex: 1;
+  width: 8px;
+  margin: 4px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end; /* يضع السهم في أسفل الخط */
+  z-index: 4;
+}
+.qb-route-arrow-bottom {
+  width: 0;
+  height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-top: 22px solid #059669; /* السهم يشير للأسفل نحو مكة */
+  margin-bottom: -2px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+.qb-route-line {
+  width: 8px;
+  flex: 1;
+  /* v25.8: التدرّج من الأحمر (موقعك/الشمال في الأعلى) إلى الأخضر (مكة في الأسفل) */
+  background: linear-gradient(to bottom, #dc2626, #059669);
+  border-radius: 4px;
+  box-shadow: 0 0 12px rgba(255,255,255,0.6), 0 0 6px rgba(5,150,105,0.8);
+  position: relative;
+}
+/* علامات متدرجة على الخط لمؤشر المسافة */
+.qb-route-line::before,
+.qb-route-line::after {
+  content: "";
+  position: absolute;
+  left: -6px;
+  width: 20px;
+  height: 3px;
+  background: white;
+  border-radius: 2px;
+  box-shadow: 0 0 4px rgba(0,0,0,0.4);
+}
+.qb-route-line::before { top: 33%; }
+.qb-route-line::after  { top: 66%; }
+
+/* v25.8: ذيل السهم = مكة المكرمة (في الأسفل فوق الخريطة) */
+.qb-route-tail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 4;
+}
+.qb-route-tail-pin {
+  font-size: 30px;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 3px white);
+}
+.qb-route-tail-label {
+  font-size: 10px;
+  color: #1f2937;
+  background: #fef3c7;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+  margin-top: 2px;
+  border: 1px solid #fde68a;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  white-space: nowrap;
+}
+
+/* v25.7: بوصلة مصغّرة مدمجة مع موقعك (في أسفل السهم) — الشمال يدور معها */
+/* v25.7: بوصلة مصغّرة مدمجة مع موقعك (في أسفل السهم) — الشمال يدور معها */
+.qb-route-tail-compass {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin: 6px auto 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.95) 58%, rgba(236,253,245,0.9) 100%);
+  border: 3px solid #059669;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 0 8px rgba(5,150,105,0.15);
+  overflow: hidden;
+  /* v25.26: انتقال ناعم (0.5s) لتقليل الارتعاش */
+  transition: transform 0.5s ease-out;
+}
+.qb-tail-dir {
+  position: absolute;
+  font-size: 12px;
+  font-weight: bold;
+  color: #059669;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+}
+/* v25.7: الشمال في أسفل البوصلة المصغّرة (عند موقعك) */
+.qb-tail-dir-n { bottom: 4px; left: 50%; transform: translateX(-50%); color: #dc2626; font-size: 14px; }
+.qb-tail-dir-s { top: 4px; left: 50%; transform: translateX(-50%); }
+.qb-tail-dir-e { left: 4px; top: 50%; transform: translateY(-50%); }
+.qb-tail-dir-w { right: 4px; top: 50%; transform: translateY(-50%); }
+.qb-tail-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 10px; height: 10px;
+  margin-left: -5px; margin-top: -5px;
+  border-radius: 50%;
+  background: #059669;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+/* v25.8: علامة الشمال الثابتة — فوق الحاوية مباشرة (عند موقعك = أعلى الموبايل) */
+.qb-north-fixed-marker {
+  position: relative;
+  margin: 0 auto 6px;
+  width: 0;
+  height: 0;
+  /* السهم يشير للأعلى (نحو موقعك = أعلى الموبايل = الشمال) */
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 14px solid #dc2626;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
+  z-index: 5;
+}
+.qb-north-fixed-marker::before {
+  content: "الشمال";
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: white;
+  background: #dc2626;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* v25.10: علامة الشمال في أسفل الموبايل — تحت الحاوية */
+.qb-north-at-bottom {
+  margin: 6px auto 0 !important;
+  /* السهم يشير للأسفل (نحو أعلى الخريطة المقلوبة = الشمال الحقيقي) */
+  border-top: 14px solid #dc2626 !important;
+  border-bottom: 0 !important;
+}
+.qb-north-at-bottom::before {
+  top: auto !important;
+  bottom: -22px !important;
+}
+
+/* v25.9: طبقة SVG لرسم خط القبلة فوق الخريطة */
+/* v25.25: SVG ثابت — لا يدور */
+.qb-svg-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  transform-origin: center center;
+}
+
+/* v25.27: الخط الأحمر — من موقعك (أسفل) إلى مكة (أعلى) مع مثلث عند مكة */
+/* الخط يدور مع الموبايل — بدايته عند موقعك ونهايته بسهم نحو مكة */
+.qb-fixed-red-line {
+  position: absolute;
+  bottom: 5%;   /* v25.27: يبدأ من موقعك في الأسفل */
+  left: 50%;
+  width: 6px;
+  /* v25.27: ارتفاع الخط يصل من 5% (موقعك) إلى 95% (مكة) = 90% من الارتفاع */
+  height: 90%;
+  background: transparent;
+  border-radius: 2px;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.6), 0 0 6px white;
+  transform-origin: bottom center; /* v25.27: يدور حول نقطة موقعك في الأسفل */
+  transform: translateX(-50%);
+  z-index: 4;
+  pointer-events: none;
+  /* v25.25: انتقال ناعم للدوران مع الموبايل */
+  transition: transform 0.5s ease-out;
+  /* v25.11: خط متقطع متطابق مع الخط الأخضر */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #dc2626 0,
+    #dc2626 10px,
+    transparent 10px,
+    transparent 16px
+  );
+}
+/* v25.27: مثلث (سهم) في أعلى الخط — عند مكة المكرمة */
+.qb-fixed-red-line::before {
+  content: "";
+  position: absolute;
+  top: -14px;          /* فوق بداية الخط */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 18px solid #dc2626;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+/* v25.27: نقطة في أسفل الخط — عند موقعك */
+.qb-fixed-red-line::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  background: #dc2626;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+/* v25.9: بوصلة مصغّرة في الزاوية */
+.qb-corner-compass {
+  position: absolute !important;
+  bottom: 10px !important;
+  left: 10px !important;
+  width: 70px !important;
+  height: 70px !important;
+  margin: 0 !important;
+  z-index: 5;
+}
+
 .qb-angle { font-size:14px; color:#065f46; font-weight:700; margin:2px 0; }
 .qb-angle strong { color:#dc2626; font-size:17px; font-family:monospace; }
 .qb-dist { font-size:12px; color:#6b7280; margin-bottom:6px; }
@@ -1049,12 +1338,12 @@ body.smart .modal { scrollbar-gutter: stable; }
 .qb-status { font-size:13px; font-weight:700; min-height:20px; margin-bottom:6px; color:#b45309; }
 .qb-status.qb-aligned { color:#059669; }
 .qb-status-big {
-  font-size: 18px !important;
-  padding: 12px 16px !important;
+  font-size: 16px !important;
+  padding: 10px 14px !important;
   background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
   border: 2px solid #f59e0b !important;
   border-radius: 12px !important;
-  margin: 10px 0 !important;
+  margin: 8px 0 !important;
   text-align: center !important;
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2) !important;
   animation: qbPulse 1.5s ease-in-out infinite !important;
@@ -1076,7 +1365,6 @@ body.smart .modal { scrollbar-gutter: stable; }
 }
 .qb-sensor { font-size:10px; color:#6b7280; margin-bottom:8px; }
 .qb-note { font-size:9px; color:#94a3b8; margin-top:8px; line-height:1.6; }
-.qb-map-section { margin-top: 14px; }
 
 /* ====== v14: الوضع الليلي (Dark Mode) ====== */
 html.dark-mode { background:#0d1512 !important; }
@@ -1118,7 +1406,33 @@ body.dark-mode .info-track-card { background:rgba(21,32,27,0.85); border-color:#
 body.dark-mode .info-text, body.dark-mode .info-track-text { color:#e8f5ee !important; }
 body.dark-mode .info-source, body.dark-mode .info-track-source { color:#9fb8ab !important; }
 body.dark-mode .info-icon, body.dark-mode .info-track-icon { color:#fbbf24; }
-body.dark-mode .info-nav, body.dark-mode .info-cat-bar, body.dark-mode #infoCatBar span { background:#15201b !important; border-color:#234536; color:#e8f5ee !important; }
+body.dark-mode .info-nav, body.dark-mode .info-cat-bar { background:#15201b !important; border-color:#234536; }
+/* v24.1: إصلاح أزرار التصنيف في الوضع الليلي — بدون !important حتى لا تُلغي ألوان JavaScript */
+body.dark-mode #infoCatBar span[onclick^="toggleCatFilter"] {
+  background:#1f3a2c;
+  border-color:#2f7d5c;
+  color:#e8f5ee;
+}
+body.dark-mode #infoCatBar span[onclick^="toggleCatFilter"]#catBtn_all {
+  background:#059669;
+  color:white;
+}
+body.dark-mode #infoCatBar span[onclick^="toggleCatFilter"]#msgNewDot {
+  background:#dc2626;
+  color:white;
+}
+/* v24: تأثير التحويم والضغط على أزرار التصنيف */
+#infoCatBar span[onclick^="toggleCatFilter"]:hover {
+  opacity: 0.75;
+  transform: scale(1.05);
+}
+#infoCatBar span[onclick^="toggleCatFilter"]:active {
+  opacity: 0.6;
+  transform: scale(0.95);
+}
+#infoCatBar span[onclick^="toggleCatFilter"] {
+  transition: opacity 0.2s, transform 0.2s, background 0.2s, color 0.2s;
+}
 body.dark-mode .modal { background:#101b16; }
 body.dark-mode .modal h2 { color:#6ee7b7; }
 body.dark-mode .modal-close { background:#1a2a22; color:#e8f5ee; }
@@ -1129,6 +1443,26 @@ body.dark-mode .setting-box span, body.dark-mode .setting-box strong { color:#e8
 body.dark-mode .toggle-row .t-name { color:#e8f5ee; }
 body.dark-mode .toggle-label { color:#9fb8ab !important; }
 body.dark-mode .method-select, body.dark-mode .loc-inputs input, body.dark-mode .modal input[type="text"], body.dark-mode .modal input[type="number"] { background:#0f1a15; border-color:#2b4a3a; color:#e8f5ee; }
+/* v25.34: إصلاح ألوان تصحيح المواقيت وفواصل الإقامة في الوضع الليلي */
+body.dark-mode #timeOffsetsSettings span[style*="color:#374151"],
+body.dark-mode #iqamaSettings span[style*="color:#374151"] { color:#e8f5ee !important; }
+body.dark-mode #timeOffsetsSettings span[style*="color:#9ca3af"],
+body.dark-mode #iqamaSettings span[style*="color:#9ca3af"] { color:#9fb8ab !important; }
+body.dark-mode #timeOffsetsSettings button { background:#1a2a22 !important; color:#e8f5ee !important; border-color:#2b4a3a !important; }
+body.dark-mode #timeOffsetsSettings input[type="number"],
+body.dark-mode #iqamaSettings input[type="number"] { background:#0f1a15 !important; border-color:#2b4a3a !important; color:#6ee7b7 !important; }
+/* v25.40: ألوان دلالية لمدخلات تصحيح المواقيت في الوضع الليلي — السالب أحمر والموجب أخضر */
+body.dark-mode #timeOffsetsSettings input[type="number"][style*="color:#dc2626"] { color:#f87171 !important; }
+body.dark-mode #timeOffsetsSettings input[type="number"][style*="color:#059669"] { color:#6ee7b7 !important; }
+body.dark-mode #timeOffsetsSettings input[type="number"][style*="color:#6b7280"] { color:#9fb8ab !important; }
+/* v25.40: توضيح خط معرّف الجهاز في الوضع الليلي */
+body.dark-mode #deviceIdDisplay { color:#e8f5ee !important; background:#0f1a15 !important; border-color:#2b4a3a !important; }
+/* v25.34: إصلاح ألوان النصوص الثانوية في الإعدادات للوضع الليلي */
+body.dark-mode .modal div[style*="color:#374151"] { color:#e8f5ee !important; }
+body.dark-mode .modal div[style*="color:#6b7280"] { color:#9fb8ab !important; }
+body.dark-mode .modal span[style*="color:#374151"] { color:#e8f5ee !important; }
+body.dark-mode .modal span[style*="color:#6b7280"] { color:#9fb8ab !important; }
+body.dark-mode .modal input[style*="color:#374151"] { color:#e8f5ee !important; }
 body.dark-mode .city-result { background:#16241d; border-color:#234536; }
 body.dark-mode .city-result:hover { background:#1f3527; }
 body.dark-mode .cr-name { color:#e8f5ee; }
@@ -1147,6 +1481,15 @@ body.dark-mode .credits-item { background:rgba(21,32,27,0.85); }
 body.dark-mode .credits-item .role { color:#9fb8ab; }
 body.dark-mode .credits-item .name { color:#e8f5ee; }
 body.dark-mode .credits-close { background:#15201b; color:#a7d7bf; }
+/* v25.30: تحسين ألوان النصوص في لوحة حول البرنامج للوضع الليلي */
+body.dark-mode .credits-content h2 { color:#6ee7b7 !important; }
+body.dark-mode .credits-content h3 { color:#6ee7b7 !important; }
+body.dark-mode .credits-content p { color:#e8f5ee !important; }
+body.dark-mode .credits-content b { color:#a7f3d0 !important; }
+body.dark-mode .credits-content .credits-text { color:#e8f5ee !important; }
+body.dark-mode .credits-content .credits-text h3 { color:#6ee7b7 !important; }
+body.dark-mode .credits-content .credits-text b { color:#a7f3d0 !important; }
+body.dark-mode .credits-content .icon { filter: brightness(1.2); }
 body.dark-mode .header-ramadan { background:linear-gradient(to right,#0f241a,#12241c,#0f241a); border-color:#234536; }
 body.dark-mode .header-ramadan .hr-title { color:#6ee7b7; }
 body.dark-mode .header-ramadan.ramadan-active { background:linear-gradient(to right,#251c0c,#2c2009,#251c0c); border-color:#6b5416; }
@@ -1257,7 +1600,11 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
         <span onclick="toggleCatFilter('hadith')" id="catBtn_hadith" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🕌 أحاديث</span>
         <span onclick="toggleCatFilter('quran')" id="catBtn_quran" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📖 قرآن</span>
         <span onclick="toggleCatFilter('azkar')" id="catBtn_azkar" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🤲 أذكار</span>
-        <span onclick="toggleCatFilter('messages')" id="catBtn_messages" style="display:inline-block;position:relative;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💬 رسائل<span id="msgNewDot" style="display:none;position:absolute;top:-7px;left:-7px;min-width:15px;height:15px;line-height:15px;text-align:center;background:#dc2626;color:white;border-radius:8px;font-size:8px;font-weight:700;padding:0 3px;-webkit-box-shadow:0 1px 3px rgba(0,0,0,0.4);box-shadow:0 1px 3px rgba(0,0,0,0.4);"></span></span>
+        <span onclick="toggleCatFilter('azkar-after-prayer')" id="catBtn_azkar-after-prayer" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🕌 بعد الصلاة</span>
+        <span onclick="toggleCatFilter('azkar-morning')" id="catBtn_azkar-morning" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🌅 الصباح</span>
+        <span onclick="toggleCatFilter('azkar-evening')" id="catBtn_azkar-evening" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🌙 المساء</span>
+        <span onclick="toggleCatFilter('azkar-friday')" id="catBtn_azkar-friday" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🕌 الجمعة</span>
+        <span onclick="toggleCatFilter('ehemessages')" id="catBtn_ehemessages" style="display:inline-block;position:relative;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💬 رسائل<span id="msgNewDot" style="display:none;position:absolute;top:-7px;left:-7px;min-width:15px;height:15px;line-height:15px;text-align:center;background:#dc2626;color:white;border-radius:8px;font-size:8px;font-weight:700;padding:0 3px;-webkit-box-shadow:0 1px 3px rgba(0,0,0,0.4);box-shadow:0 1px 3px rgba(0,0,0,0.4);"></span></span>
         <span onclick="toggleCatFilter('today')" id="catBtn_today" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📅 أحداث</span>
         <span onclick="toggleCatFilter('health')" id="catBtn_health" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💊 صحة</span>
         <span onclick="toggleCatFilter('food')" id="catBtn_food" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🍯 أطعمة</span>
@@ -1355,6 +1702,13 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     </div>
 
     <div class="modal-section">
+      <div class="sec-title">⏱️ تصحيح دائم لمواقيت الأذان (بالدقائق)</div>
+      <div class="sec-desc">صحّح موعد كل صلاة بشكل دائم. مثلاً: -10 لتقديم الأذان 10 دقائق، +5 لتأخيره 5 دقائق.</div>
+      <div id="timeOffsetsSettings"></div>
+      <button class="btn btn-amber" style="width:100%;margin-top:8px;" onclick="resetTimeOffsets()">إعادة تعيين التصحيح</button>
+    </div>
+
+    <div class="modal-section">
       <div class="sec-title">🕌 فواصل الإقامة (بالدقائق)</div>
       <div id="iqamaSettings"></div>
     </div>
@@ -1386,19 +1740,26 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <button class="btn btn-primary" onclick="refreshData();closeSettings();">تحديث المواقيت</button>
     </div>
 
+    <!-- v23.4: زر مسح الكاش -->
+    <div class="modal-section">
+      <div class="sec-title">🗑️ مسح الكاش</div>
+      <div class="sec-desc">امسح ذاكرة التخزين المؤقت للتطبيق قبل تثبيت نسخة جديدة. يحل مشاكل عدم ظهور التحديثات.</div>
+      <button class="btn btn-outline" style="width:100%;background:#fef2f2;color:#b91c1c;border-color:#fca5a5;" onclick="manualClearCache()">🗑️ مسح الكاش الآن</button>
+    </div>
+
     <div class="modal-section">
       <div class="sec-title">📱 معرّف هذا الجهاز</div>
       <div class="setting-box" style="display:block;">
         <div style="font-size:10px;color:#6b7280;margin-bottom:4px;">معرّف فريد لجهازك — استخدمه لاستقبال رسائل خاصة بك:</div>
         <div style="display:flex;gap:6px;align-items:center;">
-          <input type="text" id="deviceIdDisplay" readonly style="flex:1;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:11px;font-family:monospace;background:#f9fafb;color:#374151;text-align:left;direction:ltr;" />
+          <input type="text" id="deviceIdDisplay" readonly style="flex:1;padding:7px 9px;border:1px solid #9ca3af;border-radius:6px;font-size:13px;font-family:monospace;font-weight:700;letter-spacing:0.5px;background:#f9fafb;color:#111827;text-align:left;direction:ltr;" />
           <button class="btn btn-outline btn-sm" onclick="copyDeviceId()" id="copyDeviceIdBtn" style="white-space:nowrap;">📋 نسخ</button>
         </div>
         <div style="font-size:9px;color:#9ca3af;margin-top:4px;line-height:1.5;">
           💡 هذا المعرّف يُستخدم لإرسال رسائل خاصة بك من المدير. شاركه مع من تريد أن يرسل لك رسالة خاصة.
         </div>
       </div>
-      <!-- v20: زر مشاركة تلقائية مع المدير -->
+      <!-- v25.16: استعادة زر مشاركة معرّف الجهاز (معطّل حتى يوضع token البوت الجديد) -->
       <div class="setting-box" style="margin-top:8px;">
         <span style="font-size:11px;color:#374151;">📤 مشاركة معرّف الجهاز تلقائياً مع المدير</span>
         <button id="tgShareToggle" onclick="tgToggleShare()" style="font-size:9px;padding:3px 8px;border-radius:8px;border:1px solid #93c5fd;background:#dbeafe;color:#1d4ed8;cursor:pointer;">معطّل 🔇</button>
@@ -1406,6 +1767,13 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div style="font-size:9px;color:#9ca3af;margin-top:4px;line-height:1.5;">
         عند التفعيل، يُرسل التطبيق معرّف جهازك للمدير تلقائياً ليتمكن من إرسال رسائل خاصة بك.
       </div>
+    </div>
+
+    <!-- v25.37: مبدّل النسخة المبسطة للأجهزة الضعيفة -->
+    <div class="modal-section">
+      <div class="sec-title">🪶 النسخة المبسطة (Lite)</div>
+      <div class="sec-desc">نسخة خفيفة جداً للأجهزة القديمة والضعيفة: مواقيت + أذان + شريط معلومات، بدون خريطة القبلة والبوصلة والرسوم الثقيلة.</div>
+      <button id="liteSwitchBtn" class="btn btn-outline" style="width:100%;background:#f0fdf4;color:#047857;border-color:#6ee7b7;" onclick="switchLiteVersion()">🪶 التبديل إلى النسخة المبسطة</button>
     </div>
 
     <div class="modal-section">
@@ -1416,7 +1784,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
   </div></div>
 </div>
 
-<!-- v17: نافذة اتجاه القبلة (سهم + خريطة Google) -->
+<!-- v22: نافذة اتجاه القبلة (بوصلة احترافية) -->
 <div class="modal-overlay" id="qiblaModal">
   <div class="modal-center"><div class="modal-center-inner">
   <div class="modal" style="max-width:500px;text-align:center;">
@@ -1427,25 +1795,40 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <div class="qb-angle">زاوية القبلة من الشمال: <strong id="qbAngle">--</strong>°</div>
     <div class="qb-dist" id="qbDist">--</div>
 
-    <!-- السهم الذي يشير للقبلة -->
-    <div class="qb-arrow-stage">
-      <div class="qb-arrow-circle" id="qbArrowCircle">
-        <div class="qb-cardinal qb-cardinal-n">ش</div>
-        <div class="qb-cardinal qb-cardinal-s">ج</div>
-        <div class="qb-cardinal qb-cardinal-e">ق</div>
-        <div class="qb-cardinal qb-cardinal-w">غ</div>
-        <div class="qb-arrow" id="qbArrow">
-          <svg viewBox="0 0 100 100" width="80" height="80" style="display:block;">
-            <defs>
-              <linearGradient id="qbArrowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style="stop-color:#dc2626"/>
-                <stop offset="100%" style="stop-color:#991b1b"/>
-              </linearGradient>
-            </defs>
-            <path d="M50,8 L68,75 L50,62 L32,75 Z" fill="url(#qbArrowGrad)" stroke="#7f1d1d" stroke-width="2"/>
-          </svg>
+    <!-- v25.10: الخريطة مقلوبة 180° (شمالها في أسفل الموبايل، جنوبها في أعلى الموبايل) -->
+    <div class="qb-compass-stage">
+      <!-- حاوية الخريطة + الخطوط -->
+      <div class="qb-map-arrow-container" id="qbMapContainer">
+        <!-- v25.14: خريطة Leaflet — دورانها يُتحكم به من qiblaRender (180° أساسي + heading) -->
+        <!-- v25.25: خريطة Leaflet — ثابتة عند 180° (لا تدور مع الموبايل) -->
+        <div id="qbLeafletMap" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;transform:rotate(180deg);"></div>
+
+        <!-- v25.14: حذف الخط الأخضر الوهمي من طبقة SVG — الخط الأخضر الحقيقي مرسوم على الخريطة -->
+        <!-- طبقة SVG فارغة الآن (تُستخدم فقط للدوران في qiblaRender لكنها لا ترسم خطاً) -->
+        <svg class="qb-svg-overlay" id="qbSvgOverlay" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+          <!-- v25.14: لا يوجد خط أخضر هنا — الخط الأخضر الوحيد هو polyline على الخريطة -->
+          <!-- دائرة موقعك (أسفل الحاوية — شمال الخريطة) -->
+          <circle id="qbUserPoint" cx="50%" cy="95%" r="10" fill="#dc2626" stroke="white" stroke-width="3" />
+          <text id="qbUserText" x="50%" y="90%" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="bold" style="filter: drop-shadow(0 1px 2px white);">📍 موقعك</text>
+          <!-- دائرة مكة (أعلى الحاوية — جنوب الخريطة) -->
+          <circle id="qbKaabaPoint" cx="50%" cy="5%" r="10" fill="#059669" stroke="white" stroke-width="3" />
+          <text id="qbKaabaText" x="50%" y="3%" text-anchor="middle" fill="#059669" font-size="11" font-weight="bold" style="filter: drop-shadow(0 1px 2px white);">🕋 مكة</text>
+        </svg>
+
+        <!-- v25.10: الخط الأحمر الثابت في وسط الشاشة -->
+        <div class="qb-fixed-red-line"></div>
+
+        <!-- v25.10: بوصلة مصغّرة مدمجة في الزاوية -->
+        <div class="qb-route-tail-compass qb-corner-compass" id="qbDial">
+          <div class="qb-tail-dir qb-tail-dir-n">ش</div>
+          <div class="qb-tail-dir qb-tail-dir-e">ق</div>
+          <div class="qb-tail-dir qb-tail-dir-s">ج</div>
+          <div class="qb-tail-dir qb-tail-dir-w">غ</div>
+          <div class="qb-tail-center"></div>
         </div>
       </div>
+      <!-- v25.10: علامة الشمال تحت الحاوية (شمال الخريطة = أسفل الموبايل) -->
+      <div class="qb-north-fixed-marker qb-north-at-bottom" title="الشمال الحقيقي"></div>
     </div>
 
     <!-- رسالة الحالة -->
@@ -1455,19 +1838,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <!-- زر تفعيل الحساس -->
     <button class="btn btn-primary btn-sm" id="qbSensorBtn" onclick="qiblaEnableSensor()">🔄 تفعيل حساس الاتجاه</button>
 
-    <!-- خريطة Google Maps: المسار من موقعك إلى مكة -->
-    <div class="qb-map-section">
-      <div style="font-size:13px;font-weight:700;color:#065f46;margin:14px 0 6px;">📍 المسار إلى الكعبة المشرّفة على الخريطة</div>
-      <iframe id="qbMapFrame"
-              width="100%"
-              height="350"
-              frameborder="0"
-              style="border:0;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,0.15);"
-              src=""
-              allowfullscreen></iframe>
-    </div>
-
-    <div class="qb-note">السهم الأحمر يشير دائماً نحو القبلة، كيفما أدّرت الموبايل. الخريطة أعلاه تعرض المسار من موقعك إلى مكة المكرمة.</div>
+    <div class="qb-note">🟢 الخريطة والخط الأخضر ثابتان (كالبوصلة المغناطيسية) • 🔴 الخط الأحمر يدور مع الموبايل — أدر جهازك حتى يتطابق الخط الأحمر مع الخط الأخضر = أنت في اتجاه القبلة.</div>
   </div>
   </div></div>
 </div>
@@ -1493,16 +1864,49 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 <!-- Credits Modal -->
 <div class="credits-modal" id="creditsModal">
   <div class="credits-center"><div class="credits-center-inner">
-  <div class="credits-content">
+  <div class="credits-content" style="max-width:500px;max-height:90vh;overflow-y:auto;">
     <div class="icon">🕌</div>
+    <h2 style="text-align:center;font-size:22px;font-weight:800;color:#064e3b;margin-bottom:20px;">مواقيت الصلاة</h2>
+
     <div class="credits-item">
       <div class="role">💻 البرمجة والتصميم</div>
-      <div class="name">د. إحسان العبد الله</div>
+      <div class="name">د. إحسان عبد المحسن العبد الله</div>
     </div>
+
     <div class="credits-item">
       <div class="role">🚀 الإصدار</div>
-      <div class="name">v15 — بوصلة القبلة + الوضع الليلي + أشرطة تمرير عريضة</div>
+      <div class="name" id="creditsVersion">v25.37</div>
     </div>
+
+    <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;" class="credits-text">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:10px;">📋 مميزات التطبيق</h3>
+      <div style="padding-right:10px;">
+        <p>🕌 <b>مواقيت الصلاة:</b> حساب دقيق لمواعيد الصلوات الخمس حسب إحداثيات موقعك الجغرافي</p>
+        <p>🔔 <b>الأذان والإقامة:</b> إشعارات الأذان والإقامة مع أصوات مميزة واختيار المؤذن المفضل</p>
+        <p>⏰ <b>تنبيهات ثلاثية المراحل:</b> تنبيهات ذكية متعددة المراحل قبل كل صلاة لضمان عدم النسيان</p>
+        <p>🌐 <b>تعدد المصادر:</b> دعم عدة مصالح لحساب المواقيت مثل أم القرى والرابطة والجامعة الإسلامية والهيئة المصرية العامة للمساحة</p>
+        <p>🌅 <b>تنبيه شروق الشمس:</b> تنبيه خاص عند شروق الشمس كمرجع لوقت انتهاء صلاة الفجر</p>
+        <p>⚙️ <b>إعدادات متقدمة:</b> تخصيص شامل للإعدادات بما يتناسب مع طريقة حسابك المفضلة وموقعك</p>
+        <p>🧭 <b>بوصلة القبلة التفاعلية:</b> بوصلة احترافية تشير نحو القبلة مع خريطة المسار إلى الكعبة</p>
+        <p>🌙 <b>الوضع الليلي/النهاري:</b> واجهة مريحة للعين في كل الأوقات</p>
+        <p>📜 <b>الشريط المتحرك:</b> أحاديث وأدعية وأذكار ومعلومات إسلامية متجددة</p>
+        <p>🔄 <b>تحديث تلقائي:</b> يتم تحديث التطبيق والمحتوى تلقائياً من GitHub</p>
+        <p>📱 <b>دعم أندرويد 4.4+:</b> يعمل على الأجهزة القديمة والحديثة</p>
+        <p>🌐 <b>يعمل على كل الأجهزة:</b> موبايل، تابلت، كمبيوتر، شاشات ذكية</p>
+        <p>🌍 <b>بحث عالمي عن المدن:</b> ابحث عن أي مدينة عالمياً بالعربية أو الإنجليزية</p>
+        <p>📅 <b>التاريخ الهجري والميلادي:</b> مع إمكانية تصحيح التاريخ الهجري</p>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;text-align:right;line-height:1.8;font-size:13px;" class="credits-text">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:10px;">📞 التواصل</h3>
+      <p>للاستفسارات والاقتراحات: عبر رسائل الشريط المتحرك في التطبيق</p>
+    </div>
+
+    <div style="margin-top:16px;text-align:center;font-size:11px;color:#9ca3af;">
+      &copy; 2026 مواقيت الصلاة — جميع الحقوق محفوظة
+    </div>
+
     <button class="credits-close" onclick="closeCredits()">إغلاق</button>
   </div>
   </div></div>
@@ -1653,7 +2057,7 @@ var CALC_METHODS = [
   {id:22, ar:"الشؤون الإسلامية — البرتغال"},
   {id:23, ar:"الأردن"}
 ];
-var PT_METHOD = 4, PT_SCHOOL = 0;
+var PT_METHOD = 5, PT_SCHOOL = 0; // v21: الهيئة المصرية العامة للمساحة (افتراضي)
 var geoName = "";          // v13: اسم الموقع المحدد تلقائياً عكسياً
 var cityResults = [];      // v13: نتائج بحث المدينة
 var citySearching = false;
@@ -1684,7 +2088,12 @@ var infoCycleProgressTimer = null;
 var infoCycleProgress = 0;
 var infoCatFilter = "all";
 var fullContentDB = null;
-var INFO_CATEGORIES = ["hadith","quran","azkar","dua","messages","today","health","food","jokes","world","wisdom","prophet","seasons","poetry","quran-tafseer","vitamins","stars"];
+// v25.3: تعريف احتياطي لمتغيرات محرر الرسائل المحذوف في v19.0
+// لمنع ReferenceError في أي مراجع متبقية في دوال لم تُحذف
+var editorMsgs = null;
+var editorDirty = false;
+var msgEdLastSaveAt = 0;
+var INFO_CATEGORIES = ["hadith","quran","azkar","azkar-after-prayer","azkar-morning","azkar-evening","azkar-friday","dua","ehemessages","today","health","food","jokes","world","wisdom","prophet","seasons","poetry","quran-tafseer","vitamins","stars"];
 
 (function() {
   try {
@@ -1701,7 +2110,6 @@ function toggleOnlineInfo() {
   updateInfoToggleBtn();
   if (onlineInfoEnabled) {
     fetchAllInfo();
-    startInfoCycle();
     startInfoRefresh();
     startLiveRefresh();
   } else {
@@ -1709,7 +2117,6 @@ function toggleOnlineInfo() {
     el("infoSection").style.display = "none";
     el("infoCatBar").style.display = "none";
     stopInfoRefresh();
-    stopInfoCycle();
     stopLiveRefresh();
   }
 }
@@ -1730,9 +2137,11 @@ function updateInfoToggleBtn() {
 
 function toggleCatFilter(cat) {
   infoCatFilter = cat;
-  if (cat === "messages") {
+  if (cat === "ehemessages") {
     try { msgMarkAllSeen(currentKnownMessages()); } catch(e) {}
   }
+  // v25: ألوان أصلية — نشط: أخضر، غير نشط: أبيض/داكن حسب الوضع
+  var isDark = document.body.classList.contains("dark-mode");
   var allBtns = document.querySelectorAll("[id^='catBtn_']");
   for (var i = 0; i < allBtns.length; i++) {
     var b = allBtns[i];
@@ -1740,16 +2149,26 @@ function toggleCatFilter(cat) {
     if (bCat === cat) {
       b.style.background = "#059669";
       b.style.color = "white";
+      b.style.borderColor = "#059669";
+      b.style.fontWeight = "700";
     } else {
-      b.style.background = "white";
-      b.style.color = "#065f46";
+      if (isDark) {
+        b.style.background = "#1f3a2c";
+        b.style.color = "#e8f5ee";
+        b.style.borderColor = "#2f7d5c";
+      } else {
+        b.style.background = "white";
+        b.style.color = "#065f46";
+        b.style.borderColor = "#a7f3d0";
+      }
+      b.style.fontWeight = "400";
     }
   }
   currentInfoIdx = 0;
   el("infoSection").style.display = "block";
   if (el("infoCatBar")) el("infoCatBar").style.display = "block";
   var filtered = getFilteredItems();
-  displayCurrentInfo();
+  displayCurrentInfo(true); // v25.39: إعادة رسم قسرية عند تبديل القسم حتى مع الإيقاف المؤقت
   if (cachedInfoItems.length === 0) {
     fetchContentJSON();
   }
@@ -1774,19 +2193,15 @@ function getFilteredItems() {
   return filtered;
 }
 
-var CONTENT_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/content.json";
+var CONTENT_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/content.json";
 
 var LIVE_REFRESH_INTERVAL = 30000; 
 var _liveRefreshTimer = null;
 
-// دمج المحتوى القادم من GitHub مع رسائل المحرر غير المحفوظة
-// حتى لا تمسح المزامنة الحية التعديلات المحلية من الشريط المتحرك
+// v25.3: محرر الرسائل حُذف في v19.0 — لا حاجة لدمج التعديلات المحلية
+// الأخطاء السابقة (editorMsgs غير معرّف) كانت تمنع displayCurrentInfo() من العمل
 function applyFetchedContent(items) {
   cachedInfoItems = items;
-  if (editorMsgs && editorMsgs.length > 0 &&
-      (editorDirty || (Date.now() - msgEdLastSaveAt) < 180000)) {
-    cachedInfoItems = mergeMessagesIntoContent(cachedInfoItems, editorMsgsForCache());
-  }
   currentInfoIdx = 0;
   // v20.3: فحص أوامر التحديث من المدير (للمستخدمين الذين لديهم نسخ قديمة بدون دوال التحديث)
   try { checkUpdateCommand(items); } catch(e) {}
@@ -1870,9 +2285,16 @@ function fetchContentJSON() {
     return;
   }
   var url = CONTENT_URL + "?t=" + Date.now();
+  // v25: على أندرويد، نحاول fetchUrl مع timeout fallback إلى XHR
   if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
     try {
       AndroidPrayer.fetchUrl(url, "_nativeContentCallback");
+      // v25: لو لم يصل رد خلال 5 ثوانٍ، نحاول XHR مباشرة
+      setTimeout(function() {
+        if (!cachedInfoItems || cachedInfoItems.length === 0) {
+          fetchContentJSONViaXHR(url);
+        }
+      }, 5000);
       return;
     } catch(e) {}
   }
@@ -1901,7 +2323,10 @@ function _nativeContentCallback(data) {
     }
   }
   if (!data || data.length === 0) {
-    fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now());
+    // v20.6: إعادة المحاولة عبر XHR مباشرة (لا يعتمد على الجسر الأصلي)
+    setTimeout(function() {
+      fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now());
+    }, 500);
     return;
   }
   try {
@@ -1912,13 +2337,14 @@ function _nativeContentCallback(data) {
         el("infoSection").style.display = "block";
         if (el("infoCatBar")) el("infoCatBar").style.display = "block";
         displayCurrentInfo();
-        startInfoCycle();
       }
     } else {
-      showDataErrorMessage();
+      // v20.6: لو فشل parse، أعد الجلب عبر XHR
+      fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now());
     }
   } catch(e) {
-    showDataErrorMessage();
+    // v20.6: لو حدث خطأ، أعد الجلب عبر XHR
+    fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now());
   }
 }
 
@@ -1930,10 +2356,11 @@ function showDataErrorMessage() {
   if (el("infoCatBar")) el("infoCatBar").style.display = "block";
 }
 
-function fetchContentJSONViaXHR(url) {
+function fetchContentJSONViaXHR(url, retryCount) {
+  retryCount = retryCount || 0;
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
-  xhr.timeout = 15000;
+  xhr.timeout = 10000; // v20.4: تقليل المهلة من 15 إلى 10 ثوانٍ
   xhr.onreadystatechange = function() {
     if (xhr.readyState === 4) {
       if (xhr.status === 200) {
@@ -1944,16 +2371,35 @@ function fetchContentJSONViaXHR(url) {
             el("infoSection").style.display = "block";
             if (el("infoCatBar")) el("infoCatBar").style.display = "block";
             displayCurrentInfo();
-            startInfoCycle();
           }
         } else {
           showDataErrorMessage();
         }
+      } else if (xhr.status === 0 && retryCount < 3) {
+        // v20.4: إعادة المحاولة عند فشل الاتصال (CORS أو شبكة)
+        setTimeout(function() {
+          fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now(), retryCount + 1);
+        }, 2000 * (retryCount + 1)); // 2s, 4s, 6s
       }
     }
   };
-  xhr.onerror = function() {};
-  xhr.ontimeout = function() {};
+  // v20.4: إعادة المحاولة عند الخطأ أو انتهاء المهلة
+  xhr.onerror = function() {
+    if (retryCount < 3) {
+      setTimeout(function() {
+        fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now(), retryCount + 1);
+      }, 2000 * (retryCount + 1));
+    } else {
+      showDataErrorMessage();
+    }
+  };
+  xhr.ontimeout = function() {
+    if (retryCount < 3) {
+      fetchContentJSONViaXHR(CONTENT_URL + "?t=" + Date.now(), retryCount + 1);
+    } else {
+      showDataErrorMessage();
+    }
+  };
   xhr.send();
 }
 
@@ -2001,6 +2447,71 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
+// v22.5: تحويل الروابط في النص إلى روابط قابلة للنقر
+// v25.5: دعم المصفوفات (نصوص متعددة الأسطر) + أرقام هواتف قابلة للاتصال
+function linkifyText(text) {
+  // v25.5: إذا كان النص مصفوفة، نحوّلها لأسطر متعددة (كل عنصر في سطر)
+  if (Object.prototype.toString.call(text) === "[object Array]") {
+    var lines = [];
+    for (var i = 0; i < text.length; i++) {
+      lines.push(linkifyText(String(text[i])));
+    }
+    return lines.join('<br>');
+  }
+  var escaped = escapeHtml(text);
+  // 1. تحويل الروابط (http/https) إلى <a> tags
+  escaped = escaped.replace(/(https?:\/\/[^\s<]+)/g, function(url) {
+    return '<a href="' + url + '" target="_blank" rel="noopener" style="color:#059669;text-decoration:underline;cursor:pointer;" onclick="openLinkInNewTab(event, \'' + url + '\');">' + url + '</a>';
+  });
+  // v25.5: 2. تحويل أرقام الهواتف إلى روابط tel: قابلة للنقر
+  // يدعم: 0938123820 / 0115328205 / 0938 123 820 / 00963-11-5328205 / +963 11 5328205
+  // النمط: 08+ رقم (مع السماح بمسافات/شرطات/نقاط/+/بين الأرقام)
+  escaped = escaped.replace(/(?:tel:)?(\+?\d[\d\s\-().]{7,}\d)/g, function(match, phone) {
+    // تنظيف الرقم من المسافات والشرطات للرابط tel:
+    var cleanNum = phone.replace(/[\s\-().]/g, '');
+    return '<a href="tel:' + cleanNum + '" style="color:#059669;text-decoration:underline;cursor:pointer;font-weight:700;" onclick="callPhoneNumber(event, \'' + cleanNum + '\');">' + phone + '</a>';
+  });
+  return escaped;
+}
+
+// v25.5: إجراء مكالمة هاتفية — يستخدم NativeBridge على أندرويد أو tel: على المتصفح
+function callPhoneNumber(e, phone) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  // على أندرويد: استخدم NativeBridge لفتح تطبيق الهاتف
+  if (window.AndroidPrayer && typeof AndroidPrayer.callPhone === "function") {
+    try {
+      AndroidPrayer.callPhone(phone);
+      return;
+    } catch(err) {}
+  }
+  // على المتصفح: window.open يفتح تطبيق الهاتف الافتراضي عبر tel:
+  try {
+    window.location.href = "tel:" + phone;
+  } catch(err) {
+    // fallback أخير
+    window.open("tel:" + phone, "_blank");
+  }
+}
+
+// v22.5: فتح الرابط في صفحة جديدة مع إبقاء صفحة البرنامج مفتوحة
+function openLinkInNewTab(e, url) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  // على أندرويد: استخدم NativeBridge لفتح الرابط في المتصفح الافتراضي
+  if (window.AndroidPrayer && typeof AndroidPrayer.openExternalUrl === "function") {
+    try {
+      AndroidPrayer.openExternalUrl(url);
+      return;
+    } catch(err) {}
+  }
+  // على المتصفح: window.open يفتح تبويب جديد
+  try {
+    var w = window.open(url, '_blank');
+    if (w) return; // نجح
+  } catch(err2) {}
+  // fallback أخير: تغيير الموقع الحالي
+  window.location.href = url;
+}
+
 var infoScrollPaused = false;
 var _infoRedrawTimer = null;
 function scheduleInfoRedraw() {
@@ -2024,12 +2535,19 @@ function applyConstantScrollSpeed(trackEl) {
   trackEl.style.animationDuration = durationSec + "s";
 }
 
-function displayCurrentInfo() {
+function displayCurrentInfo(force) {
   if (!onlineInfoEnabled) return;
   el("infoSection").style.display = "block";
   el("infoCatBar").style.display = "block";
   var track = el("infoTrack");
   if (!track) return;
+  // v25.39: التحديث الدوري (كل 30 ثانية) كان يعيد بناء المحتوى فيقتل أي سحب جارٍ
+  // ويعيد الحركة — لا تُقاطع العرض أثناء الإيقاف المؤقت أو أثناء السحب/القصور الذاتي
+  var _infoCardEl = el("infoCard");
+  if (!force) {
+    if (infoScrollPaused && track.querySelector(".info-track-card")) return;
+    if (_infoCardEl && (_infoCardEl.classList.contains("inertial-scroll") || _infoCardEl.classList.contains("dragging"))) return;
+  }
   if (cachedInfoItems.length === 0) {
     track.innerHTML = '<div style="text-align:center;padding:30px 10px;color:#6b7280;font-size:11px;">⏳ جاري تحميل البيانات من GitHub...</div>';
     return;
@@ -2047,10 +2565,10 @@ function displayCurrentInfo() {
       var text = String(item.text || "");
       var src = item.src ? String(item.src) : "";
       var cardIdx = (copy === 0) ? i : (i + filtered.length);
-      var tsLine = (item.cat === "messages" && item.ts) ? '<div class="info-track-source" style="font-size:9px;opacity:.8;">🕐 ' + escapeHtml(String(item.ts)) + '</div>' : '';
+      var tsLine = (item.cat === "ehemessages" && item.ts) ? '<div class="info-track-source" style="font-size:9px;opacity:.8;">🕐 ' + escapeHtml(String(item.ts)) + '</div>' : '';
       html += '<div class="info-track-card" data-info-idx="' + cardIdx + '">' +
         '<span class="info-track-icon">' + icon + '</span>' +
-        '<div class="info-track-text">' + escapeHtml(text) + '</div>' +
+        '<div class="info-track-text">' + linkifyText(text) + '</div>' +
         (src ? '<div class="info-track-source">' + escapeHtml(src) + '</div>' : '') +
         tsLine +
         '</div>';
@@ -2074,6 +2592,10 @@ function renderInfo() {
 function nextInfo() {
   var card = el("infoCard");
   if (!card) return;
+  // v25.19: تجاهل النقرة إن كانت بعد سحب (لمنع تبديل الحالة بعد التمرير)
+  if (card._wasActualClick && !card._wasActualClick()) {
+    return; // كان سحباً، تجاهل النقرة
+  }
   infoScrollPaused = !infoScrollPaused;
   if (infoScrollPaused) {
     card.classList.add("paused");
@@ -2149,14 +2671,39 @@ function initDragScroll() {
   var startY = 0;
   var startOffset = 0;
   var currentOffset = 0;
-  var velocity = 0;              
+  var velocity = 0;
   var momentumRAF = null;
   var momentumActive = false;
-  var velocitySamples = [];      
+  var velocitySamples = [];
+  // v25.19: لتتبع ما إذا حدث سحب فعلي (لمنع nextInfo() بعد السحب)
+  var dragActuallyMoved = false;
+  var dragStartThreshold = 5; // عدد البكسلات التي يجب تحريكها ليُعتبر سحباً
+  // v25.39: عدّاد تسلسل لإلغاء سلاسل الاستعادة المعلّقة (rAF) عند بدء تفاعل جديد
+  var restoreSeq = 0;
 
   function getOneCopyHeight() {
     var fullH = track.scrollHeight;
     return fullH > 10 ? fullH / 2 : track.scrollHeight;
+  }
+  // v25.23: قراءة الموضع الفعلي للأنيميشن بشكل صحيح
+  // trackRect.top - windowRect.top يُرجع قيمة موجبة، لكن currentOffset يجب أن تكون سالبة
+  // (translateY سالبة لتحريك المحتوى لأعلى)
+  function getCurrentAnimationOffset() {
+    try {
+      var trackRect = track.getBoundingClientRect();
+      var windowRect = windowEl.getBoundingClientRect();
+      // الإزاحة سالبة (لأن المحتوى يتحرك لأعلى)
+      // نطبّعها ضمن نطاق [-oneCopy, 0] لمطابقة سلوك applyOffset
+      var oneCopy = getOneCopyHeight();
+      if (oneCopy <= 0) return 0;
+      var raw = trackRect.top - windowRect.top;
+      // تحويل القيمة الموجبة إلى سالبة وتطبيعها ضمن نطاق [-oneCopy, 0]
+      var wrapped = raw;
+      wrapped = ((wrapped % oneCopy) + oneCopy) % oneCopy;
+      if (wrapped > 0) wrapped -= oneCopy;
+      return wrapped;
+    } catch(e) {}
+    return 0;
   }
   function applyOffset(off) {
     var oneCopy = getOneCopyHeight();
@@ -2169,9 +2716,15 @@ function initDragScroll() {
     track.style.transform = "translateY(" + wrapped + "px)";
   }
   function enableInertialMode() {
+    restoreSeq++; // v25.39: ألغِ أي استعادة معلّقة قبل تفعيل الوضع اليدوي
     if (card.classList.contains("inertial-scroll")) return;
+    // v25.23: اقرأ الموضع الحالي قبل تفعيل inertial-scroll
+    var preservedOffset = getCurrentAnimationOffset();
     card.classList.add("inertial-scroll");
-    applyOffset(0);
+    // طبّق الموضع المحفوظ فوراً بعد إيقاف الأنيميشن
+    currentOffset = preservedOffset;
+    track.style.webkitTransform = "translateY(" + preservedOffset + "px)";
+    track.style.transform = "translateY(" + preservedOffset + "px)";
   }
   var restoreTimer = null;
   function scheduleRestore(delay) {
@@ -2185,23 +2738,44 @@ function initDragScroll() {
     if (restoreTimer) { clearTimeout(restoreTimer); restoreTimer = null; }
     if (momentumRAF) { cancelAnimationFrame(momentumRAF); momentumRAF = null; }
     momentumActive = false;
+    // v25.39: لا تستعد أثناء سحب نشط — endDrag سيعيد الجدولة بعد انتهائه
+    if (isDragging) return;
+    var seq = ++restoreSeq;
     var oneCopy = getOneCopyHeight();
     if (oneCopy > 0) {
-      var progress = -currentOffset / oneCopy; 
+      // v25.24: حساب نسبة التقدم في التمرير من currentOffset
+      var progress = -currentOffset / oneCopy;
       if (progress < 0) progress = 0;
-      if (progress >= 0.999) progress = 0; 
+      if (progress >= 0.999) progress = 0;
       var durationStr = track.style.animationDuration || "";
       var durationSec = parseFloat(durationStr);
       if (!durationSec || isNaN(durationSec) || durationSec < 1) durationSec = 90;
+      // v25.24: animation-delay سالب يبدأ الأنيميشن من منتصفه
       var delaySec = -progress * durationSec;
       track.style.webkitAnimationDelay = delaySec + "s";
       track.style.animationDelay = delaySec + "s";
     }
-    track.style.webkitTransform = "";
-    track.style.transform = "";
-    card.classList.remove("inertial-scroll");
-    card.classList.remove("dragging");
-    track.classList.remove("smooth-decel");
+    // v25.24: استخدم requestAnimationFrame لضمان تطبيق animation-delay
+    // قبل إزالة inertial-scroll وقبل مسح transform
+    requestAnimationFrame(function() {
+      // v25.39: تجاهل إذا بدأ تفاعل جديد قبل تنفيذ الإطار
+      if (seq !== restoreSeq || isDragging) return;
+      // إزالة inertial-scroll لإعادة تفعيل الأنيميشن
+      card.classList.remove("inertial-scroll");
+      card.classList.remove("dragging");
+      track.classList.remove("smooth-decel");
+      // طلب إطار آخر لضمان أن المتصفح طبّق الأنيميشن مع animation-delay
+      requestAnimationFrame(function() {
+        if (seq !== restoreSeq || isDragging) return; // v25.39
+        // الآن امسح transform — الأنيميشن يجب أن يكون بدأ من الموضع الصحيح
+        track.style.webkitTransform = "";
+        track.style.transform = "";
+        // v25.39 — الإصلاح الجوهري: لم نعد نمسح animation-delay بعد 200ms!
+        // مسح الـ delay كان يُرجع وقت الأنيميشن إلى الصفر فيقفز المحتوى إلى
+        // البداية (وخاصة وهو موقوف بالضغط فيتجمد هناك). القيمة تُكتب من جديد
+        // تلقائياً في كل استعادة لاحقة، فلا حاجة لمسحها إطلاقاً.
+      });
+    });
   }
   function momentumLoop() {
     if (!momentumActive) return;
@@ -2244,16 +2818,23 @@ function initDragScroll() {
     momentumRAF = requestAnimationFrame(momentumLoop);
   }
   function startDrag(clientY) {
+    // v25.21: لا نفعّل inertial mode هنا — فقط نسجّل بداية اللمس
+    // سنفعّله فقط عند moveDrag إذا تجاوز الحركة العتبة
+    // هذا يمنع توقف الأنيميشن عند النقر العادي
     isDragging = true;
     startY = clientY;
     velocitySamples = [{ t: Date.now(), y: clientY }];
-    enableInertialMode();
-    startOffset = currentOffset;
+    dragActuallyMoved = false;
+    // لا نستدعي enableInertialMode() هنا!
+    startOffset = 0; // سيُقرأ من الأنيميشن عند أول moveDrag فعلي
     card.classList.add("dragging");
     track.classList.remove("smooth-decel");
     if (momentumRAF) { cancelAnimationFrame(momentumRAF); momentumRAF = null; }
     momentumActive = false;
     velocity = 0;
+    // v25.39: ألغِ أي استعادة معلّقة كي لا تعيد الأنيميشن في منتصف اللمس/السحب
+    if (restoreTimer) { clearTimeout(restoreTimer); restoreTimer = null; }
+    restoreSeq++;
   }
   function moveDrag(clientY) {
     if (!isDragging) return;
@@ -2261,15 +2842,35 @@ function initDragScroll() {
     velocitySamples.push({ t: now, y: clientY });
     while (velocitySamples.length > VELOCITY_SAMPLE_MAX) velocitySamples.shift();
     var dy = clientY - startY;
-    applyOffset(startOffset + dy);
-    velocity = computeVelocityFromSamples(now);
+    // v25.21: فعّل inertial mode فقط عند أول حركة فعلية تتجاوز العتبة
+    // عند التفعيل، احفظ الموضع الحالي للأنيميشن وابدأ منه
+    if (!dragActuallyMoved && Math.abs(dy) > dragStartThreshold) {
+      dragActuallyMoved = true;
+      enableInertialMode(); // يقرأ الموضع الحالي ويطبّقه
+      startOffset = currentOffset; // الآن startOffset = الموضع المحفوظ
+    }
+    if (dragActuallyMoved) {
+      applyOffset(startOffset + dy);
+      velocity = computeVelocityFromSamples(now);
+    }
   }
   function endDrag() {
     if (!isDragging) return;
     isDragging = false;
     card.classList.remove("dragging");
+    // v25.21: إذا لم يحدث سحب فعلي، لا تبدأ momentum — الأنيميشن لم يتوقف أصلاً
+    if (!dragActuallyMoved) {
+      // v25.39: نقرة بسيطة — لكن إن بقي وضع inertial مفعّلاً من تفاعل سابق
+      // (مثلاً عجلة الفأرة ثم نقرة سريعة) فأعد جدولة الاستعادة حتى لا يعلق الوضع اليدوي
+      if (card.classList.contains("inertial-scroll")) scheduleRestore(50);
+      return;
+    }
     var finalV = computeVelocityFromSamples(Date.now());
     startMomentum(finalV);
+  }
+  // v25.19: التحقق من أن النقرة لم تكن سحباً (لمنع nextInfo() بعد السحب)
+  function wasActualClick() {
+    return !dragActuallyMoved;
   }
   var touchStartHandler = function(e) { if (e.touches && e.touches.length > 0) startDrag(e.touches[0].clientY); };
   var touchMoveHandler = function(e) { if (!isDragging) return; if (e.touches && e.touches.length > 0) { moveDrag(e.touches[0].clientY); e.preventDefault(); } };
@@ -2314,6 +2915,9 @@ function initDragScroll() {
   document.addEventListener("mousemove", mouseMoveHandler);
   document.addEventListener("mouseup", mouseUpHandler);
   card.addEventListener("wheel", wheelHandler, { passive: false });
+  // v25.19: تخزين مرجع لـ wasActualClick على card
+  // حتى يتمكن nextInfo() من التحقق إن كان النقر حقيقياً أم بعد سحب
+  card._wasActualClick = wasActualClick;
   card._inertiaCleanup = function() {
     card.removeEventListener("touchstart", touchStartHandler);
     card.removeEventListener("touchmove", touchMoveHandler);
@@ -2327,12 +2931,9 @@ function initDragScroll() {
     if (restoreTimer) { clearTimeout(restoreTimer); restoreTimer = null; }
   };
 }
-function slideToNextInfo() { }
-function startInfoCycle() { }
-function stopInfoCycle() { }
-function startCycleProgress() { }
-function stopCycleProgress() { if (el("infoProgressBar")) el("infoProgressBar").style.width = "0%"; }
-function resetCycleProgress() { }
+// v25.37: حُذفت الـ stubs الفارغة (slideToNextInfo, startInfoCycle, stopInfoCycle,
+// startCycleProgress, stopCycleProgress, resetCycleProgress) — كانت بقايا تصميم قديم
+// ولا تُنفّذ شيئاً
 
 function startInfoRefresh() {
   stopInfoRefresh();
@@ -2342,11 +2943,48 @@ function startInfoRefresh() {
 }
 function stopInfoRefresh() { if (infoRefreshTimer) { clearInterval(infoRefreshTimer); infoRefreshTimer = null; } }
 
+// v23.6: متغيرات تصحيح المواقيت — تُعرّف قبل التهيئة
+var TIME_OFFSETS_KEY = "pt-time-offsets";
+var timeOffsets = {};
+
+function loadTimeOffsets() {
+  try { timeOffsets = JSON.parse(localStorage.getItem(TIME_OFFSETS_KEY) || "{}"); } catch(e) { timeOffsets = {}; }
+  var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+  for (var i = 0; i < keys.length; i++) {
+    if (typeof timeOffsets[keys[i]] !== "number") timeOffsets[keys[i]] = 0;
+  }
+}
+
+function saveTimeOffsets() {
+  try { localStorage.setItem(TIME_OFFSETS_KEY, JSON.stringify(timeOffsets)); } catch(e) {}
+}
+
+function applyTimeOffsets() {
+  var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var offset = timeOffsets[k] || 0;
+    if (offset === 0) continue;
+    if (!prayerTimings[k]) continue;
+    var parts = prayerTimings[k].split(":");
+    var h = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10);
+    var totalMin = h * 60 + m + offset;
+    while (totalMin < 0) totalMin += 1440;
+    while (totalMin >= 1440) totalMin -= 1440;
+    var nh = Math.floor(totalMin / 60);
+    var nm = totalMin % 60;
+    prayerTimings[k] = (nh < 10 ? "0" + nh : nh) + ":" + (nm < 10 ? "0" + nm : nm);
+  }
+}
+
 // ===== INIT STATE =====
 (function() {
   try { dateCorrection = parseInt(localStorage.getItem("hijri-date-correction") || "0"); } catch(e) { dateCorrection = 0; }
   try { iqamaOffsets = JSON.parse(localStorage.getItem("iqama-offsets") || "{}"); } catch(e) { iqamaOffsets = {}; }
   if (!iqamaOffsets.Fajr) { iqamaOffsets = { Fajr:30, Dhuhr:20, Asr:20, Maghrib:10, Isha:10 }; }
+  // v23.6: تحميل تصحيح المواقيت بعد تعريف المتغيرات
+  loadTimeOffsets();
   
   // ✅ تهيئة إعدادات التنبيهات الجديدة (أذان، دعاء، إقامة، منبه)
   try { alertSettings = JSON.parse(localStorage.getItem("alert-settings") || "{}"); } catch(e) { alertSettings = {}; }
@@ -2381,8 +3019,14 @@ function stopInfoRefresh() { if (infoRefreshTimer) { clearInterval(infoRefreshTi
     var sl = localStorage.getItem("manual-lat");
     var sm = localStorage.getItem("manual-lng");
     if (sl && sm) { latitude = parseFloat(sl); longitude = parseFloat(sm); isManualLocation = true; }
+    // v21: طريقة الحساب — لو لم يضبط المستخدم طريقة مخصصة، استخدم الهيئة المصرية (5)
     var smth = localStorage.getItem("pt-method");
-    if (smth !== null && !isNaN(parseInt(smth))) PT_METHOD = parseInt(smth);
+    var methodSet = localStorage.getItem("pt-method-set");
+    if (smth !== null && !isNaN(parseInt(smth)) && methodSet === "1") {
+      PT_METHOD = parseInt(smth); // المستخدم ضبط طريقة مخصصة
+    } else {
+      PT_METHOD = 5; // الهيئة المصرية العامة للمساحة (افتراضي)
+    }
     var ssch = localStorage.getItem("pt-school");
     if (ssch !== null && !isNaN(parseInt(ssch))) PT_SCHOOL = parseInt(ssch);
   } catch(e) {}
@@ -2550,8 +3194,11 @@ function extractTimings(data) {
     var m = raw ? raw.match(/^(\d{1,2}:\d{2})/) : null;
     prayerTimings[k] = m ? m[1] : "";
   }
+  // v23.2: تطبيق التصحيح الدائم للمواقيت
+  applyTimeOffsets();
   syncAlarmsToNative();
 }
+
 
 // ===== NATIVE ALARM SYNC =====
 // قراءة أوقات صلاة يوم معين من الذاكرة المؤقتة المحلية (جلب الغد التلقائي يخزنها)
@@ -2751,9 +3398,30 @@ function searchCity() {
   box.innerHTML = "";
   st.style.display = "block";
   st.textContent = "⏳ جاري البحث عن «" + q + "»...";
+  var url = "https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(q) + "&count=8&language=ar&format=json";
+
+  // v25.35: على أندرويد، استخدم NativeBridge (مع Tls12Helper) بدلاً من XHR
+  // هذا يحل مشكلة Samsung J5 (Android 5.x) التي تفشل في TLS 1.2
+  if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
+    try {
+      AndroidPrayer.fetchUrl(url, "_citySearchCallback");
+      // fallback: إذا لم يصل رد خلال 12 ثانية، حاول XHR
+      setTimeout(function() {
+        if (citySearching) {
+          searchCityViaXHR(url, st, box);
+        }
+      }, 12000);
+      return;
+    } catch(e) {}
+  }
+  searchCityViaXHR(url, st, box);
+}
+
+// v25.35: XHR fallback للبحث عن المدن
+function searchCityViaXHR(url, st, box) {
   var xhr = new XMLHttpRequest();
   xhr.timeout = 12000;
-  xhr.open("GET", "https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(q) + "&count=8&language=ar&format=json", true);
+  xhr.open("GET", url, true);
   xhr.onreadystatechange = function() {
     if (xhr.readyState !== 4) return;
     citySearching = false;
@@ -2761,7 +3429,7 @@ function searchCity() {
       try {
         var j = JSON.parse(xhr.responseText);
         cityResults = (j.results || []).slice(0, 8);
-        if (!cityResults.length) { st.textContent = "❌ لا نتائج لـ «" + q + "» — جرّب اسماً آخر"; return; }
+        if (!cityResults.length) { st.textContent = "❌ لا نتائج — جرّب اسماً آخر"; return; }
         st.style.display = "none";
         var html = "";
         for (var i = 0; i < cityResults.length; i++) {
@@ -2779,6 +3447,45 @@ function searchCity() {
     }
   };
   try { xhr.send(); } catch(e) { citySearching = false; st.textContent = "⚠️ فشل البحث"; }
+}
+
+// v25.35: callback من NativeBridge.fetchUrl لنتائج البحث
+function _citySearchCallback(data) {
+  if (!data) {
+    if (window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+      try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
+    }
+  }
+  citySearching = false;
+  if (!data || data.length === 0) {
+    var st = el("citySearchStatus");
+    if (st) st.textContent = "⚠️ فشل البحث — تحقق من الاتصال بالإنترنت";
+    return;
+  }
+  try {
+    var j = (typeof data === "string") ? JSON.parse(data) : data;
+    cityResults = (j.results || []).slice(0, 8);
+    var st = el("citySearchStatus");
+    var box = el("cityResults");
+    if (!cityResults.length) {
+      if (st) st.textContent = "❌ لا نتائج — جرّب اسماً آخر";
+      return;
+    }
+    if (st) st.style.display = "none";
+    var html = "";
+    for (var i = 0; i < cityResults.length; i++) {
+      var r = cityResults[i];
+      var sub = [r.admin1, r.country].filter(Boolean).join("، ");
+      html += '<div class="city-result" onclick="pickCity(' + i + ')">' +
+              '<div class="cr-name">📍 ' + r.name + '</div>' +
+              (sub ? '<div class="cr-sub">' + sub + '</div>' : '') +
+              '</div>';
+    }
+    if (box) box.innerHTML = html;
+  } catch(e) {
+    var st2 = el("citySearchStatus");
+    if (st2) st2.textContent = "⚠️ تعذر تحليل نتيجة البحث";
+  }
 }
 function pickCity(i) {
   var r = cityResults[i]; if (!r) return;
@@ -2845,28 +3552,58 @@ function reverseGeoName(la, ln) {
 
 // نسخة احتياطية: BigDataCloud (إن فشل Nominatim)
 function reverseGeoNameFallbackBigDataCloud(la, ln) {
+  var url = "https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + la + "&longitude=" + ln + "&localityLanguage=ar";
+  // v25.35: على أندرويد، استخدم NativeBridge (مع Tls12Helper)
+  if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
+    try {
+      AndroidPrayer.fetchUrl(url, "_reverseGeoCallback");
+      return;
+    } catch(e) {}
+  }
+  reverseGeoViaXHR(url);
+}
+
+// v25.35: XHR fallback لـ reverse geocode
+function reverseGeoViaXHR(url) {
   try {
     var xhr = new XMLHttpRequest();
     xhr.timeout = 8000;
-    xhr.open("GET", "https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + la + "&longitude=" + ln + "&localityLanguage=ar", true);
+    xhr.open("GET", url, true);
     xhr.onreadystatechange = function() {
       if (xhr.readyState !== 4) return;
       if (xhr.status === 200) {
-        try {
-          var j = JSON.parse(xhr.responseText);
-          var parts = [];
-          var city = j.city || j.locality || "";
-          var reg = j.principalSubdivision || "";
-          var ctry = j.countryName || "";
-          if (city) parts.push(city);
-          else if (reg) parts.push(reg);
-          if (ctry && parts.length && parts[0] !== ctry) parts.push(ctry);
-          if (parts.length && !geoName) { geoName = parts.join("، "); renderLocation(); }
-        } catch(e) {}
+        _processReverseGeo(xhr.responseText);
       }
     };
     xhr.send();
   } catch(e) {}
+}
+
+// v25.35: معالجة نتيجة reverse geocode (مشتركة)
+function _processReverseGeo(text) {
+  try {
+    var j = (typeof text === "string") ? JSON.parse(text) : text;
+    var parts = [];
+    var city = j.city || j.locality || "";
+    var reg = j.principalSubdivision || "";
+    var ctry = j.countryName || "";
+    if (city) parts.push(city);
+    else if (reg) parts.push(reg);
+    if (ctry && parts.length && parts[0] !== ctry) parts.push(ctry);
+    if (parts.length && !geoName) { geoName = parts.join("، "); renderLocation(); }
+  } catch(e) {}
+}
+
+// v25.35: callback من NativeBridge لـ reverse geocode
+function _reverseGeoCallback(data) {
+  if (!data) {
+    if (window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+      try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
+    }
+  }
+  if (data && data.length > 0) {
+    _processReverseGeo(data);
+  }
 }
 
 // ===== v13: طريقة الحساب =====
@@ -2894,6 +3631,7 @@ function applyCalcMethod() {
   try {
     localStorage.setItem("pt-method", "" + PT_METHOD);
     localStorage.setItem("pt-school", "" + PT_SCHOOL);
+    localStorage.setItem("pt-method-set", "1"); // v21: المستخدم ضبط طريقة مخصصة
   } catch(e) {}
   el("methodCurrent").textContent = calcMethodName(PT_METHOD) + (PT_SCHOOL === 1 ? " — عصر الحنفي" : "");
   fetchPrayerTimes();
@@ -3269,7 +4007,6 @@ function render() {
     if (onlineInfoEnabled && navigator.onLine) {
       fetchAllInfo();
       startInfoRefresh();
-      startInfoCycle();
       startLiveRefresh();
     }
     if (!audioActivated && audioEnabled === false) {
@@ -3374,6 +4111,67 @@ function renderIqamaSettings() {
   }
   container.innerHTML = html;
 }
+
+// v23.2: تصحيح دائم لمواقيت الأذان
+function renderTimeOffsetsSettings() {
+  var container = el("timeOffsetsSettings");
+  if (!container) return;
+  container.style.display = "block";
+  var html = "";
+  for (var i = 0; i < PRAYER_ORDER.length; i++) {
+    var k = PRAYER_ORDER[i];
+    // v23.3: إضافة شروق الشمس للتصحيح
+    var val = timeOffsets[k] || 0;
+    var color = val < 0 ? "#dc2626" : (val > 0 ? "#059669" : "#6b7280");
+    html += '<div class="setting-box" style="display:table;">' +
+            '<span style="display:table-cell;vertical-align:middle;font-size:13px;color:#374151;">' + PRAYER_NAMES[k] + '</span>' +
+            '<div style="display:table-cell;vertical-align:middle;text-align:left;">' +
+            '<button onclick="adjustTimeOffset(\'' + k + '\',-1)" style="border:1px solid #d1d5db;border-radius:6px 0 0 6px;background:#fee2e2;color:#b91c1c;width:30px;height:28px;font-size:16px;cursor:pointer;">−</button>' +
+            '<input type="number" value="' + val + '" onchange="updateTimeOffset(\'' + k + '\',this.value)" style="width:50px;text-align:center;border:1px solid #d1d5db;border-left:none;border-right:none;padding:4px;font-size:14px;font-family:monospace;height:28px;font-weight:' + (val < 0 ? '700' : '400') + ';color:' + color + ';" />' +
+            '<button onclick="adjustTimeOffset(\'' + k + '\',1)" style="border:1px solid #d1d5db;border-radius:0 6px 6px 0;background:#dcfce7;color:#166534;width:30px;height:28px;font-size:16px;cursor:pointer;">+</button>' +
+            '<span style="font-size:10px;color:#9ca3af;margin-right:6px;">دقيقة</span>' +
+            '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+function updateTimeOffset(key, val) {
+  var v = parseInt(val, 10);
+  if (isNaN(v)) v = 0;
+  v = Math.max(-60, Math.min(60, v));
+  timeOffsets[key] = v;
+  saveTimeOffsets();
+  renderTimeOffsetsSettings();
+  // v23.5: تطبيق التصحيح مباشرة بدلاً من إعادة الجلب
+  applyTimeOffsetsToCurrentTimings();
+}
+
+function adjustTimeOffset(key, delta) {
+  var v = (timeOffsets[key] || 0) + delta;
+  v = Math.max(-60, Math.min(60, v));
+  timeOffsets[key] = v;
+  saveTimeOffsets();
+  renderTimeOffsetsSettings();
+  applyTimeOffsetsToCurrentTimings();
+}
+
+function resetTimeOffsets() {
+  var keys = ["Fajr","Sunrise","Dhuhr","Asr","Maghrib","Isha"];
+  for (var i = 0; i < keys.length; i++) timeOffsets[keys[i]] = 0;
+  saveTimeOffsets();
+  renderTimeOffsetsSettings();
+  applyTimeOffsetsToCurrentTimings();
+}
+
+// v23.5: تطبيق التصحيح على المواقيت الحالية وإعادة الرسم
+function applyTimeOffsetsToCurrentTimings() {
+  if (prayerData && prayerData.timings) {
+    extractTimings(prayerData);
+    render();
+  } else {
+    fetchPrayerTimes();
+  }
+}
 function updateIqama(key, val) {
   iqamaOffsets[key] = Math.max(1, Math.min(60, parseInt(val) || 10));
   localStorage.setItem("iqama-offsets", JSON.stringify(iqamaOffsets));
@@ -3464,6 +4262,7 @@ function openSettings() {
   el("citySearchInput").value = ""; el("cityResults").innerHTML = ""; el("citySearchStatus").style.display = "none"; // v13
   renderSmartPrefButtons(); // v12: أزرار وضع الشاشة الذكية
   renderIqamaSettings(); renderAlertToggles(); updateAudioBtn();
+  renderTimeOffsetsSettings(); // v23.2: عرض تصحيح المواقيت
   // v19: عرض معرّف الجهاز
   try {
     var devInput = el("deviceIdDisplay");
@@ -3471,8 +4270,48 @@ function openSettings() {
   } catch(e) {}
   // v20: تحديث زر المشاركة
   try { tgUpdateToggleUI(); } catch(e) {}
+  // v25.37: تحديث زر التبديل للنسخة المبسطة
+  try { updateLiteSwitchBtn(); } catch(e) {}
 }
 function closeSettings() { el("settingsModal").classList.remove("show"); }
+
+// ===== v25.37: التبديل بين النسخة الكاملة والنسخة المبسطة (Lite) =====
+// أندرويد: عبر NativeBridge.switchToLite/switchToFull (يحفظ التفضيل ويعيد التحميل)
+// الويب: تحويل مباشر إلى prayer-times-lite.html / prayer-times.html
+function switchLiteVersion() {
+  var isAndroid = window.AndroidPrayer && typeof AndroidPrayer.switchToLite === "function";
+  var usingLite = false;
+  try { usingLite = isAndroid && AndroidPrayer.isUsingLite && AndroidPrayer.isUsingLite(); } catch(e) {}
+  if (isAndroid) {
+    if (!usingLite) {
+      if (!confirm("التبديل إلى النسخة المبسطة؟\n\nنسخة خفيفة تناسب الأجهزة القديمة: مواقيت + أذان + شريط معلومات فقط.\nيمكنك العودة للنسخة الكاملة من الإعدادات في أي وقت.")) return;
+      try { AndroidPrayer.switchToLite(); } catch(e) { showNotification("⚠️ تعذّر التبديل"); }
+    } else {
+      if (!confirm("العودة إلى النسخة الكاملة؟\n\nتشمل كل المزايا: بوصلة القبلة، الخريطة، الشاشة الذكية والمزيد.")) return;
+      try { AndroidPrayer.switchToFull(); } catch(e) { showNotification("⚠️ تعذّر التبديل"); }
+    }
+  } else {
+    // وضع الويب — التبديل بين الملفين في نفس المجلد
+    var target = location.pathname.indexOf("prayer-times-lite") !== -1 ? "prayer-times.html" : "prayer-times-lite.html";
+    if (!confirm("التبديل بين النسختين؟\nسيفتح: " + target)) return;
+    try { window.location.href = target; } catch(e) {}
+  }
+}
+
+// v25.37: تحديث نص زر التبديل حسب الحالة الحالية (كاملة/مبسطة)
+function updateLiteSwitchBtn() {
+  var btn = el("liteSwitchBtn");
+  if (!btn) return;
+  var usingLite = false;
+  try { usingLite = window.AndroidPrayer && AndroidPrayer.isUsingLite && AndroidPrayer.isUsingLite(); } catch(e) {}
+  if (usingLite) {
+    btn.innerHTML = "⚡ العودة إلى النسخة الكاملة";
+    btn.style.background = "#eff6ff"; btn.style.color = "#1d4ed8"; btn.style.borderColor = "#93c5fd";
+  } else {
+    btn.innerHTML = "🪶 التبديل إلى النسخة المبسطة";
+    btn.style.background = "#f0fdf4"; btn.style.color = "#047857"; btn.style.borderColor = "#6ee7b7";
+  }
+}
 
 // v19: نسخ معرّف الجهاز
 function copyDeviceId() {
@@ -3603,7 +4442,14 @@ function refreshData() { fetchPrayerTimes(); }
   if (saved) { try { var pos = JSON.parse(saved); btn.style.left = pos.left; btn.style.top = pos.top; btn.style.right = "auto"; } catch(e) {} }
 })();
 
-function openCredits() { el("creditsModal").classList.add("show"); }
+function openCredits() {
+  // v23.1: عرض رقم الإصدار الحالي تلقائياً
+  try {
+    var vEl = el("creditsVersion");
+    if (vEl) vEl.textContent = "v" + CURRENT_APP_VERSION;
+  } catch(e) {}
+  el("creditsModal").classList.add("show");
+}
 function closeCredits() { el("creditsModal").classList.remove("show"); }
 
 el("settingsModal").addEventListener("click", function(e) { if (e.target === this) closeSettings(); });
@@ -3842,7 +4688,7 @@ function msgsFromItems(arr) {
   var out = [];
   if (!arr || typeof arr.length !== "number") return out;
   for (var i = 0; i < arr.length; i++) {
-    if (arr[i] && arr[i].cat === "messages" && messageIsForMe(arr[i])) out.push(arr[i]);
+    if (arr[i] && arr[i].cat === "ehemessages" && messageIsForMe(arr[i])) out.push(arr[i]);
   }
   return out;
 }
@@ -3870,7 +4716,7 @@ function msgFindUnseen(msgs) {
 }
 
 function currentKnownMessages() {
-  if (editorMsgs && (editorDirty || (Date.now() - msgEdLastSaveAt) < 180000)) return editorMsgsForCache();
+  // v25.3: محرر الرسائل حُذف في v19.0 — لا تعديلات محلية بعد الآن
   return msgsFromItems(cachedInfoItems);
 }
 
@@ -3933,7 +4779,7 @@ function closeMsgAlertBubble(markSeen) {
 
 function viewNewMessages() {
   closeMsgAlertBubble(false);
-  if (infoCatFilter !== "messages") toggleCatFilter("messages");
+  if (infoCatFilter !== "ehemessages") toggleCatFilter("ehemessages");
   msgMarkAllSeen(currentKnownMessages());
 }
 
@@ -4423,6 +5269,9 @@ applyTheme(); // تطبيق فوري عند الإقلاع — قبل جلب ا�
 // ============================================================
 var KAABA_LAT = 21.4224779, KAABA_LNG = 39.8251832; // الكعبة المشرفة — مكة المكرمة
 var qiblaAngle = 0, qiblaHeading = null, qiblaLive = false, qiblaSensorTimer = null;
+var qiblaLastUpdateAt = 0; // v25.17: لتخفيف الحساسية (throttle)
+// v25.22: متوسط متحرك أقوى (median filter + low-pass filter)
+var qiblaRecentHeadings = []; // آخر 5 قراءات للحصول على الوسيط (median)
 
 // زاوية القبلة: الدائرة العظمى من الموقع إلى الكعبة (بالاتجاه مع عقارب الساعة من الشمال)
 function qiblaBearing(lat, lng) {
@@ -4440,57 +5289,363 @@ function qiblaDistanceKm(lat, lng) {
   var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat * d2r) * Math.cos(KAABA_LAT * d2r) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
+function qiblaBuildTicks() {
+  var t = el("qbTicks");
+  if (!t || t.getAttribute("data-built")) return;
+  var html = "";
+  for (var i = 0; i < 72; i++) {
+    var major = (i % 9 === 0);
+    var deg = i * 5;
+    var tf = "rotate(" + deg + "deg)";
+    html += '<div class="qb-tick' + (major ? " major" : "") + '" style="transform:' + tf + ';"></div>';
+  }
+  t.innerHTML = html;
+  t.setAttribute("data-built", "1");
+}
+function qiblaSetRot(elm, deg) {
+  var v = "rotate(" + deg + "deg)";
+  elm.style.webkitTransform = v;
+  elm.style.transform = v;
+}
 function qiblaCompute() {
+  if (typeof latitude !== "number" || typeof longitude !== "number" ||
+      isNaN(latitude) || isNaN(longitude)) {
+    var st = el("qbStatus");
+    if (st) { st.innerHTML = "⚠️ لم يتم تحديد موقعك بعد — انتظر تحديد الموقع"; st.className = "qb-status qb-status-big"; }
+    return;
+  }
   qiblaAngle = qiblaBearing(latitude, longitude);
   var km = qiblaDistanceKm(latitude, longitude);
   var kmTxt = ("" + km).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   el("qbAngle").innerHTML = qiblaAngle.toFixed(1);
   el("qbDist").innerHTML = "المسافة إلى مكة المكرمة: <strong>" + kmTxt + "</strong> كم";
-  // v17: تحميل خريطة Google Maps بالمسار من موقعك إلى الكعبة
-  var frame = el("qbMapFrame");
-  if (frame) {
-    var src = "https://www.google.com/maps?saddr=" + latitude + "," + longitude +
-              "&daddr=" + KAABA_LAT + "," + KAABA_LNG +
-              "&output=embed";
-    if (frame.src !== src) frame.src = src;
+
+  // v25.9: تهيئة خريطة Leaflet مع رسم خط مستقيم من موقعك إلى مكة
+  qiblaInitLeafletMap();
+}
+
+// v25.9: تهيئة خريطة Leaflet/OpenStreetMap ورسم خط مستقيم من موقعك إلى مكة
+var _qiblaLeafletMap = null;
+var _qiblaLeafletInited = false;
+var _qiblaLeafletLoadingTried = false;
+
+function qiblaInitLeafletMap() {
+  // تحميل Leaflet CDN مرة واحدة فقط
+  if (typeof window.L === "undefined") {
+    if (_qiblaLeafletLoadingTried) return;
+    _qiblaLeafletLoadingTried = true;
+    qiblaLoadLeafletCSS();
+    qiblaLoadLeafletJS(function() {
+      _qiblaLeafletLoadingTried = false;
+      qiblaInitLeafletMap();
+    });
+    return;
   }
+  if (_qiblaLeafletInited) {
+    // فقط حدّث الموقع إن وُجدت الخريطة
+    if (_qiblaLeafletMap) {
+      try {
+        _qiblaLeafletMap.setView([latitude, longitude], 5);
+      } catch(e) {}
+    }
+    return;
+  }
+  var container = el("qbLeafletMap");
+  if (!container) return;
+  try {
+    _qiblaLeafletMap = L.map(container, {
+      zoomControl: false,
+      attributionControl: true,
+      scrollWheelZoom: false,
+      dragging: false,
+      doubleClickZoom: false,
+      touchZoom: false,
+      boxZoom: false,
+      keyboard: false
+    }).setView([latitude, longitude], 5);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap",
+      maxZoom: 19
+    }).addTo(_qiblaLeafletMap);
+
+    // علامة موقعك
+    L.circleMarker([latitude, longitude], {
+      radius: 8,
+      color: "#dc2626",
+      fillColor: "#dc2626",
+      fillOpacity: 1,
+      weight: 3
+    }).addTo(_qiblaLeafletMap).bindPopup("📍 موقعك");
+
+    // علامة مكة
+    L.circleMarker([KAABA_LAT, KAABA_LNG], {
+      radius: 8,
+      color: "#059669",
+      fillColor: "#059669",
+      fillOpacity: 1,
+      weight: 3
+    }).addTo(_qiblaLeafletMap).bindPopup("🕋 مكة المكرمة");
+
+    // v25.14: إعادة الخط المستقيم من موقعك إلى مكة على الخريطة
+    // هذا هو الخط الذي يصل بين موقعك ومكة على الخريطة الفعلية
+    L.polyline([
+      [latitude, longitude],
+      [KAABA_LAT, KAABA_LNG]
+    ], {
+      color: "#059669",
+      weight: 4,
+      opacity: 0.8,
+      dashArray: "10, 6"
+    }).addTo(_qiblaLeafletMap);
+
+    // ضبط الخريطة لتظهر النقطتين
+    _qiblaLeafletMap.fitBounds([
+      [latitude, longitude],
+      [KAABA_LAT, KAABA_LNG]
+    ], { padding: [30, 30] });
+
+    // v25.28: حساب المواضع الفعلية للمستخدم ومكة على الشاشة
+    // وضبط الخط الأحمر ليتطابق معها
+    setTimeout(function() {
+      try {
+        _qiblaLeafletMap.invalidateSize();
+        qiblaUpdateRedLinePosition();
+      } catch(e) {}
+    }, 200);
+
+    _qiblaLeafletInited = true;
+  } catch(e) {
+    var st = el("qbStatus");
+    if (st) { st.innerHTML = "⚠️ تعذر تحميل الخريطة — تأكد من اتصال الإنترنت"; }
+  }
+}
+
+// v25.28: حساب المواضع الفعلية للمستخدم ومكة على الشاشة
+// وضبط الخط الأحمر ليتطابق مع موضع المستخدم الفعلي على الخريطة
+function qiblaUpdateRedLinePosition() {
+  if (!_qiblaLeafletMap) return;
+  try {
+    var container = el("qbMapContainer") || _qiblaLeafletMap.getContainer();
+    if (!container) return;
+    var containerH = container.clientHeight;
+    if (containerH <= 0) return;
+
+    // الحصول على مواضع البكسل للمستخدم ومكة على الخريطة
+    var userPoint = _qiblaLeafletMap.latLngToContainerPoint([latitude, longitude]);
+    var kaabaPoint = _qiblaLeafletMap.latLngToContainerPoint([KAABA_LAT, KAABA_LNG]);
+
+    // الخريطة مقلوبة 180°، لذا المواضع معكوسة
+    // userPoint.y هو المسافة من أعلى الخريطة الأصلية
+    // بعد قلب 180°: أعلى الخريطة يصبح أسفل الشاشة والعكس
+    // الموضع الفعلي على الشاشة = containerH - userPoint.y
+    var userScreenY = containerH - userPoint.y;
+    var kaabaScreenY = containerH - kaabaPoint.y;
+
+    // تحويل إلى نسبة مئوية من ارتفاع الحاوية
+    var userPct = (userScreenY / containerH) * 100;
+    var kaabaPct = (kaabaScreenY / containerH) * 100;
+
+    // ضمان أن userPct > kaabaPct (المستخدم أسفل، مكة أعلى)
+    if (userPct < kaabaPct) {
+      var tmp = userPct;
+      userPct = kaabaPct;
+      kaabaPct = tmp;
+    }
+
+    // حساب ارتفاع الخط كنسبة مئوية
+    var lineHeight = userPct - kaabaPct;
+    if (lineHeight < 10) lineHeight = 10; // حد أدنى
+
+    // تحديث موضع الخط الأحمر
+    var redLine = document.querySelector(".qb-fixed-red-line");
+    if (redLine) {
+      // bottom = المسافة من أسفل الحاوية إلى بداية الخط (عند موقعك)
+      // = 100 - userPct (لأن userPct هو المسافة من الأعلى)
+      var bottomPct = 100 - userPct;
+      redLine.style.bottom = bottomPct + "%";
+      redLine.style.height = lineHeight + "%";
+    }
+
+    // تحديث مواضع دوائر SVG لتتطابق مع المواضع الفعلية
+    var userCircle = el("qbUserPoint");
+    if (userCircle) {
+      userCircle.setAttribute("cy", userPct + "%");
+    }
+    var userText = el("qbUserText");
+    if (userText) {
+      userText.setAttribute("y", (userPct - 5) + "%");
+    }
+    var kaabaCircle = el("qbKaabaPoint");
+    if (kaabaCircle) {
+      kaabaCircle.setAttribute("cy", kaabaPct + "%");
+    }
+    var kaabaText = el("qbKaabaText");
+    if (kaabaText) {
+      kaabaText.setAttribute("y", (kaabaPct - 2) + "%");
+    }
+  } catch(e) {}
+}
+
+function qiblaLoadLeafletCSS() {
+  if (document.getElementById("qbLeafletCSS")) return;
+  var link = document.createElement("link");
+  link.id = "qbLeafletCSS";
+  link.rel = "stylesheet";
+  link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+  link.crossOrigin = "";
+  document.head.appendChild(link);
+}
+
+function qiblaLoadLeafletJS(callback) {
+  if (document.getElementById("qbLeafletJS")) {
+    // بانتظار التحميل
+    var wait = setInterval(function() {
+      if (typeof window.L !== "undefined") {
+        clearInterval(wait);
+        callback();
+      }
+    }, 100);
+    return;
+  }
+  var script = document.createElement("script");
+  script.id = "qbLeafletJS";
+  script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  script.crossOrigin = "";
+  script.onload = callback;
+  script.onerror = function() {
+    var st = el("qbStatus");
+    if (st) { st.innerHTML = "⚠️ تعذر تحميل مكتبة الخريطة — حاول مرة أخرى"; }
+  };
+  document.head.appendChild(script);
 }
 function qiblaRender() {
   var hasH = qiblaLive && qiblaHeading !== null && qiblaHeading !== undefined;
-  // v17: السهم يشير للقبلة دائماً، كيفما أدّرت الموبايل
-  // السهم يدور بزاوية: qiblaAngle - deviceHeading
-  // - بدون حساس: السهم ثابت في زاوية qiblaAngle (يشير للقبلة المطلقة)
-  // - مع حساس: السهم يتبع القبلة، يدور عكس دوران الجهاز
-  var arrowRot = qiblaAngle - (hasH ? qiblaHeading : 0);
-  var arrow = el("qbArrow");
-  if (arrow) qiblaSetRot(arrow, arrowRot);
+  // v25.25: تصميم بوصلة مغناطيسية حقيقية:
+  // 1. الخريطة (مع الخط الأخضر عليها) — ثابتة دائماً
+  //    مقلوبة 180° (شمال في أسفل الموبايل، جنوب في الأعلى)
+  //    الخط الأخضر على الخريطة يصل بين موقعك ومكة — ثابت
+  // 2. الخط الأحمر — يدور مع الموبايل
+  //    يمثل اتجاه رأس الموبايل
+  //    عند مواجهة القبلة: الخط الأحمر يتطابق مع الخط الأخضر
+
+  // v25.25: الخريطة ثابتة عند 180° (مقلوبة — شمال في الأسفل)
+  var mapContainer = el("qbLeafletMap");
+  if (mapContainer) {
+    var mapTransform = "rotate(180deg)";
+    mapContainer.style.webkitTransform = mapTransform;
+    mapContainer.style.transform = mapTransform;
+  }
+
+  // v25.25: SVG overlay ثابت (لا يدور) — الدوائر في مواضعها
+  var svgOverlay = el("qbSvgOverlay");
+  if (svgOverlay) {
+    svgOverlay.style.webkitTransform = "rotate(0deg)";
+    svgOverlay.style.transform = "rotate(0deg)";
+  }
+
+  // v25.25: الخط الأحمر يدور مع الموبايل
+  // عند heading=0 (مواجهة الشمال): الخط يشير للأسفل (نحو الشمال في أسفل الشاشة) = -180°
+  // عند heading=180 (مواجهة الجنوب): الخط يشير للأعلى (نحو الجنوب في أعلى الشاشة) = 0°
+  // عند heading=qiblaAngle: الخط يشير نحو مكة = يتطابق مع الخط الأخضر
+  // الصيغة: redRot = qiblaHeading - 180
+  var redLine = document.querySelector(".qb-fixed-red-line");
+  if (redLine) {
+    var redRot = hasH ? (qiblaHeading - 180) : 0;
+    var redTransform = "translateX(-50%) rotate(" + redRot + "deg)";
+    redLine.style.webkitTransform = redTransform;
+    redLine.style.transform = redTransform;
+  }
+
+  // v25.26: البوصلة المصغّرة تدور مع الموبايل
+  // الحاوية الرئيسية مقلوبة 180°، لذا نضيف 180° لتعويض القلب
+  // النتيجة: الشمال (ش) يبقى في أسفل البوصلة على الشاشة
+  var dialRot = hasH ? (180 - qiblaHeading) : 180;
+  var dial = el("qbDial");
+  if (dial) qiblaSetRot(dial, dialRot);
+
   var st = el("qbStatus"), sn = el("qbSensor");
   if (hasH) {
     var diff = Math.abs(((qiblaAngle - qiblaHeading) % 360 + 540) % 360 - 180);
     if (st) {
       if (diff < 5) {
-        st.innerHTML = "✅ أنت الآن في اتجاه القبلة";
+        st.innerHTML = "✅ الخطان متطابقان — أنت الآن في اتجاه القبلة";
         st.className = "qb-status qb-aligned qb-status-big";
       } else {
         var turn = (qiblaAngle - qiblaHeading + 360) % 360;
         var turnDir = turn < 180 ? "يميناً" : "يساراً";
         var turnAmt = turn < 180 ? turn : (360 - turn);
-        st.innerHTML = "🧭 أدر جهازك " + Math.round(turnAmt) + "° " + turnDir + " للقبلة";
+        st.innerHTML = "🧭 أدر جهازك " + Math.round(turnAmt) + "° " + turnDir + " حتى يتطابق الخط الأحمر (الذي يدور) مع الخط الأخضر (الثابت على الخريطة)";
         st.className = "qb-status qb-status-big";
       }
     }
     if (sn) sn.innerHTML = "اتجاه جهازك: " + Math.round(qiblaHeading) + "° • القبلة: " + Math.round(qiblaAngle) + "° • الفرق: " + Math.round(diff) + "°";
   } else {
-    if (st) { st.innerHTML = "📍 السهم يشير للقبلة — فعّل حساس الاتجاه لتحريكه"; st.className = "qb-status qb-status-big"; }
-    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس: السهم ثابت في زاوية " + qiblaAngle.toFixed(0) + "° من الشمال";
+    if (st) { st.innerHTML = "📍 الخريطة والخط الأخضر ثابتان • الخط الأحمر يدور مع الموبايل — أدر جهازك حتى يتطابق الخط الأحمر مع الخط الأخضر"; st.className = "qb-status qb-status-big"; }
+    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس: زاوية القبلة " + qiblaAngle.toFixed(0) + "° من الشمال الحقيقي • الخط الأخضر ثابت على الخريطة، الخط الأحمر يدور مع الموبايل";
   }
 }
 function qiblaOrientHandler(e) {
   var h = null;
-  if (typeof e.webkitCompassHeading === "number" && !isNaN(e.webkitCompassHeading)) h = e.webkitCompassHeading; // iOS
-  else if (e.alpha !== null && e.alpha !== undefined && !isNaN(e.alpha)) h = (360 - e.alpha) % 360; // Android
+  // iOS: webkitCompassHeading مباشر
+  if (typeof e.webkitCompassHeading === "number" && !isNaN(e.webkitCompassHeading)) {
+    h = e.webkitCompassHeading;
+  }
+  // Android: alpha يتزايد عكس عقارب الساعة
+  // heading = (360 - alpha) % 360
+  else if (e.alpha !== null && e.alpha !== undefined && !isNaN(e.alpha)) {
+    h = (360 - e.alpha) % 360;
+  }
   if (h === null) return;
-  qiblaHeading = (h + 360) % 360;
+  var rawHeading = (h + 360) % 360;
+
+  // v25.22: تخفيف حساسية البوصلة (أقوى من v25.17)
+  // 1. throttle أبطأ (100ms بدلاً من 50ms) — يقلل عدد التحديثات للنصف
+  var now = Date.now();
+  if (qiblaLastUpdateAt && (now - qiblaLastUpdateAt) < 100) return;
+  qiblaLastUpdateAt = now;
+
+  // 2. تجاهل التغييرات الصغيرة جداً (تحت 1° بدلاً من 0.5°) — لكن نسمح بها أول مرة
+  if (qiblaHeading !== null && qiblaHeading !== undefined) {
+    // حساب الفرق مع مراعاة الالتفاف الدائري (0-360)
+    var diff = Math.abs(((rawHeading - qiblaHeading + 540) % 360) - 180);
+    if (diff < 1) return; // تجاهل الاهتزازات الصغيرة
+  }
+
+  // 3. median filter: احفظ آخر 5 قراءات وخذ الوسيط
+  // هذا يزيل القيم الشاذة (spikes) بشكل فعال
+  qiblaRecentHeadings.push(rawHeading);
+  if (qiblaRecentHeadings.length > 5) qiblaRecentHeadings.shift();
+
+  var filteredHeading = rawHeading;
+  if (qiblaRecentHeadings.length >= 3) {
+    // حساب الوسيط الدائري (circular median)
+    // نحول كل زاوية إلى متجهين (sin, cos)، نحسب المتوسط، نعود للزاوية
+    var sumSin = 0, sumCos = 0;
+    for (var i = 0; i < qiblaRecentHeadings.length; i++) {
+      var rad = qiblaRecentHeadings[i] * Math.PI / 180;
+      sumSin += Math.sin(rad);
+      sumCos += Math.cos(rad);
+    }
+    var avgRad = Math.atan2(sumSin / qiblaRecentHeadings.length, sumCos / qiblaRecentHeadings.length);
+    filteredHeading = (avgRad * 180 / Math.PI + 360) % 360;
+  }
+
+  // 4. low-pass filter أقوى (0.08 بدلاً من 0.2 — فقط 8% جديد + 92% قديم)
+  // هذا يجعل المؤشر يتحرك ببطء ونعومة
+  if (qiblaHeading !== null && qiblaHeading !== undefined) {
+    // حساب الفرق بين الجديد والقديم (مع مراعاة الالتفاف)
+    var d = filteredHeading - qiblaHeading;
+    if (d > 180) d -= 360;
+    if (d < -180) d += 360;
+    // تطبيق low-pass filter
+    var smoothed = qiblaHeading + (d * 0.08);
+    qiblaHeading = (smoothed + 360) % 360;
+  } else {
+    // أول قيمة — لا smoothing
+    qiblaHeading = filteredHeading;
+  }
+
   if (!qiblaLive) {
     qiblaLive = true;
     if (qiblaSensorTimer) { clearTimeout(qiblaSensorTimer); qiblaSensorTimer = null; }
@@ -4499,7 +5654,11 @@ function qiblaOrientHandler(e) {
 }
 function qiblaAttach() {
   try { window.removeEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e) {}
-  try { window.addEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e2) {}
+  try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandler, false); } catch(e3) {}
+  // v23: محاولة استخدام deviceorientationabsolute أولاً (يعطي قيم مطلقة من الشمال)
+  try { window.addEventListener("deviceorientationabsolute", qiblaOrientHandler, false); } catch(e2) {}
+  // fallback: deviceorientation العادي
+  try { window.addEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e4) {}
   if (qiblaSensorTimer) clearTimeout(qiblaSensorTimer);
   qiblaSensorTimer = setTimeout(function() {
     if (!qiblaLive) {
@@ -4508,6 +5667,7 @@ function qiblaAttach() {
     }
   }, 1800);
 }
+
 function qiblaEnableSensor() {
   var sn = el("qbSensor");
   if (sn) sn.innerHTML = "جارٍ طلب تفعيل الحساس...";
@@ -4533,7 +5693,6 @@ function qiblaRefreshIfOpen() {
 function openQibla() {
   qiblaLive = false; qiblaHeading = null;
   el("qiblaModal").classList.add("show");
-  qiblaBuildTicks();
   qiblaCompute();
   qiblaRender();
   qiblaEnableSensor(); // محاولة تفعيل تلقائية للحساس
@@ -4541,6 +5700,7 @@ function openQibla() {
 function closeQibla() {
   el("qiblaModal").classList.remove("show");
   try { window.removeEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e) {}
+  try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandler, false); } catch(e3) {}
   qiblaLive = false; qiblaHeading = null;
   if (qiblaSensorTimer) { clearTimeout(qiblaSensorTimer); qiblaSensorTimer = null; }
 }
@@ -4616,6 +5776,15 @@ function getDeviceId() {
 // audience: "*" | "all" | ["id1","id2"] | undefined => للجميع
 function messageIsForMe(item) {
   if (!item) return false;
+  // v20.7: فلترة حسب minAppVersion — لإخفاء الرسائل القديمة عن الإصدارات الحديثة
+  // هذا يسمح للمدير بإرسال رسائل جديدة تظهر فقط للإصدارات الحديثة
+  // الإصدارات القديمة لا تفهم هذا الحقل، فتتجاهله وتعرض الرسالة (سلوك قديم)
+  // لكن الإصدارات الحديثة سترى أن minAppVersion > إصدارها → تتجاهل الرسالة
+  if (item.minAppVersion) {
+    var minV = String(item.minAppVersion);
+    var myV = CURRENT_APP_VERSION;
+    if (compareVersions(myV, minV) < 0) return false; // إصداري أقدم من المطلوب
+  }
   if (!item.audience || item.audience === "*" || item.audience === "all") return true;
   var myId = getDeviceId();
   if (Object.prototype.toString.call(item.audience) === "[object Array]") {
@@ -4635,19 +5804,54 @@ function messageIsForMe(item) {
   return String(item.audience) === myId;
 }
 
+// v20.7: مقارنة أرقام الإصدارات (مثل "20.6" vs "20.7")
+// returns: -1 if a < b, 0 if a == b, 1 if a > b
+function compareVersions(a, b) {
+  var partsA = String(a).split(".");
+  var partsB = String(b).split(".");
+  var len = Math.max(partsA.length, partsB.length);
+  for (var i = 0; i < len; i++) {
+    var numA = parseInt(partsA[i] || "0", 10);
+    var numB = parseInt(partsB[i] || "0", 10);
+    if (numA < numB) return -1;
+    if (numA > numB) return 1;
+  }
+  return 0;
+}
+
 // =====================================================================
 // ===== AUTO UPDATE — فحص version.json دورياً وتحديث التطبيق =====
 // =====================================================================
-var VERSION_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json";
+var VERSION_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json";
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "20.3"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.41"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
-var TG_BOT_TOKEN = "8838990954:AAHq8VbLjpHw2X-bKLlkQvkdtsUpJDa7jKw";
-var TG_CHAT_ID = "628644087";
-var TG_API_URL = "https://api.telegram.org/bot" + TG_BOT_TOKEN + "/sendMessage";
+// v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
+// ويمكن لأي شخص استخدامه لإرسال رسائل باسم البوت.
+// طرق التفعيل بعد هذه النسخة:
+//   (أ) الطريقة المفعّلة (v25.38): وسيط منشور على Deno Deploy يحتفظ بسرّيه
+//       TG_BOT_TOKEN و TG_CHAT_ID كمتغيرات بيئة، ويستقبل POST /api/tg-report
+//       بالشكل {text} ويعيد الإرسال إلى تيليجرام — فيعمل الإرسال لكل
+//       المستخدمين دون كشف أي سر في الكود. (بديل مكافئ: cloudflare-worker/)
+//   (ب) مؤقتاً على جهاز المدير فقط (لن يعمل على أجهزة المستخدمين):
+//       localStorage.setItem("pt-tg-admin-cfg", JSON.stringify({token:"123:ABC", chatId:"..."}))
+var TG_WORKER_URL = "https://arid-badger-8563.ehessan1974-maker.deno.net"; // وسيط الإشعارات (Deno Deploy) — v25.38
+var TG_ADMIN_CFG_KEY = "pt-tg-admin-cfg";
 var TG_USERS_FILE_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/users.json";
+
+// جلب بيانات الإرسال: من إعداد المدير المحلي (ب) — أو عبر الـ worker (أ) دون بيانات محلية
+function tgGetCreds() {
+  try {
+    var raw = localStorage.getItem(TG_ADMIN_CFG_KEY);
+    if (raw) {
+      var c = JSON.parse(raw);
+      if (c && c.token && c.chatId) return { token: String(c.token), chatId: String(c.chatId) };
+    }
+  } catch(e) {}
+  return null;
+}
 
 // مفاتيح localStorage
 var TG_CONSENT_KEY = "pt-tg-consent";
@@ -4663,7 +5867,8 @@ function tgHasConsent() {
 
 // فتح نافذة الموافقة
 function tgShowConsentModal() {
-  if (!TG_BOT_TOKEN || !TG_CHAT_ID) return;
+  // v25.37: تُعرض النافذة إن وُجدت وسيلة إرسال (worker أو إعداد المدير)
+  if (!TG_WORKER_URL && !tgGetCreds()) return;
   if (tgHasConsent()) return;
   var consentDeviceId = el("consentDeviceId");
   if (consentDeviceId) consentDeviceId.textContent = getDeviceId();
@@ -4738,8 +5943,17 @@ function tgFormatDate() {
 
 // إرسال تقرير الجهاز إلى Telegram
 function tgSendReport(force) {
-  if (!TG_BOT_TOKEN || !TG_CHAT_ID) {
-    if (force) showNotification("⚠️ لم يتم ضبط Telegram Bot");
+  // v25.37: الإرسال إما عبر الـ worker (السرّ على الخادم) أو بإعداد المدير المحلي
+  var creds = tgGetCreds();
+  var endpoint = null;
+  var payload = null;
+  if (TG_WORKER_URL) {
+    endpoint = TG_WORKER_URL.replace(/\/+$/, "") + "/api/tg-report";
+  } else if (creds) {
+    endpoint = "https://api.telegram.org/bot" + creds.token + "/sendMessage";
+  }
+  if (!endpoint) {
+    if (force) showNotification("⚠️ الإرسال معطّل — لم يُضبط وسيط الإشعارات (TG_WORKER_URL)");
     return;
   }
   if (!tgHasConsent()) return;
@@ -4768,15 +5982,22 @@ function tgSendReport(force) {
   msg += "📦 إصدار التطبيق: v" + appVersion + "\n";
   msg += "⏰ آخر فتح: " + lastOpened + "\n";
 
+  if (TG_WORKER_URL) {
+    // عبر الوسيط: يرسل نص الرسالة فقط — الوسيط يضيف chat_id من سرّاته
+    payload = JSON.stringify({ text: msg });
+  } else {
+    payload = JSON.stringify({
+      chat_id: creds.chatId,
+      text: msg,
+      parse_mode: "HTML"
+    });
+  }
+
   try {
-    fetch(TG_API_URL, {
+    fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: TG_CHAT_ID,
-        text: msg,
-        parse_mode: "HTML"
-      })
+      body: payload
     }).then(function(r) {
       if (r.ok) {
         try {
@@ -4796,36 +6017,8 @@ function tgSendReport(force) {
   }
 }
 
-// ===== عداد المستخدمين =====
-// يجلب users.json من GitHub ويعدّ عدد المستخدمين الفريدين
-function tgRefreshUsersCount() {
-  var countEl = el("usersCount");
-  if (!countEl) return;
-  countEl.textContent = "...";
-  try {
-    var url = TG_USERS_FILE_URL + "?t=" + Date.now();
-    fetch(url).then(function(r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.text();
-    }).then(function(text) {
-      var users = [];
-      try { users = JSON.parse(text); } catch(e) {}
-      if (!Array.isArray(users)) users = [];
-      // عدد فريد (إزالة التكرار حسب deviceId)
-      var unique = {};
-      var count = 0;
-      for (var i = 0; i < users.length; i++) {
-        var id = users[i] && users[i].deviceId ? users[i].deviceId : "";
-        if (id && !unique[id]) { unique[id] = true; count++; }
-      }
-      countEl.textContent = String(count);
-    }).catch(function() {
-      countEl.textContent = "—";
-    });
-  } catch(e) {
-    countEl.textContent = "—";
-  }
-}
+// v25.37: حُذفت tgRefreshUsersCount — كانت تستهدف عنصر #usersCount غير موجود
+// ولا يستدعيها أحد بعد حذف واجهة عدّاد المستخدمين
 
 // =====================================================================
 // ===== AUTO UPDATE — فحص version.json دورياً وتحديث التطبيق =====
@@ -4860,7 +6053,8 @@ function showUpdateToast(newVersion) {
   if (!t) return;
   try {
     var sub = t.querySelector("#updateToastSub");
-    if (sub) sub.textContent = "النسخة الحالية: " + CURRENT_APP_VERSION + " → الجديدة: " + newVersion + " — اضغط للتحديث الآن";
+    // v25.20: نص أوضح — "لديك X، التحديث الجديد Y" (لا غموض)
+    if (sub) sub.textContent = "لديك v" + CURRENT_APP_VERSION + " — التحديث الجديد: v" + newVersion + " — اضغط للتحديث الآن";
   } catch(e) {}
   t.style.display = "block";
   t.style.animation = "ptSlideUp .35s ease";
@@ -4870,30 +6064,116 @@ function hideUpdateToast() {
   if (_updateToastEl) _updateToastEl.style.display = "none";
 }
 
-function applyAppUpdate(userTriggered) {
-  hideUpdateToast();
-  try { localStorage.setItem(APP_VERSION_KEY, CURRENT_APP_VERSION); } catch(e) {}
-  if ("serviceWorker" in navigator) {
-    try {
-      navigator.serviceWorker.getRegistrations().then(function(regs) {
-        for (var i = 0; i < regs.length; i++) {
-          regs[i].update();
-          regs[i].active && regs[i].active.postMessage("skipWaiting");
-        }
-      });
-    } catch(e) {}
+// v23.4: مسح كل الكاش قبل التحديث
+function clearAllCachesAndReload() {
+  var stepsDone = 0;
+  var totalSteps = 3;
+
+  function checkDone() {
+    stepsDone++;
+    if (stepsDone >= totalSteps) {
+      // إعادة تحميل مع تخطي الكاش
+      setTimeout(function() {
+        window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+      }, 300);
+    }
   }
+
+  // 1. مسح Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      var promises = [];
+      for (var i = 0; i < regs.length; i++) {
+        promises.push(regs[i].unregister());
+      }
+      return Promise.all(promises);
+    }).then(function() { checkDone(); }).catch(function() { checkDone(); });
+  } else {
+    checkDone();
+  }
+
+  // 2. مسح كل الكاش (caches API)
+  if (window.caches) {
+    caches.keys().then(function(keys) {
+      return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+    }).then(function() { checkDone(); }).catch(function() { checkDone(); });
+  } else {
+    checkDone();
+  }
+
+  // 3. على أندرويد: تنزيل HTML جديد قبل إعادة التحميل
   if (window.AndroidPrayer && typeof AndroidPrayer.downloadAppUpdate === "function") {
     try {
       AndroidPrayer.downloadAppUpdate(function() {
-        setTimeout(function() { location.reload(); }, 800);
+        checkDone();
       });
-      return;
-    } catch(e) {}
+    } catch(e) { checkDone(); }
+  } else {
+    checkDone();
   }
-  setTimeout(function() {
-    location.reload();
-  }, 200);
+}
+
+function applyAppUpdate(userTriggered) {
+  hideUpdateToast();
+  // v25.33: على أندرويد، حمّل التحديث أولاً ثم أعد التحميل من الملف المحدّث
+  // المشكلة السابقة: clearAllCachesAndReload فقط يُعيد تحميل الصفحة الحالية
+  // لكن الملف المحدّث في getFilesDir لا يُحمَّل حتى إعادة تشغيل التطبيق
+  if (window.AndroidPrayer) {
+    showNotification("⏳ جارٍ تحميل التحديث...");
+    // 1. حمّل HTML الجديد من GitHub
+    if (typeof AndroidPrayer.downloadAppUpdate === "function") {
+      try {
+        AndroidPrayer.downloadAppUpdate(function(success) {
+          // 2. بعد التحميل، اقرأ الملف المحدّث وأعد تحميل WebView منه
+          if (window.AndroidPrayer && typeof AndroidPrayer.reloadUpdatedHtml === "function") {
+            try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e3) {}
+          }
+          // fallback: امسح الكاش وأعد التحميل
+          clearAllCachesAndReload();
+        });
+        return;
+      } catch(e) {}
+    }
+    // fallback: امسح الكاش وأعد التحميل
+    if (typeof AndroidPrayer.reloadUpdatedHtml === "function") {
+      try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e2) {}
+    }
+  }
+  // على المتصفح: امسح الكاش وأعد التحميل
+  clearAllCachesAndReload();
+}
+
+// v23.4: مسح الكاش يدوياً من الإعدادات
+function manualClearCache() {
+  showNotification("⏳ جارٍ مسح الكاش...");
+  var done = 0;
+  var need = 2;
+
+  function check() {
+    done++;
+    if (done >= need) {
+      showNotification("✅ تم مسح الكاش — سيتم إعادة التحميل");
+      setTimeout(function() {
+        window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+      }, 1500);
+    }
+  }
+
+  // 1. مسح Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      var promises = [];
+      for (var i = 0; i < regs.length; i++) promises.push(regs[i].unregister());
+      return Promise.all(promises);
+    }).then(function() { check(); }).catch(function() { check(); });
+  } else { check(); }
+
+  // 2. مسح كل الكاش (caches API)
+  if (window.caches) {
+    caches.keys().then(function(keys) {
+      return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+    }).then(function() { check(); }).catch(function() { check(); });
+  } else { check(); }
 }
 
 function checkAppUpdate() {
@@ -4906,7 +6186,11 @@ function checkAppUpdate() {
       if (!info || !info.appVersion) return;
       var latest = String(info.appVersion);
       var current = CURRENT_APP_VERSION;
-      if (latest !== current) {
+      // v25.20: مقارنة رقمية بدلاً من نصية — فقط أظهر التوست إذا كانت النسخة الجديدة أحدث
+      // (وليس مجرد مختلفة) — هذا يمنع ظهور التوست إذا كان لدى المستخدم نسخة أحدث من version.json
+      var cmp = compareVersions(latest, current);
+      if (cmp > 0) {
+        // latest أحدث من current — أظهر التوست
         try {
           localStorage.setItem("pt-update-info", JSON.stringify({
             version: latest,
@@ -4916,6 +6200,7 @@ function checkAppUpdate() {
         } catch(e) {}
         showUpdateToast(latest);
       } else {
+        // latest == current أو latest أقدم — أخفِ التوست
         hideUpdateToast();
       }
     } catch(e) {}
@@ -4942,10 +6227,16 @@ function _appVersionCallback(data) {
   }
   try {
     var info = (typeof data === "string") ? JSON.parse(data) : data;
-    if (info && info.appVersion && String(info.appVersion) !== CURRENT_APP_VERSION) {
-      try { localStorage.setItem("pt-update-info", JSON.stringify({version: info.appVersion, url: info.htmlUrl||""})); } catch(e2) {}
-      showUpdateToast(info.appVersion);
-    } else { hideUpdateToast(); }
+    if (info && info.appVersion) {
+      // v25.20: مقارنة رقمية — فقط أظهر التوست إذا كانت النسخة الجديدة أحدث
+      var cmp = compareVersions(String(info.appVersion), CURRENT_APP_VERSION);
+      if (cmp > 0) {
+        try { localStorage.setItem("pt-update-info", JSON.stringify({version: info.appVersion, url: info.htmlUrl||""})); } catch(e2) {}
+        showUpdateToast(info.appVersion);
+      } else {
+        hideUpdateToast();
+      }
+    }
   } catch(e3) {}
 }
 
@@ -4998,10 +6289,8 @@ function registerServiceWorker() {
   registerServiceWorker();
   // فحص فوري عند الإقلاع
   setTimeout(function() {
-    try {
-      var savedVer = localStorage.getItem(APP_VERSION_KEY);
-      if (savedVer) CURRENT_APP_VERSION = savedVer;
-    } catch(e) {}
+    // v21: لا نقرأ savedVer من localStorage — نستخدم CURRENT_APP_VERSION من الكود الحالي فقط
+    // هذا يمنع ظهور toast التحديث بشكل متكرر بعد التحديث
     checkAppUpdate();
   }, 3000);
   // فحص دوري كل 5 دقائق
@@ -5010,11 +6299,11 @@ function registerServiceWorker() {
   }, APP_VERSION_CHECK_INTERVAL);
 
   // ===== v20: تهيئة Telegram Bot =====
-  // إظهار نافذة الموافقة بعد 5 ثوانٍ من فتح التطبيق
+  // v25.37: لا يوجد توكن في الكود — الإرسال يعمل بعد نشر الـ worker وضبط TG_WORKER_URL،
+  // أو محلياً على جهاز المدير عبر مفتاح pt-tg-admin-cfg (انظر أعلاه)
   setTimeout(function() {
     try { tgShowConsentModal(); } catch(e) {}
   }, 5000);
-  // إرسال تلقائي للمستخدمين الذين وافقوا مسبقاً (خلال 8 ثوانٍ)
   setTimeout(function() {
     try { tgSendReport(false); } catch(e) {}
   }, 8000);
