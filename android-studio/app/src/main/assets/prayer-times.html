@@ -728,9 +728,13 @@ body.dark-mode .msged-audience-add-name { background:#0f1f18; color:#e2e8f0; bor
   -webkit-animation-play-state: paused;
   animation-play-state: paused;
 }
-.info-card.vertical-scroll-mode:hover .info-track {
-  -webkit-animation-play-state: paused;
-  animation-play-state: paused;
+/* v25.52: إيقاف التحويم للفأرة فقط — على شاشات اللمس كانت :hover تلتصق بعد
+   أول لمسة (sticky hover) فتتجمّد الحركة عشوائياً ولا تنطلق بعد السحب والإفلات */
+@media (hover: hover) and (pointer: fine) {
+  .info-card.vertical-scroll-mode:hover .info-track {
+    -webkit-animation-play-state: paused;
+    animation-play-state: paused;
+  }
 }
 @-webkit-keyframes infoScrollUp {
   0% { -webkit-transform: translateY(0); transform: translateY(0); }
@@ -2901,6 +2905,15 @@ function initDragScroll() {
       // (مثلاً عجلة الفأرة ثم نقرة سريعة) فأعد جدولة الاستعادة حتى لا يعلق الوضع اليدوي
       if (card.classList.contains("inertial-scroll")) scheduleRestore(50);
       return;
+    }
+    // v25.52: السحب الفعلي أثناء الإيقاف المؤقت يلغي الإيقاف — الحركة التلقائية
+    // تنطلق من الموضع الذي أُفلت فيه الإصبع (restoreAutoScroll يحسب الموضع من
+    // currentOffset) بدل بقاء البطاقة متجمّدة مكان السحب
+    if (infoScrollPaused) {
+      infoScrollPaused = false;
+      card.classList.remove("paused");
+      var _hintResume = el("infoPauseHint");
+      if (_hintResume) _hintResume.textContent = "اضغط للإيقاف المؤقت";
     }
     var finalV = computeVelocityFromSamples(Date.now());
     startMomentum(finalV);
@@ -6303,7 +6316,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.51"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.52"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
