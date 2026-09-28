@@ -3442,12 +3442,23 @@ function resetToAuto() {
 // v25.47: سلسلة مصادر للبحث عن المدن — نفس فلسفة سلسلة التحديثات (لا مزيد من نقطة الفشل الواحدة)
 // المصدر 1: open-meteo (يتطلب TLS 1.2 — مشكلة Samsung J5/Android 5.x)
 // المصدر 2: Nominatim (OpenStreetMap) — بديل كامل بصيغة مختلفة تُوحَّد أدناه
+// v25.48: كلا المصدرين يُخدمان بشهادات Let's Encrypt التي لا يثق بها مخزن شهادات أندرويد 5.x/6.x/7.0
+//   (جهاز J5 الفعلي: مواقيت الصلاة تعمل لأن api.aladhan.com بشهادة ZeroSSL→USERTrust القديمة الموثوقة،
+//    والبحث يفشل لأن ISRG Root X1 غير موجود في مخزن 2016). الحل: مصدر ثالث عبر
+//    cdn.jsdelivr.net بشهادة Sectigo→USERTrust (نفس ثقة aladhan) — كتالوج 376 مدينة مُفلتر محلياً
+// المصدر 3: كتالوج cities.json من الريبو (376 مدينة عربية وعالمية) عبر jsDelivr ثم Pages
 // على أندرويد تُجرَّب القناة الأصلية أولاً (Tls12Helper يصلح TLS للـ Java stack) ثم XHR
 var citySourceIdx = 0;
-var CITY_SOURCES = 2;
+var CITY_SOURCES = 3; // v25.48: open-meteo ثم Nominatim ثم الكتالوج المدمج
 var cityAttempt = 0;
 var cityNativeAttempt = -1; // رقم المحاولة المرسلة عبر القناة الأصلية (لرفض الردود المتأخرة)
 var cityLastQuery = "";
+// v25.48: الكتالوج — مضيفان موثوقان على الأجهزة القديمة (Sectigo/USERTrust و Pages/Fastly)
+var CITY_CATALOG = null;
+var CITY_CATALOG_URLS = [
+  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/cities.json",
+  "https://ehessan1974-maker.github.io/prayer-times/cities.json"
+];
 
 function citySourceUrl(idx, q) {
   if (idx === 0) {
@@ -3483,6 +3494,70 @@ function cityNormalize(j, idx) {
   return out;
 }
 
+// v25.48: توحيد عربي للبحث — التشكيل والهمزات والتاء المربوطة والألف المقصورة
+function cityArNormalize(s) {
+  var t = String(s || "").toLowerCase();
+  t = t.replace(/[\u064B-\u065F\u0670\u0640]/g, "");
+  t = t.replace(/[أإآٱ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").replace(/ؤ/g, "و").replace(/ئ/g, "ي");
+  return t;
+}
+
+// v25.48: بحث محلي في الكتالوج — مطابقة البداية أولاً ثم الاحتواء، مرتّبة بالسكان
+function cityCatalogSearch(q) {
+  if (!CITY_CATALOG) return [];
+  var nq = cityArNormalize(q);
+  if (!nq) return [];
+  var starts = [], contains = [];
+  for (var i = 0; i < CITY_CATALOG.length; i++) {
+    var c = CITY_CATALOG[i];
+    var hay = c._h || (c._h = cityArNormalize(c.n) + "|" + cityArNormalize(c.al || "") + "|" + String(c.e || "").toLowerCase());
+    var pos = hay.indexOf(nq);
+    if (pos === -1) continue;
+    var item = { name: c.n, admin1: "", country: c.c || "", latitude: c.lat, longitude: c.lng, _p: c.p || 0 };
+    if (pos === 0 || hay.charAt(pos - 1) === "|") starts.push(item); else contains.push(item);
+  }
+  starts.sort(function(a, b) { return b._p - a._p; });
+  contains.sort(function(a, b) { return b._p - a._p; });
+  return starts.concat(contains).slice(0, 8);
+}
+
+// v25.48: تحميل الكتالوج مرة واحدة (كاش 30 يوماً → jsDelivr → Pages) — يخدم البحث واسم الموقع معاً
+function cityCatalogEnsure(cb) {
+  if (CITY_CATALOG) { cb(CITY_CATALOG); return; }
+  try {
+    var cc = localStorage.getItem("city-catalog-v1");
+    if (cc) {
+      var ccO = JSON.parse(cc);
+      if (ccO && ccO.d && ccO.d.length > 50 && (Date.now() - ccO.t) < 30 * 24 * 3600 * 1000) {
+        CITY_CATALOG = ccO.d; cb(CITY_CATALOG); return;
+      }
+    }
+  } catch(eC) {}
+  cityCatalogLoadFrom(0, cb);
+}
+
+function cityCatalogLoadFrom(idx, cb) {
+  if (idx >= CITY_CATALOG_URLS.length) { cb(null); return; }
+  var xhr = new XMLHttpRequest();
+  xhr.timeout = 6000;
+  xhr.open("GET", CITY_CATALOG_URLS[idx], true);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    if (xhr.status === 200) {
+      try {
+        var arr = JSON.parse(xhr.responseText);
+        if (arr && arr.length > 50) {
+          CITY_CATALOG = arr;
+          try { localStorage.setItem("city-catalog-v1", JSON.stringify({ t: Date.now(), d: arr })); } catch(e2) {}
+          cb(CITY_CATALOG); return;
+        }
+      } catch(e) {}
+    }
+    cityCatalogLoadFrom(idx + 1, cb);
+  };
+  try { xhr.send(); } catch(e) { cityCatalogLoadFrom(idx + 1, cb); }
+}
+
 function searchCity() {
   var q = el("citySearchInput").value.trim();
   if (!q || citySearching) return;
@@ -3502,9 +3577,13 @@ function citySearchGo() {
   st.style.display = "block";
   st.textContent = citySourceIdx === 0
     ? "⏳ جاري البحث عن «" + q + "»..."
-    : "⏳ تعذر المصدر الأول — تجربة خدمة بحث بديلة...";
+    : (citySourceIdx === 1
+      ? "⏳ تعذر المصدر الأول — تجربة خدمة بحث بديلة..."
+      : "⏳ تجربة القائمة المدمجة للمدن..."); // v25.48
   cityAttempt++;
   var attempt = cityAttempt;
+  // v25.48: المصدر الثالث — الكتالوج المدمج (آمل مصدر على الأجهزة التي لا تثق بشهادات Let's Encrypt)
+  if (citySourceIdx === 2) { citySearchViaCatalog(attempt); return; }
   var url = citySourceUrl(citySourceIdx, q);
   // v25.35: على أندرويد القناة الأصلية أولاً (Tls12Helper يصلح TLS 1.2 على Samsung J5)
   // v25.47: fetchUrlT بمهلة قصيرة (8 ثوانٍ) إن توفرت (APK جديد)، وإلا fetchUrl العادية
@@ -3569,7 +3648,52 @@ function cityShowResults(list) {
   if (box) box.innerHTML = html;
 }
 
-// فشل المصدر الحالي → المصدر البديل؛ وبعد استنفاد المصدرين رسالة صريحة بالسبب
+// v25.48: محاولة الكتالوج — كاش → jsDelivr → Pages → القناة الأصلية (Tls12Helper) → فشل نهائي
+function citySearchViaCatalog(attempt) {
+  cityCatalogEnsure(function(cat) {
+    if (cityAttempt !== attempt || !citySearching) return;
+    if (cat) { cityCatalogFinish(attempt); return; }
+    if (window.AndroidPrayer) {
+      try {
+        var f = AndroidPrayer.fetchUrlT || AndroidPrayer.fetchUrl;
+        if (f) { f.call(AndroidPrayer, CITY_CATALOG_URLS[0], "_cityCatalogCallback", 6000); cityNativeAttempt = attempt; return; }
+      } catch(e) {}
+    }
+    citySearchFail("");
+  });
+}
+
+// v25.48: callback القناة الأصلية لنتيجة الكتالوج (رفع الردود المتأخرة كما في المصدرين الأولين)
+function _cityCatalogCallback(data) {
+  var attempt = cityNativeAttempt;
+  cityNativeAttempt = -1;
+  if (attempt < 0 || cityAttempt !== attempt || !citySearching) return;
+  if (!data && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+    try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
+  }
+  if (data && data.length > 0) {
+    try {
+      var arr = (typeof data === "string") ? JSON.parse(data) : data;
+      if (arr && arr.length > 50) {
+        CITY_CATALOG = arr;
+        try { localStorage.setItem("city-catalog-v1", JSON.stringify({ t: Date.now(), d: arr })); } catch(e2) {}
+        cityCatalogFinish(attempt);
+        return;
+      }
+    } catch(e) {}
+  }
+  citySearchFail("");
+}
+
+// v25.48: عرض نتائج الكتالوج أو رسالة «لا نتائج» الصريحة مع توجيه للإحداثيات اليدوية
+function cityCatalogFinish(attempt) {
+  if (cityAttempt !== attempt || !citySearching) return;
+  var hits = cityCatalogSearch(cityLastQuery);
+  if (hits.length) { cityShowResults(hits); return; }
+  citySearchFail("❌ لا نتائج لـ «" + cityLastQuery + "» في القائمة المدمجة (" + CITY_CATALOG.length + " مدينة) — وخدمات البحث العالمية لا تصل من هذا الجهاز. أدخل الإحداثيات يدوياً بالأسفل أو جرّب اسماً آخر");
+}
+
+// فشل المصدر الحالي → المصدر البديل؛ وبعد استنفاد المصادر الثلاثة رسالة صريحة بالسبب
 function citySearchFail(lastMsg) {
   citySourceIdx++;
   if (citySourceIdx < CITY_SOURCES) { citySearchGo(); return; }
@@ -3579,7 +3703,7 @@ function citySearchFail(lastMsg) {
     st.style.display = "block";
     st.textContent = (lastMsg && lastMsg.indexOf("لا نتائج") !== -1)
       ? lastMsg
-      : "❌ تعذر الاتصال بخدمتَي البحث — تحقق من الإنترنت أو أدخل الإحداثيات يدوياً بالأسفل";
+      : "❌ تعذر الاتصال بخدمات البحث — تحقق من الإنترنت أو أدخل الإحداثيات يدوياً بالأسفل";
   }
 }
 
@@ -3596,6 +3720,31 @@ function _citySearchCallback(data) {
     var j = (typeof data === "string") ? JSON.parse(data) : data;
     cityShowResults(cityNormalize(j, citySourceIdx));
   } catch(e) { citySearchFail("⚠️ تعذر تحليل نتيجة البحث"); }
+}
+
+// v25.48: آخر احتياط لاسم الموقع — أقرب مدينة من الكتالوج (بلا خدمات خارجية — يعمل على J5)
+var _revNearestAt = 0;
+function reverseGeoNearestCatalog() {
+  if (geoName) return;
+  var now = Date.now();
+  if (now - _revNearestAt < 300000) return; // محاولة كل 5 دقائق كحد أقصى
+  _revNearestAt = now;
+  var la = latitude, ln = longitude;
+  cityCatalogEnsure(function(cat) {
+    if (!cat || geoName) return;
+    var best = null, bestD = 1e18;
+    for (var i = 0; i < cat.length; i++) {
+      var c = cat[i];
+      var dLat = (c.lat - la) * 111.32;
+      var dLng = (c.lng - ln) * 111.32 * Math.cos((la + c.lat) / 2 * Math.PI / 180);
+      var d = dLat * dLat + dLng * dLng;
+      if (d < bestD) { bestD = d; best = c; }
+    }
+    if (best && bestD < 3600) { // ضمن 60 كم فقط — وإلا الاسم مضلل
+      geoName = best.n + (best.c ? "، " + best.c : "");
+      try { renderLocation(); } catch(eR) {}
+    }
+  });
 }
 
 function pickCity(i) {
@@ -3684,25 +3833,10 @@ function reverseGeoViaXHR(url) {
       if (xhr.readyState !== 4) return;
       if (xhr.status === 200) {
         _processReverseGeo(xhr.responseText);
-      }
+      } else { reverseGeoNearestCatalog(); } // v25.48
     };
     xhr.send();
-  } catch(e) {}
-}
-
-// v25.35: معالجة نتيجة reverse geocode (مشتركة)
-function _processReverseGeo(text) {
-  try {
-    var j = (typeof text === "string") ? JSON.parse(text) : text;
-    var parts = [];
-    var city = j.city || j.locality || "";
-    var reg = j.principalSubdivision || "";
-    var ctry = j.countryName || "";
-    if (city) parts.push(city);
-    else if (reg) parts.push(reg);
-    if (ctry && parts.length && parts[0] !== ctry) parts.push(ctry);
-    if (parts.length && !geoName) { geoName = parts.join("، "); renderLocation(); }
-  } catch(e) {}
+  } catch(e) { reverseGeoNearestCatalog(); } // v25.48
 }
 
 // v25.35: callback من NativeBridge لـ reverse geocode
@@ -3714,7 +3848,23 @@ function _reverseGeoCallback(data) {
   }
   if (data && data.length > 0) {
     _processReverseGeo(data);
-  }
+  } else { reverseGeoNearestCatalog(); } // v25.48: كل الخدمات فشلت — أقرب مدينة من الكتالوج
+}
+
+// v25.48: لو نجحت الخدمة لكنها لم تعطِ اسماً صالحاً — جرّب أقرب مدينة أيضاً
+function _processReverseGeo(text) {
+  try {
+    var j = (typeof text === "string") ? JSON.parse(text) : text;
+    var parts = [];
+    var city = j.city || j.locality || "";
+    var reg = j.principalSubdivision || "";
+    var ctry = j.countryName || "";
+    if (city) parts.push(city);
+    else if (reg) parts.push(reg);
+    if (ctry && parts.length && parts[0] !== ctry) parts.push(ctry);
+    if (parts.length && !geoName) { geoName = parts.join("، "); renderLocation(); }
+    else if (!parts.length) { reverseGeoNearestCatalog(); } // v25.48
+  } catch(e) {}
 }
 
 // ===== v13: طريقة الحساب =====
@@ -5383,7 +5533,12 @@ var qiblaAngle = 0, qiblaHeading = null, qiblaLive = false, qiblaSensorTimer = n
 var qiblaLastUpdateAt = 0; // v25.17: لتخفيف الحساسية (throttle)
 var qiblaWasAligned = false; // v25.42: لاهتزاز واحد عند بلوغ المحاذاة
 // v25.22: متوسط متحرك أقوى (median filter + low-pass filter)
-var qiblaRecentHeadings = []; // آخر 5 قراءات للحصول على الوسيط (median)
+var qiblaRecentHeadings = []; // آخر 6 قراءات للمتوسط الدائري
+// v25.49: حالة خط أنابيب التنعيم والتثبيت — علاج «المؤشر لا يثبت»
+var _qiblaAbsSeen = false;      // هل وصل حدث deviceorientationabsolute فعلاً؟ (مصدر واحد فقط)
+var _qiblaShownHeading = null;  // آخر زاوية رُسمت فعلاً — عتبة إعادة الرسم
+var _qiblaSnapDone = false;     // هل تم المغلاق النهائي بعد آخر دوران؟ (تجميد تام)
+var _qiblaStableCount = 0;      // عدّاد القراءات المستقرة المتتالية قبل المغلاق
 
 // زاوية القبلة: الدائرة العظمى من الموقع إلى الكعبة (بالاتجاه مع عقارب الساعة من الشمال)
 function qiblaBearing(lat, lng) {
@@ -5701,80 +5856,123 @@ function qiblaRender() {
   }
 }
 
-function qiblaOrientHandler(e) {
+// v25.49: استخراج الاتجاه الخام من الحدث (iOS: webkitCompassHeading — Android: alpha)
+function _qiblaExtractHeading(e) {
   var h = null;
-  // iOS: webkitCompassHeading مباشر
   if (typeof e.webkitCompassHeading === "number" && !isNaN(e.webkitCompassHeading)) {
     h = e.webkitCompassHeading;
+  } else if (e.alpha !== null && e.alpha !== undefined && !isNaN(e.alpha)) {
+    h = (360 - e.alpha) % 360; // alpha يتزايد عكس عقارب الساعة
   }
-  // Android: alpha يتزايد عكس عقارب الساعة
-  // heading = (360 - alpha) % 360
-  else if (e.alpha !== null && e.alpha !== undefined && !isNaN(e.alpha)) {
-    h = (360 - e.alpha) % 360;
-  }
-  if (h === null) return;
-  var rawHeading = (h + 360) % 360;
+  if (h === null) return null;
+  return (h + 360) % 360;
+}
+function qiblaOrientHandlerAbs(e) {
+  var raw = _qiblaExtractHeading(e);
+  if (raw === null) return; // حدث بلا قيم (حساس غائب) — لا يُعتبر مصدراً صالحاً
+  _qiblaAbsSeen = true;     // v25.49: بعد ذلك تُتجاهل القناة العادية — منع تصارع إطارين مرجعيين
+  qiblaProcessHeading(raw);
+}
+function qiblaOrientHandlerRel(e) {
+  if (_qiblaAbsSeen) return; // v25.49: absolute نشط → القناة العادية احتياطية فقط (iOS/متصفحات قديمة)
+  var raw = _qiblaExtractHeading(e);
+  if (raw === null) return;
+  qiblaProcessHeading(raw);
+}
 
-  // v25.22: تخفيف حساسية البوصلة (أقوى من v25.17)
-  // 1. throttle أبطأ (100ms بدلاً من 50ms) — يقلل عدد التحديثات للنصف
+// v25.49: إعادة رسم فقط عند تغيّر مرئي (≥0.2°) — يمنع الوميض والحركة بلا جدوى
+function _qiblaMaybeRender() {
+  if (_qiblaShownHeading === null) { qiblaRender(); _qiblaShownHeading = qiblaHeading; return; }
+  var dv = Math.abs(((qiblaHeading - _qiblaShownHeading + 540) % 360) - 180);
+  if (dv >= 0.2) { qiblaRender(); _qiblaShownHeading = qiblaHeading; }
+}
+
+// v25.49: قلب المعالجة — تنعيم تكيفي بأحزمة انحراف + تجميد عند السكون + مغلاق نهائي
+//  لماذا كان المؤشر لا يثبت سابقاً؟ ضجيج المغناطيس ±2-5 درجات حتى والجهاز ساكناً،
+//  والعتبة القديمة (1 درجة) أصغر من الضجيج، والفلتر المنخفض يجعل المؤشر
+//  «يطارد» المتوسط المتذبذب إلى ما لا نهاية.
+//  التصميم بأحزمة الانحراف (الانحراف عن المعروض هو الإشارة، لا السرعة اللحظية
+//  لأن قفزات الضجيج تبدو كأنها دوران):
+//   • انحراف ≥ 4 درجات : مطاردة سريعة (k=0.35) — استجابة فورية للدوران الفعلي
+//   • بين 1.5 و 4     : تقارب هادئ (k=0.15)
+//   • أقل من 1.5      : حزام السكون — عدّ 4 قراءات مستقرة ثم مغلاق snap على متوسط النافذة
+//   • مُغلق            : تجميد تام — لكنه ينكسر تلقائياً إذا تجاوز الانحراف 4 درجات (دوران/انزياح جديد)
+//   + لا إعادة رسم إلا عند تغيّر مرئي ≥ 0.2 درجة
+function qiblaProcessHeading(rawHeading) {
   var now = Date.now();
-  if (qiblaLastUpdateAt && (now - qiblaLastUpdateAt) < 100) return;
+  if (qiblaLastUpdateAt && (now - qiblaLastUpdateAt) < 80) return; // throttle 80ms
   qiblaLastUpdateAt = now;
 
-  // 2. تجاهل التغييرات الصغيرة جداً (تحت 1° بدلاً من 0.5°) — لكن نسمح بها أول مرة
-  if (qiblaHeading !== null && qiblaHeading !== undefined) {
-    // حساب الفرق مع مراعاة الالتفاف الدائري (0-360)
-    var diff = Math.abs(((rawHeading - qiblaHeading + 540) % 360) - 180);
-    if (diff < 1) return; // تجاهل الاهتزازات الصغيرة
-  }
-
-  // 3. median filter: احفظ آخر 5 قراءات وخذ الوسيط
-  // هذا يزيل القيم الشاذة (spikes) بشكل فعال
+  // نافذة آخر 6 قراءات
   qiblaRecentHeadings.push(rawHeading);
-  if (qiblaRecentHeadings.length > 5) qiblaRecentHeadings.shift();
+  if (qiblaRecentHeadings.length > 6) qiblaRecentHeadings.shift();
 
-  var filteredHeading = rawHeading;
+  // المتوسط الدائري للنافذة (sin/cos) — أثبت من القراءة الفردية
+  var meanH = rawHeading;
   if (qiblaRecentHeadings.length >= 3) {
-    // حساب الوسيط الدائري (circular median)
-    // نحول كل زاوية إلى متجهين (sin, cos)، نحسب المتوسط، نعود للزاوية
     var sumSin = 0, sumCos = 0;
-    for (var i = 0; i < qiblaRecentHeadings.length; i++) {
-      var rad = qiblaRecentHeadings[i] * Math.PI / 180;
+    for (var j = 0; j < qiblaRecentHeadings.length; j++) {
+      var rad = qiblaRecentHeadings[j] * Math.PI / 180;
       sumSin += Math.sin(rad);
       sumCos += Math.cos(rad);
     }
-    var avgRad = Math.atan2(sumSin / qiblaRecentHeadings.length, sumCos / qiblaRecentHeadings.length);
-    filteredHeading = (avgRad * 180 / Math.PI + 360) % 360;
+    meanH = (Math.atan2(sumSin, sumCos) * 180 / Math.PI + 360) % 360;
   }
 
-  // 4. low-pass filter أقوى (0.08 بدلاً من 0.2 — فقط 8% جديد + 92% قديم)
-  // هذا يجعل المؤشر يتحرك ببطء ونعومة
-  if (qiblaHeading !== null && qiblaHeading !== undefined) {
-    // حساب الفرق بين الجديد والقديم (مع مراعاة الالتفاف)
-    var d = filteredHeading - qiblaHeading;
-    if (d > 180) d -= 360;
-    if (d < -180) d += 360;
-    // تطبيق low-pass filter
-    var smoothed = qiblaHeading + (d * 0.08);
-    qiblaHeading = (smoothed + 360) % 360;
-  } else {
-    // أول قيمة — لا smoothing
-    qiblaHeading = filteredHeading;
+  if (qiblaHeading === null || qiblaHeading === undefined) {
+    // أول قراءة بعد الفتح — قفز مباشر إلى المتوسط (لا مطاردة من الصفر)
+    qiblaHeading = meanH;
+    if (!qiblaLive) {
+      qiblaLive = true;
+      if (qiblaSensorTimer) { clearTimeout(qiblaSensorTimer); qiblaSensorTimer = null; }
+    }
+    qiblaRender();
+    _qiblaShownHeading = qiblaHeading;
+    return;
   }
+
+  var d = meanH - qiblaHeading; // انحراف المتوسط عن المعروض (دائري)
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  var ad = Math.abs(d);
+
+  // استيقاظ: انحرف الواقع كثيراً عن المعروض (دوران جديد أو انزياح بيئي)؟
+  if (_qiblaSnapDone && ad >= 4) { _qiblaSnapDone = false; _qiblaStableCount = 0; }
+  if (_qiblaSnapDone) return; // سكون + مُغلق: تجميد تام — هذا ما يثبّت المؤشر
 
   if (!qiblaLive) {
     qiblaLive = true;
     if (qiblaSensorTimer) { clearTimeout(qiblaSensorTimer); qiblaSensorTimer = null; }
   }
-  qiblaRender();
+
+  if (ad < 1.5) {
+    // حزام السكون: عدّ القراءات المستقرة ثم أغلق نهائياً على متوسط النافذة
+    _qiblaStableCount++;
+    if (_qiblaStableCount >= 4) {
+      qiblaHeading = (meanH + 360) % 360;
+      _qiblaSnapDone = true;
+      _qiblaStableCount = 0;
+      _qiblaMaybeRender(); // رسم أخير واحد إن كان الفرق مرئياً ثم صمت
+      return;
+    }
+    qiblaHeading = ((qiblaHeading + d * 0.05) + 360) % 360; // تلميع خفيف حتى المغلاق
+    _qiblaMaybeRender();
+    return;
+  }
+
+  _qiblaStableCount = 0;
+  // عامل التنعيم: سريع لانحراف كبير (مطاردة بعد دوران)، متوسط للتقارب
+  var k = ad >= 4 ? 0.35 : 0.15;
+  qiblaHeading = ((qiblaHeading + d * k) + 360) % 360;
+  _qiblaMaybeRender();
 }
 function qiblaAttach() {
-  try { window.removeEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e) {}
-  try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandler, false); } catch(e3) {}
+  try { window.removeEventListener("deviceorientation", qiblaOrientHandlerRel, false); } catch(e) {}
+  try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandlerAbs, false); } catch(e3) {}
   // v23: محاولة استخدام deviceorientationabsolute أولاً (يعطي قيم مطلقة من الشمال)
-  try { window.addEventListener("deviceorientationabsolute", qiblaOrientHandler, false); } catch(e2) {}
-  // fallback: deviceorientation العادي
-  try { window.addEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e4) {}
+  try { window.addEventListener("deviceorientationabsolute", qiblaOrientHandlerAbs, false); } catch(e2) {}
+  // fallback: deviceorientation العادي — v25.49: يُتجاهل تلقائياً إن نشط absolute
+  try { window.addEventListener("deviceorientation", qiblaOrientHandlerRel, false); } catch(e4) {}
   if (qiblaSensorTimer) clearTimeout(qiblaSensorTimer);
   qiblaSensorTimer = setTimeout(function() {
     if (!qiblaLive) {
@@ -5808,6 +6006,11 @@ function qiblaRefreshIfOpen() {
 }
 function openQibla() {
   qiblaLive = false; qiblaHeading = null; qiblaWasAligned = false;
+  // v25.49: تصفير حالة خط الأنابيب حتى لا تتلوث قراءات الفتح الجديد بقدمها
+  qiblaRecentHeadings.length = 0;
+  _qiblaAbsSeen = false;
+  _qiblaShownHeading = null; _qiblaSnapDone = false; _qiblaStableCount = 0;
+  qiblaLastUpdateAt = 0;
   el("qiblaModal").classList.add("show");
   qiblaCompute();
   qiblaRender();
@@ -5815,8 +6018,8 @@ function openQibla() {
 }
 function closeQibla() {
   el("qiblaModal").classList.remove("show");
-  try { window.removeEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e) {}
-  try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandler, false); } catch(e3) {}
+  try { window.removeEventListener("deviceorientation", qiblaOrientHandlerRel, false); } catch(e) {}
+  try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandlerAbs, false); } catch(e3) {}
   qiblaLive = false; qiblaHeading = null;
   if (qiblaSensorTimer) { clearTimeout(qiblaSensorTimer); qiblaSensorTimer = null; }
 }
@@ -5947,7 +6150,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.47"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.49"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام

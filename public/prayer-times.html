@@ -5533,7 +5533,12 @@ var qiblaAngle = 0, qiblaHeading = null, qiblaLive = false, qiblaSensorTimer = n
 var qiblaLastUpdateAt = 0; // v25.17: لتخفيف الحساسية (throttle)
 var qiblaWasAligned = false; // v25.42: لاهتزاز واحد عند بلوغ المحاذاة
 // v25.22: متوسط متحرك أقوى (median filter + low-pass filter)
-var qiblaRecentHeadings = []; // آخر 5 قراءات للحصول على الوسيط (median)
+var qiblaRecentHeadings = []; // آخر 6 قراءات للمتوسط الدائري
+// v25.49: حالة خط أنابيب التنعيم والتثبيت — علاج «المؤشر لا يثبت»
+var _qiblaAbsSeen = false;      // هل وصل حدث deviceorientationabsolute فعلاً؟ (مصدر واحد فقط)
+var _qiblaShownHeading = null;  // آخر زاوية رُسمت فعلاً — عتبة إعادة الرسم
+var _qiblaSnapDone = false;     // هل تم المغلاق النهائي بعد آخر دوران؟ (تجميد تام)
+var _qiblaStableCount = 0;      // عدّاد القراءات المستقرة المتتالية قبل المغلاق
 
 // زاوية القبلة: الدائرة العظمى من الموقع إلى الكعبة (بالاتجاه مع عقارب الساعة من الشمال)
 function qiblaBearing(lat, lng) {
@@ -5851,80 +5856,123 @@ function qiblaRender() {
   }
 }
 
-function qiblaOrientHandler(e) {
+// v25.49: استخراج الاتجاه الخام من الحدث (iOS: webkitCompassHeading — Android: alpha)
+function _qiblaExtractHeading(e) {
   var h = null;
-  // iOS: webkitCompassHeading مباشر
   if (typeof e.webkitCompassHeading === "number" && !isNaN(e.webkitCompassHeading)) {
     h = e.webkitCompassHeading;
+  } else if (e.alpha !== null && e.alpha !== undefined && !isNaN(e.alpha)) {
+    h = (360 - e.alpha) % 360; // alpha يتزايد عكس عقارب الساعة
   }
-  // Android: alpha يتزايد عكس عقارب الساعة
-  // heading = (360 - alpha) % 360
-  else if (e.alpha !== null && e.alpha !== undefined && !isNaN(e.alpha)) {
-    h = (360 - e.alpha) % 360;
-  }
-  if (h === null) return;
-  var rawHeading = (h + 360) % 360;
+  if (h === null) return null;
+  return (h + 360) % 360;
+}
+function qiblaOrientHandlerAbs(e) {
+  var raw = _qiblaExtractHeading(e);
+  if (raw === null) return; // حدث بلا قيم (حساس غائب) — لا يُعتبر مصدراً صالحاً
+  _qiblaAbsSeen = true;     // v25.49: بعد ذلك تُتجاهل القناة العادية — منع تصارع إطارين مرجعيين
+  qiblaProcessHeading(raw);
+}
+function qiblaOrientHandlerRel(e) {
+  if (_qiblaAbsSeen) return; // v25.49: absolute نشط → القناة العادية احتياطية فقط (iOS/متصفحات قديمة)
+  var raw = _qiblaExtractHeading(e);
+  if (raw === null) return;
+  qiblaProcessHeading(raw);
+}
 
-  // v25.22: تخفيف حساسية البوصلة (أقوى من v25.17)
-  // 1. throttle أبطأ (100ms بدلاً من 50ms) — يقلل عدد التحديثات للنصف
+// v25.49: إعادة رسم فقط عند تغيّر مرئي (≥0.2°) — يمنع الوميض والحركة بلا جدوى
+function _qiblaMaybeRender() {
+  if (_qiblaShownHeading === null) { qiblaRender(); _qiblaShownHeading = qiblaHeading; return; }
+  var dv = Math.abs(((qiblaHeading - _qiblaShownHeading + 540) % 360) - 180);
+  if (dv >= 0.2) { qiblaRender(); _qiblaShownHeading = qiblaHeading; }
+}
+
+// v25.49: قلب المعالجة — تنعيم تكيفي بأحزمة انحراف + تجميد عند السكون + مغلاق نهائي
+//  لماذا كان المؤشر لا يثبت سابقاً؟ ضجيج المغناطيس ±2-5 درجات حتى والجهاز ساكناً،
+//  والعتبة القديمة (1 درجة) أصغر من الضجيج، والفلتر المنخفض يجعل المؤشر
+//  «يطارد» المتوسط المتذبذب إلى ما لا نهاية.
+//  التصميم بأحزمة الانحراف (الانحراف عن المعروض هو الإشارة، لا السرعة اللحظية
+//  لأن قفزات الضجيج تبدو كأنها دوران):
+//   • انحراف ≥ 4 درجات : مطاردة سريعة (k=0.35) — استجابة فورية للدوران الفعلي
+//   • بين 1.5 و 4     : تقارب هادئ (k=0.15)
+//   • أقل من 1.5      : حزام السكون — عدّ 4 قراءات مستقرة ثم مغلاق snap على متوسط النافذة
+//   • مُغلق            : تجميد تام — لكنه ينكسر تلقائياً إذا تجاوز الانحراف 4 درجات (دوران/انزياح جديد)
+//   + لا إعادة رسم إلا عند تغيّر مرئي ≥ 0.2 درجة
+function qiblaProcessHeading(rawHeading) {
   var now = Date.now();
-  if (qiblaLastUpdateAt && (now - qiblaLastUpdateAt) < 100) return;
+  if (qiblaLastUpdateAt && (now - qiblaLastUpdateAt) < 80) return; // throttle 80ms
   qiblaLastUpdateAt = now;
 
-  // 2. تجاهل التغييرات الصغيرة جداً (تحت 1° بدلاً من 0.5°) — لكن نسمح بها أول مرة
-  if (qiblaHeading !== null && qiblaHeading !== undefined) {
-    // حساب الفرق مع مراعاة الالتفاف الدائري (0-360)
-    var diff = Math.abs(((rawHeading - qiblaHeading + 540) % 360) - 180);
-    if (diff < 1) return; // تجاهل الاهتزازات الصغيرة
-  }
-
-  // 3. median filter: احفظ آخر 5 قراءات وخذ الوسيط
-  // هذا يزيل القيم الشاذة (spikes) بشكل فعال
+  // نافذة آخر 6 قراءات
   qiblaRecentHeadings.push(rawHeading);
-  if (qiblaRecentHeadings.length > 5) qiblaRecentHeadings.shift();
+  if (qiblaRecentHeadings.length > 6) qiblaRecentHeadings.shift();
 
-  var filteredHeading = rawHeading;
+  // المتوسط الدائري للنافذة (sin/cos) — أثبت من القراءة الفردية
+  var meanH = rawHeading;
   if (qiblaRecentHeadings.length >= 3) {
-    // حساب الوسيط الدائري (circular median)
-    // نحول كل زاوية إلى متجهين (sin, cos)، نحسب المتوسط، نعود للزاوية
     var sumSin = 0, sumCos = 0;
-    for (var i = 0; i < qiblaRecentHeadings.length; i++) {
-      var rad = qiblaRecentHeadings[i] * Math.PI / 180;
+    for (var j = 0; j < qiblaRecentHeadings.length; j++) {
+      var rad = qiblaRecentHeadings[j] * Math.PI / 180;
       sumSin += Math.sin(rad);
       sumCos += Math.cos(rad);
     }
-    var avgRad = Math.atan2(sumSin / qiblaRecentHeadings.length, sumCos / qiblaRecentHeadings.length);
-    filteredHeading = (avgRad * 180 / Math.PI + 360) % 360;
+    meanH = (Math.atan2(sumSin, sumCos) * 180 / Math.PI + 360) % 360;
   }
 
-  // 4. low-pass filter أقوى (0.08 بدلاً من 0.2 — فقط 8% جديد + 92% قديم)
-  // هذا يجعل المؤشر يتحرك ببطء ونعومة
-  if (qiblaHeading !== null && qiblaHeading !== undefined) {
-    // حساب الفرق بين الجديد والقديم (مع مراعاة الالتفاف)
-    var d = filteredHeading - qiblaHeading;
-    if (d > 180) d -= 360;
-    if (d < -180) d += 360;
-    // تطبيق low-pass filter
-    var smoothed = qiblaHeading + (d * 0.08);
-    qiblaHeading = (smoothed + 360) % 360;
-  } else {
-    // أول قيمة — لا smoothing
-    qiblaHeading = filteredHeading;
+  if (qiblaHeading === null || qiblaHeading === undefined) {
+    // أول قراءة بعد الفتح — قفز مباشر إلى المتوسط (لا مطاردة من الصفر)
+    qiblaHeading = meanH;
+    if (!qiblaLive) {
+      qiblaLive = true;
+      if (qiblaSensorTimer) { clearTimeout(qiblaSensorTimer); qiblaSensorTimer = null; }
+    }
+    qiblaRender();
+    _qiblaShownHeading = qiblaHeading;
+    return;
   }
+
+  var d = meanH - qiblaHeading; // انحراف المتوسط عن المعروض (دائري)
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  var ad = Math.abs(d);
+
+  // استيقاظ: انحرف الواقع كثيراً عن المعروض (دوران جديد أو انزياح بيئي)؟
+  if (_qiblaSnapDone && ad >= 4) { _qiblaSnapDone = false; _qiblaStableCount = 0; }
+  if (_qiblaSnapDone) return; // سكون + مُغلق: تجميد تام — هذا ما يثبّت المؤشر
 
   if (!qiblaLive) {
     qiblaLive = true;
     if (qiblaSensorTimer) { clearTimeout(qiblaSensorTimer); qiblaSensorTimer = null; }
   }
-  qiblaRender();
+
+  if (ad < 1.5) {
+    // حزام السكون: عدّ القراءات المستقرة ثم أغلق نهائياً على متوسط النافذة
+    _qiblaStableCount++;
+    if (_qiblaStableCount >= 4) {
+      qiblaHeading = (meanH + 360) % 360;
+      _qiblaSnapDone = true;
+      _qiblaStableCount = 0;
+      _qiblaMaybeRender(); // رسم أخير واحد إن كان الفرق مرئياً ثم صمت
+      return;
+    }
+    qiblaHeading = ((qiblaHeading + d * 0.05) + 360) % 360; // تلميع خفيف حتى المغلاق
+    _qiblaMaybeRender();
+    return;
+  }
+
+  _qiblaStableCount = 0;
+  // عامل التنعيم: سريع لانحراف كبير (مطاردة بعد دوران)، متوسط للتقارب
+  var k = ad >= 4 ? 0.35 : 0.15;
+  qiblaHeading = ((qiblaHeading + d * k) + 360) % 360;
+  _qiblaMaybeRender();
 }
 function qiblaAttach() {
-  try { window.removeEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e) {}
-  try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandler, false); } catch(e3) {}
+  try { window.removeEventListener("deviceorientation", qiblaOrientHandlerRel, false); } catch(e) {}
+  try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandlerAbs, false); } catch(e3) {}
   // v23: محاولة استخدام deviceorientationabsolute أولاً (يعطي قيم مطلقة من الشمال)
-  try { window.addEventListener("deviceorientationabsolute", qiblaOrientHandler, false); } catch(e2) {}
-  // fallback: deviceorientation العادي
-  try { window.addEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e4) {}
+  try { window.addEventListener("deviceorientationabsolute", qiblaOrientHandlerAbs, false); } catch(e2) {}
+  // fallback: deviceorientation العادي — v25.49: يُتجاهل تلقائياً إن نشط absolute
+  try { window.addEventListener("deviceorientation", qiblaOrientHandlerRel, false); } catch(e4) {}
   if (qiblaSensorTimer) clearTimeout(qiblaSensorTimer);
   qiblaSensorTimer = setTimeout(function() {
     if (!qiblaLive) {
@@ -5958,6 +6006,11 @@ function qiblaRefreshIfOpen() {
 }
 function openQibla() {
   qiblaLive = false; qiblaHeading = null; qiblaWasAligned = false;
+  // v25.49: تصفير حالة خط الأنابيب حتى لا تتلوث قراءات الفتح الجديد بقدمها
+  qiblaRecentHeadings.length = 0;
+  _qiblaAbsSeen = false;
+  _qiblaShownHeading = null; _qiblaSnapDone = false; _qiblaStableCount = 0;
+  qiblaLastUpdateAt = 0;
   el("qiblaModal").classList.add("show");
   qiblaCompute();
   qiblaRender();
@@ -5965,8 +6018,8 @@ function openQibla() {
 }
 function closeQibla() {
   el("qiblaModal").classList.remove("show");
-  try { window.removeEventListener("deviceorientation", qiblaOrientHandler, false); } catch(e) {}
-  try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandler, false); } catch(e3) {}
+  try { window.removeEventListener("deviceorientation", qiblaOrientHandlerRel, false); } catch(e) {}
+  try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandlerAbs, false); } catch(e3) {}
   qiblaLive = false; qiblaHeading = null;
   if (qiblaSensorTimer) { clearTimeout(qiblaSensorTimer); qiblaSensorTimer = null; }
 }
@@ -6097,7 +6150,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.48"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.49"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
