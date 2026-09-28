@@ -1895,6 +1895,20 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
         <button class="btn btn-outline btn-sm" onclick="qiblaAlignBySun(true)">☀️ أعلى الهاتف نحو الشمس</button>
         <button class="btn btn-outline btn-sm" onclick="qiblaAlignBySun(false)">🌓 أعلى الهاتف مع الظل</button>
+        <button class="btn btn-outline btn-sm" id="qbSunHelpBtn" onclick="qiblaToggleSunHelp()">❓ كيف أضبط الهاتف؟</button>
+      </div>
+      <div id="qbSunHelp" style="display:none;text-align:right;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin:8px 0 4px;font-size:12.5px;line-height:1.95;color:#065f46;">
+        <div style="font-weight:800;margin-bottom:4px;">☀️ طريقة الشمس (نهاراً والشمس ظاهرة):</div>
+        ١) امسك الهاتف <b>مسطحاً أفقياً</b> كالطبق.<br>
+        ٢) دوّر جسمك حتى تشير <b>الحافة العلوية للهاتف</b> نحو الشمس مباشرة.<br>
+        ٣) وأنت ثابت بذلك الوضع اضغط «☀️ أعلى الهاتف نحو الشمس».<br>
+        ٤) ثبّت الهاتف بالوضع نفسه — السهم الأحمر (عليه الكعبة 🕋) يشير الآن نحو القبلة على الأرض.<br>
+        ٥) دوّر نفسك مع الهاتف حتى يتجه السهم منك إلى الأمام = أنت في اتجاه القبلة.
+        <div style="font-weight:800;margin:8px 0 4px;">🌓 طريقة الظل (أسهل — دون التحديق في الشمس):</div>
+        ١) ضع قلماً عمودياً على ورقة في الشمس — سيمتد ظله بعيداً عنها.<br>
+        ٢) امسك الهاتف مسطحاً واضبط <b>الحافة العلوية موازية لامتداد الظل</b> (أعلى الهاتف نحو الظل لا نحو الشمس).<br>
+        ٣) اضغط «🌓 أعلى الهاتف مع الظل» ثم كرر الخطوتين ٤ و٥ أعلاه.
+        <div style="margin-top:8px;border-top:1px dashed #bbf7d0;padding-top:6px;">💡 تزداد الدقة في منتصف الصباح أو منتصف العصر (ظل أطول وأوضح اتجاهاً) • ليلًا أو في الغيوم استخدم السحب اليدوي بمعلم معروف الاتجاه • لا تسحب القرص بعد المحاذاة حتى لا يفقد الشمال المتحاذى</div>
       </div>
       <div id="qbNorthKind" style="font-size:12px;font-weight:700;color:#059669;margin-top:6px;min-height:16px;"></div>
     </div>
@@ -1902,7 +1916,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <!-- زر تفعيل الحساس -->
     <button class="btn btn-primary btn-sm" id="qbSensorBtn" onclick="qiblaEnableSensor()">🔄 تفعيل حساس الاتجاه</button>
 
-    <div class="qb-note">🧭 القرص يدور مع الموبايل ويبقى «ش» دائماً عند الشمال الحقيقي • المؤشر الأحمر (عليه الكعبة 🕋) مثبّت على اتجاه القبلة مهما دار الجهاز • أدر جهازك حتى يقف المؤشر عند العلامة العلوية = أنت في اتجاه القبلة • <b>بدون حساس اتجاه؟</b> يظهر «وضع يدوي»: أدر القرص بإصبعك حتى يقف «ش» عند الشمال، أو استخدم المحاذاة الآلية بالشمس — وطريقة الشمس تعطي الشمال الجغرافي المعتمد في حساب زاوية القبلة مباشرة، أما المغناطيسي (بوصلة عادية/حساس نسبي) فيختلف عنه بفارق الانحراف المغناطيسي.</div>
+    <div class="qb-note">🧭 القرص يدور مع الموبايل ويبقى «ش» دائماً عند الشمال الحقيقي • المؤشر الأحمر (عليه الكعبة 🕋) مثبّت على اتجاه القبلة مهما دار الجهاز • أدر جهازك حتى يقف المؤشر عند العلامة العلوية = أنت في اتجاه القبلة • <b>بدون حساس اتجاه؟</b> يظهر «وضع يدوي»: أدر القرص بإصبعك حتى يقف «ش» عند الشمال، أو استخدم المحاذاة الآلية بالشمس (اضغط «❓ كيف أضبط الهاتف؟» لشرح الخطوات خطوة بخطوة) — وطريقة الشمس تعطي الشمال الجغرافي المعتمد في حساب زاوية القبلة مباشرة، أما المغناطيسي (بوصلة عادية/حساس نسبي) فيختلف عنه بفارق الانحراف المغناطيسي.</div>
   </div>
   </div></div>
 </div>
@@ -6210,7 +6224,7 @@ function _qiblaEnterManual() {
   var stage = el("qbcStage"); if (stage) stage.className = "qbc-stage qbc-manual";
   _qiblaAttachDrag();
   var st = el("qbStatus");
-  if (st) { st.innerHTML = "✋ بدون حساس اتجاه: أدر القرص بإصبعك حتى يقف «ش» عند الشمال الحقيقي — أو استخدم المحاذاة بالشمس"; st.className = "qb-status qb-status-big"; }
+  if (st) { st.innerHTML = "✋ بدون حساس اتجاه: أدر القرص بإصبعك حتى يقف «ش» عند الشمال الحقيقي — أو استخدم المحاذاة بالشمس (اضغط ❓ كيف أضبط الهاتف؟ للخطوات)"; st.className = "qb-status qb-status-big"; }
   var sn = el("qbSensor");
   if (sn) sn.innerHTML = "وضع يدوي: السحب يدير «ش» والمؤشر معاً • زاوية القبلة " + qiblaAngle.toFixed(0) + "° من الشمال";
 }
@@ -6325,8 +6339,18 @@ function qiblaAlignBySun(bySun) {
   qiblaLive = true;
   _qiblaSnapDone = true; _qiblaStableCount = 0; // تثبيت فوري — ينكسر تلقائياً مع أي دوران حقيقي
   _qiblaManualKind = bySun ? "الشمال الجغرافي — محاذاة بالشمس" : "الشمال الجغرافي — محاذاة بالظل";
-  if (nk) nk.innerHTML = "✅ " + _qiblaManualKind + " • ثبّت الهاتف أفقياً بنفس الوضع الذي اخترته وأنت تقرأ المؤشر — ودوّر نفسك حتى يقف المؤشر عند العلامة العلوية";
+  if (nk) nk.innerHTML = "✅ " + _qiblaManualKind + " • ثبّت الهاتف أفقياً بنفس الوضع الذي اخترته ودوّر نفسك حتى يقف المؤشر عند العلامة العلوية = أنت نحو القبلة • ⚠️ لا تسحب القرص بعد المحاذاة حتى لا يفقد الشمال";
   qiblaRender(); _qiblaShownHeading = qiblaHeading;
+}
+
+// v25.55: فتح/طي لوحة إرشاد محاذاة الشمس/الظل — خطوة بخطوة للأجهزة بلا حساس اتجاه
+function qiblaToggleSunHelp() {
+  var p = el("qbSunHelp");
+  if (!p) return;
+  var show = (p.style.display === "none");
+  p.style.display = show ? "" : "none";
+  var b = el("qbSunHelpBtn");
+  if (b) b.innerHTML = show ? "✖ إخفاء الخطوات" : "❓ كيف أضبط الهاتف؟";
 }
 
 // ===== قائمة الأجهزة المعروفة محلياً (أسماء مستعارة لمعرّفات الأجهزة) =====
@@ -6455,7 +6479,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.54"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.55"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
