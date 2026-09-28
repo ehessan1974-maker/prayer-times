@@ -3439,105 +3439,165 @@ function resetToAuto() {
 }
 
 // ===== v13: بحث عالمي عن مدينة بالاسم (Open-Meteo Geocoding — مجاني بلا مفتاح) =====
+// v25.47: سلسلة مصادر للبحث عن المدن — نفس فلسفة سلسلة التحديثات (لا مزيد من نقطة الفشل الواحدة)
+// المصدر 1: open-meteo (يتطلب TLS 1.2 — مشكلة Samsung J5/Android 5.x)
+// المصدر 2: Nominatim (OpenStreetMap) — بديل كامل بصيغة مختلفة تُوحَّد أدناه
+// على أندرويد تُجرَّب القناة الأصلية أولاً (Tls12Helper يصلح TLS للـ Java stack) ثم XHR
+var citySourceIdx = 0;
+var CITY_SOURCES = 2;
+var cityAttempt = 0;
+var cityNativeAttempt = -1; // رقم المحاولة المرسلة عبر القناة الأصلية (لرفض الردود المتأخرة)
+var cityLastQuery = "";
+
+function citySourceUrl(idx, q) {
+  if (idx === 0) {
+    return "https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(q) + "&count=8&language=ar&format=json";
+  }
+  return "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(q) + "&format=jsonv2&limit=8&accept-language=ar";
+}
+
+// v25.47: توحيد نتائج المصدرين إلى صيغة واحدة (name/admin1/country/latitude/longitude)
+function cityNormalize(j, idx) {
+  var out = [];
+  if (idx === 0) {
+    var rs = (j && j.results) ? j.results : [];
+    for (var i = 0; i < rs.length && i < 8; i++) {
+      var r = rs[i];
+      out.push({ name: r.name || "", admin1: r.admin1 || "", country: r.country || "", latitude: parseFloat(r.latitude), longitude: parseFloat(r.longitude) });
+    }
+  } else {
+    var arr = (j && typeof j.length !== "undefined") ? j : [];
+    for (var k = 0; k < arr.length && k < 8; k++) {
+      var n = arr[k];
+      var ad = n.address || {};
+      var nm = n.name || ad.city || ad.town || ad.village || (n.display_name ? String(n.display_name).split(",")[0] : "");
+      // v25.47: بعض نتائج Nominatim بلا address — استخرج المنطقة والدولة من display_name
+      var dn = n.display_name ? String(n.display_name) : "";
+      var parts = [];
+      if (dn) { var ps = dn.split(","); for (var p2 = 0; p2 < ps.length; p2++) { var t = ps[p2].replace(/^\s+|\s+$/g, ""); if (t) parts.push(t); } }
+      var ad1 = ad.state || ad.region || (parts.length > 2 ? parts[parts.length - 2] : "");
+      var cn = ad.country || (parts.length > 1 ? parts[parts.length - 1] : "");
+      out.push({ name: nm, admin1: ad1, country: cn, latitude: parseFloat(n.lat), longitude: parseFloat(n.lon) });
+    }
+  }
+  return out;
+}
+
 function searchCity() {
   var q = el("citySearchInput").value.trim();
+  if (!q || citySearching) return;
+  citySourceIdx = 0;
+  cityAttempt = 0;
+  cityLastQuery = q;
+  citySearchGo();
+}
+
+function citySearchGo() {
+  var q = cityLastQuery;
   var box = el("cityResults");
   var st = el("citySearchStatus");
-  if (!q || citySearching) return;
   citySearching = true;
   cityResults = [];
   box.innerHTML = "";
   st.style.display = "block";
-  st.textContent = "⏳ جاري البحث عن «" + q + "»...";
-  var url = "https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(q) + "&count=8&language=ar&format=json";
-
-  // v25.35: على أندرويد، استخدم NativeBridge (مع Tls12Helper) بدلاً من XHR
-  // هذا يحل مشكلة Samsung J5 (Android 5.x) التي تفشل في TLS 1.2
-  if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
+  st.textContent = citySourceIdx === 0
+    ? "⏳ جاري البحث عن «" + q + "»..."
+    : "⏳ تعذر المصدر الأول — تجربة خدمة بحث بديلة...";
+  cityAttempt++;
+  var attempt = cityAttempt;
+  var url = citySourceUrl(citySourceIdx, q);
+  // v25.35: على أندرويد القناة الأصلية أولاً (Tls12Helper يصلح TLS 1.2 على Samsung J5)
+  // v25.47: fetchUrlT بمهلة قصيرة (8 ثوانٍ) إن توفرت (APK جديد)، وإلا fetchUrl العادية
+  var usedNative = false;
+  if (window.AndroidPrayer) {
     try {
-      AndroidPrayer.fetchUrl(url, "_citySearchCallback");
-      // fallback: إذا لم يصل رد خلال 12 ثانية، حاول XHR
-      setTimeout(function() {
-        if (citySearching) {
-          searchCityViaXHR(url, st, box);
-        }
-      }, 12000);
-      return;
+      if (AndroidPrayer.fetchUrlT) { AndroidPrayer.fetchUrlT(url, "_citySearchCallback", 8000); usedNative = true; }
+      else if (AndroidPrayer.fetchUrl) { AndroidPrayer.fetchUrl(url, "_citySearchCallback"); usedNative = true; }
+      if (usedNative) {
+        cityNativeAttempt = attempt;
+        // مراقب: إن لم يصل رد القناة الأصلية خلال 10 ثوانٍ → XHR لنفس المصدر
+        setTimeout(function() {
+          if (citySearching && cityAttempt === attempt && cityNativeAttempt === attempt) {
+            cityNativeAttempt = -1;
+            citySearchViaXHR(attempt);
+          }
+        }, 10000);
+        return;
+      }
     } catch(e) {}
   }
-  searchCityViaXHR(url, st, box);
+  citySearchViaXHR(attempt);
 }
 
-// v25.35: XHR fallback للبحث عن المدن
-function searchCityViaXHR(url, st, box) {
+function citySearchViaXHR(attempt) {
+  var st = el("citySearchStatus");
   var xhr = new XMLHttpRequest();
   xhr.timeout = 12000;
-  xhr.open("GET", url, true);
+  xhr.open("GET", citySourceUrl(citySourceIdx, cityLastQuery), true);
   xhr.onreadystatechange = function() {
     if (xhr.readyState !== 4) return;
-    citySearching = false;
+    if (cityAttempt !== attempt || !citySearching) return; // تجاوزتها محاولة أحدث
     if (xhr.status === 200) {
       try {
         var j = JSON.parse(xhr.responseText);
-        cityResults = (j.results || []).slice(0, 8);
-        if (!cityResults.length) { st.textContent = "❌ لا نتائج — جرّب اسماً آخر"; return; }
-        st.style.display = "none";
-        var html = "";
-        for (var i = 0; i < cityResults.length; i++) {
-          var r = cityResults[i];
-          var sub = [r.admin1, r.country].filter(Boolean).join("، ");
-          html += '<div class="city-result" onclick="pickCity(' + i + ')">' +
-                  '<div class="cr-name">📍 ' + r.name + '</div>' +
-                  (sub ? '<div class="cr-sub">' + sub + '</div>' : '') +
-                  '</div>';
-        }
-        box.innerHTML = html;
-      } catch(e) { st.textContent = "⚠️ تعذر تحليل نتيجة البحث"; }
-    } else {
-      st.textContent = "⚠️ فشل البحث — تحقق من الاتصال بالإنترنت";
+        cityShowResults(cityNormalize(j, citySourceIdx));
+        return;
+      } catch(e) { citySearchFail("⚠️ تعذر تحليل نتيجة البحث"); return; }
     }
+    citySearchFail("");
   };
-  try { xhr.send(); } catch(e) { citySearching = false; st.textContent = "⚠️ فشل البحث"; }
+  try { xhr.send(); } catch(e) { if (cityAttempt === attempt && citySearching) citySearchFail(""); }
 }
 
-// v25.35: callback من NativeBridge.fetchUrl لنتائج البحث
-function _citySearchCallback(data) {
-  if (!data) {
-    if (window.AndroidPrayer && AndroidPrayer.getFetchResult) {
-      try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
-    }
-  }
+// عرض النتائج الموحدة — قائمة فارغة تعني جرّب المصدر البديل
+function cityShowResults(list) {
+  var st = el("citySearchStatus");
+  if (!list || !list.length) { citySearchFail("❌ لا نتائج لـ «" + cityLastQuery + "» في أي من خدمتي البحث — جرّب اسماً آخر"); return; }
   citySearching = false;
-  if (!data || data.length === 0) {
-    var st = el("citySearchStatus");
-    if (st) st.textContent = "⚠️ فشل البحث — تحقق من الاتصال بالإنترنت";
-    return;
+  cityResults = list;
+  if (st) st.style.display = "none";
+  var box = el("cityResults");
+  var html = "";
+  for (var i = 0; i < cityResults.length; i++) {
+    var r = cityResults[i];
+    var sub = [r.admin1, r.country].filter(Boolean).join("، ");
+    html += '<div class="city-result" onclick="pickCity(' + i + ')">' +
+            '<div class="cr-name">📍 ' + r.name + '</div>' +
+            (sub ? '<div class="cr-sub">' + sub + '</div>' : '') +
+            '</div>';
   }
-  try {
-    var j = (typeof data === "string") ? JSON.parse(data) : data;
-    cityResults = (j.results || []).slice(0, 8);
-    var st = el("citySearchStatus");
-    var box = el("cityResults");
-    if (!cityResults.length) {
-      if (st) st.textContent = "❌ لا نتائج — جرّب اسماً آخر";
-      return;
-    }
-    if (st) st.style.display = "none";
-    var html = "";
-    for (var i = 0; i < cityResults.length; i++) {
-      var r = cityResults[i];
-      var sub = [r.admin1, r.country].filter(Boolean).join("، ");
-      html += '<div class="city-result" onclick="pickCity(' + i + ')">' +
-              '<div class="cr-name">📍 ' + r.name + '</div>' +
-              (sub ? '<div class="cr-sub">' + sub + '</div>' : '') +
-              '</div>';
-    }
-    if (box) box.innerHTML = html;
-  } catch(e) {
-    var st2 = el("citySearchStatus");
-    if (st2) st2.textContent = "⚠️ تعذر تحليل نتيجة البحث";
+  if (box) box.innerHTML = html;
+}
+
+// فشل المصدر الحالي → المصدر البديل؛ وبعد استنفاد المصدرين رسالة صريحة بالسبب
+function citySearchFail(lastMsg) {
+  citySourceIdx++;
+  if (citySourceIdx < CITY_SOURCES) { citySearchGo(); return; }
+  citySearching = false;
+  var st = el("citySearchStatus");
+  if (st) {
+    st.style.display = "block";
+    st.textContent = (lastMsg && lastMsg.indexOf("لا نتائج") !== -1)
+      ? lastMsg
+      : "❌ تعذر الاتصال بخدمتَي البحث — تحقق من الإنترنت أو أدخل الإحداثيات يدوياً بالأسفل";
   }
 }
+
+// v25.47: callback القناة الأصلية — يرفض الردود المتأخرة، والجسم الفارغ = فشل → المصدر البديل
+function _citySearchCallback(data) {
+  var attempt = cityNativeAttempt;
+  cityNativeAttempt = -1;
+  if (attempt < 0 || cityAttempt !== attempt || !citySearching) return;
+  if (!data && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+    try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
+  }
+  if (!data || data.length === 0) { citySearchFail(""); return; }
+  try {
+    var j = (typeof data === "string") ? JSON.parse(data) : data;
+    cityShowResults(cityNormalize(j, citySourceIdx));
+  } catch(e) { citySearchFail("⚠️ تعذر تحليل نتيجة البحث"); }
+}
+
 function pickCity(i) {
   var r = cityResults[i]; if (!r) return;
   latitude = parseFloat(r.latitude); longitude = parseFloat(r.longitude);
@@ -5887,7 +5947,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.46"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.47"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام

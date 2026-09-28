@@ -135,13 +135,19 @@ public class MainActivity extends Activity {
     }
 
     private static String httpGet(String urlStr) {
+        return httpGet(urlStr, 30000);
+    }
+
+    // v25.47: overload بمهلة قصيرة لعمليات الواجهة التفاعلية (البحث عن المدن) —
+    // 30 ثانية كانت تجعل المستخدم ينتظر قبل أن يسقط الـ JS إلى المصدر البديل
+    private static String httpGet(String urlStr, int timeoutMs) {
         HttpURLConnection conn = null;
         try {
             URL u = new URL(urlStr);
             conn = (HttpURLConnection) u.openConnection();
             conn.setRequestMethod("GET");
-            conn.setConnectTimeout(30000);
-            conn.setReadTimeout(30000);
+            conn.setConnectTimeout(timeoutMs);
+            conn.setReadTimeout(timeoutMs);
             conn.setInstanceFollowRedirects(true);
             // v23: User-Agent حقيقي لتجنب رفض GitHub raw
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
@@ -189,6 +195,28 @@ public class MainActivity extends Activity {
             new Thread(new Runnable() {
                 public void run() {
                     final String body = httpGet(url);
+                    sLastFetchResult = body;
+                    if (callback != null && callback.trim().length() > 0) {
+                        final String js = callback.trim() + "(" + JSONObject.quote(body) + ")";
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                try {
+                                    if (webView != null) webView.evaluateJavascript(js, null);
+                                } catch (Exception e) {}
+                            }
+                        });
+                    }
+                }
+            }).start();
+        }
+
+        // v25.47: نفس fetchUrl بمهلة قصيرة يحددها الـ JS — للبحث عن المدن والعمليات التفاعلية.
+        // غياب هذه الدالة على APK قديم آمن: الـ JS يفحص وجودها قبل الاستخدام ويسقط لـ fetchUrl
+        @JavascriptInterface
+        public void fetchUrlT(final String url, final String callback, final int timeoutMs) {
+            new Thread(new Runnable() {
+                public void run() {
+                    final String body = httpGet(url, timeoutMs > 0 ? timeoutMs : 10000);
                     sLastFetchResult = body;
                     if (callback != null && callback.trim().length() > 0) {
                         final String js = callback.trim() + "(" + JSONObject.quote(body) + ")";
