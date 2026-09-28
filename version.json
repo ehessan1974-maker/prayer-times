@@ -1,1 +1,8 @@
-{"appVersion": "25.47", "htmlUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html", "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v25.47.apk", "apkSizeMB": "2.6", "releasedAt": "2026-09-28T00:00:00Z", "changelog": "إصلاح البحث عن المدن على الأجهزة القديمة (Samsung J5): سلسلة مصدرين (open-meteo ثم Nominatim من OSM) بدلاً من مصدر وحيد + مهلات أقصر عبر القناة الأصلية + رسائل واضحة عند الفشل"}
+{
+ "appVersion": "25.48",
+ "htmlUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html",
+ "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v25.48.apk",
+ "apkSizeMB": "2.6",
+ "releasedAt": "2026-09-28T00:00:00Z",
+ "changelog": "إصلاح جذري لفشل البحث عن المدن على سامسونغ J5 والأجهزة القديمة: السبب أن خدمتَي البحث (open-meteo و Nominatim) تعملان بشهادات Let's Encrypt التي لا يثق بها مخزن شهادات أندرويد 5.x/6.x — لذا فشلت حتى سلسلة المصدرين. أُضيف مصدر ثالث دائم: كتالوج 376 مدينة (عربي وإنجليزي) يُخدَم عبر jsDelivr بشهادة Sectigo الموثوقة على هذه الأجهزة، مع مطابقة ذكية للأسماء (مكه ← مكة المكرمة) + اسم الموقع تلقائياً من أقرب مدينة عند فشل كل الخدمات. مواقيت الصلاة والأذان لم تُمس."
+}

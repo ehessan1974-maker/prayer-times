@@ -3442,12 +3442,23 @@ function resetToAuto() {
 // v25.47: سلسلة مصادر للبحث عن المدن — نفس فلسفة سلسلة التحديثات (لا مزيد من نقطة الفشل الواحدة)
 // المصدر 1: open-meteo (يتطلب TLS 1.2 — مشكلة Samsung J5/Android 5.x)
 // المصدر 2: Nominatim (OpenStreetMap) — بديل كامل بصيغة مختلفة تُوحَّد أدناه
+// v25.48: كلا المصدرين يُخدمان بشهادات Let's Encrypt التي لا يثق بها مخزن شهادات أندرويد 5.x/6.x/7.0
+//   (جهاز J5 الفعلي: مواقيت الصلاة تعمل لأن api.aladhan.com بشهادة ZeroSSL→USERTrust القديمة الموثوقة،
+//    والبحث يفشل لأن ISRG Root X1 غير موجود في مخزن 2016). الحل: مصدر ثالث عبر
+//    cdn.jsdelivr.net بشهادة Sectigo→USERTrust (نفس ثقة aladhan) — كتالوج 376 مدينة مُفلتر محلياً
+// المصدر 3: كتالوج cities.json من الريبو (376 مدينة عربية وعالمية) عبر jsDelivr ثم Pages
 // على أندرويد تُجرَّب القناة الأصلية أولاً (Tls12Helper يصلح TLS للـ Java stack) ثم XHR
 var citySourceIdx = 0;
-var CITY_SOURCES = 2;
+var CITY_SOURCES = 3; // v25.48: open-meteo ثم Nominatim ثم الكتالوج المدمج
 var cityAttempt = 0;
 var cityNativeAttempt = -1; // رقم المحاولة المرسلة عبر القناة الأصلية (لرفض الردود المتأخرة)
 var cityLastQuery = "";
+// v25.48: الكتالوج — مضيفان موثوقان على الأجهزة القديمة (Sectigo/USERTrust و Pages/Fastly)
+var CITY_CATALOG = null;
+var CITY_CATALOG_URLS = [
+  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/cities.json",
+  "https://ehessan1974-maker.github.io/prayer-times/cities.json"
+];
 
 function citySourceUrl(idx, q) {
   if (idx === 0) {
@@ -3483,6 +3494,70 @@ function cityNormalize(j, idx) {
   return out;
 }
 
+// v25.48: توحيد عربي للبحث — التشكيل والهمزات والتاء المربوطة والألف المقصورة
+function cityArNormalize(s) {
+  var t = String(s || "").toLowerCase();
+  t = t.replace(/[\u064B-\u065F\u0670\u0640]/g, "");
+  t = t.replace(/[أإآٱ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").replace(/ؤ/g, "و").replace(/ئ/g, "ي");
+  return t;
+}
+
+// v25.48: بحث محلي في الكتالوج — مطابقة البداية أولاً ثم الاحتواء، مرتّبة بالسكان
+function cityCatalogSearch(q) {
+  if (!CITY_CATALOG) return [];
+  var nq = cityArNormalize(q);
+  if (!nq) return [];
+  var starts = [], contains = [];
+  for (var i = 0; i < CITY_CATALOG.length; i++) {
+    var c = CITY_CATALOG[i];
+    var hay = c._h || (c._h = cityArNormalize(c.n) + "|" + cityArNormalize(c.al || "") + "|" + String(c.e || "").toLowerCase());
+    var pos = hay.indexOf(nq);
+    if (pos === -1) continue;
+    var item = { name: c.n, admin1: "", country: c.c || "", latitude: c.lat, longitude: c.lng, _p: c.p || 0 };
+    if (pos === 0 || hay.charAt(pos - 1) === "|") starts.push(item); else contains.push(item);
+  }
+  starts.sort(function(a, b) { return b._p - a._p; });
+  contains.sort(function(a, b) { return b._p - a._p; });
+  return starts.concat(contains).slice(0, 8);
+}
+
+// v25.48: تحميل الكتالوج مرة واحدة (كاش 30 يوماً → jsDelivr → Pages) — يخدم البحث واسم الموقع معاً
+function cityCatalogEnsure(cb) {
+  if (CITY_CATALOG) { cb(CITY_CATALOG); return; }
+  try {
+    var cc = localStorage.getItem("city-catalog-v1");
+    if (cc) {
+      var ccO = JSON.parse(cc);
+      if (ccO && ccO.d && ccO.d.length > 50 && (Date.now() - ccO.t) < 30 * 24 * 3600 * 1000) {
+        CITY_CATALOG = ccO.d; cb(CITY_CATALOG); return;
+      }
+    }
+  } catch(eC) {}
+  cityCatalogLoadFrom(0, cb);
+}
+
+function cityCatalogLoadFrom(idx, cb) {
+  if (idx >= CITY_CATALOG_URLS.length) { cb(null); return; }
+  var xhr = new XMLHttpRequest();
+  xhr.timeout = 6000;
+  xhr.open("GET", CITY_CATALOG_URLS[idx], true);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    if (xhr.status === 200) {
+      try {
+        var arr = JSON.parse(xhr.responseText);
+        if (arr && arr.length > 50) {
+          CITY_CATALOG = arr;
+          try { localStorage.setItem("city-catalog-v1", JSON.stringify({ t: Date.now(), d: arr })); } catch(e2) {}
+          cb(CITY_CATALOG); return;
+        }
+      } catch(e) {}
+    }
+    cityCatalogLoadFrom(idx + 1, cb);
+  };
+  try { xhr.send(); } catch(e) { cityCatalogLoadFrom(idx + 1, cb); }
+}
+
 function searchCity() {
   var q = el("citySearchInput").value.trim();
   if (!q || citySearching) return;
@@ -3502,9 +3577,13 @@ function citySearchGo() {
   st.style.display = "block";
   st.textContent = citySourceIdx === 0
     ? "⏳ جاري البحث عن «" + q + "»..."
-    : "⏳ تعذر المصدر الأول — تجربة خدمة بحث بديلة...";
+    : (citySourceIdx === 1
+      ? "⏳ تعذر المصدر الأول — تجربة خدمة بحث بديلة..."
+      : "⏳ تجربة القائمة المدمجة للمدن..."); // v25.48
   cityAttempt++;
   var attempt = cityAttempt;
+  // v25.48: المصدر الثالث — الكتالوج المدمج (آمل مصدر على الأجهزة التي لا تثق بشهادات Let's Encrypt)
+  if (citySourceIdx === 2) { citySearchViaCatalog(attempt); return; }
   var url = citySourceUrl(citySourceIdx, q);
   // v25.35: على أندرويد القناة الأصلية أولاً (Tls12Helper يصلح TLS 1.2 على Samsung J5)
   // v25.47: fetchUrlT بمهلة قصيرة (8 ثوانٍ) إن توفرت (APK جديد)، وإلا fetchUrl العادية
@@ -3569,7 +3648,52 @@ function cityShowResults(list) {
   if (box) box.innerHTML = html;
 }
 
-// فشل المصدر الحالي → المصدر البديل؛ وبعد استنفاد المصدرين رسالة صريحة بالسبب
+// v25.48: محاولة الكتالوج — كاش → jsDelivr → Pages → القناة الأصلية (Tls12Helper) → فشل نهائي
+function citySearchViaCatalog(attempt) {
+  cityCatalogEnsure(function(cat) {
+    if (cityAttempt !== attempt || !citySearching) return;
+    if (cat) { cityCatalogFinish(attempt); return; }
+    if (window.AndroidPrayer) {
+      try {
+        var f = AndroidPrayer.fetchUrlT || AndroidPrayer.fetchUrl;
+        if (f) { f.call(AndroidPrayer, CITY_CATALOG_URLS[0], "_cityCatalogCallback", 6000); cityNativeAttempt = attempt; return; }
+      } catch(e) {}
+    }
+    citySearchFail("");
+  });
+}
+
+// v25.48: callback القناة الأصلية لنتيجة الكتالوج (رفع الردود المتأخرة كما في المصدرين الأولين)
+function _cityCatalogCallback(data) {
+  var attempt = cityNativeAttempt;
+  cityNativeAttempt = -1;
+  if (attempt < 0 || cityAttempt !== attempt || !citySearching) return;
+  if (!data && window.AndroidPrayer && AndroidPrayer.getFetchResult) {
+    try { data = AndroidPrayer.getFetchResult(); } catch(e) {}
+  }
+  if (data && data.length > 0) {
+    try {
+      var arr = (typeof data === "string") ? JSON.parse(data) : data;
+      if (arr && arr.length > 50) {
+        CITY_CATALOG = arr;
+        try { localStorage.setItem("city-catalog-v1", JSON.stringify({ t: Date.now(), d: arr })); } catch(e2) {}
+        cityCatalogFinish(attempt);
+        return;
+      }
+    } catch(e) {}
+  }
+  citySearchFail("");
+}
+
+// v25.48: عرض نتائج الكتالوج أو رسالة «لا نتائج» الصريحة مع توجيه للإحداثيات اليدوية
+function cityCatalogFinish(attempt) {
+  if (cityAttempt !== attempt || !citySearching) return;
+  var hits = cityCatalogSearch(cityLastQuery);
+  if (hits.length) { cityShowResults(hits); return; }
+  citySearchFail("❌ لا نتائج لـ «" + cityLastQuery + "» في القائمة المدمجة (" + CITY_CATALOG.length + " مدينة) — وخدمات البحث العالمية لا تصل من هذا الجهاز. أدخل الإحداثيات يدوياً بالأسفل أو جرّب اسماً آخر");
+}
+
+// فشل المصدر الحالي → المصدر البديل؛ وبعد استنفاد المصادر الثلاثة رسالة صريحة بالسبب
 function citySearchFail(lastMsg) {
   citySourceIdx++;
   if (citySourceIdx < CITY_SOURCES) { citySearchGo(); return; }
@@ -3579,7 +3703,7 @@ function citySearchFail(lastMsg) {
     st.style.display = "block";
     st.textContent = (lastMsg && lastMsg.indexOf("لا نتائج") !== -1)
       ? lastMsg
-      : "❌ تعذر الاتصال بخدمتَي البحث — تحقق من الإنترنت أو أدخل الإحداثيات يدوياً بالأسفل";
+      : "❌ تعذر الاتصال بخدمات البحث — تحقق من الإنترنت أو أدخل الإحداثيات يدوياً بالأسفل";
   }
 }
 
@@ -3596,6 +3720,31 @@ function _citySearchCallback(data) {
     var j = (typeof data === "string") ? JSON.parse(data) : data;
     cityShowResults(cityNormalize(j, citySourceIdx));
   } catch(e) { citySearchFail("⚠️ تعذر تحليل نتيجة البحث"); }
+}
+
+// v25.48: آخر احتياط لاسم الموقع — أقرب مدينة من الكتالوج (بلا خدمات خارجية — يعمل على J5)
+var _revNearestAt = 0;
+function reverseGeoNearestCatalog() {
+  if (geoName) return;
+  var now = Date.now();
+  if (now - _revNearestAt < 300000) return; // محاولة كل 5 دقائق كحد أقصى
+  _revNearestAt = now;
+  var la = latitude, ln = longitude;
+  cityCatalogEnsure(function(cat) {
+    if (!cat || geoName) return;
+    var best = null, bestD = 1e18;
+    for (var i = 0; i < cat.length; i++) {
+      var c = cat[i];
+      var dLat = (c.lat - la) * 111.32;
+      var dLng = (c.lng - ln) * 111.32 * Math.cos((la + c.lat) / 2 * Math.PI / 180);
+      var d = dLat * dLat + dLng * dLng;
+      if (d < bestD) { bestD = d; best = c; }
+    }
+    if (best && bestD < 3600) { // ضمن 60 كم فقط — وإلا الاسم مضلل
+      geoName = best.n + (best.c ? "، " + best.c : "");
+      try { renderLocation(); } catch(eR) {}
+    }
+  });
 }
 
 function pickCity(i) {
@@ -3684,25 +3833,10 @@ function reverseGeoViaXHR(url) {
       if (xhr.readyState !== 4) return;
       if (xhr.status === 200) {
         _processReverseGeo(xhr.responseText);
-      }
+      } else { reverseGeoNearestCatalog(); } // v25.48
     };
     xhr.send();
-  } catch(e) {}
-}
-
-// v25.35: معالجة نتيجة reverse geocode (مشتركة)
-function _processReverseGeo(text) {
-  try {
-    var j = (typeof text === "string") ? JSON.parse(text) : text;
-    var parts = [];
-    var city = j.city || j.locality || "";
-    var reg = j.principalSubdivision || "";
-    var ctry = j.countryName || "";
-    if (city) parts.push(city);
-    else if (reg) parts.push(reg);
-    if (ctry && parts.length && parts[0] !== ctry) parts.push(ctry);
-    if (parts.length && !geoName) { geoName = parts.join("، "); renderLocation(); }
-  } catch(e) {}
+  } catch(e) { reverseGeoNearestCatalog(); } // v25.48
 }
 
 // v25.35: callback من NativeBridge لـ reverse geocode
@@ -3714,7 +3848,23 @@ function _reverseGeoCallback(data) {
   }
   if (data && data.length > 0) {
     _processReverseGeo(data);
-  }
+  } else { reverseGeoNearestCatalog(); } // v25.48: كل الخدمات فشلت — أقرب مدينة من الكتالوج
+}
+
+// v25.48: لو نجحت الخدمة لكنها لم تعطِ اسماً صالحاً — جرّب أقرب مدينة أيضاً
+function _processReverseGeo(text) {
+  try {
+    var j = (typeof text === "string") ? JSON.parse(text) : text;
+    var parts = [];
+    var city = j.city || j.locality || "";
+    var reg = j.principalSubdivision || "";
+    var ctry = j.countryName || "";
+    if (city) parts.push(city);
+    else if (reg) parts.push(reg);
+    if (ctry && parts.length && parts[0] !== ctry) parts.push(ctry);
+    if (parts.length && !geoName) { geoName = parts.join("، "); renderLocation(); }
+    else if (!parts.length) { reverseGeoNearestCatalog(); } // v25.48
+  } catch(e) {}
 }
 
 // ===== v13: طريقة الحساب =====
@@ -5947,7 +6097,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.47"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.48"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
