@@ -91,7 +91,13 @@ public class MainActivity extends Activity {
         KeepAliveService.start(this);
 
         // فحص تحديثات HTML من GitHub في الخلفية (يلتقط prayer-times.html الجديد)
-        UpdateChecker.checkAndDownload(this, null);
+        // v25.50: في خيط خلفي — كان على UI thread فيرمي NetworkOnMainThreadException
+        // بصمت ولا يعمل فحص الإقلاع أصلاً
+        new Thread(new Runnable() {
+            public void run() {
+                try { UpdateChecker.checkAndDownload(MainActivity.this, null); } catch (Exception e) {}
+            }
+        }).start();
     }
 
     @Override

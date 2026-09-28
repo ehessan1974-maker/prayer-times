@@ -6150,7 +6150,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.49"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.50"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
@@ -6428,38 +6428,45 @@ function clearAllCachesAndReload() {
 
   // 3. على أندرويد: تنزيل HTML جديد قبل إعادة التحميل
   if (window.AndroidPrayer && typeof AndroidPrayer.downloadAppUpdate === "function") {
-    try {
-      AndroidPrayer.downloadAppUpdate(function() {
-        checkDone();
-      });
-    } catch(e) { checkDone(); }
+    // v25.50: تمرير اسم دالة عامة (نص) — تمرير دالة مجهولة يصل إلى Java كنص مصدر
+    // فيفشل evaluateJavascript بصمت ولا يعاد تحميل WebView أبداً (حلقة رسالة التحديث)
+    try { AndroidPrayer.downloadAppUpdate("_updateDownloadDone"); return; } catch(e) {}
   } else {
     checkDone();
   }
 }
 
+// v25.50: دالة الاستدعاء الرجعي المسمّاة — تستدعيها Java عبر evaluateJavascript
+// بعد اكتمال التنزيل (النمط الصحيح: اسم نصي مثل fetchUrl/_appVersionCallback)
+function _updateDownloadDone(success) {
+  var ok = (success === true || success === "true");
+  try {
+    if (ok) showNotification("✅ تم تنزيل التحديث — جارٍ إعادة التحميل...");
+    else showNotification("⚠️ لم يكتمل التنزيل الآن — سيعاد التحميل من آخر نسخة محفوظة، ويُطبّق التحديث تلقائياً لاحقاً");
+  } catch(eN) {}
+  try {
+    if (window.AndroidPrayer && typeof AndroidPrayer.reloadUpdatedHtml === "function") {
+      try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e3) {}
+    }
+  } catch(e2) {}
+  // fallback: مسح الكاش وإعادة التحميل (متصفح أو جسر قديم)
+  clearAllCachesAndReload();
+}
+
 function applyAppUpdate(userTriggered) {
   hideUpdateToast();
   // v25.33: على أندرويد، حمّل التحديث أولاً ثم أعد التحميل من الملف المحدّث
-  // المشكلة السابقة: clearAllCachesAndReload فقط يُعيد تحميل الصفحة الحالية
-  // لكن الملف المحدّث في getFilesDir لا يُحمَّل حتى إعادة تشغيل التطبيق
+  // v25.50 إصلاح جذري: كان يُمرّر دالة مجهولة إلى الجسر (String) فتصل إلى Java كنص
+  // مصدر للدالة، فيفشل evaluateJavascript بصمت ولا يُعاد تحميل WebView أبداً —
+  // الضغط كان ينزّل التحديث للملفات لكنه لا يطبّقه إلا بعد إعادة تشغيل التطبيق،
+  // فتبدو رسالة التحديث كأنها لا تُجدي وتعود باستمرار.
+  // الصحيح: تمرير اسم دالة عامة (كما في fetchUrl/_appVersionCallback)
   if (window.AndroidPrayer) {
     showNotification("⏳ جارٍ تحميل التحديث...");
-    // 1. حمّل HTML الجديد من GitHub
     if (typeof AndroidPrayer.downloadAppUpdate === "function") {
-      try {
-        AndroidPrayer.downloadAppUpdate(function(success) {
-          // 2. بعد التحميل، اقرأ الملف المحدّث وأعد تحميل WebView منه
-          if (window.AndroidPrayer && typeof AndroidPrayer.reloadUpdatedHtml === "function") {
-            try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e3) {}
-          }
-          // fallback: امسح الكاش وأعد التحميل
-          clearAllCachesAndReload();
-        });
-        return;
-      } catch(e) {}
+      try { AndroidPrayer.downloadAppUpdate("_updateDownloadDone"); return; } catch(e) {}
     }
-    // fallback: امسح الكاش وأعد التحميل
+    // fallback: أعد التحميل من الملف المحدّث مباشرة إن وُجد
     if (typeof AndroidPrayer.reloadUpdatedHtml === "function") {
       try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e2) {}
     }
@@ -6591,7 +6598,16 @@ function _appVersionCallback(data) {
   var cmp = compareVersions(String(info.appVersion), CURRENT_APP_VERSION);
   if (cmp > 0) {
     try { localStorage.setItem("pt-update-info", JSON.stringify({version: info.appVersion, url: info.htmlUrl||"", releasedAt: info.releasedAt||""})); } catch(e2) {}
-    showUpdateToast(String(info.appVersion));
+    // v25.50: تخفيف الإلحاح — التوست التلقائي مرة كل 30 دقيقة لكل نسخة
+    // (الفحص اليدوي من الإعدادات يعرضه دائماً بلا خناق)
+    var offerOk = true;
+    try {
+      var offerKey = "pt-update-offer-" + info.appVersion;
+      var lastOffer = parseInt(localStorage.getItem(offerKey) || "0", 10) || 0;
+      if (!_updateManual && (Date.now() - lastOffer) < 30 * 60 * 1000) offerOk = false;
+      localStorage.setItem(offerKey, String(Date.now()));
+    } catch(e4) {}
+    if (offerOk) showUpdateToast(String(info.appVersion));
   } else {
     hideUpdateToast();
   }
