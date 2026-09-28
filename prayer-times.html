@@ -1635,6 +1635,8 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <span>📍 <span id="locManualPlaceName">موقع يدوي</span></span>
       <div class="coords" id="locManualCoords"></div>
     </div>
+    <!-- v25.54: صندوق حالة/خطأ تحديد الموقع — locError كانت تُضبط ولا تُعرض أبداً -->
+    <div id="locErrBox" style="display:none;max-width:400px;margin:4px auto;padding:6px 10px;border:1px solid #fca5a5;background:#fef2f2;border-radius:10px;font-size:11px;color:#b91c1c;text-align:center;font-family:Tahoma,Arial,sans-serif;"></div>
     <div id="locNamePrompt" style="display:none;margin:4px auto;max-width:400px;text-align:center;">
       <div style="font-size:11px;color:#6b7280;margin-bottom:2px;">اكتب اسم الموقع:</div>
       <div style="display:-webkit-box;-webkit-box-orient:horizontal;-webkit-box-align:center;">
@@ -1729,6 +1731,8 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
         <button class="btn btn-outline btn-sm" id="resetLocBtn" style="display:none;" onclick="resetToAuto()">🔄 تلقائي</button>
         <button class="btn btn-outline btn-sm" onclick="requestLocation()">📍 إعادة طلب</button>
       </div>
+      <!-- v25.54: حالة/خطأ تحديد الموقع داخل الإعدادات نفسها -->
+      <div id="locRetryStatus" style="display:none;font-size:11px;margin-top:6px;padding:5px 8px;border:1px solid #fcd34d;background:#fffbeb;border-radius:8px;text-align:center;font-family:Tahoma,Arial,sans-serif;color:#92400e;"></div>
     </div>
 
     <div class="modal-section">
@@ -2134,6 +2138,13 @@ var iqamaOffsets = {};
 var alertSettings = {}; 
 var adhanPlayed, iqamaPlayedSet;
 var locError = null;
+// v25.54: حالة سلسلة تحديد الموقع — انظر requestLocation (سلسلة GPS→شبكة→آخر موقع معروف + قناة أصلية في APK)
+var _locBusy = false, _locSettled = true, _locWatchdog = null, _locAttemptIdx = 0;
+var _LOC_ATTEMPTS = [
+  { enableHighAccuracy: true,  timeout: 8000, maximumAge: 30000 },  // GPS — نقبل كاش 30 ثانية فقط
+  { enableHighAccuracy: false, timeout: 8000, maximumAge: 120000 }, // شبكة Wi-Fi/أبراج — الحل الأدق في الأماكن المغلقة
+  { enableHighAccuracy: false, timeout: 6000, maximumAge: 600000 }  // أي موقع معروف آخره ≤10 دقائق
+];
 
 // ===== ONLINE ISLAMIC INFO =====
 var onlineInfoEnabled = true;
@@ -3425,47 +3436,109 @@ function hasTimings() {
 }
 
 // ===== LOCATION =====
+// ===== LOCATION =====
+// v25.54 [إصلاح جذري لبلاغ سامسونغ J5: «تلقائي لا يجد موقعي»]:
+//  1) كان getCurrentPosition يُستدعى مرة واحدة بأشد الخيارات صرامة (enableHighAccuracy:true + maximumAge:0)
+//     → في الأماكن المغلقة إصلاح GPS الأول يتجاوز مهلة 15 ث، وموقع الشبكة (Wi-Fi/الأبراج) لا يُجرَّب إطلاقاً.
+//     الآن: سلسلة تدرجية GPS → شبكة → آخر موقع معروف، مهما طالت النتيجة تعود مواقيت صحيحة.
+//  2) في WebView القديم قد لا يعود أي رد أصلاً (حالة v25.45) — في التطبيق نجرّب القناة الأصلية
+//     LocationManager أولاً عبر AndroidPrayer.nativeLocation (آخر موقع معروف فوري + إصلاح واحد سريع).
+//  3) locError كانت تُضبط ولا تُعرض أبداً — renderLocation يعرضها الآن في صندوق ظاهر (شاشة + إعدادات).
 function requestLocation() {
+  if (_locBusy) return; // طلب جارٍ — لا نُكدس طلبات متوازية
+  _locBusy = true; _locSettled = false; _locAttemptIdx = 0;
   locError = null;
-  // v25.45 [إصلاح حرج]: على بعض أجهزة أندرويد (موقع النظام مطفأ/إذن معلّق/WebView قديم)
-  // لا يعيد getCurrentPosition أي رد إطلاقاً: لا نجاح ولا خطأ ولا انتهاء مهلة 15 ثانية —
-  // كانت النتيجة شاشة فارغة حتى الضغط اليدوي على «تحديث المواقيت».
-  // المراقب أدناه يضمن أن fetchPrayerTimes() يُستدعى دائماً بأي إحداثيات متاحة.
-  var settled = false;
-  var locWatchdog = setTimeout(function() {
-    if (settled) return;
-    settled = true;
-    locError = "تعذر تحديد الموقع تلقائياً — تُعرض المواقيت بآخر موقع معروف";
-    renderLocation();
-    fetchPrayerTimes();
-  }, 20000);
-  if (!navigator.geolocation) { clearTimeout(locWatchdog); locError = "المتصفح لا يدعم تحديد الموقع"; renderLocation(); fetchPrayerTimes(); return; }
-  // v16.1: تفعيل الدقة العالية + إلغاء الكاش للحصول على موقع دقيق
-  navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      if (settled) return; settled = true; clearTimeout(locWatchdog);
-      latitude = pos.coords.latitude; longitude = pos.coords.longitude;
-      isManualLocation = false;
-      try {
-        localStorage.removeItem("manual-lat"); localStorage.removeItem("manual-lng");
-        // v25.45: احفظ آخر إحداثيات ناجحة — للاقلاع السريع (عرض الكاش فوراً) في المرة القادمة
-        localStorage.setItem("last-lat", latitude.toString());
-        localStorage.setItem("last-lng", longitude.toString());
-      } catch(e) {}
-      geoName = ""; reverseGeoName(latitude, longitude); // v13: اسم الموقع تلقائياً بعد الجغرافيا
-      qiblaRefreshIfOpen(); // v14: تحديث البوصلة إن كانت مفتوحة
-      locError = null; fetchPrayerTimes();
-    },
-    function(err) {
-      if (settled) return; settled = true; clearTimeout(locWatchdog);
-      var msgs = { 1:"تم رفض إذن تحديد الموقع", 2:"الموقع غير متاح", 3:"انتهت مهلة طلب الموقع" };
-      locError = msgs[err.code] || "فشل في تحديد الموقع";
-      renderLocation(); fetchPrayerTimes();
-    },
-    // v16.1: تفعيل الدقة العالية (GPS) + مهلة أطول + عدم قبول موقع مخزّن سابق
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-  );
+  renderLocation(); // يعرض «جارٍ تحديد الموقع…» فوراً
+  if (_locWatchdog) { try { clearTimeout(_locWatchdog); } catch(eW0) {} }
+  // المراقب الشامل (روح v25.45): مهما حدث، fetchPrayerTimes تُستدعى خلال 25 ثانية
+  _locWatchdog = setTimeout(function() {
+    if (_locSettled) return;
+    _locHandleFailure("تعذر تحديد الموقع تلقائياً — تُعرض المواقيت بآخر موقع معروف. تأكد من تفعيل خدمة الموقع (GPS) ومنح التطبيق إذن الموقع");
+  }, 25000);
+  if (!navigator.geolocation && !(window.AndroidPrayer && typeof AndroidPrayer.nativeLocation === "function")) {
+    _locHandleFailure("المتصفح لا يدعم تحديد الموقع");
+    return;
+  }
+  // v25.54: في التطبيق — القناة الأصلية أولاً (أسرع وأوثق من WebView القديم: lastKnown فوري)
+  if (window.AndroidPrayer && typeof AndroidPrayer.nativeLocation === "function") {
+    try { AndroidPrayer.nativeLocation(8000, "_nativeLocCallback"); return; } catch(eN) {}
+  }
+  _locTryNext();
 }
+function _locTryNext() {
+  if (_locSettled) return;
+  if (!navigator.geolocation || _locAttemptIdx >= _LOC_ATTEMPTS.length) {
+    _locHandleFailure("تعذر تحديد الموقع تلقائياً — فعّل خدمة الموقع (GPS) وامنح إذن الموقع للتطبيق، أو أدخل الإحداثيات يدوياً من الإعدادات");
+    return;
+  }
+  var opts = _LOC_ATTEMPTS[_locAttemptIdx++];
+  try {
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        if (_locSettled) return;
+        try {
+          if (pos && pos.coords && typeof pos.coords.latitude === "number" && typeof pos.coords.longitude === "number" && !isNaN(pos.coords.latitude) && !isNaN(pos.coords.longitude)) {
+            _locHandleSuccess(pos.coords.latitude, pos.coords.longitude);
+          } else { _locTryNext(); }
+        } catch(eV) { _locTryNext(); }
+      },
+      function(err) {
+        if (_locSettled) return;
+        if (err && err.code === 1) { // PERMISSION_DENIED — إعادة المحاولة بلا فائدة، رسالة واضحة فوراً
+          _locHandleFailure("تم رفض إذن الموقع — فعّله من إعدادات المتصفح/النظام لهذا التطبيق ثم اضغط تلقائي مجدداً");
+          return;
+        }
+        _locTryNext(); // مهلة/غير متاح → المحاولة التالية (أقل صرامة)
+      },
+      opts
+    );
+  } catch(eG) { _locTryNext(); }
+}
+// v25.54: رد القناة الأصلية nativeLocation — JSON: {ok,lat,lng,provider,ageMs,acc} أو {ok:false,reason}
+function _nativeLocCallback(raw) {
+  if (_locSettled) return; // رد متأخر بعد نجاح/فشل سابق أو انتهاء المراقب — يُتجاهل
+  var d = null;
+  try { d = (typeof raw === "string") ? JSON.parse(raw) : raw; } catch(eP) { d = null; }
+  if (d && d.ok && typeof d.lat === "number" && typeof d.lng === "number" && !isNaN(d.lat) && !isNaN(d.lng)) {
+    _locHandleSuccess(d.lat, d.lng);
+    return;
+  }
+  var reason = (d && d.reason) ? d.reason : "error";
+  if (reason === "permission") {
+    // اطلب الإذن فعلياً (يفتح حوار النظام إن أمكن) وأخبر المستخدم بوضوح
+    try { if (typeof AndroidPrayer.requestLocationPermission === "function") AndroidPrayer.requestLocationPermission(); } catch(eR) {}
+    _locHandleFailure("إذن الموقع غير ممنوح للتطبيق — وافق على حوار الإذن إن ظهر، أو فعّله من إعدادات النظام ← التطبيقات ← مواقيت الصلاة ← الأذونات ← الموقع");
+    return;
+  }
+  if (reason === "disabled") {
+    _locHandleFailure("خدمة الموقع مطفأة على الجهاز — فعّلها من إعدادات أندرويد (الموقع) ثم اضغط تلقائي مجدداً");
+    return;
+  }
+  _locTryNext(); // فشل أصلي (مهلة/غير محدد) → جرّب geolocation
+}
+function _locHandleSuccess(lat, lng) {
+  if (_locSettled) return; _locSettled = true; _locBusy = false;
+  if (_locWatchdog) { try { clearTimeout(_locWatchdog); } catch(eW1) {} _locWatchdog = null; }
+  latitude = lat; longitude = lng;
+  isManualLocation = false;
+  try {
+    localStorage.removeItem("manual-lat"); localStorage.removeItem("manual-lng");
+    // v25.45: احفظ آخر إحداثيات ناجحة — للاقلاع السريع (عرض الكاش فوراً) في المرة القادمة
+    localStorage.setItem("last-lat", latitude.toString());
+    localStorage.setItem("last-lng", longitude.toString());
+  } catch(e) {}
+  geoName = ""; reverseGeoName(latitude, longitude); // v13: اسم الموقع تلقائياً بعد الجغرافيا
+  qiblaRefreshIfOpen(); // v14: تحديث البوصلة إن كانت مفتوحة
+  locError = null; renderLocation(); fetchPrayerTimes();
+}
+function _locHandleFailure(msg) {
+  if (_locSettled) return; _locSettled = true; _locBusy = false;
+  if (_locWatchdog) { try { clearTimeout(_locWatchdog); } catch(eW2) {} _locWatchdog = null; }
+  locError = msg || "فشل في تحديد الموقع";
+  renderLocation(); // v25.54: الرسالة تُعرض فعلياً للمستخدم الآن (كانت تُضبط بصمت)
+  fetchPrayerTimes();
+}
+
 function applyManualLocation() {
   var lat = parseFloat(el("inputLat").value);
   var lng = parseFloat(el("inputLng").value);
@@ -4362,7 +4435,34 @@ function renderLocation() {
     }
     el("locPlaceName").textContent = showName || "--";
   }
+  // v25.54: locError كانت تُضبط في خمسة مواضع ولا تُعرض أبداً (كانت شرط تفريع فقط!)
+  // صندوق الحالة/الخطأ يظهر على الشاشة الرئيسية (locErrBox) وداخل الإعدادات (locRetryStatus)
+  try {
+    var busy = (typeof _locBusy !== "undefined") && _locBusy;
+    var box = el("locErrBox"), stat = el("locRetryStatus");
+    if (busy) {
+      box.textContent = "📡 جارٍ تحديد الموقع…";
+      box.style.display = "block";
+      box.style.background = "#fffbeb"; box.style.borderColor = "#fcd34d"; box.style.color = "#92400e";
+      if (stat) {
+        stat.textContent = "📡 جارٍ تحديد الموقع…"; stat.style.display = "block";
+        stat.style.background = "#fffbeb"; stat.style.borderColor = "#fcd34d"; stat.style.color = "#92400e";
+      }
+    } else if (locError) {
+      box.textContent = "⚠️ " + locError;
+      box.style.display = "block";
+      box.style.background = "#fef2f2"; box.style.borderColor = "#fca5a5"; box.style.color = "#b91c1c";
+      if (stat) {
+        stat.textContent = "⚠️ " + locError; stat.style.display = "block";
+        stat.style.background = "#fef2f2"; stat.style.borderColor = "#fca5a5"; stat.style.color = "#b91c1c";
+      }
+    } else {
+      box.style.display = "none";
+      if (stat) stat.style.display = "none";
+    }
+  } catch(eLZ) {}
 }
+
 function renderDate() {
   var hd = prayerData.date.hijri, gd = prayerData.date.gregorian;
   var today = new Date();
@@ -6355,7 +6455,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.53"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.54"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
