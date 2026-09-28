@@ -728,6 +728,25 @@ body.dark-mode .msged-audience-add-name { background:#0f1f18; color:#e2e8f0; bor
   -webkit-animation-play-state: paused;
   animation-play-state: paused;
 }
+/* v25.53: الجذر الحقيقي لبلاغ «أول سحبة لا تحرّك البيانات والثانية فقط تنجح» —
+   البطاقة داخل حاوية تمرير أصلي (.main به overflow-y:auto و-webkit-overflow-scrolling:touch)
+   فكان المتصفح يرى اللمسة العمودية فوقه فيصادرها لتمرير الصفحة ويقطع تسليم touchmove
+   بـ touchcancel قبل تجاوز عتبة السحب (5px): السحبة الأولى تموت ولا يتحرك المحتوى،
+   والنقرة الشبحية بعد الإلغاء تقلب الإيقاف المؤقت فيتجمّد الخط، ثم السحبة الثانية
+   تنجح لأن الحالة انقلبت أو لأن الحاوية بلغت حدّ تمريرها. touch-action:none يحسم
+   المسألة من الأساس: المتصفح لا يبدأ تمريراً من لمسة على البطاقة إطلاقاً فيصل
+   السحب كاملاً من أول إمساك (نفس نمط بوصلة القبلة qbc-manual) */
+.info-card.vertical-scroll-mode {
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+/* v25.53: إلغاء scale(0.99) عند :active لهذه البطاقة — التضييق اللحظي عند اللمس
+   كان يُزحزح ما يقرأه getCurrentAnimationOffset من getBoundingClientRect عند
+   بدء السحب (~1-3px) فيقفز المحتوى لحظة الإمساك، مع بقاء opacity كتغذية بصرية */
+.info-card.vertical-scroll-mode:active {
+  -webkit-transform: none;
+  transform: none;
+}
 /* v25.52: إيقاف التحويم للفأرة فقط — على شاشات اللمس كانت :hover تلتصق بعد
    أول لمسة (sticky hover) فتتجمّد الحركة عشوائياً ولا تنطلق بعد السحب والإفلات */
 @media (hover: hover) and (pointer: fine) {
@@ -2637,6 +2656,11 @@ function nextInfo() {
   if (card._wasActualClick && !card._wasActualClick()) {
     return; // كان سحباً، تجاهل النقرة
   }
+  // v25.53: النقرة الشبحية بعد touchcancel لا تقلب الإيقاف المؤقت — كانت تُجمّد
+  // البيانات بعد أول إمساك فتبدو للمنتج وكأن السحبة الأولى لم تحرّك شيئاً
+  if (card._ghostClick && card._ghostClick()) {
+    return;
+  }
   infoScrollPaused = !infoScrollPaused;
   if (infoScrollPaused) {
     card.classList.add("paused");
@@ -2719,6 +2743,9 @@ function initDragScroll() {
   // v25.19: لتتبع ما إذا حدث سحب فعلي (لمنع nextInfo() بعد السحب)
   var dragActuallyMoved = false;
   var dragStartThreshold = 5; // عدد البكسلات التي يجب تحريكها ليُعتبر سحباً
+  // v25.53: نافذة زمنية لقمع النقرة الشبحية بعد touchcancel (طابع زمني ms) —
+  // بعض الـ WebView تطلق click بعد إلغاء اللمسة فكانت تقلب الإيقاف المؤقت دون لمس حقيقي
+  var suppressClickUntil = 0;
   // v25.39: عدّاد تسلسل لإلغاء سلاسل الاستعادة المعلّقة (rAF) عند بدء تفاعل جديد
   var restoreSeq = 0;
 
@@ -2895,10 +2922,14 @@ function initDragScroll() {
       velocity = computeVelocityFromSamples(now);
     }
   }
-  function endDrag() {
+  function endDrag(cancelled) {
     if (!isDragging) return;
     isDragging = false;
     card.classList.remove("dragging");
+    // v25.53: لمسة أُلغيت (touchcancel — مصادرة المتصفح للتمرير أو مقاطعة نظام)
+    // ليست نقرة: علّم نافذة قمع قصيرة كي لا تقلب النقرة الشبحية التالية حالة
+    // الإيقاف المؤقت (كانت تُجمّد البيانات بعد أول إمساك فيبدو أن السحبة لم تفعل شيئاً)
+    if (cancelled) suppressClickUntil = Date.now() + 400;
     // v25.21: إذا لم يحدث سحب فعلي، لا تبدأ momentum — الأنيميشن لم يتوقف أصلاً
     if (!dragActuallyMoved) {
       // v25.39: نقرة بسيطة — لكن إن بقي وضع inertial مفعّلاً من تفاعل سابق
@@ -2924,7 +2955,9 @@ function initDragScroll() {
   }
   var touchStartHandler = function(e) { if (e.touches && e.touches.length > 0) startDrag(e.touches[0].clientY); };
   var touchMoveHandler = function(e) { if (!isDragging) return; if (e.touches && e.touches.length > 0) { moveDrag(e.touches[0].clientY); e.preventDefault(); } };
-  var touchEndHandler = function() { endDrag(); };
+  var touchEndHandler = function() { endDrag(false); };
+  // v25.53: touchcancel ≠ touchend — يمرّر علم الإلغاء ليُقمع النقر الشبحي اللاحق
+  var touchCancelHandler = function() { endDrag(true); };
   var mouseDownHandler = function(e) { if (e.button !== 0) return; startDrag(e.clientY); e.preventDefault(); };
   var mouseMoveHandler = function(e) { if (!isDragging) return; moveDrag(e.clientY); };
   var mouseUpHandler = function() { endDrag(); };
@@ -2960,7 +2993,7 @@ function initDragScroll() {
   card.addEventListener("touchstart", touchStartHandler, { passive: true });
   card.addEventListener("touchmove", touchMoveHandler, { passive: false });
   card.addEventListener("touchend", touchEndHandler, { passive: true });
-  card.addEventListener("touchcancel", touchEndHandler, { passive: true });
+  card.addEventListener("touchcancel", touchCancelHandler, { passive: true });
   card.addEventListener("mousedown", mouseDownHandler);
   document.addEventListener("mousemove", mouseMoveHandler);
   document.addEventListener("mouseup", mouseUpHandler);
@@ -2968,11 +3001,17 @@ function initDragScroll() {
   // v25.19: تخزين مرجع لـ wasActualClick على card
   // حتى يتمكن nextInfo() من التحقق إن كان النقر حقيقياً أم بعد سحب
   card._wasActualClick = wasActualClick;
+  // v25.53: يستعملها nextInfo لابتلاع النقرة الشبحية الوحيدة بعد touchcancel —
+  // تُستهلك مرة واحدة (تصفير النافذة) كي لا تُعطّل النقرات الحقيقية اللاحقة
+  card._ghostClick = function() {
+    if (Date.now() < suppressClickUntil) { suppressClickUntil = 0; return true; }
+    return false;
+  };
   card._inertiaCleanup = function() {
     card.removeEventListener("touchstart", touchStartHandler);
     card.removeEventListener("touchmove", touchMoveHandler);
     card.removeEventListener("touchend", touchEndHandler);
-    card.removeEventListener("touchcancel", touchEndHandler);
+    card.removeEventListener("touchcancel", touchCancelHandler);
     card.removeEventListener("mousedown", mouseDownHandler);
     document.removeEventListener("mousemove", mouseMoveHandler);
     document.removeEventListener("mouseup", mouseUpHandler);
@@ -6316,7 +6355,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.52"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.53"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
