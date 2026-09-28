@@ -1386,6 +1386,10 @@ body.smart .modal { scrollbar-gutter: stable; }
 .qbc-stage.aligned .qbc-needle-line { stroke:#16a34a; }
 .qbc-stage.aligned .qbc-kaaba-badge { stroke:#16a34a; }
 .qbc-stage.aligned .qbc-top-marker { border-top-color:#16a34a; }
+/* v25.51: وضع البوصلة اليدوية — القرص يُسحب بالإصبع */
+.qbc-stage.qbc-manual { touch-action:none; cursor:grab; }
+.qbc-stage.qbc-manual:active { cursor:grabbing; }
+.qbc-stage.qbc-manual .qbc-face { fill:#f0fdf4; }
 
 /* ====== v14: الوضع الليلي (Dark Mode) ====== */
 html.dark-mode { background:#0d1512 !important; }
@@ -1858,10 +1862,20 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <div class="qb-status" id="qbStatus">--</div>
     <div class="qb-sensor" id="qbSensor"></div>
 
+    <!-- v25.51: وضع البوصلة اليدوية — للأجهزة بلا حساس اتجاه: يدور القرص بالإصبع أو بمحاذاة الشمس -->
+    <div id="qbManualBar" style="display:none;">
+      <div style="font-size:12px;color:#6b7280;margin:4px 0 8px;line-height:1.7;">✋ <b>بلا حساس اتجاه؟</b> أدر القرص بإصبعك حتى يقف «ش» نحو الشمال الحقيقي (حدّده بالشمس أو الظل أو معلم معروف) — أو استخدم المحاذاة الآلية بالشمس:</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="qiblaAlignBySun(true)">☀️ أعلى الهاتف نحو الشمس</button>
+        <button class="btn btn-outline btn-sm" onclick="qiblaAlignBySun(false)">🌓 أعلى الهاتف مع الظل</button>
+      </div>
+      <div id="qbNorthKind" style="font-size:12px;font-weight:700;color:#059669;margin-top:6px;min-height:16px;"></div>
+    </div>
+
     <!-- زر تفعيل الحساس -->
     <button class="btn btn-primary btn-sm" id="qbSensorBtn" onclick="qiblaEnableSensor()">🔄 تفعيل حساس الاتجاه</button>
 
-    <div class="qb-note">🧭 القرص يدور مع الموبايل ويبقى «ش» دائماً عند الشمال الحقيقي • المؤشر الأحمر (عليه الكعبة 🕋) مثبّت على اتجاه القبلة مهما دار الجهاز • أدر جهازك حتى يقف المؤشر عند العلامة العلوية = أنت في اتجاه القبلة.</div>
+    <div class="qb-note">🧭 القرص يدور مع الموبايل ويبقى «ش» دائماً عند الشمال الحقيقي • المؤشر الأحمر (عليه الكعبة 🕋) مثبّت على اتجاه القبلة مهما دار الجهاز • أدر جهازك حتى يقف المؤشر عند العلامة العلوية = أنت في اتجاه القبلة • <b>بدون حساس اتجاه؟</b> يظهر «وضع يدوي»: أدر القرص بإصبعك حتى يقف «ش» عند الشمال، أو استخدم المحاذاة الآلية بالشمس — وطريقة الشمس تعطي الشمال الجغرافي المعتمد في حساب زاوية القبلة مباشرة، أما المغناطيسي (بوصلة عادية/حساس نسبي) فيختلف عنه بفارق الانحراف المغناطيسي.</div>
   </div>
   </div></div>
 </div>
@@ -5539,6 +5553,11 @@ var _qiblaAbsSeen = false;      // هل وصل حدث deviceorientationabsolute 
 var _qiblaShownHeading = null;  // آخر زاوية رُسمت فعلاً — عتبة إعادة الرسم
 var _qiblaSnapDone = false;     // هل تم المغلاق النهائي بعد آخر دوران؟ (تجميد تام)
 var _qiblaStableCount = 0;      // عدّاد القراءات المستقرة المتتالية قبل المغلاق
+// v25.51: حالة وضع البوصلة اليدوية (الأجهزة بلا حساس اتجاه)
+var _qiblaManual = false;     // الوضع اليدوي نشط؟ (يُفعَّل آلياً بعد غياب الحساس 1.8 ثانية أو بمحاذاة الشمس)
+var _qiblaManualKind = "";    // وصف مرجع الشمال الحالي (للعرض)
+var _qiblaDragOn = false;     // يجري سحب القرص الآن؟
+var _qiblaDragLastA = 0;      // زاوية الإصبع السابقة حول المركز (0 عند الأعلى، مع عقارب الساعة)
 
 // زاوية القبلة: الدائرة العظمى من الموقع إلى الكعبة (بالاتجاه مع عقارب الساعة من الشمال)
 function qiblaBearing(lat, lng) {
@@ -5847,12 +5866,12 @@ function qiblaRender() {
         st.className = "qb-status qb-status-big";
       }
     }
-    if (sn) sn.innerHTML = "اتجاه جهازك: " + Math.round(qiblaHeading) + "° • القبلة: " + Math.round(qiblaAngle) + "° • الفرق: " + Math.round(diff) + "°";
+    if (sn) sn.innerHTML = "اتجاه جهازك: " + Math.round(qiblaHeading) + "° • القبلة: " + Math.round(qiblaAngle) + "° • الفرق: " + Math.round(diff) + "° • " + _qiblaNorthKindText();
   } else {
     if (stage) stage.className = "qbc-stage";
     qiblaWasAligned = false;
-    if (st) { st.innerHTML = "بدون حساس: المؤشر ثابت عند زاوية القبلة من الشمال («ش» في الأعلى = الشمال الحقيقي) — وجّه نفسك بحيث تقع الكعبة أمامك"; st.className = "qb-status qb-status-big"; }
-    if (sn && !qiblaLive) sn.innerHTML = "بدون حساس: زاوية القبلة " + qiblaAngle.toFixed(0) + "° من الشمال الحقيقي";
+    if (st) { st.innerHTML = "بدون حساس: أدر القرص بإصبعك حتى يقف «ش» عند الشمال الحقيقي — المؤشر (عليه الكعبة) يدل على القبلة"; st.className = "qb-status qb-status-big"; }
+    if (sn && !qiblaLive) sn.innerHTML = "وضع يدوي: زاوية القبلة " + qiblaAngle.toFixed(0) + "° من الشمال — حدّد الشمال بالسحب أو بالشمس ثم اقرأ المؤشر";
   }
 }
 
@@ -5899,6 +5918,7 @@ function _qiblaMaybeRender() {
 //   • مُغلق            : تجميد تام — لكنه ينكسر تلقائياً إذا تجاوز الانحراف 4 درجات (دوران/انزياح جديد)
 //   + لا إعادة رسم إلا عند تغيّر مرئي ≥ 0.2 درجة
 function qiblaProcessHeading(rawHeading) {
+  if (_qiblaManual) _qiblaExitManual(); // v25.51: وصل حساس فعّال — انسحاب تلقائي من الوضع اليدوي
   var now = Date.now();
   if (qiblaLastUpdateAt && (now - qiblaLastUpdateAt) < 80) return; // throttle 80ms
   qiblaLastUpdateAt = now;
@@ -5975,10 +5995,7 @@ function qiblaAttach() {
   try { window.addEventListener("deviceorientation", qiblaOrientHandlerRel, false); } catch(e4) {}
   if (qiblaSensorTimer) clearTimeout(qiblaSensorTimer);
   qiblaSensorTimer = setTimeout(function() {
-    if (!qiblaLive) {
-      var sn = el("qbSensor");
-      if (sn) sn.innerHTML = "⚠️ لم يُرصد حساس اتجاه في هذا الجهاز — الزاوية الثابتة أعلاه تعمل دائماً";
-    }
+    if (!qiblaLive) _qiblaEnterManual(); // v25.51: لا حساس خلال 1.8 ثانية → وضع البوصلة اليدوية
   }, 1800);
 }
 
@@ -6010,6 +6027,7 @@ function openQibla() {
   qiblaRecentHeadings.length = 0;
   _qiblaAbsSeen = false;
   _qiblaShownHeading = null; _qiblaSnapDone = false; _qiblaStableCount = 0;
+  _qiblaExitManual(); // v25.51: كل فتح يبدأ نظيفاً — اليدوي يعود تلقائياً إن غاب الحساس
   qiblaLastUpdateAt = 0;
   el("qiblaModal").classList.add("show");
   qiblaCompute();
@@ -6022,6 +6040,141 @@ function closeQibla() {
   try { window.removeEventListener("deviceorientationabsolute", qiblaOrientHandlerAbs, false); } catch(e3) {}
   qiblaLive = false; qiblaHeading = null;
   if (qiblaSensorTimer) { clearTimeout(qiblaSensorTimer); qiblaSensorTimer = null; }
+}
+
+// =====================================================================
+// ===== v25.51: وضع البوصلة اليدوية — للأجهزة بلا حساس اتجاه =====
+// =====================================================================
+// الهاتف بلا حساس اتجاه لا يعرف وضعه بنفسه، فيزوّد المستخدم المرجع بإحدى طريقتين:
+//  1) السحب بالإصبع: تدوير القرص كاملاً (ش/ق/ج/غ + المؤشر معاً) حتى يقف «ش»
+//     عند الشمال الذي يعرفه المستخدم (الشمس، الظل، معلم معروف، بوصلة مغناطيسية).
+//  2) المحاذاة الآلية بالشمس: حساب سموت الشمس الجغرافي من الوقت والموقع ثم
+//     اعتبار أعلى الهاتف باتجاه الشمس (سموتها) أو مع اتجاه ظل قلم عمودي
+//     (سموتها + 180) — شمال جغرافي دقيق وهو المرجع المعتمد لزاوية القبلة.
+function _qiblaEnterManual() {
+  if (_qiblaManual || qiblaLive) return;
+  _qiblaManual = true; _qiblaManualKind = "";
+  var bar = el("qbManualBar"); if (bar) bar.style.display = "";
+  var stage = el("qbcStage"); if (stage) stage.className = "qbc-stage qbc-manual";
+  _qiblaAttachDrag();
+  var st = el("qbStatus");
+  if (st) { st.innerHTML = "✋ بدون حساس اتجاه: أدر القرص بإصبعك حتى يقف «ش» عند الشمال الحقيقي — أو استخدم المحاذاة بالشمس"; st.className = "qb-status qb-status-big"; }
+  var sn = el("qbSensor");
+  if (sn) sn.innerHTML = "وضع يدوي: السحب يدير «ش» والمؤشر معاً • زاوية القبلة " + qiblaAngle.toFixed(0) + "° من الشمال";
+}
+function _qiblaExitManual() {
+  if (!_qiblaManual) return;
+  _qiblaManual = false; _qiblaDragOn = false; _qiblaManualKind = "";
+  var bar = el("qbManualBar"); if (bar) bar.style.display = "none";
+  var stage = el("qbcStage"); if (stage) stage.className = "qbc-stage";
+}
+function _qiblaNorthKindText() {
+  if (_qiblaManual) return _qiblaManualKind || "مرجع يدوي للشمال";
+  return _qiblaAbsSeen ? "الشمال الجغرافي (مستشعر مطلق)" : "الشمال المغناطيسي (بإهمال الانحراف)";
+}
+// ربط أحداث السحب مرة واحدة (لمس + فأرة — يعمل على أقدم WebView)
+function _qiblaAttachDrag() {
+  var stage = el("qbcStage");
+  if (!stage || stage.getAttribute("data-drag")) return;
+  stage.setAttribute("data-drag", "1");
+  function evPos(e) { return (e.touches && e.touches.length) ? e.touches[0] : e; }
+  function onStart(e) {
+    if (!_qiblaManual || _qiblaDragOn) return;
+    var p = evPos(e); if (!p || typeof p.clientX !== "number") return;
+    var a = _qiblaDragAngle(p.clientX, p.clientY);
+    if (a === null) return;
+    _qiblaDragOn = true; _qiblaDragLastA = a;
+  }
+  function onMove(e) {
+    if (!_qiblaDragOn || !_qiblaManual) return;
+    var p = evPos(e); if (!p || typeof p.clientX !== "number") return;
+    if (e.cancelable) { try { e.preventDefault(); } catch(e9) {} }
+    var a = _qiblaDragAngle(p.clientX, p.clientY);
+    if (a === null) return;
+    var d = a - _qiblaDragLastA;
+    if (d > 180) d -= 360; if (d < -180) d += 360;
+    _qiblaDragLastA = a;
+    if (!d) return;
+    if (qiblaHeading === null || qiblaHeading === undefined) qiblaHeading = 0;
+    // سحب الإصبع مع عقارب الساعة يدير القرص (ومعه «ش» والمؤشر) بنفس الاتجاه
+    qiblaHeading = ((qiblaHeading - d) % 360 + 360) % 360;
+    if (!qiblaLive) qiblaLive = true;
+    _qiblaMaybeRender();
+  }
+  function onEnd() { _qiblaDragOn = false; }
+  stage.addEventListener("touchstart", onStart, false);
+  stage.addEventListener("touchmove", onMove, false);
+  stage.addEventListener("touchend", onEnd, false);
+  stage.addEventListener("touchcancel", onEnd, false);
+  stage.addEventListener("mousedown", onStart, false);
+  window.addEventListener("mousemove", onMove, false);
+  window.addEventListener("mouseup", onEnd, false);
+}
+function _qiblaDragAngle(cx, cy) {
+  var svg = document.querySelector("#qbcStage svg");
+  if (!svg || !svg.getBoundingClientRect) return null;
+  var r = svg.getBoundingClientRect();
+  if (!r || !r.width) return null;
+  var dx = cx - (r.left + r.width / 2), dy = cy - (r.top + r.height / 2);
+  return Math.atan2(dx, -dy) * 180 / Math.PI; // 0 عند الأعلى، يزداد مع عقارب الساعة
+}
+// موضع الشمس (تقريب NOAA — دقة ~0.2 درجة تكفي للمحاذاة)
+// az: السموت الجغرافي من الشمال الحقيقي مع عقارب الساعة • alt: الارتفاع فوق الأفق
+function _qiblaSunPos(dateObj, lat, lng) {
+  var rad = Math.PI / 180;
+  var jd = dateObj.getTime() / 86400000 + 2440587.5;
+  var jc = (jd - 2451545) / 36525;
+  var gmls = (280.46646 + jc * (36000.76983 + jc * 0.0003032)) % 360; if (gmls < 0) gmls += 360;
+  var gmas = 357.52911 + jc * (35999.05029 - 0.0001537 * jc);
+  var eeo = 0.016708634 - jc * (0.000042037 + 0.0000001267 * jc);
+  var sunEq = Math.sin(gmas*rad) * (1.914602 - jc*(0.004817 + 0.000014*jc))
+            + Math.sin(2*gmas*rad) * (0.019993 - 0.000101*jc)
+            + Math.sin(3*gmas*rad) * 0.000289;
+  var sunAppLong = gmls + sunEq - 0.00569 - 0.00478 * Math.sin((125.04 - 1934.136*jc) * rad);
+  var meanObliq = 23 + (26 + (21.448 - jc*(46.815 + jc*(0.00059 - jc*0.001813))) / 60) / 60;
+  var obliq = meanObliq + 0.00256 * Math.cos((125.04 - 1934.136*jc) * rad);
+  var decl = Math.asin(Math.sin(obliq*rad) * Math.sin(sunAppLong*rad)) / rad;
+  var vary = Math.tan(obliq/2*rad) * Math.tan(obliq/2*rad);
+  var eqTime = 4 * (vary*Math.sin(2*gmls*rad)
+                  - 2*eeo*Math.sin(gmas*rad)
+                  + 4*eeo*vary*Math.sin(gmas*rad)*Math.cos(2*gmls*rad)
+                  - 0.5*vary*vary*Math.sin(4*gmls*rad)
+                  - 1.25*eeo*eeo*Math.sin(2*gmas*rad));
+  var minUTC = dateObj.getUTCHours()*60 + dateObj.getUTCMinutes() + dateObj.getUTCSeconds()/60;
+  var ha = (minUTC + eqTime + 4*lng) / 4 - 180; // زاوية الساعة بالدرجات (سالب صباحاً)
+  var latR = lat*rad, decR = decl*rad, haR = ha*rad;
+  var sinAlt = Math.sin(latR)*Math.sin(decR) + Math.cos(latR)*Math.cos(decR)*Math.cos(haR);
+  if (sinAlt > 1) sinAlt = 1; if (sinAlt < -1) sinAlt = -1;
+  var alt = Math.asin(sinAlt) / rad;
+  var x = -Math.cos(decR) * Math.sin(haR);                            // مكوّن شرق/غرب
+  var y = (Math.sin(decR) - Math.sin(latR)*sinAlt) / Math.cos(latR);  // مكوّن شمالي
+  var az = (Math.atan2(x, y) / rad + 360) % 360;
+  return { az: az, alt: alt };
+}
+// المحاذاة بالشمس: bySun=true → أعلى الهاتف نحو الشمس / false → أعلى الهاتف مع اتجاه الظل
+function qiblaAlignBySun(bySun) {
+  var sn = el("qbSensor"), nk = el("qbNorthKind");
+  if (typeof latitude !== "number" || typeof longitude !== "number" || isNaN(latitude) || isNaN(longitude)) {
+    if (sn) sn.innerHTML = "⚠️ حدّد موقعك أولاً ثم أعد المحاذاة بالشمس";
+    return;
+  }
+  var sp = _qiblaSunPos(new Date(), latitude, longitude);
+  if (sp.alt < 0) {
+    if (sn) sn.innerHTML = "🌙 الشمس تحت الأفق الآن — استخدم السحب اليدوي بمعلم معروف الاتجاه";
+    return;
+  }
+  if (!_qiblaManual) {
+    _qiblaManual = true; _qiblaManualKind = "";
+    var bar = el("qbManualBar"); if (bar) bar.style.display = "";
+    var stage = el("qbcStage"); if (stage) stage.className = "qbc-stage qbc-manual";
+    _qiblaAttachDrag();
+  }
+  qiblaHeading = bySun ? sp.az : (sp.az + 180) % 360;
+  qiblaLive = true;
+  _qiblaSnapDone = true; _qiblaStableCount = 0; // تثبيت فوري — ينكسر تلقائياً مع أي دوران حقيقي
+  _qiblaManualKind = bySun ? "الشمال الجغرافي — محاذاة بالشمس" : "الشمال الجغرافي — محاذاة بالظل";
+  if (nk) nk.innerHTML = "✅ " + _qiblaManualKind + " • ثبّت الهاتف أفقياً بنفس الوضع الذي اخترته وأنت تقرأ المؤشر — ودوّر نفسك حتى يقف المؤشر عند العلامة العلوية";
+  qiblaRender(); _qiblaShownHeading = qiblaHeading;
 }
 
 // ===== قائمة الأجهزة المعروفة محلياً (أسماء مستعارة لمعرّفات الأجهزة) =====
@@ -6150,7 +6303,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "25.50"; // النسخة الحالية — تُقارن مع version.json على GitHub
+var CURRENT_APP_VERSION = "25.51"; // النسخة الحالية — تُقارن مع version.json على GitHub
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
