@@ -1611,6 +1611,13 @@
     "ts": "2026/10/15 00:56"
   },
   {
+    "icon": "😴",
+    "text": "[img:https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/media/img-20261015-010351-1524.png]\n",
+    "src": "نكت سورية",
+    "cat": "world",
+    "ts": "2026/10/15 01:04"
+  },
+  {
     "icon": "🔗",
     "text": "رابط البرنامج: https://ehessan1974-maker.github.io/prayer-times/",
     "src": "رابط دائم للتطبيق",
@@ -1654,13 +1661,13 @@
   },
   {
     "icon": "💬",
-    "text": "مرحبا بابا جنى قلب البابا",
+    "text": "مرحبا بابا جنى قلب البابا\n[img:https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/media/img-20261015-010521-8960.jpg]\n",
     "src": "رسالة لـ قلب البابا",
     "cat": "ehemessages",
     "audience": [
-      "android:994065c9287ad170"
+      "android:7a9f975df4b4c07f"
     ],
-    "ts": "2026/10/14 03:34"
+    "ts": "2026/10/15 01:05"
   },
   {
     "icon": "💬",
