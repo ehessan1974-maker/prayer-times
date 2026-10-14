@@ -796,15 +796,24 @@ body.dark-mode .msged-audience-add-name { background:#0f1f18; color:#e2e8f0; bor
   /* v25.18: الحفاظ على فواصل الأسطر (\n) في النصوص */
   white-space: pre-line;
 }
-/* v26.2: الصور داخل الرسائل + العارض الكامل */
+/* v26.2: الصور داخل الرسائل + العارض الكامل — v26.4: مساحة محفوظة تمنع رجفة النص أثناء التحميل/الفشل */
 .info-track-card .msg-img {
   max-width: 100%;
   max-height: 200px;
+  min-height: 56px;
   border-radius: 10px;
   display: inline-block;
   margin: 4px 0;
   cursor: zoom-in;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
+  background: rgba(127, 127, 127, .14);
+}
+.msg-img.img-fail {
+  min-height: 56px;
+  max-height: 56px;
+  min-width: 160px;
+  cursor: pointer;
+  opacity: .85;
 }
 #imgViewer {
   position: fixed;
@@ -2569,7 +2578,7 @@ function linkifyText(text) {
   // v26.2: الصور المدمجة [img:URL] — تُستبدل بتوكِنات قبل معالجة الروابط كي لا يعاد معالجة روابطها
   var _imgTokens = [];
   escaped = escaped.replace(/\[img:([^\]\s]+)\]/g, function(m0, u){
-    _imgTokens.push('<img class="msg-img" src="' + u + '" loading="lazy" alt="صورة" onerror="__imgFix(this)" onclick="openImgViewer(this.src)">');
+    _imgTokens.push('<img class="msg-img" src="' + __imgBust(u) + '" loading="lazy" alt="صورة" onerror="__imgFix(this)" onclick="openImgViewer(this.src)">');
     return "\u0001IMG" + (_imgTokens.length - 1) + "\u0001";
   });
   // 1. تحويل الروابط (http/https) إلى <a> tags
@@ -2641,28 +2650,58 @@ function openImgViewer(src) {
   v.classList.add("show");
 }
 
-// v26.3: تعويض فشل تحميل الصورة تلقائياً — التبديل بين المضيفات (raw ← Pages ← jsDelivr)
-// السبب: jsDelivr يخزّن استجابات 404 للملفات الجديدة على بعض عقد الشبكة فتختفي الصورة أحياناً
+// v26.3: تعويض فشل تحميل الصورة تلقائياً — التبديل بين المضيفات
+// v26.4 [مُعاد ضبطه للأجهزة القديمة]: jsDelivr أولاً (شهادة GlobalSign تعمل على كل أندرويد)
+// ثم raw ثم Pages (شهادتهما Let's Encrypt تُرفض على أندرويد < 7.1.1 فلا تنفع إلا على الأجهزة الحديثة)
+// + مُفرِب ذاكرة ‎?v=نسخة التطبيق يُلزم جهاز المستخدم بطلب جديد حتى لو خزّن 404 قديمة (jsDelivr يخزّنها 7 أيام)
 var __IMG_HOSTS = [
+  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/",
   "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/",
-  "https://ehessan1974-maker.github.io/prayer-times/",
-  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/"
+  "https://ehessan1974-maker.github.io/prayer-times/"
 ];
+function __imgBust(u){
+  /* يُلحق مُفرِب ذاكرة بروابط الصور بلا استعلام — يكسر 404 المخزنة في ذاكرة جهاز المستخدم */
+  if (u && u.indexOf("?") === -1) return u + "?v=" + CURRENT_APP_VERSION;
+  return u;
+}
 function __imgFix(img) {
   var now = Date.now();
-  if (img._fixT && now - img._fixT < 80) return; /* منع المعالجة المزدوجة لنفس الحدث (وسم مضمّن + مستمع المستند) */
+  if (img._fixT && now - img._fixT < 80) return; /* منع المعالجة المزدوجة لنفس الحدث */
   img._fixT = now;
   var src = img.getAttribute("src") || "";
-  var m = src.match(/media\/[A-Za-z0-9._-]+$/);
+  var q = "", base = src, qi = src.indexOf("?");
+  if (qi !== -1) { base = src.slice(0, qi); q = src.slice(qi); }
+  var m = base.match(/media\/[A-Za-z0-9._-]+$/);
   if (!m) { img.onerror = null; return; }
   var path = m[0];
-  var rest = [];
+  /* v26.4 [إصلاح حلقة لا نهائية]: نسجّل كل مضيف جُرّب فلا نعود إليه أبداً —
+     بدونه على الأجهزة القديمة: raw يفشل بشهادته فيرجع لـjsDelivr فيعيد 404 مخزنة فيرجع لـraw… يرجف بلا نهاية */
+  if (!img._tried) img._tried = {};
   for (var i = 0; i < __IMG_HOSTS.length; i++) {
-    if (src.indexOf(__IMG_HOSTS[i]) !== 0) rest.push(__IMG_HOSTS[i]);
+    if (base.indexOf(__IMG_HOSTS[i]) === 0) { img._tried[i] = true; break; }
   }
-  if (!rest.length) { img.onerror = null; return; }
+  var next = -1;
+  for (var j = 0; j < __IMG_HOSTS.length; j++) {
+    if (!img._tried[j]) { next = j; break; }
+  }
+  if (next === -1) {
+    /* نضوبت كل المضيفات: مربع ثابت بدل الوميض + نقرة تعيد المحاولة من الصفر بمُفرِب جديد */
+    img.onerror = null;
+    img.classList.add("img-fail");
+    img.alt = "📷 صورة — اضغط لإعادة المحاولة";
+    img.onclick = function(ev){
+      try { if (ev && ev.stopPropagation) ev.stopPropagation(); } catch(e0){}
+      img._fixT = null;
+      img._tried = {};
+      img.classList.remove("img-fail");
+      img.alt = "صورة";
+      img.onerror = function(){ __imgFix(img); };
+      img.src = __IMG_HOSTS[0] + path + "?r=" + Date.now();
+    };
+    return;
+  }
   img.onerror = function(){ __imgFix(img); };
-  img.src = rest[0] + path;
+  img.src = __IMG_HOSTS[next] + path + q;
 }
 // شبكة أمان v26.3: مستمع على مستوى المستند يلتقط فشل تحميل أي صورة رسالة
 // حتى لو حُجب الوسم المضمّن أو استُبدلت خاصية onerror لاحقاً (مرحلة الالتقاط تمر عبر كل العناصر)
@@ -6553,7 +6592,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.3"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.3: تعويض فشل تحميل الصور تلقائياً بين المضيفات — علاج اختفاء الصور المتقطع)
+var CURRENT_APP_VERSION = "26.4"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.4: ترتيب مضيفات متوافق مع الأجهزة القديمة + مُفرِب ذاكرة للصور + مساحة محفوظة تمنع رجفة النص + إعادة محاولة بالنقر)
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام

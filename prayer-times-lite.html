@@ -75,14 +75,23 @@ body {
 .info-text { font-size: 13px; color: #78350f; font-weight: 600; line-height: 1.8; }
 .info-source { font-size: 10px; color: #b45309; opacity: 0.7; margin-top: 4px; }
 .info-icon { font-size: 20px; margin-left: 6px; }
-/* v26.2: الصور داخل الرسائل */
+/* v26.2: الصور داخل الرسائل — v26.4: مساحة محفوظة تمنع رجفة النص */
 .info-text .msg-img, #infoText .msg-img {
   max-width: 100%;
   max-height: 180px;
+  min-height: 56px;
   border-radius: 10px;
   display: inline-block;
   margin: 4px 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
+  background: rgba(127, 127, 127, .14);
+}
+.msg-img.img-fail {
+  min-height: 56px;
+  max-height: 56px;
+  min-width: 160px;
+  cursor: pointer;
+  opacity: .85;
 }
 .update-toast {
   position: fixed; bottom: 16px; left: 16px; right: 16px;
@@ -161,31 +170,57 @@ var latitude = null, longitude = null;
 var prayerData = null;
 var cachedInfoItems = [];
 var currentInfoIdx = 0;
-var CURRENT_APP_VERSION = "26.3";
-// v26.3: تعويض فشل تحميل الصور تلقائياً — التبديل بين المضيفات (raw ← Pages ← jsDelivr)
-// السبب: jsDelivr يخزّن استجابات 404 للملفات الجديدة على بعض عقد الشبكة فتختفي الصورة أحياناً
+var CURRENT_APP_VERSION = "26.4";
+// v26.3/26.4: تعويض فشل تحميل الصور تلقائياً — jsDelivr أولاً (شهادة GlobalSign تعمل على كل أندرويد حتى القديم)
+// ثم raw ثم Pages (شهادتهما Let's Encrypt تُرفض على أندرويد < 7.1.1)
+// + مُفرِب ذاكرة ‎?v= يكسر 404 المخزنة في ذاكرة جهاز المستخدم (jsDelivr يخزّنها حتى 7 أيام)
 var __IMG_HOSTS = [
+  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/",
   "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/",
-  "https://ehessan1974-maker.github.io/prayer-times/",
-  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/"
+  "https://ehessan1974-maker.github.io/prayer-times/"
 ];
+function __imgBust(u){
+  if (u && u.indexOf("?") === -1) return u + "?v=" + CURRENT_APP_VERSION;
+  return u;
+}
 function __imgFix(img) {
   var now = Date.now();
-  if (img._fixT && now - img._fixT < 80) return; /* منع المعالجة المزدوجة لنفس الحدث (وسم مضمّن + مستمع المستند) */
+  if (img._fixT && now - img._fixT < 80) return;
   img._fixT = now;
   var src = img.getAttribute("src") || "";
-  var m = src.match(/media\/[A-Za-z0-9._-]+$/);
+  var q = "", base = src, qi = src.indexOf("?");
+  if (qi !== -1) { base = src.slice(0, qi); q = src.slice(qi); }
+  var m = base.match(/media\/[A-Za-z0-9._-]+$/);
   if (!m) { img.onerror = null; return; }
   var path = m[0];
-  var rest = [];
+  /* v26.4 [إصلاح حلقة لا نهائية]: تسجيل المضيفات المُجرّبة فلا عودة إليها أبداً —
+     بدونه على الأجهزة القديمة: raw يفشل بشهادته فيرجع لـjsDelivr فيعيد 404 مخزنة فيرجع لraw… يرجف بلا نهاية */
+  if (!img._tried) img._tried = {};
   for (var i = 0; i < __IMG_HOSTS.length; i++) {
-    if (src.indexOf(__IMG_HOSTS[i]) !== 0) rest.push(__IMG_HOSTS[i]);
+    if (base.indexOf(__IMG_HOSTS[i]) === 0) { img._tried[i] = true; break; }
   }
-  if (!rest.length) { img.onerror = null; return; }
+  var next = -1;
+  for (var j = 0; j < __IMG_HOSTS.length; j++) {
+    if (!img._tried[j]) { next = j; break; }
+  }
+  if (next === -1) {
+    img.onerror = null;
+    img.classList.add("img-fail");
+    img.alt = "📷 صورة — اضغط لإعادة المحاولة";
+    img.onclick = function(ev){
+      try { if (ev && ev.stopPropagation) ev.stopPropagation(); } catch(e0){}
+      img._fixT = null;
+      img._tried = {};
+      img.classList.remove("img-fail");
+      img.alt = "صورة";
+      img.onerror = function(){ __imgFix(img); };
+      img.src = __IMG_HOSTS[0] + path + "?r=" + Date.now();
+    };
+    return;
+  }
   img.onerror = function(){ __imgFix(img); };
-  img.src = rest[0] + path;
+  img.src = __IMG_HOSTS[next] + path + q;
 }
-// شبكة أمان v26.3: مستمع على مستوى المستند يلتقط فشل تحميل أي صورة رسالة حتى لو حُجب الوسم المضمّن
 document.addEventListener("error", function(e){
   var t = e.target;
   if (t && t.tagName === "IMG" && (t.getAttribute("src") || "").indexOf("/media/") !== -1) __imgFix(t);
@@ -441,7 +476,7 @@ function displayInfo() {
   var src = item.src || "";
   var htmlText = escapeHtml(text).replace(/\n/g, "<br>");
   // v26.2: عرض الصور المدمجة [img:URL]
-  htmlText = htmlText.replace(/\[img:(https?:\/\/[^\s\]]+)\]/g, '<img class="msg-img" src="$1" loading="lazy" alt="صورة" onerror="__imgFix(this)">');
+  htmlText = htmlText.replace(/\[img:(https?:\/\/[^\s\]]+)\]/g, function(m0, u){ return '<img class="msg-img" src="' + __imgBust(u) + '" loading="lazy" alt="صورة" onerror="__imgFix(this)">'; });
   el("infoText").innerHTML = '<span class="info-icon">' + icon + '</span> ' + htmlText;
   if (src) el("infoSource").textContent = src;
   else el("infoSource").textContent = "";
