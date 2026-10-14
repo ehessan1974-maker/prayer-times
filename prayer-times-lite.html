@@ -75,6 +75,15 @@ body {
 .info-text { font-size: 13px; color: #78350f; font-weight: 600; line-height: 1.8; }
 .info-source { font-size: 10px; color: #b45309; opacity: 0.7; margin-top: 4px; }
 .info-icon { font-size: 20px; margin-left: 6px; }
+/* v26.2: الصور داخل الرسائل */
+.info-text .msg-img, #infoText .msg-img {
+  max-width: 100%;
+  max-height: 180px;
+  border-radius: 10px;
+  display: inline-block;
+  margin: 4px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
+}
 .update-toast {
   position: fixed; bottom: 16px; left: 16px; right: 16px;
   background: linear-gradient(135deg, #065f46, #10b981); color: white;
@@ -152,7 +161,7 @@ var latitude = null, longitude = null;
 var prayerData = null;
 var cachedInfoItems = [];
 var currentInfoIdx = 0;
-var CURRENT_APP_VERSION = "26.1";
+var CURRENT_APP_VERSION = "26.2";
 // v25.43: مصادر متعددة — إذا فشل jsDelivr نجرّب GitHub Pages ثم raw مباشرة
 var UPDATE_SOURCE_URLS = [
   "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json",
@@ -402,7 +411,10 @@ function displayInfo() {
   // إذا كان text مصفوفة، ادمجها
   if (typeof text === "object" && text.join) text = text.join("\n");
   var src = item.src || "";
-  el("infoText").innerHTML = '<span class="info-icon">' + icon + '</span> ' + escapeHtml(text).replace(/\n/g, "<br>");
+  var htmlText = escapeHtml(text).replace(/\n/g, "<br>");
+  // v26.2: عرض الصور المدمجة [img:URL]
+  htmlText = htmlText.replace(/\[img:(https?:\/\/[^\s\]]+)\]/g, '<img class="msg-img" src="$1" loading="lazy" alt="صورة">');
+  el("infoText").innerHTML = '<span class="info-icon">' + icon + '</span> ' + htmlText;
   if (src) el("infoSource").textContent = src;
   else el("infoSource").textContent = "";
 }

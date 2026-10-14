@@ -796,6 +796,28 @@ body.dark-mode .msged-audience-add-name { background:#0f1f18; color:#e2e8f0; bor
   /* v25.18: الحفاظ على فواصل الأسطر (\n) في النصوص */
   white-space: pre-line;
 }
+/* v26.2: الصور داخل الرسائل + العارض الكامل */
+.info-track-card .msg-img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 10px;
+  display: inline-block;
+  margin: 4px 0;
+  cursor: zoom-in;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
+}
+#imgViewer {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  cursor: zoom-out;
+}
+#imgViewer.show { display: flex; }
+#imgViewer img { max-width: 94vw; max-height: 92vh; border-radius: 8px; }
 .info-track-card .info-track-source {
   font-size: 9px;
   color: #b45309;
@@ -2544,6 +2566,12 @@ function linkifyText(text) {
     return lines.join('<br>');
   }
   var escaped = escapeHtml(text);
+  // v26.2: الصور المدمجة [img:URL] — تُستبدل بتوكِنات قبل معالجة الروابط كي لا يعاد معالجة روابطها
+  var _imgTokens = [];
+  escaped = escaped.replace(/\[img:([^\]\s]+)\]/g, function(m0, u){
+    _imgTokens.push('<img class="msg-img" src="' + u + '" loading="lazy" alt="صورة" onclick="openImgViewer(this.src)">');
+    return "\u0001IMG" + (_imgTokens.length - 1) + "\u0001";
+  });
   // 1. تحويل الروابط (http/https) إلى <a> tags
   escaped = escaped.replace(/(https?:\/\/[^\s<]+)/g, function(url) {
     return '<a href="' + url + '" target="_blank" rel="noopener" style="color:#059669;text-decoration:underline;cursor:pointer;" onclick="openLinkInNewTab(event, \'' + url + '\');">' + url + '</a>';
@@ -2556,6 +2584,8 @@ function linkifyText(text) {
     var cleanNum = phone.replace(/[\s\-().]/g, '');
     return '<a href="tel:' + cleanNum + '" style="color:#059669;text-decoration:underline;cursor:pointer;font-weight:700;" onclick="callPhoneNumber(event, \'' + cleanNum + '\');">' + phone + '</a>';
   });
+  // v26.2: إعادة تركيب وسوم الصور بعد انتهاء معالجة الروابط والهواتف
+  escaped = escaped.replace(/\u0001IMG(\d+)\u0001/g, function(m0, i){ return _imgTokens[+i]; });
   return escaped;
 }
 
@@ -2595,6 +2625,20 @@ function openLinkInNewTab(e, url) {
   } catch(err2) {}
   // fallback أخير: تغيير الموقع الحالي
   window.location.href = url;
+}
+
+// v26.2: عارض الصور بالحجم الكامل — نقرة للفتح ونقرة للإغلاق
+function openImgViewer(src) {
+  var v = document.getElementById("imgViewer");
+  if (!v) {
+    v = document.createElement("div");
+    v.id = "imgViewer";
+    v.innerHTML = '<img alt="صورة">';
+    v.addEventListener("click", function() { v.classList.remove("show"); });
+    document.body.appendChild(v);
+  }
+  v.querySelector("img").src = src;
+  v.classList.add("show");
 }
 
 var infoScrollPaused = false;
@@ -6479,7 +6523,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.1"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.1: تصحيح عرض رقم الإصدار — كان يبقى 25.55 بعد إصدار v26)
+var CURRENT_APP_VERSION = "26.2"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.2: عرض الصور المدمجة [img:…] داخل الرسائل + عارض صور بالحجم الكامل)
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام

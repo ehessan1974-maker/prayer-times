@@ -133,6 +133,20 @@ main#appMain{flex:1; display:grid; grid-template-columns:250px 1fr 460px; gap:12
 .emoji-pick{display:flex; flex-wrap:wrap; gap:4px; margin-top:5px}
 .emoji-pick span{font-size:16px; cursor:pointer; border:1px solid transparent; border-radius:7px; padding:2px 5px; transition:.1s}
 .emoji-pick span:hover{background:var(--green-bg); border-color:var(--green-light)}
+.emoji-pick .my-emoji{background:var(--green-bg); border-color:var(--green-light)}
+.emoji-sep{align-self:stretch; width:1px; background:var(--line); margin:2px 3px}
+/* ===== زر صورة النص + تقدم الرفع ===== */
+.img-btn{background:var(--green-bg); color:var(--green-dark); border:1px solid var(--green-light); border-radius:7px; padding:1px 8px; font-size:10.5px; font-weight:700; cursor:pointer; margin-inline-start:6px; font-family:inherit; vertical-align:middle}
+.img-btn:hover{background:var(--green-light)}
+.img-progress{font-size:10px; color:var(--gold); font-weight:700; margin-inline-start:6px}
+/* ===== منتقي الإيموجي من الإنترنت ===== */
+.net-emoji-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(46px,1fr)); gap:5px; max-height:42vh; overflow-y:auto; border:1px solid var(--line); border-radius:10px; padding:8px; background:#fbfdfc}
+.net-e{font-size:23px; text-align:center; cursor:pointer; border-radius:9px; padding:5px 0; border:1px solid transparent; transition:.1s}
+.net-e:hover{background:var(--green-bg); border-color:var(--green-light)}
+.my-icons-row{display:flex; flex-wrap:wrap; gap:6px}
+.my-chip{display:inline-flex; align-items:center; gap:2px; background:var(--green-bg); border:1px solid var(--green-light); border-radius:16px; padding:2px 6px}
+.my-chip .mc-e{font-size:17px; cursor:pointer}
+.my-chip .mc-x{font-size:10px; color:var(--red); cursor:pointer; padding:0 2px}
 .editor-actions{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap}
 .btn{
   border:none; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:700; transition:.15s;
@@ -234,6 +248,7 @@ kbd{background:#eef2f1; border:1px solid var(--line); border-radius:5px; padding
   <button class="tbtn" id="btnSettings" title="التوكن والإعدادات">⚙️</button>
   <button class="tbtn" id="btnHelp" title="مساعدة">؟</button>
   <input type="file" id="fileInput" accept=".json,application/json" class="hidden">
+  <input type="file" id="imgInput" accept="image/*" class="hidden">
 </header>
 
 <!-- ======= لافتة توفر إصدار أحدث ======= -->
@@ -421,6 +436,19 @@ kbd{background:#eef2f1; border:1px solid var(--line); border-radius:5px; padding
   </div>
 </dialog>
 
+<!-- ======= حوار أيقونات الإنترنت ======= -->
+<dialog id="dlgEmojiNet">
+  <div class="dlg-head"><span>🌐 أيقونات من الإنترنت — بحث بالعربية</span><button onclick="closeDlg('dlgEmojiNet')">✕</button></div>
+  <div class="dlg-body">
+    <input type="text" id="emojiNetSearch" placeholder="ابحث بالعربية: مسجد، وردة، ماء، قلب، هاتف…" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:14px;outline:none">
+    <div class="hint" id="emojiNetStatus" style="margin:4px 2px 8px"></div>
+    <div class="net-emoji-grid" id="emojiNetGrid"></div>
+    <h4 style="font-size:12px;color:var(--green-dark);margin:14px 0 6px">⭐ أيقوناتي — محفوظة على GitHub وتظهر على كل أجهزتك</h4>
+    <div id="myIconsRow" class="my-icons-row"></div>
+  </div>
+  <div class="dlg-foot"><button class="btn ghost" onclick="closeDlg('dlgEmojiNet')">إغلاق</button></div>
+</dialog>
+
 <!-- ======= حوار تأكيد عام ======= -->
 <dialog id="dlgConfirm">
   <div class="dlg-head"><span id="cfTitle">تأكيد</span><button onclick="closeDlg('dlgConfirm')">✕</button></div>
@@ -455,6 +483,18 @@ kbd{background:#eef2f1; border:1px solid var(--line); border-radius:5px; padding
       <li><b>minAppVersion</b> مثال: 26.0 — تختفي الرسالة عن الإصدارات الأقدم.</li>
       <li><b>group_id / is_group_title / count</b> لتجميع النكت والمحتويات المتسلسلة.</li>
     </ul>
+    <h3>🖼️ الصور داخل النص</h3>
+    <ul>
+      <li><b>اللصق المباشر</b>: انسخ صورة من أي مكان واضغط <kbd>Ctrl+V</kbd> داخل خانة النص — أو استخدم زر «🖼️ صورة» لاختيارها من الجهاز (يعمل على الموبايل أيضاً).</li>
+      <li>تُضغط الصورة تلقائياً (حتى ‎900px و ‏~350KB) ثم تُرفع إلى مجلد <kbd>media/</kbd> في GitHub وتُدرج برابط دائم بصيغة <kbd>[img:…]</kbd>.</li>
+      <li>التطبيق (الإصدار 26.2 فأحدث) يعرض الصورة داخل الرسالة، وبالضغط عليها تُفتح بحجم كامل.</li>
+      <li>رفع الصور يحتاج توكناً محفوظاً (⚙️ الإعدادات).</li>
+    </ul>
+    <h3>🌐 أيقونات من الإنترنت</h3>
+    <ul>
+      <li>زر «🌐 من الإنترنت» بجانب الأيقونة في لوحة التحرير يفتح بحثاً بالعربية بين آلاف الإيموجي (مسجد، وردة، ماء، قلب…).</li>
+      <li>ما تختاره يوضع للعنصر فوراً ويُضاف إلى «⭐ أيقوناتي» المحفوظة على GitHub — فتظهر في قائمتك على الابتوب والموبايل معاً، ويمكن إزالتها من نافذة البحث نفسها.</li>
+    </ul>
     <h3>⚠️ أوامر النظام (_update_cmd)</h3>
     <p>عناصر ذات خانة <kbd>_update_cmd</kbd> هي أوامر تحديث خفية للإدارة — تظهر في قسم منفصل ولا تُعدَّل إلا عند الضرورة القصوى.</p>
     <h3>💾 النسخ الاحتياطي</h3>
@@ -475,7 +515,11 @@ var OWNER = "ehessan1974-maker";
 var PUBLIC_REPO = "prayer-times";
 var PRIVATE_REPO = "prayer-times-private";
 var CONTENT_PATH = "content.json";
-var EDITOR_VERSION = "1.1.2"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub */
+var MEDIA_PATH = "media";            /* مجلد الصور المرفوعة في الريبو العام */
+var ICONS_FILE = "editor-icons.json"; /* قائمة «أيقوناتي» المشتركة بين الأجهزة */
+var EMOJI_SRC_EN = "https://cdn.jsdelivr.net/npm/emojibase-data@17/en/compact.json";
+var EMOJI_SRC_AR = "https://cdn.jsdelivr.net/npm/cldr-annotations-modern@45.0.0/annotations/ar/annotations.json";
+var EDITOR_VERSION = "1.3.0"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub */
 
 /* الخانات المعروفة للتطبيق (من أزرار التصفية داخل prayer-times.html) */
 var KNOWN_CATS = {
@@ -1047,11 +1091,16 @@ function renderEditor(){
   }
   /* الأيقونة */
   html += '<div class="field"><label>الأيقونة <span class="en">icon</span></label>' +
+    '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
     '<input type="text" id="edIcon" value="' + esc(String(it.icon || "")) + '" maxlength="8" style="width:90px;text-align:center;font-size:17px">' +
-    '<div class="emoji-pick">' + EMOJI_PICKS.map(function(e){ return '<span onclick="setIcon(\'' + e + '\')">' + e + '</span>'; }).join("") + '</div></div>';
+    '<button type="button" class="mini-btn" onclick="openEmojiNet()" title="ابحث بالعربية بين آلاف الإيموجي وأضف ما تختاره لقائمتك على كل أجهزتك">🌐 من الإنترنت</button>' +
+    '</div>' +
+    '<div class="emoji-pick" id="emojiGrid">' + emojiGridHtml() + '</div></div>';
   /* النص */
-  html += '<div class="field"><label>النص <span class="en">text</span></label>' +
-    '<textarea id="edText" placeholder="اكتب محتوى العنصر هنا…">' + esc(String(it.text || "")) + '</textarea>' +
+  html += '<div class="field"><label>النص <span class="en">text</span>' +
+    '<button type="button" class="img-btn" onclick="pickImage()" title="ألصق صورة (Ctrl+V) داخل النص أو اخترها من الجهاز — تُضغط وتُرفع إلى GitHub وتُدرج برابط دائم">🖼️ صورة</button>' +
+    '<span id="imgProgress" class="img-progress"></span></label>' +
+    '<textarea id="edText" placeholder="اكتب محتوى العنصر هنا… — يمكنك لصق صورة مباشرة (Ctrl+V)">' + esc(String(it.text || "")) + '</textarea>' +
     '<div class="char-count" id="edTextCount"></div></div>';
   /* المصدر */
   html += '<div class="field"><label>المصدر <span class="en">src</span> — اختياري</label>' +
@@ -1112,10 +1161,38 @@ function setIcon(e){
   if (inp) inp.value = e;
   applyLiveEdits(true);
 }
+/* شبكة الأيقونات: «أيقوناتي» (من GitHub) أولاً ثم القائمة الثابتة */
+function emojiGridHtml(){
+  var custom = (state.customIcons || []).slice().reverse(); /* الأحدث أولاً */
+  var out = "";
+  for (var i = 0; i < custom.length; i++){
+    out += '<span class="my-emoji" title="من أيقوناتي" onclick="setIcon(\'' + custom[i] + '\')">' + custom[i] + '</span>';
+  }
+  if (custom.length) out += '<span class="emoji-sep"></span>';
+  out += EMOJI_PICKS.map(function(e){ return '<span onclick="setIcon(\'' + e + '\')">' + e + '</span>'; }).join("");
+  return out;
+}
+function refreshEmojiGrid(){
+  var g = $("emojiGrid");
+  if (g) g.innerHTML = emojiGridHtml();
+}
 function bindEditor(it, isCmd){
   var idx = state.selIdx;
   $("edIcon").addEventListener("input", function(){ applyLiveEdits(); });
   $("edText").addEventListener("input", function(){ applyLiveEdits(); });
+  /* لصق صورة مباشرة داخل خانة النص (Ctrl+V على الابتوب، أو قائمة اللصق على الموبايل) */
+  $("edText").addEventListener("paste", function(e){
+    var items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (var i = 0; i < items.length; i++){
+      if (items[i].type && items[i].type.indexOf("image/") === 0){
+        e.preventDefault();
+        var f = items[i].getAsFile();
+        if (f) uploadImage(f);
+        return;
+      }
+    }
+  });
   $("edSrc").addEventListener("input", function(){ applyLiveEdits(); });
   $("edCat").addEventListener("change", function(){
     if (this.value === "__new__"){
@@ -1389,6 +1466,278 @@ async function verifyLive(pushedText){
   }
   return false;
 }
+/* ================= الصور: ضغط ذكي ورفع إلى GitHub ================= */
+var IMG_MAX_DIM = 900;   /* أقصى بعد (عرض أو ارتفاع) */
+var IMG_TARGET_KB = 350; /* الحجم المستهدف بعد الضغط */
+function imgProgress(msg){
+  var el = $("imgProgress");
+  if (el) el.textContent = msg ? " " + msg : "";
+}
+function readAsDataURL(blob){
+  return new Promise(function(res, rej){
+    var fr = new FileReader();
+    fr.onload = function(){ res(String(fr.result)); };
+    fr.onerror = function(){ rej(new Error("تعذر قراءة الملف")); };
+    fr.readAsDataURL(blob);
+  });
+}
+function canvasCompress(img, scale, quality){
+  return new Promise(function(res, rej){
+    var w = Math.max(1, Math.round(img.naturalWidth * scale));
+    var h = Math.max(1, Math.round(img.naturalHeight * scale));
+    var c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    var ctx = c.getContext("2d");
+    ctx.fillStyle = "#ffffff"; /* JPEG بلا شفافية — خلفية بيضاء */
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    c.toBlob(function(b){
+      if (b) res(b); else rej(new Error("فشل ضغط الصورة"));
+    }, "image/jpeg", quality);
+  });
+}
+async function compressImageFile(file){
+  /* GIF: يُرفع كما هو — الضغط يقتل الحركة */
+  if (file.type === "image/gif") return { blob: file, ext: "gif" };
+  /* صور صغيرة أصلاً: تُرفع كما هي (تحافظ على الشفافية والجودة) */
+  if (file.size <= 150 * 1024 && (file.type === "image/png" || file.type === "image/webp"))
+    return { blob: file, ext: (file.type === "image/png" ? "png" : "webp") };
+  var url = URL.createObjectURL(file);
+  try {
+    var img = await new Promise(function(res, rej){
+      var im = new Image();
+      im.onload = function(){ res(im); };
+      im.onerror = function(){ rej(new Error("صورة غير صالحة")); };
+      im.src = url;
+    });
+    var scale = Math.min(1, IMG_MAX_DIM / Math.max(img.naturalWidth, img.naturalHeight));
+    var q = 0.85;
+    var blob = await canvasCompress(img, scale, q);
+    while (blob.size > IMG_TARGET_KB * 1024 && q > 0.4){
+      if (blob.size > IMG_TARGET_KB * 1024 * 1.8) scale = Math.max(0.3, scale * 0.75);
+      q -= 0.15;
+      blob = await canvasCompress(img, scale, q);
+    }
+    return { blob: blob, ext: "jpg" };
+  } finally { URL.revokeObjectURL(url); }
+}
+/* رفع ملف عام إلى أي مسار في الريبو (base64) */
+async function ghPutPath(repo, path, contentB64, message){
+  var gr = await fetch(ghUrl("/repos/" + OWNER + "/" + repo + "/contents/" + path + "?ref=main"), { headers: ghHeaders(), cache: "no-store" });
+  var sha = null;
+  if (gr.status === 404) sha = null;
+  else if (!gr.ok) throw new Error("فحص " + repo + ": HTTP " + gr.status);
+  else sha = (await gr.json()).sha || null;
+  var body = { message: message, content: contentB64, branch: "main" };
+  if (sha) body.sha = sha;
+  var r = await fetch(ghUrl("/repos/" + OWNER + "/" + repo + "/contents/" + path), {
+    method: "PUT", headers: ghHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(body)
+  });
+  if (!r.ok){
+    var t = await r.text();
+    throw new Error("رفع " + repo + ": HTTP " + r.status + " " + t.slice(0, 300));
+  }
+  var j = await r.json();
+  return (j.commit && j.commit.sha) ? j.commit.sha.slice(0, 8) : "ok";
+}
+var _imgUploading = false;
+async function uploadImage(file){
+  if (_imgUploading){ toast("⏳ هناك صورة قيد الرفع — انتظر لحظة"); return; }
+  var ta = $("edText");
+  if (!ta){ alert("حدِّد عنصراً أولاً لتُدرج الصورة في نصه."); return; }
+  if (!getToken()){ alert("⚠️ رفع الصور يحتاج توكن GitHub.\nافتح ⚙️ الإعدادات وألصق التوكن (مرة واحدة على هذا الجهاز)."); return; }
+  if (!/^image\//.test(file.type || "")){ alert("الملف المختار ليس صورة."); return; }
+  _imgUploading = true;
+  var origKB = Math.round(file.size / 1024);
+  try {
+    imgProgress("⏳ ضغط…");
+    var res = await compressImageFile(file);
+    var newKB = Math.max(1, Math.round(res.blob.size / 1024));
+    imgProgress("⏳ رفع… (" + origKB + "KB ← " + newKB + "KB)");
+    var d = new Date();
+    var stamp = d.getFullYear() + _tsPad(d.getMonth() + 1) + _tsPad(d.getDate()) + "-" + _tsPad(d.getHours()) + _tsPad(d.getMinutes()) + _tsPad(d.getSeconds());
+    var path = MEDIA_PATH + "/img-" + stamp + "-" + Math.floor(Math.random() * 9000 + 1000) + "." + res.ext;
+    var dataUrl = await readAsDataURL(res.blob);
+    var b64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
+    await ghPutPath(PUBLIC_REPO, path, b64, "إضافة صورة عبر المحرر (" + newKB + "KB)");
+    /* نسخة احتياطية في الخاص — بصمت، لا تعيق نجاح العملية */
+    try { await ghPutPath(PRIVATE_REPO, path, b64, "إضافة صورة (نسخة احتياطية)"); } catch(e2){}
+    var url = "https://cdn.jsdelivr.net/gh/" + OWNER + "/" + PUBLIC_REPO + "@main/" + path;
+    /* إدراج العلامة موضع المؤشر داخل النص */
+    var marker = "[img:" + url + "]";
+    var s = ta.selectionStart || 0, epos = ta.selectionEnd || 0;
+    var v = ta.value;
+    var pre = (s > 0 && v[s - 1] !== "\n") ? "\n" : "";
+    ta.value = v.slice(0, s) + pre + marker + "\n" + v.slice(epos);
+    var caret = s + pre.length + marker.length + 1;
+    try { ta.setSelectionRange(caret, caret); ta.focus(); } catch(e3){}
+    applyLiveEdits();
+    imgProgress("");
+    toast("✅ أُدرجت الصورة (" + newKB + "KB) — ستظهر في التطبيق بعد النشر 🚀");
+  } catch(e){
+    imgProgress("");
+    toast("❌ فشل رفع الصورة: " + e.message, "err");
+  } finally { _imgUploading = false; }
+}
+function pickImage(){ $("imgInput").click(); }
+
+/* ================= أيقونات من الإنترنت (إيموجي بأسماء عربية) ================= */
+var EMOJI_CACHE_KEY = "pt_emoji_ar_v1";
+var CUSTOM_ICONS_KEY = "pt_custom_icons_v1";
+var _emojiData = null;
+var _emojiLoadP = null;
+function normAr(s){
+  return String(s || "").toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, "")
+    .replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي")
+    .replace(/ؤ/g, "و").replace(/ئ/g, "ي");
+}
+function emojiCacheGet(){
+  try {
+    var j = JSON.parse(localStorage.getItem(EMOJI_CACHE_KEY) || "null");
+    if (j && j.ts && (Date.now() - j.ts) < 30 * 24 * 3600 * 1000 && j.data && j.data.length) return j.data;
+  } catch(e){}
+  return null;
+}
+function emojiCacheSet(data){
+  try { localStorage.setItem(EMOJI_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: data })); } catch(e){}
+}
+async function emojiEnsureData(){
+  if (_emojiData) return _emojiData;
+  var cached = emojiCacheGet();
+  if (cached){ _emojiData = cached; return _emojiData; }
+  if (_emojiLoadP) return _emojiLoadP;
+  _emojiLoadP = (async function(){
+    var results = await Promise.all([
+      fetch(EMOJI_SRC_EN + "?t=" + Date.now()).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }),
+      fetch(EMOJI_SRC_AR + "?t=" + Date.now()).then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).catch(function(){ return null; })
+    ]);
+    var en = results[0], ar = results[1];
+    var arMap = (ar && ar.annotations && ar.annotations.annotations) ? ar.annotations.annotations : {};
+    var out = [];
+    for (var i = 0; i < en.length; i++){
+      var it = en[i];
+      if (!it.unicode || !it.unicode) continue;
+      var a = arMap[it.unicode] || null;
+      var label = (a && a.tts && a.tts[0]) ? a.tts[0] : (it.label || "");
+      var tags = ((a && a.default) ? a.default.join(" ") : "") + " " + (it.label || "");
+      out.push({ e: it.unicode, label: label, tags: normAr(label + " " + tags) });
+    }
+    _emojiData = out;
+    emojiCacheSet(out);
+    return out;
+  })();
+  try { return await _emojiLoadP; } finally { _emojiLoadP = null; }
+}
+function emojiSearch(q){
+  if (!_emojiData) return [];
+  var nq = normAr(String(q || "").trim());
+  if (!nq) return _emojiData.slice(0, 120);
+  var starts = [], mid = [], rest = [];
+  for (var i = 0; i < _emojiData.length; i++){
+    var it = _emojiData[i];
+    var l = normAr(it.label);
+    if (l.indexOf(nq) === 0) starts.push(it);
+    else if (l.indexOf(nq) !== -1) mid.push(it);
+    else if (it.tags.indexOf(nq) !== -1) rest.push(it);
+  }
+  return starts.concat(mid, rest).slice(0, 120);
+}
+/* ===== «أيقوناتي»: محلية + GitHub (لكل الأجهزة) ===== */
+function loadLocalCustomIcons(){
+  try { var a = JSON.parse(localStorage.getItem(CUSTOM_ICONS_KEY) || "[]"); return (a && a.length) ? a : []; } catch(e){ return []; }
+}
+function saveLocalCustomIcons(arr){
+  try { localStorage.setItem(CUSTOM_ICONS_KEY, JSON.stringify(arr)); } catch(e){}
+}
+function iconsJsonText(){
+  return JSON.stringify({ icons: state.customIcons || [] }, null, 2) + "\n";
+}
+async function loadCustomIcons(){
+  if (!state.customIcons) state.customIcons = loadLocalCustomIcons();
+  refreshEmojiGrid();
+  try {
+    var r = await fetch("https://raw.githubusercontent.com/" + OWNER + "/" + PUBLIC_REPO + "/main/" + ICONS_FILE + "?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) return;
+    var j = await r.json();
+    var remote = (j && j.icons) || [];
+    var merged = remote.slice();
+    for (var i = 0; i < state.customIcons.length; i++) if (merged.indexOf(state.customIcons[i]) === -1) merged.push(state.customIcons[i]);
+    if (JSON.stringify(merged) !== JSON.stringify(state.customIcons)){
+      state.customIcons = merged;
+      saveLocalCustomIcons(merged);
+      refreshEmojiGrid();
+    }
+  } catch(e){ /* بلا إنترنت — المحلية تكفي */ }
+}
+function pushIconsToGithub(msg){
+  if (!getToken()) return Promise.reject(new Error("لا توكن"));
+  return ghPutPath(PUBLIC_REPO, ICONS_FILE, b64Utf8(iconsJsonText()), msg)
+    .then(function(){ try { ghPutPath(PRIVATE_REPO, ICONS_FILE, b64Utf8(iconsJsonText()), msg + " (نسخة احتياطية)"); } catch(e2){} })
+    .catch(function(e){ throw e; });
+}
+function addToMyIcons(e){
+  if (!state.customIcons) state.customIcons = loadLocalCustomIcons();
+  if (state.customIcons.indexOf(e) !== -1) return;
+  state.customIcons.push(e);
+  saveLocalCustomIcons(state.customIcons);
+  refreshEmojiGrid();
+  if (getToken()){
+    pushIconsToGithub("إضافة أيقونة إلى قائمة المحرر")
+      .then(function(){ toast("⭐ أُضيفت " + e + " لقائمتك على كل أجهزتك"); })
+      .catch(function(){ toast("⭐ أُضيفت الأيقونة محلياً (تعذر الحفظ على GitHub)", "err"); });
+  } else {
+    toast("⭐ أُضيفت الأيقونة محلياً — احفظ توكناً في ⚙️ لمزامنتها مع أجهزتك الأخرى");
+  }
+}
+function removeMyIcon(e){
+  if (!state.customIcons) return;
+  state.customIcons = state.customIcons.filter(function(x){ return x !== e; });
+  saveLocalCustomIcons(state.customIcons);
+  refreshEmojiGrid();
+  renderMyIcons();
+  if (getToken()) pushIconsToGithub("إزالة أيقونة من قائمة المحرر").catch(function(){});
+}
+/* ===== حوار الأيقونات من الإنترنت ===== */
+function openEmojiNet(){
+  if (!state.items){ alert("حمّل المحتوى أولاً ثم حدِّد عنصراً."); return; }
+  if (state.selIdx === null || !state.items[state.selIdx]){ alert("حدِّد عنصراً أولاً — الأيقونة تُوضع للعنصر المحدد."); return; }
+  openDlg("dlgEmojiNet");
+  $("emojiNetSearch").value = "";
+  $("emojiNetGrid").innerHTML = '<div class="empty-hint">⏳ جارٍ تحميل قاعدة الإيموجي العربية (مرة واحدة، ثم تُحفظ على الجهاز)…</div>';
+  $("emojiNetStatus").textContent = "";
+  renderMyIcons();
+  emojiEnsureData().then(function(){
+    if ($("dlgEmojiNet").open) emojiRenderResults(emojiSearch(""));
+    loadCustomIcons();
+  }).catch(function(){
+    $("emojiNetGrid").innerHTML = '<div class="empty-hint">❌ تعذر تحميل القاعدة — تحقق من اتصالك بالإنترنت وأعد المحاولة</div>';
+  });
+}
+function renderMyIcons(){
+  var box = $("myIconsRow");
+  if (!box) return;
+  var list = state.customIcons || [];
+  box.innerHTML = list.length
+    ? list.map(function(e){
+        return '<span class="my-chip"><span class="mc-e" title="وضعها للعنصر" onclick="pickNetEmoji(\'' + e + '\')">' + e + '</span>' +
+               '<span class="mc-x" title="إزالة من قائمتي" onclick="removeMyIcon(\'' + e + '\')">✕</span></span>';
+      }).join("")
+    : '<span style="color:var(--muted);font-size:11px">لا توجد أيقونات مضافة بعد — ابحث في الحقل أعلاه واختر، وستُضاف تلقائياً هنا.</span>';
+}
+function emojiRenderResults(list){
+  var g = $("emojiNetGrid");
+  g.innerHTML = list.length
+    ? list.map(function(it){ return '<span class="net-e" title="' + esc(it.label) + '" onclick="pickNetEmoji(\'' + it.e + '\')">' + it.e + '</span>'; }).join("")
+    : '<div class="empty-hint">لا نتائج — جرّب كلمة أخرى</div>';
+  var st = $("emojiNetStatus");
+  if (st) st.textContent = list.length ? (list.length + " نتيجة من " + (_emojiData ? _emojiData.length : "…")) : "";
+}
+function pickNetEmoji(e){
+  setIcon(e);
+  addToMyIcons(e);
+  closeDlg("dlgEmojiNet");
+}
 /* ================= فتح حوار النشر ================= */
 function openPublish(){
   if (!state.items || state.publishing) return;
@@ -1604,6 +1953,20 @@ function init(){
   $("btnAddItem").onclick = addItem;
   $("btnDoDelCat").onclick = doDeleteCat;
   $("btnDoAddField").onclick = doAddField;
+  /* اختيار صورة من الجهاز (بديل اللصق — مهم للموبايل) */
+  $("imgInput").onchange = function(){
+    if (this.files && this.files[0]) uploadImage(this.files[0]);
+    this.value = "";
+  };
+  /* بحث أيقونات الإنترنت (مع تهدئة الكتابة) */
+  var _esTm = null;
+  $("emojiNetSearch").addEventListener("input", function(){
+    if (_esTm) clearTimeout(_esTm);
+    var q = this.value;
+    _esTm = setTimeout(function(){ emojiRenderResults(emojiSearch(q)); }, 180);
+  });
+  /* تحميل «أيقوناتي» (المحلية ثم من GitHub) */
+  loadCustomIcons();
   var radios = document.querySelectorAll('input[name=delCatMode]');
   for (var i = 0; i < radios.length; i++) radios[i].addEventListener("change", syncDelCatCards);
   /* تأكيد عام */
@@ -1662,7 +2025,10 @@ window.__pt = {
   deleteItem: deleteItem, duplicateItem: duplicateItem, moveItem: moveItem,
   doAddField: doAddField, openPublish: openPublish, doPublish: doPublish,
   validCatId: validCatId, saveFile: saveFile, setIcon: setIcon,
-  mTab: mTab, checkForEditorUpdate: checkForEditorUpdate, editorVersion: function(){ return EDITOR_VERSION; }
+  mTab: mTab, checkForEditorUpdate: checkForEditorUpdate, editorVersion: function(){ return EDITOR_VERSION; },
+  uploadImage: uploadImage, compressImageFile: compressImageFile, openEmojiNet: openEmojiNet,
+  emojiSearch: emojiSearch, emojiEnsureData: emojiEnsureData, pickNetEmoji: pickNetEmoji,
+  customIcons: function(){ return state.customIcons || []; }
 };
 </script>
 </body>
