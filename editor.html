@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محرر محتوى مواقيت الصلاة</title>
+<style>
+:root{
+  --green:#059669; --green-dark:#065f46; --green-light:#a7f3d0; --green-bg:#ecfdf5;
+  --gold:#d97706; --bg:#f4f8f6; --card:#ffffff; --line:#d7e5de;
+  --text:#1f2937; --muted:#6b7280; --red:#dc2626; --red-bg:#fef2f2;
+  --amber-bg:#fffbeb; --amber-line:#f59e0b; --blue:#2563eb;
+  --shadow:0 1px 3px rgba(6,95,70,.08),0 4px 14px rgba(6,95,70,.07);
+  --radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI",Tahoma,"Noto Sans Arabic","Noto Naskh Arabic",Arial,sans-serif;
+  background:var(--bg); color:var(--text); font-size:14px; line-height:1.7;
+  display:flex; flex-direction:column;
+}
+.hidden{display:none !important}
+button{font-family:inherit; cursor:pointer}
+input,textarea,select{font-family:inherit; font-size:13px; color:var(--text)}
+/* ===== Header ===== */
+header#topbar{
+  background:linear-gradient(135deg,#065f46 0%,#059669 60%,#0d9488 100%);
+  color:#fff; padding:10px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  box-shadow:0 2px 8px rgba(6,95,70,.25); position:sticky; top:0; z-index:50;
+}
+#topbar .brand{font-size:17px; font-weight:800; letter-spacing:.2px; white-space:nowrap}
+#topbar .brand small{font-weight:400; opacity:.85; font-size:11px; margin-inline-start:6px}
+#topStats{font-size:11.5px; background:rgba(255,255,255,.14); padding:3px 10px; border-radius:20px; white-space:nowrap}
+#topStats .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#fbbf24;margin-inline-start:4px;vertical-align:middle}
+.spacer{flex:1}
+.tbtn{
+  background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.25); color:#fff;
+  padding:6px 13px; border-radius:9px; font-size:12.5px; font-weight:600; transition:.15s;
+  white-space:nowrap;
+}
+.tbtn:hover{background:rgba(255,255,255,.28)}
+.tbtn.primary{background:#fff; color:var(--green-dark); border-color:#fff}
+.tbtn.primary:hover{background:#ecfdf5}
+.tbtn:disabled{opacity:.45; cursor:not-allowed}
+/* ===== Main 3 panes ===== */
+main#appMain{flex:1; display:grid; grid-template-columns:250px 1fr 460px; gap:12px; padding:12px; min-height:0}
+@media (max-width:1100px){ main#appMain{grid-template-columns:220px 1fr} #editorPane{grid-column:1/-1} }
+/* ===== نسخة الموبايل: لوحة واحدة + تبويبات ===== */
+#mobileTabs{display:none}
+@media (max-width:760px){
+  main#appMain{grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:8px; padding:8px}
+  #mobileTabs{display:flex; grid-area:1/1; gap:6px}
+  #mobileTabs .mtab{flex:1; padding:9px 4px; border:1px solid var(--line); background:var(--card); border-radius:10px; font-size:12px; font-weight:800; color:var(--muted); cursor:pointer; font-family:inherit}
+  #mobileTabs .mtab.active{background:var(--green); color:#fff; border-color:var(--green)}
+  #appMain > .pane{grid-area:2/1; display:none; min-height:0}
+  body.m-tab-cats #catsPane{display:flex}
+  body.m-tab-items #itemsPane{display:flex}
+  body.m-tab-edit #editorPane{display:flex}
+  header#topbar{padding:8px 10px}
+  #topbar .brand{font-size:15px}
+  #searchBox{width:96px !important; flex:1; min-width:78px}
+  .side-note{display:none}
+  footer#statusbar{font-size:10px; padding:5px 8px; flex-wrap:wrap}
+}
+/* ===== لافتة توفر إصدار أحدث من المحرر ===== */
+#updateBanner{display:none; align-items:center; gap:10px; background:var(--amber-bg); color:#92400e; border-bottom:1px solid var(--amber-line); padding:8px 14px; font-size:12.5px; font-weight:700}
+#updateBanner button{border:1px solid #fcd34d; background:#fff; color:#92400e; border-radius:8px; padding:4px 12px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit}
+#updateBanner button:hover{background:#fef3c7}
+#updateBanner #ubLater{background:none; border:none; font-size:14px; padding:2px 6px}
+.pane{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow); display:flex; flex-direction:column; min-height:0; overflow:hidden;
+}
+.pane-head{
+  padding:10px 12px; border-bottom:1px solid var(--line); background:#f8fbf9;
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.pane-head h2{font-size:13.5px; color:var(--green-dark); font-weight:800}
+.pane-head .count{font-size:11px; color:var(--muted); background:#eef5f1; border-radius:12px; padding:1px 8px}
+.pane-body{flex:1; overflow-y:auto; padding:8px; min-height:0}
+.mini-btn{
+  background:var(--green-bg); color:var(--green-dark); border:1px solid var(--green-light);
+  border-radius:8px; padding:3px 10px; font-size:11.5px; font-weight:700; transition:.15s;
+}
+.mini-btn:hover{background:var(--green-light)}
+.mini-btn.danger{background:var(--red-bg); color:var(--red); border-color:#fecaca}
+.mini-btn.danger:hover{background:#fee2e2}
+/* categories sidebar */
+.cat-row{
+  display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:9px; cursor:pointer;
+  border:1px solid transparent; margin-bottom:3px; transition:.12s;
+}
+.cat-row:hover{background:#f0f7f3}
+.cat-row.active{background:var(--green-bg); border-color:var(--green-light)}
+.cat-row .c-ico{font-size:16px; width:22px; text-align:center}
+.cat-row .c-name{flex:1; font-weight:600; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.cat-row .c-count{font-size:10.5px; color:var(--muted); background:#f1f5f3; border-radius:10px; padding:0 7px}
+.badge-new{font-size:9px; color:#92400e; background:#fef3c7; border-radius:8px; padding:0 6px; font-weight:700}
+.cat-row.cmd-row{background:var(--amber-bg); border:1px dashed var(--amber-line)}
+.cat-row.cmd-row .c-name{color:#92400e}
+.side-note{font-size:10.5px; color:var(--muted); padding:8px 10px; border-top:1px dashed var(--line); margin-top:6px}
+/* items list */
+.item-row{
+  display:flex; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:10px;
+  margin-bottom:6px; cursor:pointer; transition:.12s; background:#fff; align-items:flex-start;
+}
+.item-row:hover{border-color:var(--green); background:#f6fdf9}
+.item-row.active{border-color:var(--green); background:var(--green-bg); box-shadow:inset 3px 0 0 var(--green)}
+.item-row .i-ico{font-size:17px; min-width:24px; text-align:center; padding-top:1px}
+.item-row .i-text{flex:1; font-size:12.5px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; word-break:break-word}
+.item-row .i-badges{display:flex; gap:4px; flex-wrap:wrap; margin-top:3px}
+.i-badge{font-size:9px; background:#eef2ff; color:#4338ca; border-radius:7px; padding:0 6px; font-weight:600}
+.i-badge.warn{background:var(--amber-bg); color:#92400e}
+.item-row .i-ops{display:flex; flex-direction:column; gap:3px; opacity:.55}
+.item-row:hover .i-ops{opacity:1}
+.op{background:#f3f4f6; border:1px solid #e5e7eb; border-radius:6px; width:22px; height:22px; font-size:11px; line-height:1; display:flex; align-items:center; justify-content:center}
+.op:hover{background:var(--green-bg); border-color:var(--green-light)}
+.op.del:hover{background:var(--red-bg); border-color:#fecaca}
+.empty-hint{text-align:center; color:var(--muted); font-size:12px; padding:26px 12px}
+/* item editor */
+#editorPane .pane-body{padding:14px}
+.field{margin-bottom:11px}
+.field label{display:block; font-size:11.5px; font-weight:700; color:var(--green-dark); margin-bottom:4px}
+.field label .en{color:var(--muted); font-weight:400; font-size:10px}
+.field input[type=text], .field textarea, .field select{
+  width:100%; border:1px solid var(--line); border-radius:9px; padding:7px 10px; background:#fbfdfc;
+  outline:none; transition:.15s;
+}
+.field input:focus, .field textarea:focus, .field select:focus{border-color:var(--green); box-shadow:0 0 0 3px rgba(5,150,105,.12); background:#fff}
+.field textarea{min-height:130px; resize:vertical; line-height:1.9; font-size:13.5px}
+.char-count{font-size:10px; color:var(--muted); text-align:left; margin-top:2px}
+.emoji-pick{display:flex; flex-wrap:wrap; gap:4px; margin-top:5px}
+.emoji-pick span{font-size:16px; cursor:pointer; border:1px solid transparent; border-radius:7px; padding:2px 5px; transition:.1s}
+.emoji-pick span:hover{background:var(--green-bg); border-color:var(--green-light)}
+.editor-actions{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap}
+.btn{
+  border:none; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:700; transition:.15s;
+}
+.btn.main{background:var(--green); color:#fff}
+.btn.main:hover{background:var(--green-dark)}
+.btn.ghost{background:#fff; color:var(--green-dark); border:1px solid var(--green-light)}
+.btn.ghost:hover{background:var(--green-bg)}
+.btn.danger{background:var(--red); color:#fff}
+.btn.danger:hover{background:#b91c1c}
+.btn:disabled{opacity:.5; cursor:not-allowed}
+.warnbox{background:var(--amber-bg); border:1px solid var(--amber-line); color:#92400e; border-radius:9px; padding:8px 12px; font-size:11.5px; margin-bottom:10px}
+.dangerbox{background:var(--red-bg); border:1px solid #fecaca; color:#991b1b; border-radius:9px; padding:8px 12px; font-size:11.5px; margin-bottom:10px}
+.okbox{background:var(--green-bg); border:1px solid var(--green-light); color:var(--green-dark); border-radius:9px; padding:8px 12px; font-size:11.5px; margin-bottom:10px}
+details.rawjson{margin-top:12px; border:1px solid var(--line); border-radius:9px; background:#fbfdfc}
+details.rawjson summary{cursor:pointer; padding:8px 12px; font-size:11.5px; font-weight:700; color:var(--muted)}
+details.rawjson .raw-body{padding:0 12px 12px}
+details.rawjson textarea{width:100%; min-height:170px; direction:ltr; text-align:left; font-family:Consolas,Monaco,monospace; font-size:11.5px; border:1px solid var(--line); border-radius:8px; padding:8px}
+.extra-fields{border:1px dashed var(--line); border-radius:9px; padding:10px; margin-bottom:11px; background:#f8fbf9}
+.extra-fields h4{font-size:11px; color:var(--muted); margin-bottom:7px; font-weight:700}
+.ef-row{display:flex; gap:6px; align-items:center; margin-bottom:5px}
+.ef-row .ef-k{font-size:10.5px; font-weight:700; color:var(--green-dark); min-width:92px}
+.ef-row input[type=text]{flex:1; border:1px solid var(--line); border-radius:7px; padding:5px 8px}
+.ef-row .rm{background:none; border:none; color:var(--red); font-size:13px; cursor:pointer}
+.ef-row .ts-now{background:var(--green-light); color:var(--green-dark); border:1px solid var(--line); border-radius:7px; padding:4px 9px; font-size:10.5px; font-weight:700; cursor:pointer; white-space:nowrap}
+.ef-row .ts-now:hover{filter:brightness(.94)}
+.ts-warn{font-size:9.5px; color:var(--red); margin:-2px 0 7px; padding-right:92px}
+/* welcome */
+main#welcome{flex:1; display:flex; align-items:center; justify-content:center; padding:24px}
+.wcard{background:#fff; border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:38px 42px; max-width:560px; width:100%; text-align:center}
+.wcard .logo{font-size:46px}
+.wcard h1{font-size:20px; color:var(--green-dark); margin:10px 0 4px}
+.wcard p.sub{color:var(--muted); font-size:13px; margin-bottom:22px}
+.wbtns{display:flex; flex-direction:column; gap:10px}
+.wbtn{
+  display:flex; align-items:center; gap:12px; padding:13px 18px; border-radius:12px; font-size:14px;
+  font-weight:700; border:1px solid var(--line); background:#fbfdfc; transition:.15s; text-align:right;
+}
+.wbtn:hover{border-color:var(--green); background:var(--green-bg)}
+.wbtn .wi{font-size:22px}
+.wbtn small{display:block; font-weight:400; font-size:11px; color:var(--muted)}
+.wnote{margin-top:18px; font-size:11px; color:var(--muted); border-top:1px dashed var(--line); padding-top:12px}
+/* status bar */
+footer#statusbar{
+  background:var(--green-dark); color:#d1fae5; font-size:11.5px; padding:5px 14px;
+  display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+}
+footer#statusbar .s-dirty{color:#fbbf24; font-weight:700}
+/* dialogs */
+dialog{
+  border:none; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.28); padding:0;
+  width:min(92vw,560px); max-height:88vh;
+}
+dialog::backdrop{background:rgba(6,95,70,.45); backdrop-filter:blur(2px)}
+.dlg-head{background:linear-gradient(135deg,#065f46,#059669); color:#fff; padding:13px 18px; font-weight:800; font-size:15px; border-radius:16px 16px 0 0; display:flex; justify-content:space-between; align-items:center}
+.dlg-head button{background:rgba(255,255,255,.15); border:none; color:#fff; border-radius:8px; width:26px; height:26px; font-size:14px}
+.dlg-body{padding:18px; overflow-y:auto; max-height:calc(88vh - 110px)}
+.dlg-foot{padding:12px 18px; border-top:1px solid var(--line); display:flex; gap:8px; justify-content:flex-start; background:#f8fbf9; border-radius:0 0 16px 16px}
+.dlg-body label.fl{display:block; font-size:12px; font-weight:700; color:var(--green-dark); margin:10px 0 4px}
+.dlg-body input[type=text], .dlg-body input[type=password], .dlg-body textarea, .dlg-body select{
+  width:100%; border:1px solid var(--line); border-radius:9px; padding:8px 11px; outline:none;
+}
+.dlg-body input:focus, .dlg-body textarea:focus, .dlg-body select:focus{border-color:var(--green)}
+.dlg-body .hint{font-size:11px; color:var(--muted); margin-top:5px}
+.check-row{display:flex; align-items:flex-start; gap:8px; margin:8px 0; font-size:12.5px}
+.check-row input{margin-top:4px}
+.publog{background:#0f172a; color:#a7f3d0; direction:ltr; text-align:left; font-family:Consolas,monospace; font-size:11px; border-radius:9px; padding:10px 12px; max-height:190px; overflow-y:auto; margin-top:10px; white-space:pre-wrap; word-break:break-all}
+.publog .ok{color:#6ee7b7} .publog .err{color:#fca5a5} .publog .info{color:#93c5fd}
+.radio-card{border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; cursor:pointer; display:flex; gap:10px; align-items:flex-start; transition:.12s}
+.radio-card:hover{border-color:var(--green)}
+.radio-card.sel{border-color:var(--green); background:var(--green-bg)}
+.radio-card.dangersel{border-color:var(--red); background:var(--red-bg)}
+.radio-card .rc-t{font-weight:700; font-size:13px}
+.radio-card .rc-d{font-size:11px; color:var(--muted)}
+.helpbox h3{color:var(--green-dark); font-size:14px; margin:14px 0 5px}
+.helpbox p, .helpbox li{font-size:12.5px; color:#374151}
+.helpbox ol, .helpbox ul{padding-inline-start:22px; margin:6px 0}
+.helpbox li{margin-bottom:4px}
+kbd{background:#eef2f1; border:1px solid var(--line); border-radius:5px; padding:0 6px; font-size:11px; font-family:inherit}
+.toast{
+  position:fixed; bottom:46px; inset-inline-start:50%; transform:translateX(50%);
+  background:#065f46; color:#fff; padding:9px 20px; border-radius:24px; font-size:13px; font-weight:600;
+  box-shadow:0 6px 22px rgba(0,0,0,.25); z-index:200; opacity:0; pointer-events:none; transition:.25s;
+}
+.toast.show{opacity:1}
+.toast.err{background:var(--red)}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <div class="brand">🕌 محرر المحتوى<small>مواقيت الصلاة</small></div>
+  <div id="topStats" class="hidden"></div>
+  <div class="spacer"></div>
+  <button class="tbtn" id="btnOpen">📂 فتح ملف</button>
+  <button class="tbtn" id="btnWeb">🌐 من الإنترنت</button>
+  <button class="tbtn" id="btnSave" disabled>💾 حفظ</button>
+  <button class="tbtn primary" id="btnPublish" disabled>🚀 نشر إلى GitHub</button>
+  <button class="tbtn" id="btnSettings" title="التوكن والإعدادات">⚙️</button>
+  <button class="tbtn" id="btnHelp" title="مساعدة">؟</button>
+  <input type="file" id="fileInput" accept=".json,application/json" class="hidden">
+</header>
+
+<!-- ======= لافتة توفر إصدار أحدث ======= -->
+<div id="updateBanner">
+  <span id="ubMsg">🔄 يوجد إصدار أحدث من المحرر</span>
+  <span class="spacer"></span>
+  <button id="ubGo">🔄 تحديث الآن</button>
+  <button id="ubLater" title="إخفاء حتى الجلسة القادمة">✕</button>
+</div>
+
+<!-- ======= شاشة الترحيب ======= -->
+<main id="welcome">
+  <div class="wcard">
+    <div class="logo">🕌</div>
+    <h1>محرر محتوى مواقيت الصلاة</h1>
+    <p class="sub">عدِّل خانات ومحتويات التطبيق (أدعية، أذكار، أحاديث، رسائل…) من جهازك مباشرة — بدون GitHub</p>
+    <div class="wbtns">
+      <button class="wbtn" id="wOpen">
+        <span class="wi">📂</span>
+        <span>فتح ملف content.json من الجهاز
+          <small>إن كانت لديك نسخة محفوظة سابقاً على هذا الجهاز</small>
+        </span>
+      </button>
+      <button class="wbtn" id="wWeb">
+        <span class="wi">🌐</span>
+        <span>تحميل النسخة المنشورة حالياً (يحتاج إنترنت)
+          <small>الطريقة الموصى بها — تعمل دائماً على آخر نسخة حية</small>
+        </span>
+      </button>
+    </div>
+    <div class="wnote">
+      💡 سير العمل المقترح: <b>تحميل النسخة الحية ← تعديل ← حفظ نسخة على الجهاز ← نشر</b>.
+      النشر يحدّث التطبيق لجميع المستخدمين خلال ~30 ثانية من فتحه، ويحفظ نسخة كاملة في تاريخ GitHub (نسخة احتياطية تلقائية).
+    </div>
+  </div>
+</main>
+
+<!-- ======= المحرر ======= -->
+<main id="appMain" class="hidden">
+
+  <!-- ======= تبويبات نسخة الموبايل ======= -->
+  <nav id="mobileTabs">
+    <button class="mtab active" data-tab="cats">📁 الخانات</button>
+    <button class="mtab" data-tab="items">📋 العناصر</button>
+    <button class="mtab" data-tab="edit">✏️ التحرير</button>
+  </nav>
+
+  <aside class="pane" id="catsPane">
+    <div class="pane-head">
+      <h2>📁 الخانات</h2>
+      <span class="count" id="catsCount">0</span>
+      <span class="spacer"></span>
+      <button class="mini-btn" id="btnAddCat">➕ خانة</button>
+    </div>
+    <div class="pane-body" id="catsList"></div>
+    <div class="side-note">الخانة = تصنيف يظهر للتطبيق. الخانات الجديدة تظهر في قسم «الكل» داخل التطبيق، وزر تصفية مخصص لها يُضاف مع تحديثات التطبيق القادمة.</div>
+  </aside>
+
+  <section class="pane" id="itemsPane">
+    <div class="pane-head">
+      <h2 id="itemsPaneTitle">العناصر</h2>
+      <span class="count" id="itemsCount">0</span>
+      <span class="spacer"></span>
+      <input type="text" id="searchBox" placeholder="🔍 بحث في كل المحتوى…" style="width:180px;border:1px solid var(--line);border-radius:8px;padding:4px 9px;font-size:12px;outline:none">
+      <button class="mini-btn" id="btnAddItem">➕ عنصر</button>
+    </div>
+    <div class="pane-body" id="itemsList"></div>
+  </section>
+
+  <section class="pane" id="editorPane">
+    <div class="pane-head">
+      <h2 id="editorTitle">تفاصيل العنصر</h2>
+      <span class="spacer"></span>
+      <span id="editorPos" style="font-size:10.5px;color:var(--muted)"></span>
+    </div>
+    <div class="pane-body">
+      <div class="empty-hint" id="editorEmpty">👈 اختر عنصراً من القائمة لعرضه وتعديله</div>
+      <div id="itemEditor" class="hidden"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="statusbar" class="hidden">
+  <span id="stSource">—</span>
+  <span id="stCounts"></span>
+  <span id="stDirty" class="s-dirty hidden">● تغييرات غير منشورة</span>
+  <span class="spacer"></span>
+  <span id="stMsg"></span>
+</footer>
+
+<!-- ======= حوار الإعدادات (التوكن) ======= -->
+<dialog id="dlgSettings">
+  <div class="dlg-head"><span>⚙️ الإعدادات — توكن GitHub</span><button onclick="closeDlg('dlgSettings')">✕</button></div>
+  <div class="dlg-body">
+    <div class="warnbox">🔐 التوكن يُحفظ <b>على هذا الجهاز فقط</b> (بداخل المتصفح) ولا يُرسل لأي جهة سوى github.com. لا يتم حفظه داخل ملف المحرر نفسه — يمكنكم مشاركة الملف أو نسخه بأمان.</div>
+    <label class="fl">توكن GitHub (للنشر المباشر)</label>
+    <input type="password" id="setToken" placeholder="ghp_…" autocomplete="off" spellcheck="false">
+    <div class="hint">أنشئ التوكن من: github.com/settings/tokens ← Generate new token (classic) ← فعّل صلاحية <b>repo</b>. التوكن مطلوب مرة واحدة فقط للنشر؛ الفتح والتعديل والحفظ لا يحتاجانه.</div>
+    <div id="tokenStatus" style="margin-top:10px"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn main" id="btnSaveToken">حفظ التوكن</button>
+    <button class="btn ghost" id="btnTestToken">فحص التوكن</button>
+    <button class="btn danger" id="btnClearToken">حذف التوكن</button>
+  </div>
+</dialog>
+
+<!-- ======= حوار النشر ======= -->
+<dialog id="dlgPublish">
+  <div class="dlg-head"><span>🚀 النشر إلى GitHub</span><button onclick="closeDlg('dlgPublish')">✕</button></div>
+  <div class="dlg-body">
+    <div id="pubSummary" class="okbox"></div>
+    <label class="fl">رسالة الحفظ (تظهر في تاريخ GitHub)</label>
+    <input type="text" id="pubMsg" placeholder="تحديث المحتوى">
+    <label class="fl">أين تنشر؟</label>
+    <div class="check-row"><input type="checkbox" id="pubPublic" checked><label for="pubPublic" style="cursor:pointer"><b>الريبو العام</b> (prayer-times) — هذا ما يقرأه التطبيق لجميع المستخدمين عبر CDN</label></div>
+    <div class="check-row"><input type="checkbox" id="pubPrivate" checked><label for="pubPrivate" style="cursor:pointer"><b>الريبو الخاص</b> (prayer-times-private) — النسخة الأم، حفظها محدَّثة يضمن بقاء نسختكم الرئيسية مطابقة</label></div>
+    <div class="hint">⚠️ النشر يجعل التعديلات مرئية لجميع مستخدمي التطبيق خلال ~30 ثانية من فتح التطبيق. احفظ نسخة على جهازك أولاً (زر 💾) إن أردت نسخة احتياطية محلية.</div>
+    <div class="publog hidden" id="pubLog"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn main" id="btnDoPublish">🚀 نشر الآن</button>
+    <button class="btn ghost" id="btnClosePub">إغلاق</button>
+  </div>
+</dialog>
+
+<!-- ======= حوار إضافة/إعادة تسمية خانة ======= -->
+<dialog id="dlgCat">
+  <div class="dlg-head"><span id="dlgCatTitle">➕ خانة جديدة</span><button onclick="closeDlg('dlgCat')">✕</button></div>
+  <div class="dlg-body">
+    <div id="dlgCatWarn"></div>
+    <label class="fl">معرّف الخانة (بالإنجليزية، حروف صغيرة وأرقام وشرطة فقط)</label>
+    <input type="text" id="catIdInput" placeholder="مثال: azkar-sleep" dir="ltr" style="text-align:left" spellcheck="false">
+    <div class="hint">المعرّف هو الاسم التقني الذي يربط العناصر ببعضها. لا يظهر للمستخدم إن لم يكن من خانات التطبيق المعروفة.</div>
+    <label class="fl">أيقونة العنصر الأول</label>
+    <input type="text" id="catIconInput" value="📖" style="width:70px;text-align:center;font-size:17px">
+    <label class="fl">نص العنصر الأول <span style="font-weight:400;color:var(--muted)">(لا يمكن إنشاء خانة فارغة — أنشئ عنصراً واحداً الآن وعدِّله لاحقاً)</span></label>
+    <textarea id="catTextInput" style="width:100%;min-height:90px;border:1px solid var(--line);border-radius:9px;padding:8px" placeholder="اكتب هنا محتوى العنصر الأول…"></textarea>
+    <label class="fl">المصدر (اختياري)</label>
+    <input type="text" id="catSrcInput" placeholder="مثال: صحيح البخاري">
+  </div>
+  <div class="dlg-foot">
+    <button class="btn main" id="btnDoCat">إنشاء</button>
+    <button class="btn ghost" onclick="closeDlg('dlgCat')">إلغاء</button>
+  </div>
+</dialog>
+
+<!-- ======= حوار حذف خانة ======= -->
+<dialog id="dlgDelCat">
+  <div class="dlg-head"><span>🗑️ حذف خانة</span><button onclick="closeDlg('dlgDelCat')">✕</button></div>
+  <div class="dlg-body">
+    <div id="delCatInfo" class="warnbox"></div>
+    <label class="fl">ماذا نفعل بعناصر هذه الخانة؟</label>
+    <div class="radio-card sel" data-mode="move" id="rcMove">
+      <input type="radio" name="delCatMode" value="move" checked>
+      <div><div class="rc-t">نقلها إلى خانة أخرى</div><div class="rc-d">لن يُحذف أي محتوى — تُنقل جميع العناصر كما هي</div>
+        <select id="moveTarget" style="margin-top:6px;width:100%"></select>
+      </div>
+    </div>
+    <div class="radio-card" data-mode="delete" id="rcDelete">
+      <input type="radio" name="delCatMode" value="delete">
+      <div><div class="rc-t" style="color:var(--red)">حذفها نهائياً مع الخانة</div><div class="rc-d">لا يمكن التراجع إلا يدوياً قبل الحفظ (زر إلغاء التغييرات)</div></div>
+    </div>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn main" id="btnDoDelCat">تنفيذ</button>
+    <button class="btn ghost" onclick="closeDlg('dlgDelCat')">إلغاء</button>
+  </div>
+</dialog>
+
+<!-- ======= حوار إضافة حقل خاص ======= -->
+<dialog id="dlgField">
+  <div class="dlg-head"><span>➕ إضافة حقل للعنصر</span><button onclick="closeDlg('dlgField')">✕</button></div>
+  <div class="dlg-body">
+    <label class="fl">حقول معروفة</label>
+    <select id="fieldKnown"></select>
+    <div class="hint">id: رقم تعريفي • narrator: اسم الراوي (للأحاديث) • group_id/is_group_title/count: تجميع العناصر • ts: طابع زمني للرسائل (زر «🕐 الآن» بجانب الحقل يضع التاريخ والوقت الحاليين بصيغة التطبيق) • audience: أجهزة مستهدفة (جهاز واحد أو أكثر مفصولة بفواصل) • minAppVersion: إظهار للإصدارات الحديثة فقط</div>
+    <label class="fl" style="margin-top:14px">أو حقل مخصص (اسم تقني بالإنجليزية)</label>
+    <input type="text" id="fieldCustom" placeholder="مثال: note" dir="ltr" style="text-align:left" spellcheck="false">
+  </div>
+  <div class="dlg-foot">
+    <button class="btn main" id="btnDoAddField">إضافة الحقل</button>
+    <button class="btn ghost" onclick="closeDlg('dlgField')">إلغاء</button>
+  </div>
+</dialog>
+
+<!-- ======= حوار تأكيد عام ======= -->
+<dialog id="dlgConfirm">
+  <div class="dlg-head"><span id="cfTitle">تأكيد</span><button onclick="closeDlg('dlgConfirm')">✕</button></div>
+  <div class="dlg-body"><div id="cfBody" style="font-size:13px"></div></div>
+  <div class="dlg-foot">
+    <button class="btn main" id="cfYes">تأكيد</button>
+    <button class="btn ghost" id="cfNo">إلغاء</button>
+  </div>
+</dialog>
+
+<!-- ======= حوار المساعدة ======= -->
+<dialog id="dlgHelp">
+  <div class="dlg-head"><span>؟ دليل الاستخدام السريع</span><button onclick="closeDlg('dlgHelp')">✕</button></div>
+  <div class="dlg-body helpbox">
+    <h3>🚀 دورة العمل الكاملة</h3>
+    <ol>
+      <li><b>🌐 من الإنترنت</b> — حمّل النسخة المنشورة حالياً (الطريقة الموصى بها دائماً).</li>
+      <li><b>عدِّل</b> — اختر خانة من اليمين، ثم عنصراً من الوسط، وعدِّله في اللوحة اليسرى. يمكنك إضافة/حذف/إعادة تسمية خانات، وإضافة/نسخ/حذف/ترتيب العناصر.</li>
+      <li><b>💾 حفظ</b> — نزّل نسخة محلية (content.json) للاحتفاظ بها على جهازك.</li>
+      <li><b>🚀 نشر</b> — أرسل التعديلات إلى GitHub (العام + الخاص). خلال ~30 ثانية يظهر المحتوى الجديد في تطبيق جميع المستخدمين.</li>
+    </ol>
+    <h3>📁 الخانات (الفئات)</h3>
+    <ul>
+      <li>الخانة مجموعة عناصر؛ وجودها مشتق من عناصرها — خانة بلا عناصر تختفي عند الحفظ.</li>
+      <li><b>إعادة التسمية</b> تغيّر المعرّف على <u>جميع</u> عناصر الخانة دفعة واحدة.</li>
+      <li>تنبيه: الخانات الأساسية (أحاديث، قرآن، أذكار…) لها أزرار تصفية داخل التطبيق باسمها الحالي — إن غيّرت معرّفها سيعرض التطبيق محتواها في قسم «الكل» فقط، وسيبقى الزر فارغاً حتى تحديث التطبيق.</li>
+    </ul>
+    <h3>💬 حقول خاصة</h3>
+    <ul>
+      <li><b>ts</b> طابع زمني للرسائل (يظهر للتلميذ كوقت الإرسال). اضغط زر «🕐 الآن» بجانب الحقل لوضع التاريخ والوقت الحاليين بضغطة واحدة — والتزم الصيغة YYYY/MM/DD HH:MM لأن التطبيق يقارن الطوابع نصياً لتحديد الرسائل الجديدة.</li>
+      <li><b>audience</b> لإرسال رسالة لأجهزة محددة: ضع معرّف الجهاز، أو عدة معرفات مفصولة بفواصل. اتركه فارغاً أو «*» للجميع.</li>
+      <li><b>minAppVersion</b> مثال: 26.0 — تختفي الرسالة عن الإصدارات الأقدم.</li>
+      <li><b>group_id / is_group_title / count</b> لتجميع النكت والمحتويات المتسلسلة.</li>
+    </ul>
+    <h3>⚠️ أوامر النظام (_update_cmd)</h3>
+    <p>عناصر ذات خانة <kbd>_update_cmd</kbd> هي أوامر تحديث خفية للإدارة — تظهر في قسم منفصل ولا تُعدَّل إلا عند الضرورة القصوى.</p>
+    <h3>💾 النسخ الاحتياطي</h3>
+    <p>كل نشر يُنشئ نسخة كاملة في تاريخ GitHub يمكن الرجوع إليها في أي وقت. استخدم <kbd>Ctrl+S</kbd> لحفظ نسخة محلية إضافية، أو زر «نسخة احتياطية مؤرخة» من قائمة الحفظ.</p>
+  </div>
+  <div class="dlg-foot"><button class="btn main" onclick="closeDlg('dlgHelp')">فهمت</button></div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+/* ============================================================
+   محرر محتوى مواقيت الصلاة — ملف واحد بلا اعتماديات خارجية
+   يعمل: فتح/تعديل/حفظ content.json + نشر مباشر إلى GitHub
+   ============================================================ */
+
+var OWNER = "ehessan1974-maker";
+var PUBLIC_REPO = "prayer-times";
+var PRIVATE_REPO = "prayer-times-private";
+var CONTENT_PATH = "content.json";
+var EDITOR_VERSION = "1.1.0"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub */
+
+/* الخانات المعروفة للتطبيق (من أزرار التصفية داخل prayer-times.html) */
+var KNOWN_CATS = {
+  "hadith":            { name: "أحاديث",      icon: "🕌" },
+  "quran":             { name: "قرآن",        icon: "📖" },
+  "azkar":             { name: "أذكار",       icon: "🤲" },
+  "azkar-after-prayer":{ name: "بعد الصلاة",  icon: "🕌" },
+  "azkar-morning":     { name: "الصباح",      icon: "🌅" },
+  "azkar-evening":     { name: "المساء",      icon: "🌙" },
+  "azkar-friday":      { name: "الجمعة",      icon: "🕌" },
+  "ehemessages":       { name: "رسائل",       icon: "💬" },
+  "health":            { name: "صحة",         icon: "💊" },
+  "food":              { name: "أطعمة",       icon: "🍯" },
+  "jokes":             { name: "نكت",         icon: "😂" },
+  "world":             { name: "طرائف",       icon: "🌍" },
+  "dua":               { name: "أدعية",       icon: "🤲" },
+  "wisdom":            { name: "حكم",         icon: "💎" },
+  "prophet":           { name: "أنبياء",      icon: "📜" },
+  "poetry":            { name: "شعر",         icon: "🎼" },
+  "quran-tafseer":     { name: "إعراب",       icon: "📝" },
+  "vitamins":          { name: "فيتامينات",   icon: "💊" },
+  "stars":             { name: "نجوم",        icon: "🌟" }
+};
+
+/* الحقول الاختيارية المعروفة (تُعرض عند وجودها ويمكن إضافتها) */
+var OPTIONAL_FIELDS = [
+  { k: "id",             label: "المعرّف (id)",              type: "number" },
+  { k: "narrator",       label: "الراوي (narrator)",         type: "text" },
+  { k: "group_id",       label: "معرّف المجموعة (group_id)", type: "text" },
+  { k: "is_group_title", label: "عنوان مجموعة (is_group_title)", type: "bool" },
+  { k: "count",          label: "عدد التكرار (count)",       type: "number" },
+  { k: "ts",             label: "الطابع الزمني (ts)",        type: "text" },
+  { k: "audience",       label: "جمهور مستهدف (audience)",   type: "text" },
+  { k: "minAppVersion",  label: "أدنى إصدار (minAppVersion)", type: "text" }
+];
+
+var EMOJI_PICKS = ["🕌","🤲","📖","📜","🌙","😴","💬","🍽️","🚗","💎","🌅","🕋","💊","🎵","😂","🌍","🌟","🍯","📝","✈️","🩸","🍌","🚌","❤️","🌸","⛰️","🌊","🕌"];
+
+var state = {
+  items: null,          // مصفوفة العناصر الحالية
+  snapshot: null,       // نص JSON كما كان عند آخر تحميل/نشر (للتراجع)
+  sourceLabel: "",      // وصف المصدر (ملف محلي / إنترنت)
+  dirty: false,
+  selCat: null,
+  selIdx: null,         // الفهرس العام داخل items
+  search: "",
+  publishing: false
+};
+
+/* ================= أدوات عامة ================= */
+function $(id){ return document.getElementById(id); }
+function esc(s){
+  return String(s == null ? "" : s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function toast(msg, isErr){
+  var t = $("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (isErr ? " err" : "");
+  clearTimeout(t._tm);
+  t._tm = setTimeout(function(){ t.className = "toast" + (isErr ? " err" : ""); }, 2600);
+}
+function openDlg(id){ try{ document.getElementById(id).showModal(); }catch(e){} }
+function closeDlg(id){ try{ document.getElementById(id).close(); }catch(e){} }
+function nowStamp(){
+  var d = new Date(), p = function(n){ return (n<10?"0":"")+n; };
+  return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes());
+}
+function catInfo(cat){
+  var known = KNOWN_CATS[cat];
+  return {
+    id: cat,
+    name: known ? known.name : cat,
+    icon: known ? known.icon : "📁",
+    known: !!known,
+    isCmd: cat === "_update_cmd"
+  };
+}
+/* اشتقاق الخانات من العناصر (بترتيب أول ظهور) */
+function catsOf(items){
+  var order = [], counts = {}, i, c;
+  for (i = 0; i < items.length; i++){
+    c = String(items[i].cat || "");
+    if (!(c in counts)){ counts[c] = 0; order.push(c); }
+    counts[c]++;
+  }
+  return order.map(function(c){ var inf = catInfo(c); inf.count = counts[c]; return inf; });
+}
+
+/* ================= حالة التطبيق ================= */
+function markDirty(){
+  state.dirty = true;
+  refreshStatus();
+}
+function refreshStatus(){
+  var has = state.items !== null;
+  $("btnSave").disabled = !has;
+  $("btnPublish").disabled = !has || state.publishing;
+  $("statusbar").classList.toggle("hidden", !has);
+  $("topStats").classList.toggle("hidden", !has);
+  $("appMain").classList.toggle("hidden", !has);
+  $("welcome").classList.toggle("hidden", has);
+  if (!has) return;
+  var nCats = catsOf(state.items).length;
+  $("topStats").innerHTML = esc(state.items.length) + " عنصر • " + nCats + " خانة" +
+    (state.dirty ? ' <span class="dot" title="تغييرات غير منشورة"></span>' : "");
+  $("stSource").textContent = "المصدر: " + state.sourceLabel;
+  $("stCounts").textContent = state.items.length + " عنصر / " + nCats + " خانة";
+  $("stDirty").classList.toggle("hidden", !state.dirty);
+}
+
+/* ================= التحقق من صحة البيانات ================= */
+function validateItems(arr){
+  var errs = [];
+  if (!Array.isArray(arr)) return ["الملف ليس مصفوفة JSON — البنية المتوقعة قائمة عناصر []."];
+  if (arr.length === 0) return ["الملف فارغ (لا يحتوي أي عنصر)."];
+  for (var i = 0; i < arr.length; i++){
+    var it = arr[i];
+    if (!it || typeof it !== "object" || Array.isArray(it)) errs.push("العنصر رقم " + (i+1) + ": ليس كائناً صالحاً.");
+    else {
+      if (it.cat === undefined || String(it.cat) === "") errs.push("العنصر رقم " + (i+1) + ": بلا خانة (cat).");
+      if (it.text === undefined || String(it.text) === "") errs.push("العنصر رقم " + (i+1) + ": بنص فارغ.");
+    }
+    if (errs.length >= 8){ errs.push("… وتوقفت عند أول 8 مشاكل."); break; }
+  }
+  return errs;
+}
+
+/* ================= التحميل ================= */
+function adoptItems(arr, sourceLabel, keepMsg){
+  var errs = validateItems(arr);
+  if (errs.length){
+    if (!confirm("⚠️ الملف يحتوي مشاكل:\n\n• " + errs.slice(0,8).join("\n• ") +
+      "\n\nقد تعرض بعض العناصر بشكل ناقص. هل تريد الفتح رغم ذلك؟")) return false;
+  }
+  state.items = arr;
+  state.sourceLabel = sourceLabel;
+  state.dirty = false;
+  state.snapshot = JSON.stringify(arr);
+  state.selCat = null;
+  state.selIdx = null;
+  state.search = "";
+  $("searchBox").value = "";
+  refreshStatus();
+  renderAll();
+  $("stMsg").textContent = keepMsg || ("تم التحميل: " + new Date().toLocaleTimeString("ar"));
+  return true;
+}
+function loadFromFile(file){
+  if (state.dirty && !confirm("لديك تغييرات غير محفوظة وستُفقد عند فتح ملف آخر. متابعة؟")) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    var arr;
+    try { arr = JSON.parse(reader.result); }
+    catch(e){
+      alert("❌ الملف ليس JSON صالحاً:\n" + e.message +
+        "\n\nتأكد أنك اخترت ملف content.json الصحيح (وليس ملفاً آخر أو نسخة تالفة).");
+      return;
+    }
+    if (adoptItems(arr, "ملف محلي (" + (file.name || "content.json") + ")"))
+      toast("✅ تم فتح الملف — " + arr.length + " عنصر");
+  };
+  reader.onerror = function(){ alert("❌ تعذر قراءة الملف من القرص."); };
+  reader.readAsText(file, "utf-8");
+}
+function loadFromWeb(){
+  if (state.dirty && !confirm("لديك تغييرات غير محفوظة وستُفقد عند تحميل نسخة جديدة. متابعة؟")) return;
+  var urls = [
+    "https://cdn.jsdelivr.net/gh/" + OWNER + "/" + PUBLIC_REPO + "@main/" + CONTENT_PATH,
+    "https://raw.githubusercontent.com/" + OWNER + "/" + PUBLIC_REPO + "/main/" + CONTENT_PATH
+  ];
+  var tried = 0;
+  $("stMsg").textContent = "⏳ جاري التحميل من الإنترنت…";
+  function tryNext(){
+    if (tried >= urls.length){
+      $("stMsg").textContent = "";
+      alert("❌ تعذر التحميل من الإنترنت.\nتأكد من اتصالك بالشبكة ثم أعد المحاولة، أو افتح ملفاً محلياً بديلاً.");
+      return;
+    }
+    var url = urls[tried++] + "?t=" + Date.now();
+    fetch(url, { cache: "no-store" })
+      .then(function(r){ if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+      .then(function(txt){
+        var arr;
+        try { arr = JSON.parse(txt); } catch(e){ throw new Error("الاستجابة ليست JSON صالحاً"); }
+        if (adoptItems(arr, "النسخة المنشورة (إنترنت)"))
+          toast("✅ تم تحميل النسخة الحية — " + arr.length + " عنصر");
+      })
+      .catch(function(){ tryNext(); });
+  }
+  tryNext();
+}
+
+/* ================= الحفظ المحلي ================= */
+function buildSaveText(){
+  return JSON.stringify(state.items, null, 2) + "\n";
+}
+function downloadJson(filename, text){
+  var blob = new Blob([text], { type: "application/json;charset=utf-8" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 800);
+}
+function saveFile(backup){
+  if (!state.items) return;
+  var text = buildSaveText();
+  try { JSON.parse(text); }
+  catch(e){ alert("❌ خطأ داخلي: البيانات الحالية لا تُنتج JSON صالحاً!\n" + e.message); return; }
+  downloadJson(backup ? ("content-backup-" + nowStamp() + ".json") : "content.json", text);
+  toast(backup ? "💾 نُزّلت نسخة احتياطية مؤرخة" : "💾 نُزّل content.json إلى مجلد التنزيلات");
+  $("stMsg").textContent = "حفظ محلي: " + (backup ? "نسخة احتياطية " : "") + new Date().toLocaleTimeString("ar");
+}
+</script>
+<script>
+"use strict";
+/* ================= العرض ================= */
+function renderAll(){
+  renderCats();
+  renderItems();
+  renderEditor();
+  refreshStatus();
+}
+function renderCats(){
+  var items = state.items, list = $("catsList");
+  var cats = catsOf(items);
+  $("catsCount").textContent = cats.length;
+  var html = "";
+  for (var i = 0; i < cats.length; i++){
+    var c = cats[i];
+    html += '<div class="cat-row' + (state.selCat === c.id ? " active" : "") +
+      '" data-cat="' + esc(c.id) + '" onclick="pickCat(this)">' +
+      '<span class="c-ico">' + esc(c.icon) + '</span>' +
+      '<span class="c-name">' + esc(c.name) + (c.known ? "" : ' <span class="badge-new">جديدة</span>') + '</span>' +
+      '<span class="c-count">' + c.count + '</span>' +
+      '<button class="op" title="إعادة تسمية الخانة" onclick="event.stopPropagation();openRenameCat(\'' + esc(encodeURIComponent(c.id)) + '\')">✏️</button>' +
+      '<button class="op del" title="حذف الخانة" onclick="event.stopPropagation();openDeleteCat(\'' + esc(encodeURIComponent(c.id)) + '\')">🗑️</button>' +
+      '</div>';
+  }
+  /* أوامر النظام */
+  var cmds = items.map(function(it, i){ return { it: it, i: i }; })
+    .filter(function(x){ return x.it && x.it.cat === "_update_cmd"; });
+  html += '<div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)">' +
+    '<div style="font-size:11px;color:#92400e;font-weight:700;margin-bottom:4px">⚙️ أوامر النظام (' + cmds.length + ')</div>';
+  if (cmds.length === 0){
+    html += '<div style="font-size:10.5px;color:var(--muted)">لا توجد أوامر تحديث حالياً — وهذا طبيعي.</div>';
+  } else {
+    for (var j = 0; j < cmds.length; j++){
+      var it = cmds[j].it;
+      html += '<div class="cat-row cmd-row' + (state.selIdx === cmds[j].i ? " active" : "") +
+        '" onclick="pickItem(' + cmds[j].i + ')">' +
+        '<span class="c-ico">⚙️</span><span class="c-name">' + esc(String(it.cmd || "?")) +
+        (it.url ? ' — ' + esc(String(it.url)).slice(0, 40) : '') + '</span></div>';
+    }
+  }
+  html += '</div>';
+  list.innerHTML = html;
+}
+function pickCat(el){
+  var id = el.getAttribute("data-cat");
+  state.selCat = id;
+  state.selIdx = null;
+  renderAll();
+  /* نسخة الموبايل: الانتقال التلقائي لتبويب العناصر */
+  if (isMobile()) mTab("items");
+}
+/* عرض العناصر (مع البحث الشامل) */
+function renderItems(){
+  var items = state.items, q = (state.search || "").trim().toLowerCase();
+  var searching = q.length > 0;
+  var list = $("itemsList");
+  var titleEl = $("itemsPaneTitle"), countEl = $("itemsCount");
+  var rows = [];
+  if (searching){
+    titleEl.textContent = 'نتائج البحث عن "' + state.search + '"';
+    for (var i = 0; i < items.length; i++){
+      var it = items[i];
+      var hay = (String(it.text || "") + " " + String(it.src || "") + " " + String(it.cat || "")).toLowerCase();
+      if (hay.indexOf(q) !== -1) rows.push(i);
+    }
+    countEl.textContent = rows.length;
+  } else {
+    var ci = catInfo(state.selCat || "");
+    titleEl.textContent = (ci.icon || "📁") + " " + (ci.name || "اختر خانة");
+    for (var k = 0; k < items.length; k++){
+      if (String(items[k].cat || "") === state.selCat) rows.push(k);
+    }
+    countEl.textContent = rows.length;
+  }
+  var html = "";
+  for (var r = 0; r < rows.length; r++){
+    var idx = rows[r], m = items[idx];
+    var badges = "";
+    if (searching){
+      var ci2 = catInfo(String(m.cat || ""));
+      badges += '<span class="i-badge">' + esc(ci2.icon + " " + ci2.name) + '</span>';
+    }
+    if (m.narrator) badges += '<span class="i-badge">راوي</span>';
+    if (m.ts) badges += '<span class="i-badge">🕐 رسالة</span>';
+    if (m.audience) badges += '<span class="i-badge warn">موجهة</span>';
+    if (m.minAppVersion) badges += '<span class="i-badge warn">v' + esc(String(m.minAppVersion)) + '+</span>';
+    if (m.is_group_title) badges += '<span class="i-badge">عنوان مجموعة</span>';
+    if (m.group_id && !m.is_group_title) badges += '<span class="i-badge">مجموعة ' + esc(String(m.group_id)) + '</span>';
+    var withinCatPos = "";
+    if (!searching && state.selCat){
+      var sameCatIdxs = [];
+      for (var z = 0; z < items.length; z++) if (String(items[z].cat || "") === state.selCat) sameCatIdxs.push(z);
+      withinCatPos = " #" + (sameCatIdxs.indexOf(idx) + 1) + "/" + sameCatIdxs.length;
+    }
+    html += '<div class="item-row' + (state.selIdx === idx ? " active" : "") + '" data-idx="' + idx + '" onclick="pickItem(' + idx + ')">' +
+      '<span class="i-ico">' + esc(String(m.icon || "📖")) + '</span>' +
+      '<div style="flex:1;min-width:0"><div class="i-text">' + esc(String(m.text || "")).slice(0, 220) + '</div>' +
+      (badges ? '<div class="i-badges">' + badges + '</div>' : '') + '</div>' +
+      '<div class="i-ops">' +
+      '<button class="op" title="أعلى" onclick="event.stopPropagation();moveItem(' + idx + ',-1)">▲</button>' +
+      '<button class="op" title="أسفل" onclick="event.stopPropagation();moveItem(' + idx + ',1)">▼</button>' +
+      '<button class="op" title="نسخ" onclick="event.stopPropagation();duplicateItem(' + idx + ')">⧉</button>' +
+      '<button class="op del" title="حذف" onclick="event.stopPropagation();deleteItem(' + idx + ')">🗑</button>' +
+      '</div></div>';
+  }
+  list.innerHTML = html || '<div class="empty-hint">' +
+    (searching ? "لا نتائج مطابقة." :
+      (state.selCat ? "هذه الخانة فارغة — أضف أول عنصر بزر ➕ عنصر." : "👈 اختر خانة من اليمين لعرض عناصرها.")) +
+    '</div>';
+  $("editorPos").textContent = "";
+}
+function pickItem(idx){
+  state.selIdx = idx;
+  var it = state.items[idx];
+  state.selCat = String(it.cat || "");
+  renderAll();
+  /* تمييز الصف والخانة بعد إعادة الرسم */
+  var row = document.querySelector('.item-row[data-idx="' + idx + '"]');
+  if (row) row.scrollIntoView({ block: "nearest" });
+  /* نسخة الموبايل: الانتقال التلقائي لتبويب التحرير */
+  if (isMobile()) mTab("edit");
+}
+function isMobile(){ return window.matchMedia && window.matchMedia("(max-width:760px)").matches; }
+
+/* ================= عمليات الخانات ================= */
+var dlgCatMode = "add", dlgCatOld = null;
+function openAddCat(){
+  dlgCatMode = "add"; dlgCatOld = null;
+  $("dlgCatTitle").textContent = "➕ خانة جديدة";
+  $("dlgCatWarn").innerHTML = "";
+  $("catIdInput").value = "";
+  $("catIconInput").value = "📖";
+  $("catTextInput").value = "";
+  $("catSrcInput").value = "";
+  $("btnDoCat").textContent = "إنشاء";
+  openDlg("dlgCat");
+  setTimeout(function(){ $("catIdInput").focus(); }, 120);
+}
+function openRenameCat(encId){
+  var id = decodeURIComponent(encId);
+  dlgCatMode = "rename"; dlgCatOld = id;
+  var inf = catInfo(id);
+  $("dlgCatTitle").textContent = "✏️ إعادة تسمية الخانة: " + inf.name;
+  var warn = "";
+  if (inf.known){
+    warn += '<div class="dangerbox">⚠️ <b>«' + esc(inf.name) + '» خانة أساسية في التطبيق</b> ولها زر تصفية خاص باسمها الحالي. بعد إعادة التسمية سينتقل محتواها لمعرّف جديد (يظهر في قسم «الكل») وسيبقى زرها القديم فارغاً حتى صدور تحديث للتطبيق. تأكد أن هذا ما تريده.</div>';
+  }
+  warn += '<div class="warnbox">ستُغيَّر الخانة على <b>جميع</b> عناصرها (' + catCountOf(id) + ' عنصر) دفعة واحدة.</div>';
+  $("dlgCatWarn").innerHTML = warn;
+  $("catIdInput").value = id;
+  $("catIconInput").value = inf.icon;
+  $("catTextInput").value = "";
+  $("catSrcInput").value = "";
+  $("btnDoCat").textContent = "تطبيق التسمية";
+  openDlg("dlgCat");
+  setTimeout(function(){ $("catIdInput").focus(); $("catIdInput").select(); }, 120);
+}
+function catCountOf(id){
+  var n = 0;
+  for (var i = 0; i < state.items.length; i++) if (String(state.items[i].cat || "") === id) n++;
+  return n;
+}
+function validCatId(id, ignoreOld){
+  if (!/^[a-z0-9][a-z0-9_-]{0,30}$/.test(id)) return "المعرّف يجب أن يكون حروفاً إنجليزية صغيرة/أرقام/شرطة (حتى 31 حرفاً) ويبدأ بحرف أو رقم.";
+  if (id === "_update_cmd") return "لا يمكن استخدام _update_cmd — هذا معرّف محجوز لأوامر النظام.";
+  if (id === ignoreOld) return null;
+  if (catCountOf(id) > 0 || KNOWN_CATS[id]) return "هذا المعرّف مستخدم مسبقاً — اختر معرّفاً آخر.";
+  return null;
+}
+function doCatDialog(){
+  var id = $("catIdInput").value.trim();
+  var err = validCatId(id, dlgCatMode === "rename" ? dlgCatOld : null);
+  if (err){ alert("⚠️ " + err); return; }
+  if (dlgCatMode === "add"){
+    var txt = $("catTextInput").value.trim();
+    if (!txt){ alert("أدخل نص العنصر الأول (لا يمكن إنشاء خانة فارغة)."); return; }
+    var item = { icon: $("catIconInput").value.trim() || "📖", text: txt, src: $("catSrcInput").value.trim(), cat: id };
+    state.items.push(item);
+    closeDlg("dlgCat");
+    state.selCat = id; state.selIdx = state.items.length - 1;
+    markDirty(); renderAll();
+    toast('✅ أُنشئت خانة "' + id + '" بعنصر أول');
+  } else {
+    var n = 0;
+    for (var i = 0; i < state.items.length; i++){
+      if (String(state.items[i].cat || "") === dlgCatOld){ state.items[i].cat = id; n++; }
+    }
+    closeDlg("dlgCat");
+    state.selCat = id;
+    if (state.selIdx !== null && String(state.items[state.selIdx].cat) !== id) state.selIdx = null;
+    markDirty(); renderAll();
+    toast("✅ أعيدت تسمية الخانة (" + n + " عنصر) إلى " + id);
+  }
+}
+/* حذف خانة */
+var delCatTarget = null;
+function openDeleteCat(encId){
+  var id = decodeURIComponent(encId);
+  delCatTarget = id;
+  var inf = catInfo(id), n = catCountOf(id);
+  $("delCatInfo").innerHTML = 'سيتم التعامل مع خانة <b>' + esc(inf.name) + '</b> التي تحتوي <b>' + n + '</b> عنصر.' +
+    (n === 0 ? '<br>الخانة فارغة — حذفها مجرد إزالة من القائمة (لن تتأثر أي بيانات).' : '');
+  var others = catsOf(state.items).filter(function(c){ return c.id !== id; });
+  var sel = $("moveTarget");
+  if (others.length){
+    sel.innerHTML = others.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.icon + " " + c.name) + '</option>'; }).join("");
+    sel.disabled = false;
+    $("rcMove").style.display = "flex";
+    var radios1 = document.querySelectorAll('input[name=delCatMode]');
+    for (var r1 = 0; r1 < radios1.length; r1++) radios1[r1].checked = (radios1[r1].value === "move");
+    syncDelCatCards();
+  } else {
+    $("rcMove").style.display = "none";
+    var radios = document.querySelectorAll('input[name=delCatMode]');
+    for (var rr = 0; rr < radios.length; rr++) radios[rr].checked = (radios[rr].value === "delete");
+    syncDelCatCards();
+    sel.disabled = true;
+  }
+  openDlg("dlgDelCat");
+}
+function syncDelCatCards(){
+  var cards = document.querySelectorAll("#dlgDelCat .radio-card");
+  for (var i = 0; i < cards.length; i++){
+    var r = cards[i].querySelector('input[name=delCatMode]');
+    cards[i].classList.toggle("sel", !!(r && r.checked));
+    cards[i].classList.toggle("dangersel", !!(r && r.checked && r.value === "delete"));
+  }
+}
+function doDeleteCat(){
+  var checkedEl = document.querySelector('input[name=delCatMode]:checked');
+  var mode = checkedEl ? checkedEl.value : "move";
+  var n = catCountOf(delCatTarget);
+  if (mode === "move"){
+    var target = $("moveTarget").value;
+    if (!target || target === delCatTarget){ alert("اختر خانة هدف صحيحة."); return; }
+    for (var i = 0; i < state.items.length; i++){
+      if (String(state.items[i].cat || "") === delCatTarget) state.items[i].cat = target;
+    }
+    closeDlg("dlgDelCat");
+    if (state.selCat === delCatTarget) state.selCat = target;
+    markDirty(); renderAll();
+    toast("✅ نُقلت " + n + " عنصراً إلى " + catInfo(target).name);
+  } else {
+    closeDlg("dlgDelCat");
+    confirmDlg("تأكيد الحذف النهائي", 'سيتم حذف <b>' + n + '</b> عنصر من خانة <b>' + esc(catInfo(delCatTarget).name) + '</b> نهائياً.<br>يمكنك التراجع قبل الحفظ/النشر عبر زر «↩️ إلغاء التغييرات».<br><br>متابعة؟', function(){
+      state.items = state.items.filter(function(it){ return String(it.cat || "") !== delCatTarget; });
+      if (state.selCat === delCatTarget){ state.selCat = null; state.selIdx = null; }
+      markDirty(); renderAll();
+      toast("🗑️ حُذفت خانة " + delCatTarget + " (" + n + " عنصر)");
+    });
+  }
+}
+</script>
+<script>
+"use strict";
+/* ================= عمليات العناصر ================= */
+function addItem(){
+  if (!state.items) return;
+  if (!state.selCat){
+    var cats = catsOf(state.items);
+    if (!cats.length){ alert("أنشئ خانة أولاً."); return; }
+    state.selCat = cats[0].id;
+  }
+  var item = { icon: "📖", text: "", src: "", cat: state.selCat };
+  /* أضف العنصر الجديد بعد آخر عنصر من نفس الخانة ليبقى الترتيب منطقياً */
+  var insertAt = 0;
+  for (var i = 0; i < state.items.length; i++){
+    if (String(state.items[i].cat || "") === state.selCat) insertAt = i + 1;
+  }
+  state.items.splice(insertAt, 0, item);
+  state.selIdx = insertAt;
+  markDirty(); renderAll();
+  toast("➕ أُضيف عنصر جديد — اكتب نصه في اللوحة اليسرى");
+  setTimeout(function(){
+    var ta = document.getElementById("edText");
+    if (ta){ ta.focus(); ta.scrollIntoView({ block: "center" }); }
+  }, 60);
+}
+function duplicateItem(idx){
+  var src = state.items[idx];
+  var copy = JSON.parse(JSON.stringify(src));
+  state.items.splice(idx + 1, 0, copy);
+  if (state.selIdx !== null && state.selIdx > idx) state.selIdx++;
+  markDirty(); renderAll();
+  toast("⧉ نُسخ العنصر");
+}
+function deleteItem(idx){
+  var it = state.items[idx];
+  var prev = String(it.text || "").slice(0, 60);
+  confirmDlg("حذف عنصر", 'حذف هذا العنصر نهائياً؟<br><small style="color:var(--muted)">' + esc(prev) + (String(it.text || "").length > 60 ? "…" : "") + '</small><br><br>يمكن التراجع قبل الحفظ/النشر عبر «↩️ إلغاء التغييرات».', function(){
+    state.items.splice(idx, 1);
+    if (state.selIdx === idx) state.selIdx = null;
+    else if (state.selIdx !== null && state.selIdx > idx) state.selIdx--;
+    markDirty(); renderAll();
+    toast("🗑️ حُذف العنصر");
+  });
+}
+/* ترتيب داخل الخانة نفسها */
+function moveItem(idx, dir){
+  var cat = String(state.items[idx].cat || "");
+  var sameIdx = [];
+  for (var i = 0; i < state.items.length; i++){
+    if (String(state.items[i].cat || "") === cat) sameIdx.push(i);
+  }
+  var pos = sameIdx.indexOf(idx);
+  var swapWith = sameIdx[pos + dir];
+  if (swapWith === undefined) return;
+  var tmp = state.items[idx];
+  state.items[idx] = state.items[swapWith];
+  state.items[swapWith] = tmp;
+  if (state.selIdx === idx) state.selIdx = swapWith;
+  else if (state.selIdx === swapWith) state.selIdx = idx;
+  markDirty(); renderAll();
+}
+
+/* ================= لوحة تحرير العنصر ================= */
+var EXTRA_EXCLUDE = { icon: 1, text: 1, src: 1, cat: 1 };
+function extraKeysOf(it){
+  var keys = [];
+  for (var k in it){
+    if (Object.prototype.hasOwnProperty.call(it, k) && !EXTRA_EXCLUDE[k]) keys.push(k);
+  }
+  return keys;
+}
+function renderEditor(){
+  var box = $("itemEditor"), empty = $("editorEmpty");
+  if (state.selIdx === null || !state.items[state.selIdx]){
+    box.classList.add("hidden");
+    empty.classList.remove("hidden");
+    $("editorTitle").textContent = "تفاصيل العنصر";
+    $("editorPos").textContent = "";
+    return;
+  }
+  var it = state.items[state.selIdx];
+  var isCmd = String(it.cat || "") === "_update_cmd";
+  var ci = catInfo(String(it.cat || ""));
+  empty.classList.add("hidden");
+  box.classList.remove("hidden");
+  $("editorTitle").innerHTML = esc(ci.icon) + " " + esc(ci.name);
+  var sameIdx = [];
+  for (var i = 0; i < state.items.length; i++) if (String(state.items[i].cat || "") === String(it.cat || "")) sameIdx.push(i);
+  $("editorPos").textContent = "عنصر " + (sameIdx.indexOf(state.selIdx) + 1) + " من " + sameIdx.length;
+
+  var html = "";
+  if (isCmd){
+    html += '<div class="dangerbox">⚙️ <b>هذا أمر نظام (_update_cmd)</b> — تُنفَّذ قيمته داخل تطبيق جميع المستخدمين (إعادة تحميل أو تحديث إجباري).<br>لا تعدِّله أو تحذفه إلا إذا كنت تعرف تماماً ما تفعل!</div>';
+  } else {
+    html += '<div class="okbox">💡 التعديلات تُطبَّق فوراً أثناء الكتابة. اضغط <b>🚀 نشر</b> أعلى الصفحة عندما تنتهي.</div>';
+  }
+  /* الأيقونة */
+  html += '<div class="field"><label>الأيقونة <span class="en">icon</span></label>' +
+    '<input type="text" id="edIcon" value="' + esc(String(it.icon || "")) + '" maxlength="8" style="width:90px;text-align:center;font-size:17px">' +
+    '<div class="emoji-pick">' + EMOJI_PICKS.map(function(e){ return '<span onclick="setIcon(\'' + e + '\')">' + e + '</span>'; }).join("") + '</div></div>';
+  /* النص */
+  html += '<div class="field"><label>النص <span class="en">text</span></label>' +
+    '<textarea id="edText" placeholder="اكتب محتوى العنصر هنا…">' + esc(String(it.text || "")) + '</textarea>' +
+    '<div class="char-count" id="edTextCount"></div></div>';
+  /* المصدر */
+  html += '<div class="field"><label>المصدر <span class="en">src</span> — اختياري</label>' +
+    '<input type="text" id="edSrc" value="' + esc(String(it.src || "")) + '" placeholder="مثال: صحيح البخاري"></div>';
+  /* الخانة */
+  var catOpts = catsOf(state.items).map(function(c){
+    return '<option value="' + esc(c.id) + '"' + (c.id === String(it.cat || "") ? " selected" : "") + '>' + esc(c.icon + " " + c.name) + '</option>';
+  }).join("");
+  html += '<div class="field"><label>الخانة <span class="en">cat</span></label>' +
+    '<select id="edCat">' + catOpts + '<option value="__new__">➕ خانة جديدة…</option></select></div>';
+
+  /* الحقول الإضافية الموجودة */
+  var extraKeys = extraKeysOf(it);
+  if (extraKeys.length){
+    html += '<div class="extra-fields"><h4>حقول خاصة موجودة على هذا العنصر</h4>';
+    for (var j = 0; j < extraKeys.length; j++){
+      var k = extraKeys[j];
+      var known = null;
+      for (var oi = 0; oi < OPTIONAL_FIELDS.length; oi++) if (OPTIONAL_FIELDS[oi].k === k) known = OPTIONAL_FIELDS[oi];
+      var label = known ? known.label : esc(k) + " (مخصص)";
+      var val;
+      if (known && known.type === "bool") val = it[k] ? "1" : "";
+      else if (Array.isArray(it[k])) val = it[k].map(String).join(", ");
+      else val = String(it[k]);
+      html += '<div class="ef-row"><span class="ef-k">' + label + '</span>';
+      if (known && known.type === "bool"){
+        html += '<input type="checkbox" id="ef_' + esc(k) + '"' + (it[k] ? " checked" : "") + ' style="width:auto">' +
+          '<button class="rm" title="إزالة الحقل" onclick="removeField(\'' + esc(k) + '\')">✕</button>';
+      } else if (isCmd && (k === "cmd" || k === "url" || k === "version")){
+        html += '<input type="text" id="ef_' + esc(k) + '" value="' + esc(val) + '" dir="ltr" style="text-align:left">' +
+          '<button class="rm" title="إزالة الحقل" onclick="removeField(\'' + esc(k) + '\')">✕</button>';
+      } else {
+        html += '<input type="text" id="ef_' + esc(k) + '" value="' + esc(val) + '"' +
+          (k === "audience" ? ' placeholder="* للجميع، أو معرّفات أجهزة مفصولة بفواصل"' : '') +
+          (k === "ts" ? ' dir="ltr" placeholder="2026/10/14 09:30"' : '') +
+          '>';
+        if (k === "ts") html += '<button class="ts-now" title="وضع التاريخ والوقت الحاليين بصيغة التطبيق YYYY/MM/DD HH:MM" onclick="tsNow()">🕐 الآن</button>';
+        html += '<button class="rm" title="إزالة الحقل" onclick="removeField(\'' + esc(k) + '\')">✕</button>';
+      }
+      html += '</div>';
+      if (k === "ts") html += '<div class="ts-warn" id="tsWarn" style="display:none">⚠️ الصيغة المتوقعة YYYY/MM/DD HH:MM — التطبيق يقارن الطوابع نصياً فالتزم بها تماماً</div>';
+    }
+    html += '</div>';
+  }
+  html += '<div style="text-align:left"><button class="mini-btn" onclick="openAddField()">➕ إضافة حقل</button></div>';
+
+  /* JSON خام */
+  html += '<details class="rawjson" id="rawDetails"><summary>🔧 JSON خام للعنصر (للمستخدمين المتقدمين)</summary>' +
+    '<div class="raw-body"><textarea id="rawJson" dir="ltr" spellcheck="false">' + esc(JSON.stringify(it, null, 2)) + '</textarea>' +
+    '<div style="display:flex;gap:8px;margin-top:7px"><button class="mini-btn" onclick="applyRawJson()">تطبيق JSON</button>' +
+    '<span id="rawErr" style="color:var(--red);font-size:11px"></span></div></div></details>';
+
+  box.innerHTML = html;
+  bindEditor(it, isCmd);
+}
+function setIcon(e){
+  var inp = $("edIcon");
+  if (inp) inp.value = e;
+  applyLiveEdits(true);
+}
+function bindEditor(it, isCmd){
+  var idx = state.selIdx;
+  $("edIcon").addEventListener("input", function(){ applyLiveEdits(); });
+  $("edText").addEventListener("input", function(){ applyLiveEdits(); });
+  $("edSrc").addEventListener("input", function(){ applyLiveEdits(); });
+  $("edCat").addEventListener("change", function(){
+    if (this.value === "__new__"){
+      renderEditor(); /* يلغي الاختيار */
+      openAddCat();
+      return;
+    }
+    var item = state.items[idx];
+    if (item) item.cat = this.value;
+    state.selCat = this.value;
+    markDirty(); renderAll();
+    toast("↗️ نُقل العنصر إلى " + catInfo(this.value).name);
+  });
+  /* حقول إضافية */
+  var extraKeys = extraKeysOf(it);
+  for (var j = 0; j < extraKeys.length; j++){
+    (function(k){
+      var el = $("ef_" + cssEscape(k));
+      if (!el) return;
+      var evName = (el.type === "checkbox") ? "change" : "input";
+      el.addEventListener(evName, function(){ applyExtraField(it, k, el); });
+    })(extraKeys[j]);
+  }
+  var tsInp = $("ef_ts");
+  if (tsInp) tsValidate(tsInp);
+  updateTextCount();
+}
+function cssEscape(s){
+  return String(s).replace(/[^a-zA-Z0-9_-]/g, function(c){ return "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"); });
+}
+function applyExtraField(item, k, el){
+  var known = null;
+  for (var oi = 0; oi < OPTIONAL_FIELDS.length; oi++) if (OPTIONAL_FIELDS[oi].k === k) known = OPTIONAL_FIELDS[oi];
+  if (known && known.type === "bool"){
+    if (el.checked) item[k] = true;
+    else delete item[k];
+  } else if (known && known.type === "number"){
+    var v = el.value.trim();
+    if (v === "" || isNaN(Number(v))) delete item[k];
+    else item[k] = Number(v);
+  } else if (k === "audience" && Array.isArray(item[k])){
+    var arr = el.value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+    if (arr.length === 0) delete item[k];
+    else item[k] = arr;
+  } else {
+    if (el.value.trim() === "") delete item[k];
+    else item[k] = (k === "ts") ? el.value.trim() : el.value;
+  }
+  if (k === "ts") tsValidate(el);
+  markDirty();
+}
+/* 🕐 أداة مساعدة لحقول الطابع الزمني (ts) — صيغة التطبيق الثابتة YYYY/MM/DD HH:MM */
+function _tsPad(n){ return (n < 10 ? "0" : "") + n; }
+function tsFormat(d){
+  return d.getFullYear() + "/" + _tsPad(d.getMonth() + 1) + "/" + _tsPad(d.getDate()) +
+         " " + _tsPad(d.getHours()) + ":" + _tsPad(d.getMinutes());
+}
+function tsNow(){
+  var inp = $("ef_ts");
+  if (!inp){ alert("حدِّد عنصراً يحتوي حقل ts أولاً (رسائل 💬).\n\nلإضافة الحقل: ➕ إضافة حقل ← الطابع الزمني (ts)."); return; }
+  inp.value = tsFormat(new Date());
+  var idx = state.selIdx;
+  if (idx !== null && state.items[idx]) applyExtraField(state.items[idx], "ts", inp);
+  else tsValidate(inp);
+  toast("🕐 وُضع التاريخ والوقت الحاليان: " + inp.value);
+}
+function tsValidate(inp){
+  var w = $("tsWarn");
+  if (!w || !inp) return;
+  var ok = /^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}$/.test(String(inp.value || "").trim());
+  w.style.display = ok ? "none" : "inline";
+}
+function updateTextCount(){
+  var ta = $("edText"), cc = $("edTextCount");
+  if (ta && cc) cc.textContent = ta.value.length + " حرف";
+}
+/* كتابة حية: تُحدَّث العناصر مباشرة */
+var _listRefreshTm = null;
+function applyLiveEdits(skipList){
+  var idx = state.selIdx;
+  if (idx === null || !state.items[idx]) return;
+  var it = state.items[idx];
+  it.icon = $("edIcon").value;
+  it.text = $("edText").value;
+  it.src = $("edSrc").value.trim();
+  updateTextCount();
+  markDirty();
+  /* تحديث معاينة الصف فقط (بدون إعادة رسم كاملة تحافظ على التركيز) */
+  if (_listRefreshTm) clearTimeout(_listRefreshTm);
+  _listRefreshTm = setTimeout(function(){
+    var row = document.querySelector('.item-row[data-idx="' + idx + '"] .i-text');
+    if (row) row.textContent = String(it.text || "").slice(0, 220);
+    var icoRow = document.querySelector('.item-row[data-idx="' + idx + '"] .i-ico');
+    if (icoRow) icoRow.textContent = it.icon || "📖";
+  }, 200);
+}
+function removeField(k){
+  var idx = state.selIdx;
+  if (idx === null || !state.items[idx]) return;
+  confirmDlg("إزالة حقل", 'إزالة الحقل <b>' + esc(k) + '</b> من هذا العنصر؟', function(){
+    delete state.items[idx][k];
+    markDirty(); renderEditor();
+    toast("أُزيل الحقل " + k);
+  });
+}
+/* إضافة حقل */
+function openAddField(){
+  var it = state.items[state.selIdx];
+  if (!it) return;
+  var present = extraKeysOf(it);
+  var opts = "";
+  for (var i = 0; i < OPTIONAL_FIELDS.length; i++){
+    var f = OPTIONAL_FIELDS[i];
+    if (present.indexOf(f.k) !== -1) continue;
+    opts += '<option value="' + esc(f.k) + '">' + esc(f.label) + '</option>';
+  }
+  $("fieldKnown").innerHTML = opts || '<option value="">— كل الحقول المعروفة مضافة —</option>';
+  $("fieldCustom").value = "";
+  openDlg("dlgField");
+}
+function doAddField(){
+  var it = state.items[state.selIdx];
+  if (!it) return;
+  var custom = $("fieldCustom").value.trim();
+  var k;
+  if (custom){
+    if (!/^[A-Za-z_][A-Za-z0-9_]{0,30}$/.test(custom)){ alert("اسم الحقل المخصص يجب أن يكون حروفاً إنجليزية وأرقاماً وشرطة سفلية فقط."); return; }
+    k = custom;
+  } else {
+    k = $("fieldKnown").value;
+    if (!k){ alert("اختر حقلاً معروفاً أو اكتب اسماً مخصصاً."); return; }
+  }
+  if (EXTRA_EXCLUDE[k]){ alert("هذا الاسم محجوز للحقل الأساسي."); return; }
+  var known = null;
+  for (var oi = 0; oi < OPTIONAL_FIELDS.length; oi++) if (OPTIONAL_FIELDS[oi].k === k) known = OPTIONAL_FIELDS[oi];
+  if (known && known.type === "bool") it[k] = false;
+  else if (known && known.type === "number") it[k] = 1;
+  else it[k] = "";
+  closeDlg("dlgField");
+  markDirty(); renderEditor();
+  toast("➕ أُضيف الحقل " + k + " — عدِّل قيمته الآن");
+}
+/* JSON خام */
+function applyRawJson(){
+  var idx = state.selIdx;
+  if (idx === null) return;
+  var errEl = $("rawErr");
+  try {
+    var obj = JSON.parse($("rawJson").value);
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) throw new Error("يجب أن يكون كائناً {} وليس مصفوفة أو قيمة.");
+    state.items[idx] = obj;
+    errEl.textContent = "";
+    state.selCat = String(obj.cat || "");
+    markDirty(); renderAll();
+    toast("✅ طُبِّق JSON على العنصر");
+  } catch(e){
+    errEl.textContent = "❌ " + e.message;
+  }
+}
+/* تأكيد عام */
+var _cfCb = null;
+function confirmDlg(title, bodyHtml, onYes){
+  $("cfTitle").textContent = title;
+  $("cfBody").innerHTML = bodyHtml;
+  _cfCb = onYes;
+  openDlg("dlgConfirm");
+}
+function undoChanges(){
+  if (!state.dirty) return;
+  confirmDlg("إلغاء التغييرات", "الرجوع إلى النسخة كما كانت عند آخر تحميل/نشر؟<br><br>ستُفقد كل التعديلات غير المنشورة.", function(){
+    if (state.snapshot){
+      var arr = JSON.parse(state.snapshot);
+      state.items = arr;
+      state.dirty = false;
+      state.selIdx = null;
+      renderAll();
+      toast("↩️ أُلغيت كل التغييرات غير المنشورة");
+    }
+  });
+}
+</script>
+<style>
+footer#statusbar button.sb-btn{
+  background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.3);
+  border-radius:8px; padding:2px 11px; font-size:11px; font-weight:700;
+}
+footer#statusbar button.sb-btn:hover{background:rgba(255,255,255,.3)}
+</style>
+<script>
+"use strict";
+/* ================= التوكن ================= */
+var TOKEN_KEY = "pt_content_editor_token";
+function getToken(){ 
+  try { return (localStorage.getItem(TOKEN_KEY) || "").trim(); } catch(e){ return ""; }
+}
+function setTokenStorage(tok){
+  try { if (tok) localStorage.setItem(TOKEN_KEY, tok); else localStorage.removeItem(TOKEN_KEY); return true; }
+  catch(e){ return false; }
+}
+/* ================= أدوات النشر ================= */
+function b64Utf8(s){ return btoa(unescape(encodeURIComponent(s))); }
+function ghUrl(path){ return "https://api.github.com" + path; }
+function ghHeaders(extra){
+  var h = { "Authorization": "Bearer " + getToken(), "Accept": "application/vnd.github+json", "User-Agent": "prayer-times-content-editor" };
+  if (extra) for (var k in extra) h[k] = extra[k];
+  return h;
+}
+function pubLog(line, cls){
+  var el = $("pubLog");
+  el.classList.remove("hidden");
+  el.innerHTML += '<span class="' + (cls || "") + '">' + esc(line) + '</span>\n';
+  el.scrollTop = el.scrollHeight;
+}
+async function ghGetSha(repo){
+  var r = await fetch(ghUrl("/repos/" + OWNER + "/" + repo + "/contents/" + CONTENT_PATH + "?ref=main"), { headers: ghHeaders(), cache: "no-store" });
+  if (r.status === 404) return null;
+  if (!r.ok){
+    var t = await r.text();
+    throw new Error("فحص " + repo + ": HTTP " + r.status + " " + t.slice(0, 200));
+  }
+  var j = await r.json();
+  return j.sha || null;
+}
+async function ghPutContent(repo, text, message){
+  var sha = await ghGetSha(repo);
+  var body = { message: message, content: b64Utf8(text), branch: "main" };
+  if (sha) body.sha = sha;
+  var r = await fetch(ghUrl("/repos/" + OWNER + "/" + repo + "/contents/" + CONTENT_PATH), {
+    method: "PUT", headers: ghHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(body)
+  });
+  if (!r.ok){
+    var t = await r.text();
+    throw new Error("نشر " + repo + ": HTTP " + r.status + " " + t.slice(0, 300));
+  }
+  var j = await r.json();
+  return (j.commit && j.commit.sha) ? j.commit.sha.slice(0, 8) : "ok";
+}
+async function purgeCdn(){
+  var r = await fetch("https://purge.jsdelivr.net/gh/" + OWNER + "/" + PUBLIC_REPO + "@main/" + CONTENT_PATH, { cache: "no-store" });
+  var j = await r.json().catch(function(){ return {}; });
+  return j.status || ("HTTP " + r.status);
+}
+async function verifyRaw(pushedText){
+  /* الفحص المرجعي: ما يستقبله GitHub مباشرة (raw يعرض آخر كومِت فوراً) */
+  try {
+    var r = await fetch("https://raw.githubusercontent.com/" + OWNER + "/" + PUBLIC_REPO + "/main/" + CONTENT_PATH + "?t=" + Date.now(), { cache: "no-store" });
+    if (r.ok){
+      var txt = await r.text();
+      return txt === pushedText;
+    }
+    return false;
+  } catch(e){ return false; }
+}
+async function verifyLive(pushedText){
+  var url = "https://cdn.jsdelivr.net/gh/" + OWNER + "/" + PUBLIC_REPO + "@main/" + CONTENT_PATH + "?t=" + Date.now();
+  for (var attempt = 1; attempt <= 10; attempt++){
+    try {
+      var r = await fetch(url, { cache: "no-store" });
+      if (r.ok){
+        var txt = await r.text();
+        if (txt === pushedText) return true;
+        pubLog("   المحاولة " + attempt + "/10: ذاكرة CDN لم تُحدَّث بعد…", "info");
+      } else {
+        pubLog("   المحاولة " + attempt + "/10: HTTP " + r.status, "info");
+      }
+    } catch(e){
+      pubLog("   المحاولة " + attempt + "/10: " + e.message, "info");
+    }
+    await new Promise(function(res){ setTimeout(res, 9000); });
+    url = "https://cdn.jsdelivr.net/gh/" + OWNER + "/" + PUBLIC_REPO + "@main/" + CONTENT_PATH + "?t=" + Date.now();
+  }
+  return false;
+}
+/* ================= فتح حوار النشر ================= */
+function openPublish(){
+  if (!state.items || state.publishing) return;
+  if (!state.dirty && state.sourceLabel.indexOf("المنشورة") !== -1){
+    if (!confirm("لا توجد تغييرات جديدة منذ آخر تحميل من الإنترنت. النشر سينشئ نسخة مطابقة تماماً.\nهل تريد المتابعة؟")) return;
+  }
+  var cats = catsOf(state.items);
+  $("pubSummary").innerHTML = "📊 جاهز للنشر: <b>" + state.items.length + "</b> عنصر في <b>" + cats.length +
+    "</b> خانة.<br>سيُرفع ملف content.json إلى المستودعين المحددين أدناه، ثم يُمسح تخزين CDN المؤقت ويُتحقق من النسخة الحية.";
+  var now = new Date();
+  $("pubMsg").value = "تحديث المحتوى عبر المحرر — " + now.toLocaleDateString("ar");
+  $("pubLog").innerHTML = "";
+  $("pubLog").classList.add("hidden");
+  $("btnDoPublish").disabled = false;
+  openDlg("dlgPublish");
+}
+/* ================= تنفيذ النشر ================= */
+async function doPublish(){
+  if (state.publishing) return;
+  var text = buildSaveText();
+  try { JSON.parse(text); } catch(e){ alert("❌ البيانات الحالية لا تُنتج JSON صالحاً — أصلح الأخطاء أولاً."); return; }
+  if (!getToken()){
+    alert("⚠️ لا يوجد توكن محفوظ.\nافتح ⚙️ الإعدادات وألصق توكن GitHub بصلاحية repo مرة واحدة فقط.");
+    openDlg("dlgSettings");
+    return;
+  }
+  var pub = $("pubPublic").checked, priv = $("pubPrivate").checked;
+  if (!pub && !priv){ alert("اختر مستودعاً واحداً على الأقل."); return; }
+  if (!pub){
+    if (!confirm("لم تختر النشر للريبو العام — لن يصل التعديل إلى تطبيق المستخدمين!\nمتابعة على أي حال؟")) return;
+  }
+  var message = ($("pubMsg").value || "تحديث المحتوى").trim();
+  state.publishing = true;
+  $("btnDoPublish").disabled = true;
+  $("btnPublish").disabled = true;
+  var ok = false;
+  try {
+    if (pub){
+      pubLog("▸ رفع content.json إلى الريبو العام (" + PUBLIC_REPO + ")…", "info");
+      var c1 = await ghPutContent(PUBLIC_REPO, text, message);
+      pubLog("✅ تم الرفع للعام — commit " + c1, "ok");
+    }
+    if (priv){
+      pubLog("▸ مزامنة النسخة الأم في الريبو الخاص (" + PRIVATE_REPO + ")…", "info");
+      var c2 = await ghPutContent(PRIVATE_REPO, text, message);
+      pubLog("✅ تمت مزامنة الخاص — commit " + c2, "ok");
+    }
+    if (pub){
+      pubLog("▸ مسح ذاكرة jsDelivr المؤقتة…", "info");
+      try {
+        var st = await purgeCdn();
+        pubLog("✅ المسح: " + st, "ok");
+      } catch(e){
+        pubLog("⚠️ تعذر المسح الآلي (" + e.message + ") — سيُحدَّث CDN تلقائياً خلال دقائق", "err");
+      }
+      pubLog("▸ التحقق من الاستلام (GitHub) والنسخة الحية (CDN)…", "info");
+      var rawOk = await verifyRaw(text);
+      if (rawOk){
+        pubLog("✅ GitHub يستلم النسخة الجديدة سليمة 100% (raw ✓)", "ok");
+      } else {
+        pubLog("⚠️ تعذر تأكيد الاستلام من raw.githubusercontent حالياً — راجع الكومِت على GitHub", "err");
+      }
+      var live = await verifyLive(text);
+      if (live){
+        pubLog("✅ CDN محدَّث ومطابق — سيصل المحتوى للتطبيق خلال ~30 ثانية من فتحه", "ok");
+      } else if (rawOk){
+        pubLog("ℹ️ ذاكرة jsDelivr المؤقتة لم تنتهِ بعد — تتجدد تلقائياً خلال دقائق (GitHub لديه النسخة الجديدة بالفعل، والمحتوى سليم). افتح التطبيق بعد قليل للتأكد.", "info");
+      } else {
+        pubLog("⚠️ لم أتمكن من التحقق الآلي الآن. افتح التطبيق بعد دقيقتين للتأكد.", "err");
+      }
+    }
+    ok = true;
+  } catch(e){
+    pubLog("❌ فشل: " + e.message, "err");
+    pubLog("لم يُنشر شيء تالف — النسخ السابقة سليمة في تاريخ GitHub. صحّح المشكلة وأعد المحاولة.", "err");
+  }
+  state.publishing = false;
+  $("btnDoPublish").disabled = false;
+  refreshStatus();
+  if (ok){
+    state.dirty = false;
+    state.snapshot = JSON.stringify(state.items);
+    state.sourceLabel = "النسخة المنشورة (نُشرت الآن)";
+    refreshStatus(); renderAll();
+    toast("🚀 تم النشر بنجاح");
+  }
+}
+/* ================= الإعدادات ================= */
+function openSettings(){
+  $("setToken").value = getToken();
+  $("tokenStatus").innerHTML = getToken() ?
+    '<div class="okbox">يوجد توكن محفوظ على هذا الجهاز (مخفي).</div>' :
+    '<div class="warnbox">لا يوجد توكن محفوظ — النشر المباشر معطّل حتى حفظ توكن.</div>';
+  openDlg("dlgSettings");
+}
+async function testToken(){
+  var tok = $("setToken").value.trim();
+  if (!tok){ $("tokenStatus").innerHTML = '<div class="warnbox">أدخل توكن أولاً.</div>'; return; }
+  $("tokenStatus").innerHTML = '<div class="warnbox">⏳ جاري الفحص…</div>';
+  try {
+    var r = await fetch(ghUrl("/user"), { headers: ghHeaders(), cache: "no-store" });
+    if (!r.ok){
+      $("tokenStatus").innerHTML = '<div class="dangerbox">❌ التوكن غير صالح (HTTP ' + r.status + ') — تأكد من نسخه كاملاً.</div>';
+      return;
+    }
+    var j = await r.json();
+    var scopes = r.headers.get("X-OAuth-Scopes") || "—";
+    var hasRepo = scopes.split(",").map(function(s){ return s.trim(); }).indexOf("repo") !== -1;
+    $("tokenStatus").innerHTML = '<div class="okbox">✅ التوكن صالح — الحساب: <b>' + esc(j.login) + '</b><br>الصلاحيات: ' + esc(scopes) +
+      (hasRepo ? '<br>✔ يحتوي صلاحية <b>repo</b> — النشر المباشر سيعمل.' : '<br>⚠️ <b>لا يحتوي صلاحية repo</b> — النشر سيفشل. أنشئ توكناً بصلاحية repo.') + '</div>';
+  } catch(e){
+    $("tokenStatus").innerHTML = '<div class="dangerbox">❌ تعذر الاتصال: ' + esc(e.message) + '</div>';
+  }
+}
+/* ================= التهيئة والربط ================= */
+/* ============ نسخة الموبايل: تبويبات اللوحات ============ */
+function mTab(name){
+  document.body.classList.remove("m-tab-cats", "m-tab-items", "m-tab-edit");
+  document.body.classList.add("m-tab-" + name);
+  var tabs = document.querySelectorAll("#mobileTabs .mtab");
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle("active", tabs[i].getAttribute("data-tab") === name);
+}
+/* ============ فحص توفر إصدار أحدث من المحرر ============ */
+/* يجلب النسخة المنشورة من raw.githubusercontent (فوري بلا ذاكرة طويلة)،
+   يقارن رقم الإصدار، وعند الاختلاف يظهر لافتة بتحديث فوري. */
+var _updateBannerShown = false;
+/* إعادة تحميل تتخطى ذاكرة المتصفح (GitHub Pages تخزّن HTML حتى 10 دقائق —
+   وإضافة ?v= جديدة تجبر الطبقة الشبكية على جلب النسخة الطازجة فوراً) */
+function hardReload(){
+  location.href = location.pathname + "?v=" + Date.now();
+}
+function checkForEditorUpdate(){
+  if (state.publishing || _updateBannerShown || !state.items) return;
+  fetch("https://raw.githubusercontent.com/" + OWNER + "/" + PUBLIC_REPO + "/main/editor.html?t=" + Date.now())
+    .then(function(r){ return r.ok ? r.text() : null; })
+    .then(function(txt){
+      if (!txt) return;
+      var m = txt.match(/EDITOR_VERSION\s*=\s*"([^"]+)"/);
+      if (!m || m[1] === EDITOR_VERSION) return;
+      _updateBannerShown = true;
+      var b = $("updateBanner");
+      if (!b) return;
+      $("ubMsg").textContent = "🔄 يوجد إصدار أحدث من المحرر (v" + m[1] + ")";
+      b.style.display = "flex";
+      $("ubGo").onclick = function(){
+        if (location.protocol === "file:"){
+          /* النسخة المحلية لا تتجدد بإعادة التحميل — افتح النسخة السحابية (Pages: تحديث خلال دقيقة من أي نشر) */
+          window.open("https://" + OWNER + ".github.io/" + PUBLIC_REPO + "/editor.html", "_blank");
+        } else if (state.dirty){
+          confirmDlg("تحديث المحرر", "لديك <b>تعديلات غير محفوظة</b> — إعادة التحميل ستُفقدها.<br>احفظ نسخة محلية أولاً (زر 💾) أو أكمل التحديث الآن.", hardReload);
+        } else {
+          hardReload();
+        }
+      };
+    })
+    .catch(function(){ /* صامت — بلا إنترنت أو لم تُنشر النسخة السحابية بعد */ });
+}
+function init(){
+  /* أزرار الشريط العلوي */
+  $("btnOpen").onclick = function(){ $("fileInput").click(); };
+  $("wOpen").onclick = function(){ $("fileInput").click(); };
+  $("fileInput").onchange = function(){
+    if (this.files && this.files[0]) loadFromFile(this.files[0]);
+    this.value = "";
+  };
+  $("btnWeb").onclick = loadFromWeb;
+  $("wWeb").onclick = loadFromWeb;
+  $("btnSave").onclick = function(){ saveFile(false); };
+  $("btnSettings").onclick = openSettings;
+  $("btnHelp").onclick = function(){ openDlg("dlgHelp"); };
+  $("btnPublish").onclick = openPublish;
+  $("btnDoPublish").onclick = doPublish;
+  $("btnClosePub").onclick = function(){ closeDlg("dlgPublish"); };
+  /* الإعدادات */
+  $("btnSaveToken").onclick = function(){
+    var tok = $("setToken").value.trim();
+    if (tok && !/^gh[pousr]_[A-Za-z0-9]{30,}$/.test(tok) && !confirm("الصيغة لا تشبه توكن GitHub المعتاد (ghp_…). حفظه رغم ذلك؟")) return;
+    setTokenStorage(tok);
+    $("tokenStatus").innerHTML = tok ? '<div class="okbox">✅ حُفظ التوكن على هذا الجهاز.</div>' : '<div class="warnbox">حُذف التوكن.</div>';
+    toast(tok ? "✅ حُفظ التوكن" : "حُذف التوكن");
+  };
+  $("btnTestToken").onclick = testToken;
+  $("btnClearToken").onclick = function(){
+    setTokenStorage("");
+    $("setToken").value = "";
+    $("tokenStatus").innerHTML = '<div class="warnbox">حُذف التوكن من هذا الجهاز.</div>';
+  };
+  /* الخانات والعناصر */
+  $("btnAddCat").onclick = openAddCat;
+  $("btnDoCat").onclick = doCatDialog;
+  $("btnAddItem").onclick = addItem;
+  $("btnDoDelCat").onclick = doDeleteCat;
+  $("btnDoAddField").onclick = doAddField;
+  var radios = document.querySelectorAll('input[name=delCatMode]');
+  for (var i = 0; i < radios.length; i++) radios[i].addEventListener("change", syncDelCatCards);
+  /* تأكيد عام */
+  $("cfYes").onclick = function(){
+    closeDlg("dlgConfirm");
+    if (_cfCb){ var cb = _cfCb; _cfCb = null; cb(); }
+  };
+  $("cfNo").onclick = function(){ _cfCb = null; closeDlg("dlgConfirm"); };
+  /* بحث */
+  $("searchBox").addEventListener("input", function(){
+    state.search = this.value;
+    renderItems();
+  });
+  /* أزرار شريط الحالة */
+  var sb = $("statusbar");
+  var undoB = document.createElement("button");
+  undoB.className = "sb-btn"; undoB.textContent = "↩️ إلغاء التغييرات"; undoB.onclick = undoChanges;
+  var bakB = document.createElement("button");
+  bakB.className = "sb-btn"; bakB.textContent = "💾 نسخة احتياطية مؤرخة";
+  bakB.onclick = function(){ saveFile(true); };
+  sb.appendChild(undoB); sb.appendChild(bakB);
+  /* اختصار Ctrl+S */
+  document.addEventListener("keydown", function(e){
+    if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")){
+      e.preventDefault();
+      if (state.items) saveFile(false);
+    }
+  });
+  /* تحذير قبل مغادرة الصفحة مع تغييرات غير منشورة */
+  window.addEventListener("beforeunload", function(e){
+    if (state.dirty){ e.preventDefault(); e.returnValue = ""; }
+  });
+  /* تبويبات نسخة الموبايل */
+  var mtabs = document.querySelectorAll("#mobileTabs .mtab");
+  for (var t = 0; t < mtabs.length; t++){
+    (function(btn){ btn.onclick = function(){ mTab(btn.getAttribute("data-tab")); }; })(mtabs[t]);
+  }
+  mTab("cats");
+  $("ubLater").onclick = function(){
+    $("updateBanner").style.display = "none";
+    _updateBannerShown = true;
+  };
+  /* فحص الإصدار الأحدث: بعد التحميل بقليل ثم كل دقيقتين */
+  setTimeout(checkForEditorUpdate, 4000);
+  setInterval(checkForEditorUpdate, 120000);
+  refreshStatus();
+}
+document.addEventListener("DOMContentLoaded", init);
+
+/* خطافات للاختبار الآلي */
+window.__pt = {
+  state: state, catsOf: catsOf, catInfo: catInfo, buildSaveText: buildSaveText,
+  validateItems: validateItems, loadFromWeb: loadFromWeb, adoptItems: adoptItems,
+  addItem: addItem, doCatDialog: doCatDialog, openAddCat: openAddCat, undoChanges: undoChanges,
+  openRenameCat: openRenameCat, openDeleteCat: openDeleteCat, doDeleteCat: doDeleteCat,
+  deleteItem: deleteItem, duplicateItem: duplicateItem, moveItem: moveItem,
+  doAddField: doAddField, openPublish: openPublish, doPublish: doPublish,
+  validCatId: validCatId, saveFile: saveFile, setIcon: setIcon,
+  mTab: mTab, checkForEditorUpdate: checkForEditorUpdate, editorVersion: function(){ return EDITOR_VERSION; }
+};
+</script>
+</body>
+</html>
