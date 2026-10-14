@@ -519,7 +519,7 @@ var MEDIA_PATH = "media";            /* مجلد الصور المرفوعة ف�
 var ICONS_FILE = "editor-icons.json"; /* قائمة «أيقوناتي» المشتركة بين الأجهزة */
 var EMOJI_SRC_EN = "https://cdn.jsdelivr.net/npm/emojibase-data@17/en/compact.json";
 var EMOJI_SRC_AR = "https://cdn.jsdelivr.net/npm/cldr-annotations-modern@45.0.0/annotations/ar/annotations.json";
-var EDITOR_VERSION = "1.3.0"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub */
+var EDITOR_VERSION = "1.3.1"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub */
 
 /* الخانات المعروفة للتطبيق (من أزرار التصفية داخل prayer-times.html) */
 var KNOWN_CATS = {
@@ -1526,6 +1526,8 @@ async function ghPutPath(repo, path, contentB64, message){
   var gr = await fetch(ghUrl("/repos/" + OWNER + "/" + repo + "/contents/" + path + "?ref=main"), { headers: ghHeaders(), cache: "no-store" });
   var sha = null;
   if (gr.status === 404) sha = null;
+  else if (gr.status === 401) throw new Error("التوكن غير صالح أو مُبطَل (401) — افتح ⚙️ الإعدادات وألصق توكناً جديداً ثم «حفظ التوكن»");
+  else if (gr.status === 403) throw new Error("رُفض الطلب (403) — تأكد أن التوكن يحتوي صلاحية repo");
   else if (!gr.ok) throw new Error("فحص " + repo + ": HTTP " + gr.status);
   else sha = (await gr.json()).sha || null;
   var body = { message: message, content: contentB64, branch: "main" };
@@ -1534,6 +1536,8 @@ async function ghPutPath(repo, path, contentB64, message){
     method: "PUT", headers: ghHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(body)
   });
   if (!r.ok){
+    if (r.status === 401) throw new Error("التوكن غير صالح أو مُبطَل (401) — افتح ⚙️ الإعدادات وألصق توكناً جديداً ثم «حفظ التوكن»");
+    if (r.status === 403) throw new Error("رُفض الرفع (403) — تأكد أن التوكن بصلاحية repo ولم يتجاوز حدود GitHub");
     var t = await r.text();
     throw new Error("رفع " + repo + ": HTTP " + r.status + " " + t.slice(0, 300));
   }
@@ -1828,9 +1832,20 @@ async function doPublish(){
 /* ================= الإعدادات ================= */
 function openSettings(){
   $("setToken").value = getToken();
-  $("tokenStatus").innerHTML = getToken() ?
-    '<div class="okbox">يوجد توكن محفوظ على هذا الجهاز (مخفي).</div>' :
-    '<div class="warnbox">لا يوجد توكن محفوظ — النشر المباشر معطّل حتى حفظ توكن.</div>';
+  var st = $("tokenStatus");
+  if (!getToken()){
+    st.innerHTML = '<div class="warnbox">لا يوجد توكن محفوظ — النشر المباشر ورفع الصور معطّلان حتى حفظ توكن.</div>';
+  } else {
+    st.innerHTML = '<div class="okbox">يوجد توكن محفوظ على هذا الجهاز (مخفي) — ⏳ جاري التحقق من صحته…</div>';
+    fetch(ghUrl("/user"), { headers: ghHeaders(), cache: "no-store" })
+      .then(function(r){ return r.ok ? r.json().then(function(j){ return { ok: true, login: j.login }; }) : { ok: false, status: r.status }; })
+      .then(function(v){
+        if (v.ok) st.innerHTML = '<div class="okbox">✅ التوكن المحفوظ صالح — الحساب: <b>' + esc(v.login) + '</b> — يمكنكم النشر ورفع الصور.</div>';
+        else if (v.status === 401) st.innerHTML = '<div class="dangerbox">❌ التوكن المحفوظ <b>مُبطَل أو منتهي</b> (401) — هذا سبب فشل رفع الصور والنشر.<br>ألصق توكناً جديداً في الحقل أعلاه ثم انقر «حفظ التوكن».</div>';
+        else st.innerHTML = '<div class="warnbox">⚠️ تعذر التحقق من التوكن المحفوظ (HTTP ' + v.status + ') — جرّب زر «فحص التوكن».</div>';
+      })
+      .catch(function(){ st.innerHTML = '<div class="warnbox">⚠️ تعذر الاتصال بالتحقق — جرّب زر «فحص التوكن».</div>'; });
+  }
   openDlg("dlgSettings");
 }
 async function testToken(){
@@ -1938,8 +1953,9 @@ function init(){
     var tok = $("setToken").value.trim();
     if (tok && !/^gh[pousr]_[A-Za-z0-9]{30,}$/.test(tok) && !confirm("الصيغة لا تشبه توكن GitHub المعتاد (ghp_…). حفظه رغم ذلك؟")) return;
     setTokenStorage(tok);
-    $("tokenStatus").innerHTML = tok ? '<div class="okbox">✅ حُفظ التوكن على هذا الجهاز.</div>' : '<div class="warnbox">حُذف التوكن.</div>';
     toast(tok ? "✅ حُفظ التوكن" : "حُذف التوكن");
+    if (tok) testToken(); /* تحقق فوري بعد الحفظ ليظهر إن كان صالحاً أم لا */
+    else $("tokenStatus").innerHTML = '<div class="warnbox">حُذف التوكن.</div>';
   };
   $("btnTestToken").onclick = testToken;
   $("btnClearToken").onclick = function(){
