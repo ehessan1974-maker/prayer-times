@@ -1633,7 +1633,7 @@
   },
   {
     "icon": "💬",
-    "text": "[img:https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/media/img-20261014-141139-1692.jpg]\nمرحبا بابا جنى قلب البابا",
+    "text": "مرحبا بابا جنى قلب البابا",
     "src": "رسالة لـ قلب البابا",
     "cat": "ehemessages",
     "audience": [
@@ -1643,7 +1643,7 @@
   },
   {
     "icon": "💬",
-    "text": "[img:https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/media/img-20261014-141109-5144.jpg]\nمرحبا حبيبتي منال",
+    "text": "مرحبا حبيبتي منال",
     "src": "رسالة لـ حبيبتي",
     "cat": "ehemessages",
     "audience": [
@@ -1671,11 +1671,19 @@
   },
   {
     "icon": "📝",
-    "text": "[img:https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/media/img-20261014-141358-6558.jpg]\nمرحبا\nهذه رسالة خاصة بـ موبايلي",
+    "text": "مرحبا\nهذه رسالة خاصة بـ موبايلي",
     "src": "رسالة إلى موبايلي",
     "cat": "ehemessages",
     "audience": "android:f67b2330103fe339",
     "ts": "2026/10/14 03:21"
+  },
+  {
+    "icon": "📝",
+    "text": "مرحبا\nهذه رسالة خاصة بـ الشاشة",
+    "src": "رسالة إلى موبايلي",
+    "cat": "ehemessages",
+    "ts": "2026/10/14 15:25",
+    "audience": "android:a6eea05a848132df"
   },
   {
     "icon": "📜",
