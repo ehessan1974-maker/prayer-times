@@ -475,7 +475,7 @@ var OWNER = "ehessan1974-maker";
 var PUBLIC_REPO = "prayer-times";
 var PRIVATE_REPO = "prayer-times-private";
 var CONTENT_PATH = "content.json";
-var EDITOR_VERSION = "1.1.0"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub */
+var EDITOR_VERSION = "1.1.1"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub */
 
 /* الخانات المعروفة للتطبيق (من أزرار التصفية داخل prayer-times.html) */
 var KNOWN_CATS = {
@@ -644,9 +644,11 @@ function loadFromFile(file){
 }
 function loadFromWeb(){
   if (state.dirty && !confirm("لديك تغييرات غير محفوظة وستُفقد عند تحميل نسخة جديدة. متابعة؟")) return;
+  /* raw أولاً: يعرض آخر كومِت فوراً ومرجعي 100% — jsDelivr احتياطاً فقط،
+     لأن ذاكرته قد تتأخر دقائق فتعطي أساس تعديل قديماً ويُحوّ النشرُ الأحدثَ */
   var urls = [
-    "https://cdn.jsdelivr.net/gh/" + OWNER + "/" + PUBLIC_REPO + "@main/" + CONTENT_PATH,
-    "https://raw.githubusercontent.com/" + OWNER + "/" + PUBLIC_REPO + "/main/" + CONTENT_PATH
+    "https://raw.githubusercontent.com/" + OWNER + "/" + PUBLIC_REPO + "/main/" + CONTENT_PATH,
+    "https://cdn.jsdelivr.net/gh/" + OWNER + "/" + PUBLIC_REPO + "@main/" + CONTENT_PATH
   ];
   var tried = 0;
   $("stMsg").textContent = "⏳ جاري التحميل من الإنترنت…";
