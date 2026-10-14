@@ -161,7 +161,35 @@ var latitude = null, longitude = null;
 var prayerData = null;
 var cachedInfoItems = [];
 var currentInfoIdx = 0;
-var CURRENT_APP_VERSION = "26.2";
+var CURRENT_APP_VERSION = "26.3";
+// v26.3: تعويض فشل تحميل الصور تلقائياً — التبديل بين المضيفات (raw ← Pages ← jsDelivr)
+// السبب: jsDelivr يخزّن استجابات 404 للملفات الجديدة على بعض عقد الشبكة فتختفي الصورة أحياناً
+var __IMG_HOSTS = [
+  "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/",
+  "https://ehessan1974-maker.github.io/prayer-times/",
+  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/"
+];
+function __imgFix(img) {
+  var now = Date.now();
+  if (img._fixT && now - img._fixT < 80) return; /* منع المعالجة المزدوجة لنفس الحدث (وسم مضمّن + مستمع المستند) */
+  img._fixT = now;
+  var src = img.getAttribute("src") || "";
+  var m = src.match(/media\/[A-Za-z0-9._-]+$/);
+  if (!m) { img.onerror = null; return; }
+  var path = m[0];
+  var rest = [];
+  for (var i = 0; i < __IMG_HOSTS.length; i++) {
+    if (src.indexOf(__IMG_HOSTS[i]) !== 0) rest.push(__IMG_HOSTS[i]);
+  }
+  if (!rest.length) { img.onerror = null; return; }
+  img.onerror = function(){ __imgFix(img); };
+  img.src = rest[0] + path;
+}
+// شبكة أمان v26.3: مستمع على مستوى المستند يلتقط فشل تحميل أي صورة رسالة حتى لو حُجب الوسم المضمّن
+document.addEventListener("error", function(e){
+  var t = e.target;
+  if (t && t.tagName === "IMG" && (t.getAttribute("src") || "").indexOf("/media/") !== -1) __imgFix(t);
+}, true);
 // v25.43: مصادر متعددة — إذا فشل jsDelivr نجرّب GitHub Pages ثم raw مباشرة
 var UPDATE_SOURCE_URLS = [
   "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json",
@@ -413,7 +441,7 @@ function displayInfo() {
   var src = item.src || "";
   var htmlText = escapeHtml(text).replace(/\n/g, "<br>");
   // v26.2: عرض الصور المدمجة [img:URL]
-  htmlText = htmlText.replace(/\[img:(https?:\/\/[^\s\]]+)\]/g, '<img class="msg-img" src="$1" loading="lazy" alt="صورة">');
+  htmlText = htmlText.replace(/\[img:(https?:\/\/[^\s\]]+)\]/g, '<img class="msg-img" src="$1" loading="lazy" alt="صورة" onerror="__imgFix(this)">');
   el("infoText").innerHTML = '<span class="info-icon">' + icon + '</span> ' + htmlText;
   if (src) el("infoSource").textContent = src;
   else el("infoSource").textContent = "";

@@ -519,7 +519,7 @@ var MEDIA_PATH = "media";            /* مجلد الصور المرفوعة ف�
 var ICONS_FILE = "editor-icons.json"; /* قائمة «أيقوناتي» المشتركة بين الأجهزة */
 var EMOJI_SRC_EN = "https://cdn.jsdelivr.net/npm/emojibase-data@17/en/compact.json";
 var EMOJI_SRC_AR = "https://cdn.jsdelivr.net/npm/cldr-annotations-modern@45.0.0/annotations/ar/annotations.json";
-var EDITOR_VERSION = "1.3.1"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub */
+var EDITOR_VERSION = "1.3.2"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub */
 
 /* الخانات المعروفة للتطبيق (من أزرار التصفية داخل prayer-times.html) */
 var KNOWN_CATS = {
@@ -1566,7 +1566,11 @@ async function uploadImage(file){
     await ghPutPath(PUBLIC_REPO, path, b64, "إضافة صورة عبر المحرر (" + newKB + "KB)");
     /* نسخة احتياطية في الخاص — بصمت، لا تعيق نجاح العملية */
     try { await ghPutPath(PRIVATE_REPO, path, b64, "إضافة صورة (نسخة احتياطية)"); } catch(e2){}
-    var url = "https://cdn.jsdelivr.net/gh/" + OWNER + "/" + PUBLIC_REPO + "@main/" + path;
+    /* v1.3.2: raw (GitHub مباشرة) بدل jsDelivr للصور — الملف الجديد متاح فوراً ولا يُخزَّن 404
+       (jsDelivr يخزّن استجابات 404 لدقائق على بعض عقد الشبكة فتختفي الصورة الجديدة أحياناً ثم تعود) */
+    var url = "https://raw.githubusercontent.com/" + OWNER + "/" + PUBLIC_REPO + "/main/" + path;
+    /* احتياطي: مسح ذاكرة jsDelivr للصورة الجديدة كي لا تبقى أي 404 قديمة إن استُخدم رابطها يدوياً */
+    try { fetch("https://purge.jsdelivr.net/gh/" + OWNER + "/" + PUBLIC_REPO + "@main/" + path).catch(function(){}); } catch(eP){}
     /* إدراج العلامة موضع المؤشر داخل النص */
     var marker = "[img:" + url + "]";
     var s = ta.selectionStart || 0, epos = ta.selectionEnd || 0;

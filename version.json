@@ -1,8 +1,8 @@
 {
- "appVersion": "26.2",
- "htmlUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html",
- "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.0.apk",
- "apkSizeMB": "2.6",
- "releasedAt": "2026-10-14T02:30:00Z",
- "changelog": "جديد: عرض الصور داخل الرسائل — ألصق صورة في محرر المحتوى (زر 🖼️ أو Ctrl+V) وستظهر لجميع المستخدمين، وبالضغط عليها تُفتح بحجم كامل. محرر المحتوى صار سحابياً أيضاً: ehessan1974-maker.github.io/prayer-times/editor.html"
+  "appVersion": "26.3",
+  "htmlUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html",
+  "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.0.apk",
+  "apkSizeMB": "2.6",
+  "releasedAt": "2026-10-14",
+  "changelog": "إصلاح: الصور لم تعد تختفي متقطعاً — إن تعذر تحميل صورة من مستضيف واحد يبدّلها التطبيق تلقائياً لمصدر بديل (3 مضيفات). والصور الجديدة تُدرج برابط متاح فوراً بعد الرفع."
 }
