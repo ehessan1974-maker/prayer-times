@@ -1,8 +1,8 @@
 {
-  "appVersion": "26.5",
+  "appVersion": "26.6",
   "htmlUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html",
-  "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.0.apk",
-  "apkSizeMB": "2.6",
+  "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.6.apk",
+  "apkSizeMB": "2.7",
   "releasedAt": "2026-10-15",
-  "changelog": "جديد: مقاطع الفيديو داخل المحتوى 🎬 — ارفع فيديو من المحرر (زر 🎬 فيديو بجانب النص) ويظهر للمستخدمين داخل الرسالة مع زر تشغيل، بنفس ثبات الصور على كل الأجهزة (تعويض تلقائي بين المصادر + حماية الأجهزة القديمة)"
+  "changelog": "جديد: أصوات تنبيه «باقي للصلاة / باقي للشروق» الجديدة 🔊 — تسجيلات محدثة لتنبيهات 15 و10 و5 دقائق قبل الصلاة والشروق. نزّل وثبّت APK v26.6 من صفحة التحميل حتى تعمل الأصوات الجديدة (الأصوات مضمّنة داخل التطبيق نفسه)."
 }
