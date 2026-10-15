@@ -854,6 +854,33 @@ body.dark-mode .msged-audience-add-name { background:#0f1f18; color:#e2e8f0; bor
 }
 #imgViewer.show { display: flex; }
 #imgViewer img { max-width: 94vw; max-height: 92vh; border-radius: 8px; }
+/* v26.7: مشغل الريلز — فيديو الكونتنت بملء الشاشة: تشغيل تلقائي + تكرار + لمسة إيقاف/تشغيل + تمرير رأسي بين المقاطع */
+#reelsViewer{position:fixed;top:0;left:0;right:0;bottom:0;background:#000;display:none;z-index:100000;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+#reelsViewer.show{display:block;}
+#reelsStage{position:absolute;top:0;left:0;right:0;bottom:0;}
+#reelsVid{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;}
+#reelsVid.cover{object-fit:cover;}
+.reels-btn{position:absolute;top:14px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:19px;line-height:42px;text-align:center;z-index:3;cursor:pointer;}
+#reelsClose{left:14px;}
+#reelsMute{right:14px;}
+#reelsCounter{position:absolute;top:26px;left:0;right:0;text-align:center;color:rgba(255,255,255,.85);font-size:12px;font-weight:700;z-index:2;pointer-events:none;direction:ltr;}
+#reelsSpin{position:absolute;top:50%;left:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;z-index:2;pointer-events:none;display:none;-webkit-animation:reelsSpin .9s linear infinite;animation:reelsSpin .9s linear infinite;}
+@-webkit-keyframes reelsSpin{to{-webkit-transform:rotate(360deg);transform:rotate(360deg);}}
+@keyframes reelsSpin{to{-webkit-transform:rotate(360deg);transform:rotate(360deg);}}
+#reelsPause{position:absolute;top:50%;left:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.45);z-index:2;pointer-events:none;opacity:0;-webkit-transition:opacity .25s;transition:opacity .25s;}
+#reelsPause span{position:absolute;top:15px;width:9px;height:34px;border-radius:2px;background:#fff;}
+#reelsPause .p1{left:20px;}
+#reelsPause .p2{right:20px;}
+#reelsPause.show{opacity:1;}
+#reelsCap{position:absolute;bottom:24px;left:12px;right:12px;color:#fff;font-size:13px;font-weight:600;line-height:1.7;text-align:right;direction:rtl;max-height:6.8em;overflow:hidden;z-index:2;pointer-events:none;text-shadow:0 1px 4px rgba(0,0,0,.9);}
+#reelsProg{position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.22);z-index:3;}
+#reelsProgFill{height:100%;width:0;background:#fff;}
+#reelsFail{position:absolute;top:50%;left:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);color:#fff;font-size:13px;font-weight:700;text-align:center;z-index:4;display:none;background:rgba(127,127,127,.25);padding:10px 16px;border-radius:10px;max-width:80%;}
+/* v26.7: غلاف الفيديو المدمج + زر تشغيل — النقر يفتح مشغل الريلز بدل أزرار الفيديو الصغيرة */
+.vid-wrap{position:relative;display:inline-block;max-width:100%;cursor:pointer;margin:4px 0;}
+.vid-wrap .msg-video{display:block;margin:0;}
+.vid-play{position:absolute;top:50%;left:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:rgba(0,0,0,.45);z-index:1;pointer-events:none;}
+.vid-play:before{content:"";position:absolute;top:50%;left:50%;-webkit-transform:translate(-40%,-50%);transform:translate(-40%,-50%);border-left:16px solid #fff;border-top:10px solid transparent;border-bottom:10px solid transparent;}
 .info-track-card .info-track-source {
   font-size: 9px;
   color: #b45309;
@@ -2608,10 +2635,10 @@ function linkifyText(text) {
     _imgTokens.push('<img class="msg-img" src="' + __imgBust(u) + '" loading="lazy" alt="صورة" onerror="__imgFix(this)" onclick="openImgViewer(this.src)">');
     return "\u0001IMG" + (_imgTokens.length - 1) + "\u0001";
   });
-  // v26.5: الفيديو المدمج [video:URL] — توكِنات مثل الصور (preload=metadata يوفّر البيانات، والتحكم اليدوي بالتشغيل)
+  // v26.5: الفيديو المدمج [video:URL] — v26.7: بدون أزرار تحكم؛ النقر يفتح مشغل الريلز بملء الشاشة (تشغيل تلقائي)
   var _vidTokens = [];
   escaped = escaped.replace(/\[video:([^\]\s]+)\]/g, function(m0, u){
-    _vidTokens.push('<video class="msg-video" src="' + __imgBust(u) + '" controls playsinline preload="metadata" onerror="__imgFix(this)"></video>');
+    _vidTokens.push('<span class="vid-wrap"><video class="msg-video" src="' + __imgBust(u) + '" playsinline preload="metadata" title="اضغط للمشاهدة بملء الشاشة" onerror="__imgFix(this)" onclick="openReels(this.src)"></video><span class="vid-play"></span></span>');
     return "\u0002VID" + (_vidTokens.length - 1) + "\u0002";
   });
   // 1. تحويل الروابط (http/https) إلى <a> tags
@@ -2685,6 +2712,236 @@ function openImgViewer(src) {
   v.classList.add("show");
 }
 
+// ==================== v26.7: مشغل الريلز ====================
+// فيديو الكونتنت بملء الشاشة مثل مقاطع الريلز: تشغيل تلقائي مع الصوت، تكرار، لمسة = إيقاف/تشغيل،
+// تمرير رأسي بين مقاطع الكونتنت (سحب لأعلى = التالي، لأسفل = السابق، وفي أول مقطع = إغلاق).
+// ES5 بالكامل توافقاً مع الأجهزة القديمة + تجاوز المضيفات (__IMG_HOSTS) عند فشل التحميل.
+var __reelsList = [], __reelsIdx = 0, __reelsApi = null;
+function __reelsPath(u){ var m = String(u || "").split("?")[0].match(/media\/[A-Za-z0-9._-]+$/); return m ? m[0] : ""; }
+function __reelsClean(t){
+  return String(t || "")
+    .replace(/\[video:[^\]\s]+\]/g, " ").replace(/\[img:[^\]\s]+\]/g, " ")
+    .replace(/https?:\/\/[^\s<]+/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
+function __reelsCollect(){
+  var out = [], seen = {}, items = (typeof cachedInfoItems !== "undefined" && cachedInfoItems) ? cachedInfoItems : [];
+  for (var i = 0; i < items.length; i++) {
+    var raw = "";
+    try { raw = JSON.stringify(items[i]); } catch(e1) { continue; }
+    if (raw.indexOf("[video:") === -1) continue;
+    var cap = __reelsClean(items[i] && (items[i].text || items[i].title || ""));
+    var m = raw.match(/\[video:([^\]\s]+)\]/g) || [];
+    for (var j = 0; j < m.length; j++) {
+      var u = m[j].slice(7, -1);
+      var p = __reelsPath(u);
+      if (!p || seen[p]) continue;
+      seen[p] = 1;
+      out.push({ url: u, cap: cap });
+    }
+  }
+  return out;
+}
+function openReels(src){
+  __reelsList = __reelsCollect();
+  var p = __reelsPath(src), idx = -1;
+  for (var i = 0; i < __reelsList.length; i++) { if (__reelsPath(__reelsList[i].url) === p) { idx = i; break; } }
+  if (idx === -1) { __reelsList.unshift({ url: String(src || ""), cap: "" }); idx = 0; }
+  if (!__reelsApi) __reelsApi = __reelsBuild();
+  var A = __reelsApi;
+  __reelsResetVisual();
+  A.el.className = "show";
+  __reelsLoad(idx);
+}
+function __reelsBuild(){
+  var el = document.createElement("div");
+  el.id = "reelsViewer";
+  el.innerHTML =
+    '<div id="reelsStage"><video id="reelsVid" playsinline loop preload="auto"></video></div>' +
+    '<div id="reelsClose" class="reels-btn">✕</div>' +
+    '<div id="reelsMute" class="reels-btn">🔊</div>' +
+    '<div id="reelsCounter"></div>' +
+    '<div id="reelsSpin"></div>' +
+    '<div id="reelsPause"><span class="p1"></span><span class="p2"></span></div>' +
+    '<div id="reelsCap"></div>' +
+    '<div id="reelsFail">⚠️ تعذّر تشغيل الفيديو — تحقق من الاتصال</div>' +
+    '<div id="reelsProg"><div id="reelsProgFill"></div></div>';
+  document.body.appendChild(el);
+  var A = {
+    el: el,
+    stage: el.querySelector("#reelsStage"),
+    vid: el.querySelector("#reelsVid"),
+    closeEl: el.querySelector("#reelsClose"),
+    muteEl: el.querySelector("#reelsMute"),
+    cntEl: el.querySelector("#reelsCounter"),
+    spinEl: el.querySelector("#reelsSpin"),
+    pauseEl: el.querySelector("#reelsPause"),
+    capEl: el.querySelector("#reelsCap"),
+    failEl: el.querySelector("#reelsFail"),
+    fillEl: el.querySelector("#reelsProgFill"),
+    _pt: null, _swapping: false
+  };
+  A.closeEl.onclick = function(){ __reelsCloseAll(); };
+  A.muteEl.onclick = function(e){
+    try { if (e && e.stopPropagation) e.stopPropagation(); } catch(e0){}
+    A.vid.muted = !A.vid.muted;
+    A.muteEl.textContent = A.vid.muted ? "🔇" : "🔊";
+  };
+  A.vid.addEventListener("loadedmetadata", function(){
+    /* الفيديو العمودي يملأ الشاشة (cover)، والأفقي يُعرض كاملاً (contain) */
+    A.vid.className = (A.vid.videoHeight > A.vid.videoWidth) ? "cover" : "";
+  });
+  A.vid.addEventListener("timeupdate", function(){
+    if (!A.vid.duration) return;
+    A.fillEl.style.width = Math.min(100, (A.vid.currentTime / A.vid.duration) * 100) + "%";
+  });
+  A.vid.addEventListener("waiting", function(){ A.spinEl.style.display = "block"; });
+  A.vid.addEventListener("playing", function(){ A.spinEl.style.display = "none"; });
+  A.vid.addEventListener("canplay", function(){ A.spinEl.style.display = "none"; });
+  A.vid.addEventListener("error", function(){ __reelsHostRetry(); });
+  var g = { x: 0, y: 0, t: 0, axis: 0, moved: false, guard: 0 };
+  A.stage.addEventListener("touchstart", function(e){
+    if (!e.touches || e.touches.length !== 1) return;
+    g.x = e.touches[0].clientX; g.y = e.touches[0].clientY; g.t = Date.now();
+    g.axis = 0; g.moved = false;
+    A.stage.style.webkitTransition = "none"; A.stage.style.transition = "none";
+  }, false);
+  A.stage.addEventListener("touchmove", function(e){
+    if (A._swapping || !e.touches || e.touches.length !== 1) return;
+    var dx = e.touches[0].clientX - g.x, dy = e.touches[0].clientY - g.y;
+    if (!g.axis && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) g.axis = (Math.abs(dy) >= Math.abs(dx)) ? 1 : 2;
+    if (g.axis !== 1) return;
+    if (e.preventDefault) e.preventDefault();
+    g.moved = true;
+    var atEdge = (dy > 0 && __reelsIdx === 0) || (dy < 0 && __reelsIdx >= __reelsList.length - 1);
+    var off = atEdge ? dy * 0.35 : dy;
+    A.stage.style.webkitTransform = "translate3d(0," + off + "px,0)";
+    A.stage.style.transform = "translate3d(0," + off + "px,0)";
+  }, false);
+  A.stage.addEventListener("touchend", function(e){
+    g.guard = Date.now(); /* كبت النقرة الاصطناعية بعد أي لمسة */
+    if (A._swapping) return;
+    var dt = Date.now() - g.t;
+    if (!g.moved && dt < 400) { __reelsToggle(); return; }
+    if (g.axis !== 1) return;
+    var t = (e.changedTouches && e.changedTouches[0]) || null;
+    var dy = t ? (t.clientY - g.y) : 0;
+    if (Math.abs(dy) > 60) {
+      if (dy < 0 && __reelsIdx < __reelsList.length - 1) __reelsSwap(1);
+      else if (dy > 0 && __reelsIdx > 0) __reelsSwap(-1);
+      else if (dy > 0) __reelsCloseAll();
+      else __reelsSnap();
+    } else __reelsSnap();
+  }, false);
+  A.stage.addEventListener("click", function(){
+    if (Date.now() - g.guard < 600) return;
+    __reelsToggle();
+  }, false);
+  A.stage.addEventListener("contextmenu", function(e){ try { e.preventDefault(); } catch(e0){} }, false);
+  document.addEventListener("keydown", function(e){
+    if (!__reelsApi || __reelsApi.el.className !== "show") return;
+    if (e.key === "Escape") __reelsCloseAll();
+    else if (e.key === "ArrowUp") __reelsSwap(1);
+    else if (e.key === "ArrowDown") __reelsSwap(-1);
+    else if (e.key === " " || e.key === "Spacebar") { try { e.preventDefault(); } catch(e0){} __reelsToggle(); }
+  }, false);
+  return A;
+}
+function __reelsToggle(){
+  var A = __reelsApi; if (!A) return;
+  if (A.vid.paused) {
+    try { var pr = A.vid.play(); if (pr && pr.then) pr.then(function(){}, function(){}); } catch(e0){}
+    A.pauseEl.className = "";
+  } else {
+    A.vid.pause();
+    A.pauseEl.className = "show";
+  }
+}
+function __reelsSnap(){
+  var A = __reelsApi; if (!A) return;
+  A.stage.style.webkitTransition = "-webkit-transform .22s ease-out, transform .22s ease-out, opacity .22s";
+  A.stage.style.transition = "transform .22s ease-out, opacity .22s";
+  A.stage.style.webkitTransform = "translate3d(0,0,0)";
+  A.stage.style.transform = "translate3d(0,0,0)";
+  A.stage.style.opacity = "1";
+}
+function __reelsSwap(dir){
+  var A = __reelsApi; if (!A || A._swapping) return;
+  var n = __reelsIdx + dir;
+  if (n < 0 || n >= __reelsList.length) { __reelsSnap(); return; }
+  A._swapping = true;
+  var h = window.innerHeight || 640;
+  try { A.vid.pause(); } catch(e0){}
+  A.stage.style.webkitTransition = "-webkit-transform .2s ease-in, transform .2s ease-in, opacity .2s";
+  A.stage.style.transition = "transform .2s ease-in, opacity .2s";
+  A.stage.style.webkitTransform = "translate3d(0," + (-dir * h) + "px,0)";
+  A.stage.style.transform = "translate3d(0," + (-dir * h) + "px,0)";
+  A.stage.style.opacity = "0";
+  setTimeout(function(){
+    A.stage.style.webkitTransition = "none"; A.stage.style.transition = "none";
+    A.stage.style.webkitTransform = "translate3d(0," + (dir * h) + "px,0)";
+    A.stage.style.transform = "translate3d(0," + (dir * h) + "px,0)";
+    A.stage.style.opacity = "0";
+    void A.stage.offsetWidth;
+    __reelsLoad(n);
+    A.stage.style.webkitTransition = "-webkit-transform .2s ease-out, transform .2s ease-out, opacity .2s";
+    A.stage.style.transition = "transform .2s ease-out, opacity .2s";
+    A.stage.style.webkitTransform = "translate3d(0,0,0)";
+    A.stage.style.transform = "translate3d(0,0,0)";
+    A.stage.style.opacity = "1";
+    A._swapping = false;
+  }, 210);
+}
+function __reelsLoad(i){
+  var A = __reelsApi; if (!A) return;
+  var it = __reelsList[i];
+  if (!it) { __reelsCloseAll(); return; }
+  __reelsIdx = i;
+  A.capEl.textContent = it.cap || "";
+  A.cntEl.textContent = (__reelsList.length > 1) ? (i + 1) + " / " + __reelsList.length : "";
+  A.fillEl.style.width = "0%";
+  A.failEl.style.display = "none";
+  A.spinEl.style.display = "block";
+  A.vid._hostIdx = 0;
+  A.vid.src = it.url;
+  try { A.vid.load(); } catch(e0){}
+  try { var pr = A.vid.play(); if (pr && pr.then) pr.then(function(){}, function(){}); } catch(e1){}
+}
+function __reelsHostRetry(){
+  var A = __reelsApi;
+  if (!A || A.el.className !== "show") return; /* مغلق أو غير مهيأ */
+  var it = __reelsList[__reelsIdx]; if (!it) return;
+  var p = __reelsPath(it.url);
+  if (!A.vid._hostIdx) A.vid._hostIdx = 0;
+  A.vid._hostIdx++;
+  if (p && A.vid._hostIdx < __IMG_HOSTS.length) {
+    A.vid.src = __IMG_HOSTS[A.vid._hostIdx] + p + "?r=" + Date.now();
+    try { A.vid.load(); } catch(e0){}
+    try { var pr = A.vid.play(); if (pr && pr.then) pr.then(function(){}, function(){}); } catch(e1){}
+  } else {
+    A.spinEl.style.display = "none";
+    A.failEl.style.display = "block";
+  }
+}
+function __reelsResetVisual(){
+  var A = __reelsApi; if (!A) return;
+  try { A.vid.pause(); } catch(e0){}
+  A.stage.style.webkitTransition = "none"; A.stage.style.transition = "none";
+  A.stage.style.webkitTransform = "translate3d(0,0,0)";
+  A.stage.style.transform = "translate3d(0,0,0)";
+  A.stage.style.opacity = "1";
+  A.pauseEl.className = "";
+  A.spinEl.style.display = "none";
+  A.failEl.style.display = "none";
+  A.vid.muted = false;
+  A.muteEl.textContent = "🔊";
+}
+function __reelsCloseAll(){
+  if (!__reelsApi) return;
+  __reelsResetVisual();
+  __reelsApi.el.className = "";
+}
+
 // v26.3: تعويض فشل تحميل الصورة تلقائياً — التبديل بين المضيفات
 // v26.4 [مُعاد ضبطه للأجهزة القديمة]: jsDelivr أولاً (شهادة GlobalSign تعمل على كل أندرويد)
 // ثم raw ثم Pages (شهادتهما Let's Encrypt تُرفض على أندرويد < 7.1.1 فلا تنفع إلا على الأجهزة الحديثة)
@@ -2700,6 +2957,7 @@ function __imgBust(u){
   return u;
 }
 function __imgFix(img) {
+  if (img && img.id === "reelsVid") return; /* v26.7: فيديو الريلز يدير مضيفاته بنفسه (__reelsHostRetry) */
   var now = Date.now();
   if (img._fixT && now - img._fixT < 80) return; /* منع المعالجة المزدوجة لنفس الحدث */
   img._fixT = now;
@@ -2747,14 +3005,22 @@ function __vidFailBox(v, path) {
   box.textContent = "🎬 فيديو — اضغط لإعادة المحاولة";
   box.onclick = function(ev){
     try { if (ev && ev.stopPropagation) ev.stopPropagation(); } catch(e0){}
+    /* v26.7: إعادة البناء بغلاف vid-wrap + النقر يفتح مشغل الريلز (تُستبدل الحاوية كلها إن وُجدت) */
     var nv = document.createElement("video");
     nv.className = "msg-video";
-    nv.controls = true;
     nv.setAttribute("playsinline", "");
     nv.setAttribute("preload", "metadata");
+    nv.setAttribute("title", "اضغط للمشاهدة بملء الشاشة");
+    nv.setAttribute("onclick", "openReels(this.src)");
     nv.onerror = function(){ __imgFix(nv); };
     nv.src = __IMG_HOSTS[0] + path + "?r=" + Date.now();
-    if (box.parentNode) box.parentNode.replaceChild(nv, box);
+    var wrap = document.createElement("span");
+    wrap.className = "vid-wrap";
+    var pl = document.createElement("span");
+    pl.className = "vid-play";
+    wrap.appendChild(nv); wrap.appendChild(pl);
+    var repl = (box.parentNode && box.parentNode.className === "vid-wrap") ? box.parentNode : box;
+    if (repl.parentNode) repl.parentNode.replaceChild(wrap, repl);
   };
   if (v.parentNode) v.parentNode.replaceChild(box, v);
   else box = null;
@@ -6648,7 +6914,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.5"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.4: ترتيب مضيفات متوافق مع الأجهزة القديمة + مُفرِب ذاكرة للصور + مساحة محفوظة تمنع رجفة النص + إعادة محاولة بالنقر)
+var CURRENT_APP_VERSION = "26.7"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.7: مشغل ريلز لفيديو الكونتنت — عرض ملء الشاشة بتشغيل تلقائي وتمرير رأسي بين المقاطع)
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
