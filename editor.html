@@ -249,6 +249,7 @@ kbd{background:#eef2f1; border:1px solid var(--line); border-radius:5px; padding
   <button class="tbtn" id="btnHelp" title="مساعدة">؟</button>
   <input type="file" id="fileInput" accept=".json,application/json" class="hidden">
   <input type="file" id="imgInput" accept="image/*" class="hidden">
+  <input type="file" id="vidInput" accept="video/mp4,video/webm,video/quicktime,video/3gpp,.mp4,.webm,.mov,.3gp,.m4v" class="hidden">
 </header>
 
 <!-- ======= لافتة توفر إصدار أحدث ======= -->
@@ -490,6 +491,13 @@ kbd{background:#eef2f1; border:1px solid var(--line); border-radius:5px; padding
       <li>التطبيق (الإصدار 26.2 فأحدث) يعرض الصورة داخل الرسالة، وبالضغط عليها تُفتح بحجم كامل.</li>
       <li>رفع الصور يحتاج توكناً محفوظاً (⚙️ الإعدادات).</li>
     </ul>
+    <h3>🎬 الفيديو داخل النص</h3>
+    <ul>
+      <li>زر «🎬 فيديو» بجانب خانة النص يفتح منتقي الملفات — اختر مقطعاً <b>MP4</b> بحجم حتى <b>20MB</b> (المقاطع القصيرة أسرع رفعاً وأخف على بيانات المستخدمين).</li>
+      <li>يُرفع الفيديو إلى مجلد <kbd>media/</kbd> ويُدرج برابط دائم بصيغة <kbd>[video:…]</kbd>، ويظهر في التطبيق (الإصدار 26.5 فأحدث) داخل الرسالة مع زر تشغيل.</li>
+      <li>الصيغ المقبولة: <b>MP4</b> (الأفضل والأتوافق مع كل الأجهزة)، WEBM، MOV، 3GP — أما MKV وAVI فلا تعمل في التطبيق.</li>
+      <li>رفع الفيديو يحتاج توكناً محفوظاً (⚙️ الإعدادات) وقد يستغرق دقيقة على بيانات الموبايل.</li>
+    </ul>
     <h3>🌐 أيقونات من الإنترنت</h3>
     <ul>
       <li>زر «🌐 من الإنترنت» بجانب الأيقونة في لوحة التحرير يفتح بحثاً بالعربية بين آلاف الإيموجي (مسجد، وردة، ماء، قلب…).</li>
@@ -515,11 +523,11 @@ var OWNER = "ehessan1974-maker";
 var PUBLIC_REPO = "prayer-times";
 var PRIVATE_REPO = "prayer-times-private";
 var CONTENT_PATH = "content.json";
-var MEDIA_PATH = "media";            /* مجلد الصور المرفوعة في الريبو العام */
+var MEDIA_PATH = "media";            /* مجلد الصور والفيديوهات المرفوعة في الريبو العام */
 var ICONS_FILE = "editor-icons.json"; /* قائمة «أيقوناتي» المشتركة بين الأجهزة */
 var EMOJI_SRC_EN = "https://cdn.jsdelivr.net/npm/emojibase-data@17/en/compact.json";
 var EMOJI_SRC_AR = "https://cdn.jsdelivr.net/npm/cldr-annotations-modern@45.0.0/annotations/ar/annotations.json";
-var EDITOR_VERSION = "1.3.3"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub */
+var EDITOR_VERSION = "1.4.0"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub */
 
 /* الخانات المعروفة للتطبيق (من أزرار التصفية داخل prayer-times.html) */
 var KNOWN_CATS = {
@@ -1099,7 +1107,9 @@ function renderEditor(){
   /* النص */
   html += '<div class="field"><label>النص <span class="en">text</span>' +
     '<button type="button" class="img-btn" onclick="pickImage()" title="ألصق صورة (Ctrl+V) داخل النص أو اخترها من الجهاز — تُضغط وتُرفع إلى GitHub وتُدرج برابط دائم">🖼️ صورة</button>' +
-    '<span id="imgProgress" class="img-progress"></span></label>' +
+    '<button type="button" class="img-btn" onclick="pickVideo()" title="اختر مقطعاً فيديو MP4 حتى 20MB — يُرفع إلى GitHub ويُدرج برابط دائم ويظهر داخل الرسالة مع زر تشغيل">🎬 فيديو</button>' +
+    '<span id="imgProgress" class="img-progress"></span>' +
+    '<span id="vidProgress" class="img-progress"></span></label>' +
     '<textarea id="edText" placeholder="اكتب محتوى العنصر هنا… — يمكنك لصق صورة مباشرة (Ctrl+V)">' + esc(String(it.text || "")) + '</textarea>' +
     '<div class="char-count" id="edTextCount"></div></div>';
   /* المصدر */
@@ -1590,6 +1600,74 @@ async function uploadImage(file){
 }
 function pickImage(){ $("imgInput").click(); }
 
+/* ================= الفيديو داخل النص (v1.4.0) =================
+   بلا ضغط (ضغط الفيديو بالمتصفح غير عملي) — رفع مباشر حتى 20MB:
+   هذا حد jsDelivr الذي يخدم الملفات الأكبر منها بالرفض، وهو المصدر
+   الوحيد المتوافق مع شهادات الأجهزة القديمة (كـ Galaxy J5) */
+var VID_MAX_MB = 20;
+var _vidUploading = false;
+function vidProgress(msg){
+  var el = $("vidProgress");
+  if (el) el.textContent = msg || "";
+}
+function pickVideo(){ $("vidInput").click(); }
+async function uploadVideo(file){
+  if (_vidUploading){ toast("⏳ هناك فيديو قيد الرفع — انتظر لحظة"); return; }
+  var ta = $("edText");
+  if (!ta){ alert("حدِّد عنصراً أولاً لتُدرج الفيديو في نصه."); return; }
+  if (!getToken()){ alert("⚠️ رفع الفيديو يحتاج توكن GitHub.\nافتح ⚙️ الإعدادات وألصق التوكن (مرة واحدة على هذا الجهاز)."); return; }
+  /* بعض منتقيات الموبايل تُرجع type فارغاً — نعتمد الامتداد أولاً ثم خريطة أنواع بيضاء
+     (بدونها: video/x-matroska يُشتق منه امتداد خاطئ "x" ويُرفع ملف لن يعمل في التطبيق) */
+  var nm = String(file.name || "").toLowerCase();
+  var mExt = nm.match(/\.(mp4|webm|mov|3gp|m4v)$/);
+  var TYPE_EXT = { "mp4": "mp4", "webm": "webm", "quicktime": "mov", "3gpp": "3gp", "3gpp2": "3gp", "m4v": "m4v", "x-m4v": "m4v" };
+  var tm = String(file.type || "").match(/video\/([a-z0-9-]+)/i);
+  var ext = mExt ? mExt[1] : (tm && TYPE_EXT[tm[1].toLowerCase()]) || "";
+  var isVid = /^video\//.test(file.type || "") || !!mExt;
+  if (!isVid){ alert("الملف المختار ليس فيديو."); return; }
+  if (!ext){ alert("صيغة الفيديو غير معروفة — الأفضل MP4.\n💡 امتدادات مقبولة: mp4 أو webm أو mov أو 3gp."); return; }
+  if (ext === "mkv" || ext === "avi" || nm.slice(-4) === ".mkv" || nm.slice(-4) === ".avi"){
+    alert("❌ صيغة " + ext.toUpperCase() + " لا تعمل في التطبيق — حوّل الفيديو إلى MP4 أولاً.");
+    return;
+  }
+  var mb = file.size / (1024 * 1024);
+  if (mb > VID_MAX_MB){
+    alert("❌ الفيديو كبير (" + mb.toFixed(1) + "MB) — الحد الأقصى " + VID_MAX_MB + "MB.\n💡 قصّر المقطع أو صغّر دقته (480p مثلاً) ثم أعد المحاولة.");
+    return;
+  }
+  _vidUploading = true;
+  try {
+    vidProgress("⏳ تجهيز…");
+    var d = new Date();
+    var stamp = d.getFullYear() + _tsPad(d.getMonth() + 1) + _tsPad(d.getDate()) + "-" + _tsPad(d.getHours()) + _tsPad(d.getMinutes()) + _tsPad(d.getSeconds());
+    var path = MEDIA_PATH + "/vid-" + stamp + "-" + Math.floor(Math.random() * 9000 + 1000) + "." + ext;
+    var dataUrl = await readAsDataURL(file);
+    var b64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
+    vidProgress("⏳ رفع " + mb.toFixed(1) + "MB… قد يستغرق وقتاً");
+    await ghPutPath(PUBLIC_REPO, path, b64, "إضافة فيديو عبر المحرر (" + Math.max(1, Math.round(mb)) + "MB)");
+    /* نسخة احتياطية في الخاص — بصمت، لا تعيق نجاح العملية */
+    try { await ghPutPath(PRIVATE_REPO, path, b64, "إضافة فيديو (نسخة احتياطية)"); } catch(e2){}
+    /* رابط jsDelivr (شهادة GlobalSign تعمل على كل الأندرويد حتى القديم — نفس منطق الصور v1.3.3) */
+    var url = "https://cdn.jsdelivr.net/gh/" + OWNER + "/" + PUBLIC_REPO + "@main/" + path;
+    /* مسح ذاكرة jsDelivr فوراً بعد الرفع — يزيل أي 404 سلبية من عقد الشبكة */
+    try { fetch("https://purge.jsdelivr.net/gh/" + OWNER + "/" + PUBLIC_REPO + "@main/" + path).catch(function(){}); } catch(eP){}
+    /* إدراج العلامة موضع المؤشر داخل النص (بنفس منطق الصور) */
+    var marker = "[video:" + url + "]";
+    var s = ta.selectionStart || 0, epos = ta.selectionEnd || 0;
+    var v = ta.value;
+    var pre = (s > 0 && v[s - 1] !== "\n") ? "\n" : "";
+    ta.value = v.slice(0, s) + pre + marker + "\n" + v.slice(epos);
+    var caret = s + pre.length + marker.length + 1;
+    try { ta.setSelectionRange(caret, caret); ta.focus(); } catch(e3){}
+    applyLiveEdits();
+    vidProgress("");
+    toast("✅ أُدرج الفيديو (" + mb.toFixed(1) + "MB) — سيظهر في التطبيق بعد النشر 🚀");
+  } catch(e){
+    vidProgress("");
+    toast("❌ فشل رفع الفيديو: " + e.message, "err");
+  } finally { _vidUploading = false; }
+}
+
 /* ================= أيقونات من الإنترنت (إيموجي بأسماء عربية) ================= */
 var EMOJI_CACHE_KEY = "pt_emoji_ar_v1";
 var CUSTOM_ICONS_KEY = "pt_custom_icons_v1";
@@ -1977,6 +2055,11 @@ function init(){
   /* اختيار صورة من الجهاز (بديل اللصق — مهم للموبايل) */
   $("imgInput").onchange = function(){
     if (this.files && this.files[0]) uploadImage(this.files[0]);
+    this.value = "";
+  };
+  /* اختيار فيديو من الجهاز */
+  $("vidInput").onchange = function(){
+    if (this.files && this.files[0]) uploadVideo(this.files[0]);
     this.value = "";
   };
   /* بحث أيقونات الإنترنت (مع تهدئة الكتابة) */

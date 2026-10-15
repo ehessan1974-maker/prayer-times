@@ -1,8 +1,8 @@
 {
-  "appVersion": "26.4",
+  "appVersion": "26.5",
   "htmlUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html",
   "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.0.apk",
   "apkSizeMB": "2.6",
-  "releasedAt": "2026-10-14",
-  "changelog": "إصلاح جذري لعرض الصور على الأجهزة القديمة (كـ Galaxy J5): ترتيب مصادر متوافق مع شهادات أندرويد القديم + مُفرِب ذاكرة يكسر أي خطأ مخزّن لدى الجهاز + مساحة محفوظة للصور تمنع رجفة النص + نقرة على الصورة الفاشلة تعيد المحاولة"
+  "releasedAt": "2026-10-15",
+  "changelog": "جديد: مقاطع الفيديو داخل المحتوى 🎬 — ارفع فيديو من المحرر (زر 🎬 فيديو بجانب النص) ويظهر للمستخدمين داخل الرسالة مع زر تشغيل، بنفس ثبات الصور على كل الأجهزة (تعويض تلقائي بين المصادر + حماية الأجهزة القديمة)"
 }

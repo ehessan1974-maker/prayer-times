@@ -796,6 +796,33 @@ body.dark-mode .msged-audience-add-name { background:#0f1f18; color:#e2e8f0; bor
   /* v25.18: الحفاظ على فواصل الأسطر (\n) في النصوص */
   white-space: pre-line;
 }
+/* v26.5: الفيديو داخل الرسائل — مساحة محفوظة تمنع قفز النص قبل وصول البيانات الأولية */
+.info-track-card .msg-video {
+  max-width: 100%;
+  width: 320px;
+  max-height: 230px;
+  min-height: 56px;
+  border-radius: 10px;
+  display: inline-block;
+  margin: 4px 0;
+  background: #000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
+}
+.vid-fail {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  min-width: 200px;
+  max-width: 100%;
+  border-radius: 10px;
+  background: rgba(127, 127, 127, .14);
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 8px 14px;
+}
 /* v26.2: الصور داخل الرسائل + العارض الكامل — v26.4: مساحة محفوظة تمنع رجفة النص أثناء التحميل/الفشل */
 .info-track-card .msg-img {
   max-width: 100%;
@@ -2581,6 +2608,12 @@ function linkifyText(text) {
     _imgTokens.push('<img class="msg-img" src="' + __imgBust(u) + '" loading="lazy" alt="صورة" onerror="__imgFix(this)" onclick="openImgViewer(this.src)">');
     return "\u0001IMG" + (_imgTokens.length - 1) + "\u0001";
   });
+  // v26.5: الفيديو المدمج [video:URL] — توكِنات مثل الصور (preload=metadata يوفّر البيانات، والتحكم اليدوي بالتشغيل)
+  var _vidTokens = [];
+  escaped = escaped.replace(/\[video:([^\]\s]+)\]/g, function(m0, u){
+    _vidTokens.push('<video class="msg-video" src="' + __imgBust(u) + '" controls playsinline preload="metadata" onerror="__imgFix(this)"></video>');
+    return "\u0002VID" + (_vidTokens.length - 1) + "\u0002";
+  });
   // 1. تحويل الروابط (http/https) إلى <a> tags
   escaped = escaped.replace(/(https?:\/\/[^\s<]+)/g, function(url) {
     return '<a href="' + url + '" target="_blank" rel="noopener" style="color:#059669;text-decoration:underline;cursor:pointer;" onclick="openLinkInNewTab(event, \'' + url + '\');">' + url + '</a>';
@@ -2595,6 +2628,8 @@ function linkifyText(text) {
   });
   // v26.2: إعادة تركيب وسوم الصور بعد انتهاء معالجة الروابط والهواتف
   escaped = escaped.replace(/\u0001IMG(\d+)\u0001/g, function(m0, i){ return _imgTokens[+i]; });
+  // v26.5: إعادة تركيب وسوم الفيديو
+  escaped = escaped.replace(/\u0002VID(\d+)\u0002/g, function(m0, i){ return _vidTokens[+i]; });
   return escaped;
 }
 
@@ -2687,6 +2722,8 @@ function __imgFix(img) {
   if (next === -1) {
     /* نضوبت كل المضيفات: مربع ثابت بدل الوميض + نقرة تعيد المحاولة من الصفر بمُفرِب جديد */
     img.onerror = null;
+    /* v26.5: للفيديو — مربع ثابت يُستبدل به الوسم، والنقر يعيد بناء وسم جديد نظيف */
+    if (img.tagName === "VIDEO") { __vidFailBox(img, path); return; }
     img.classList.add("img-fail");
     img.alt = "📷 صورة — اضغط لإعادة المحاولة";
     img.onclick = function(ev){
@@ -2703,11 +2740,30 @@ function __imgFix(img) {
   img.onerror = function(){ __imgFix(img); };
   img.src = __IMG_HOSTS[next] + path + q;
 }
-// شبكة أمان v26.3: مستمع على مستوى المستند يلتقط فشل تحميل أي صورة رسالة
+// v26.5: فشل الفيديو نهائياً — مربع ثابت بدل الوسم + نقرة تعيد بناء وسم جديد من الصفر بمُفرِب جديد
+function __vidFailBox(v, path) {
+  var box = document.createElement("div");
+  box.className = "vid-fail";
+  box.textContent = "🎬 فيديو — اضغط لإعادة المحاولة";
+  box.onclick = function(ev){
+    try { if (ev && ev.stopPropagation) ev.stopPropagation(); } catch(e0){}
+    var nv = document.createElement("video");
+    nv.className = "msg-video";
+    nv.controls = true;
+    nv.setAttribute("playsinline", "");
+    nv.setAttribute("preload", "metadata");
+    nv.onerror = function(){ __imgFix(nv); };
+    nv.src = __IMG_HOSTS[0] + path + "?r=" + Date.now();
+    if (box.parentNode) box.parentNode.replaceChild(nv, box);
+  };
+  if (v.parentNode) v.parentNode.replaceChild(box, v);
+  else box = null;
+}
+// شبكة أمان v26.3: مستمع على مستوى المستند يلتقط فشل تحميل أي صورة/فيديو رسالة
 // حتى لو حُجب الوسم المضمّن أو استُبدلت خاصية onerror لاحقاً (مرحلة الالتقاط تمر عبر كل العناصر)
 document.addEventListener("error", function(e){
   var t = e.target;
-  if (t && t.tagName === "IMG" && (t.getAttribute("src") || "").indexOf("/media/") !== -1) __imgFix(t);
+  if (t && (t.tagName === "IMG" || t.tagName === "VIDEO") && (t.getAttribute("src") || "").indexOf("/media/") !== -1) __imgFix(t);
 }, true);
 
 var infoScrollPaused = false;
@@ -6592,7 +6648,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.4"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.4: ترتيب مضيفات متوافق مع الأجهزة القديمة + مُفرِب ذاكرة للصور + مساحة محفوظة تمنع رجفة النص + إعادة محاولة بالنقر)
+var CURRENT_APP_VERSION = "26.5"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.4: ترتيب مضيفات متوافق مع الأجهزة القديمة + مُفرِب ذاكرة للصور + مساحة محفوظة تمنع رجفة النص + إعادة محاولة بالنقر)
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
