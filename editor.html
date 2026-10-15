@@ -221,8 +221,8 @@ dialog::backdrop{background:rgba(6,95,70,.45); backdrop-filter:blur(2px)}
 .radio-card.dangersel{border-color:var(--red); background:var(--red-bg)}
 .radio-card .rc-t{font-weight:700; font-size:13px}
 .radio-card .rc-d{font-size:11px; color:var(--muted)}
-/* v1.7.0: بطاقتا خيار إدراج الصورة (من الجهاز / من الشبكة) */
-.img-choice-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+/* v1.8.0: بطاقات خيار إدراج الصورة (من الجهاز / من الشبكة / صورة سابقة) */
+.img-choice-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
 .img-choice-card{border:1.5px solid var(--line); border-radius:12px; background:#fff; padding:16px 10px 13px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center; transition:.12s; font-family:inherit}
 .img-choice-card:hover{border-color:var(--green); background:var(--green-bg); transform:translateY(-1px)}
 .img-choice-card .ic-emoji{font-size:30px; line-height:1}
@@ -230,6 +230,11 @@ dialog::backdrop{background:rgba(6,95,70,.45); backdrop-filter:blur(2px)}
 .img-choice-card .ic-d{font-size:11px; color:var(--muted); line-height:1.7}
 .img-web-prev{margin-top:10px; text-align:center}
 .img-web-prev img{max-width:100%; max-height:160px; border-radius:10px; border:1px solid var(--line)}
+/* v1.8.0: معرض الصور السابقة */
+.recent-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:8px}
+.recent-img{border:1px solid var(--line); border-radius:10px; padding:0; background:#fff; cursor:pointer; overflow:hidden; aspect-ratio:1/1; display:block}
+.recent-img img{width:100%; height:100%; object-fit:cover; display:block}
+.recent-img:hover{border-color:var(--green); box-shadow:0 2px 8px rgba(5,150,105,.25)}
 @media (max-width:520px){ .img-choice-grid{grid-template-columns:1fr} }
 .helpbox h3{color:var(--green-dark); font-size:14px; margin:14px 0 5px}
 .helpbox p, .helpbox li{font-size:12.5px; color:#374151}
@@ -483,7 +488,12 @@ kbd{background:#eef2f1; border:1px solid var(--line); border-radius:5px; padding
         <button type="button" class="img-choice-card" onclick="imgChooseWeb()">
           <span class="ic-emoji">🌐</span>
           <span class="ic-t">من الشبكة</span>
-          <span class="ic-d">ألصق رابط صورة موجودة على الإنترنت — تُدرج فوراً دون رفع، وتظهر في التطبيق عند توفر الإنترنت</span>
+          <span class="ic-d">ألصق رابط صورة من الإنترنت — إدراج فوري مع معاينة، دون رفع</span>
+        </button>
+        <button type="button" class="img-choice-card" onclick="imgChooseRecent()">
+          <span class="ic-emoji">🕐</span>
+          <span class="ic-t">صورة سابقة</span>
+          <span class="ic-d">اختر من الصور المستخدمة في المحتوى — إدراج بضغطة دون رفع</span>
         </button>
       </div>
       <div class="hint" style="margin-top:10px">💡 يمكنك أيضاً لصق صورة منسوخة مباشرة داخل خانة النص بـ Ctrl+V.</div>
@@ -497,9 +507,18 @@ kbd{background:#eef2f1; border:1px solid var(--line); border-radius:5px; padding
         <div class="hint" id="imgWebPrevMsg"></div>
       </div>
     </div>
+    <div id="imgRecentPane" style="display:none">
+      <div style="font-size:12.5px;font-weight:800;color:var(--green-dark);margin-bottom:8px">🕐 الصور المستخدمة سابقاً <span id="imgRecentCount" style="color:var(--muted);font-weight:400;font-size:11px"></span></div>
+      <div class="recent-grid" id="imgRecentGrid"></div>
+      <div class="hint" style="margin-top:8px">انقر أي صورة لتُدرج في موضع المؤشر — القائمة تُبنى من صور المحتوى المحمَّل حالياً.</div>
+    </div>
   </div>
   <div class="dlg-foot" id="imgWebFoot" style="display:none">
     <button class="btn main" id="imgWebInsert">✅ إدراج الصورة</button>
+    <button class="btn ghost" onclick="imgBackToChoice()">رجوع</button>
+    <button class="btn ghost" onclick="closeDlg('dlgImgChoice')">إلغاء</button>
+  </div>
+  <div class="dlg-foot" id="imgRecentFoot" style="display:none">
     <button class="btn ghost" onclick="imgBackToChoice()">رجوع</button>
     <button class="btn ghost" onclick="closeDlg('dlgImgChoice')">إلغاء</button>
   </div>
@@ -532,6 +551,7 @@ kbd{background:#eef2f1; border:1px solid var(--line); border-radius:5px; padding
     <h3>🖼️ الصور داخل النص</h3>
     <ul>
       <li><b>اللصق المباشر</b>: انسخ صورة من أي مكان واضغط <kbd>Ctrl+V</kbd> داخل خانة النص — أو اضغط زر «🖼️ صورة» واختر <b>📱 من الجهاز</b> (ضغط ورفع تلقائي إلى GitHub) أو <b>🌐 من الشبكة</b> (لصق رابط صورة جاهز من الإنترنت مع معاينة، دون رفع).</li>
+      <li><b>🕐 صورة سابقة</b>: من نفس الزر — معرض بكل صور المحتوى المحمَّل، انقر صورة لتُدرج فوراً دون رفع جديد.</li>
       <li>تُضغط الصورة تلقائياً (حتى ‎900px و ‏~350KB) ثم تُرفع إلى مجلد <kbd>media/</kbd> في GitHub وتُدرج برابط دائم بصيغة <kbd>[img:…]</kbd>.</li>
       <li>التطبيق (الإصدار 26.2 فأحدث) يعرض الصورة داخل الرسالة، وبالضغط عليها تُفتح بحجم كامل.</li>
       <li>رفع الصور يحتاج توكناً محفوظاً (⚙️ الإعدادات).</li>
@@ -565,9 +585,10 @@ var MEDIA_PATH = "media";            /* مجلد الصور المرفوعة ف�
 var ICONS_FILE = "editor-icons.json"; /* قائمة «أيقوناتي» المشتركة بين الأجهزة */
 var EMOJI_SRC_EN = "https://cdn.jsdelivr.net/npm/emojibase-data@17/en/compact.json";
 var EMOJI_SRC_AR = "https://cdn.jsdelivr.net/npm/cldr-annotations-modern@45.0.0/annotations/ar/annotations.json";
-var EDITOR_VERSION = "1.7.0"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub (v1.7.0: زر 🖼️ صورة يعرض خيارين — 📱 من الجهاز أو 🌐 من الشبكة بإدراج رابط مباشر مع معاينة قبل الإدراج) */
+var EDITOR_VERSION = "1.8.0"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub (v1.8.0: خيار ثالث لزر 🖼️ صورة — 🕐 صورة سابقة: معرض بكل صور المحتوى لإدراجها بضغطة دون رفع) */
 /* v1.6.0: العنوان والشارات تُبنى دائماً من EDITOR_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 /* v1.7.0: insertImageMarker() مشتركة بين رفع الجهاز وإدراج رابط الشبكة — منطق إدراج واحد لا يتكرر */
+/* v1.8.0: imgRecentUrls() تستخرج روابط [img:] فريدة من state.items (الأحدث أولاً) — بلا قراءات شبكة إضافية */
 try {
   document.title = "محرر محتوى مواقيت الصلاة v" + EDITOR_VERSION;
   var _bVer = document.getElementById("brandVer"); if (_bVer) _bVer.textContent = "v" + EDITOR_VERSION;
@@ -1151,7 +1172,7 @@ function renderEditor(){
     '<div class="emoji-pick" id="emojiGrid">' + emojiGridHtml() + '</div></div>';
   /* النص */
   html += '<div class="field"><label>النص <span class="en">text</span>' +
-    '<button type="button" class="img-btn" onclick="pickImage()" title="خياران: 📱 من الجهاز (ضغط ورفع تلقائي إلى GitHub) أو 🌐 من الشبكة (لصق رابط صورة جاهز) — أو ألصق صورة مباشرة بـ Ctrl+V">🖼️ صورة</button>' +
+    '<button type="button" class="img-btn" onclick="pickImage()" title="ثلاثة خيارات: 📱 من الجهاز (ضغط ورفع تلقائي) أو 🌐 من الشبكة (لصق رابط) أو 🕐 صورة سابقة (من صور المحتوى) — أو ألصق صورة مباشرة بـ Ctrl+V">🖼️ صورة</button>' +
     '<span id="imgProgress" class="img-progress"></span></label>' +
     '<textarea id="edText" placeholder="اكتب محتوى العنصر هنا… — يمكنك لصق صورة مباشرة (Ctrl+V)">' + esc(String(it.text || "")) + '</textarea>' +
     '<div class="char-count" id="edTextCount"></div></div>';
@@ -1643,6 +1664,8 @@ function pickImage(){
 function imgChooseDevice(){ closeDlg("dlgImgChoice"); $("imgInput").click(); }
 function imgChooseWeb(){
   $("imgChoiceHome").style.display = "none";
+  $("imgRecentPane").style.display = "none";
+  $("imgRecentFoot").style.display = "none";
   $("imgWebPane").style.display = "";
   $("imgWebFoot").style.display = "";
   var u = $("imgWebUrl");
@@ -1652,9 +1675,52 @@ function imgChooseWeb(){
 }
 function imgBackToChoice(){
   var w = $("imgWebPane"), f = $("imgWebFoot"), h = $("imgChoiceHome");
+  var rp = $("imgRecentPane"), rf = $("imgRecentFoot");
   if (w) w.style.display = "none";
   if (f) f.style.display = "none";
+  if (rp) rp.style.display = "none";
+  if (rf) rf.style.display = "none";
   if (h) h.style.display = "";
+}
+/* ===== v1.8.0: الخيار الثالث — الصور السابقة من المحتوى ===== */
+function imgChooseRecent(){
+  $("imgChoiceHome").style.display = "none";
+  $("imgWebPane").style.display = "none";
+  $("imgWebFoot").style.display = "none";
+  $("imgRecentPane").style.display = "";
+  $("imgRecentFoot").style.display = "";
+  imgRenderRecent();
+}
+function imgRecentUrls(){
+  var out = [], seen = {};
+  var items = (typeof state !== "undefined" && state.items) || [];
+  for (var i = items.length - 1; i >= 0; i--){
+    var t = String((items[i] && items[i].text) || "");
+    var re = /\[img:([^\]\s]+)\]/g, m;
+    while ((m = re.exec(t))){
+      if (!seen[m[1]]){ seen[m[1]] = 1; out.push(m[1]); }
+    }
+  }
+  return out;
+}
+function imgRenderRecent(){
+  var g = $("imgRecentGrid");
+  if (!g) return;
+  var list = imgRecentUrls();
+  var c = $("imgRecentCount");
+  if (c) c.textContent = list.length ? ("(" + list.length + ")") : "";
+  g.innerHTML = list.length
+    ? list.map(function(u, i){
+        return '<button type="button" class="recent-img" onclick="imgPickRecent(' + i + ')" title="إدراج هذه الصورة"><img src="' + esc(u) + '" loading="lazy" alt="صورة سابقة"></button>';
+      }).join("")
+    : '<div class="empty-hint">لا توجد صور في المحتوى المحمَّل بعد — أضف صورة من الجهاز أو الشبكة وستظهر هنا لاحقاً.</div>';
+}
+function imgPickRecent(i){
+  var u = imgRecentUrls()[i];
+  if (!u) return;
+  closeDlg("dlgImgChoice");
+  insertImageMarker(u);
+  toast("✅ أُدرجت صورة سابقة من المحتوى 🕐");
 }
 function imgWebPreviewHide(){
   var box = $("imgWebPrev"); if (box) box.style.display = "none";
