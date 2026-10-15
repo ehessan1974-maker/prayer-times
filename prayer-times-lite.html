@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>مواقيت الصلاة</title>
+<title>مواقيت الصلاة v26.8</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
@@ -174,7 +174,7 @@ body {
 <body>
 
 <div class="header">
-  <h1>🕌 مواقيت الصلاة</h1>
+  <h1>🕌 مواقيت الصلاة <span id="hdrAppVer" style="font-size:9px;font-weight:700;opacity:.7;border:1px solid currentColor;border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.8</span></h1>
   <div class="date" id="dateDisplay">--</div>
 </div>
 
@@ -223,7 +223,13 @@ var latitude = null, longitude = null;
 var prayerData = null;
 var cachedInfoItems = [];
 var currentInfoIdx = 0;
-var CURRENT_APP_VERSION = "26.7"; /* v26.7: مشغل ريلز لفيديو الكونتنت */
+var CURRENT_APP_VERSION = "26.8"; /* v26.8: رقم الإصدار ظاهر في عنوان التطبيق وفي رأس الصفحة */
+/* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION */
+try {
+  document.title = "مواقيت الصلاة v" + CURRENT_APP_VERSION;
+  var _hdrVer = document.getElementById("hdrAppVer");
+  if (_hdrVer) _hdrVer.textContent = "v" + CURRENT_APP_VERSION;
+} catch(eVerTitle) {}
 // v26.3/26.4: تعويض فشل تحميل الصور تلقائياً — jsDelivr أولاً (شهادة GlobalSign تعمل على كل أندرويد حتى القديم)
 // ثم raw ثم Pages (شهادتهما Let's Encrypt تُرفض على أندرويد < 7.1.1)
 // + مُفرِب ذاكرة ‎?v= يكسر 404 المخزنة في ذاكرة جهاز المستخدم (jsDelivr يخزّنها حتى 7 أيام)

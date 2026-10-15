@@ -1,8 +1,8 @@
 {
-  "appVersion": "26.7",
+  "appVersion": "26.8",
   "htmlUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html",
-  "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.7.apk",
+  "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.8.apk",
   "apkSizeMB": "2.7",
   "releasedAt": "2026-10-15",
-  "changelog": "جديد: مشغّل ريلز لفيديو الكونتنت 🎬 — اضغط على أي فيديو داخل الكونتنت ليُعرض بملء الشاشة مع تشغيل تلقائي وتكرار، ولمسة واحدة للإيقاف/التشغيل، وسحب رأسي للتنقل بين المقاطع (سحب لأعلى = التالي، سحب لأسفل = السابق/إغلاق). التحديث يصل تلقائياً داخل التطبيق."
+  "changelog": "جديد: رقم الإصدار الآن ظاهر في عنوان التطبيق وفي رأس الصفحة بجانب الاسم 🕌 — تعرف نسختك بنظرة واحدة (ومثله في عنوان المحرر v1.6.0). التحديث يصل تلقائياً داخل التطبيق."
 }

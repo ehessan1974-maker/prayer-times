@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>محرر محتوى مواقيت الصلاة</title>
+<title>محرر محتوى مواقيت الصلاة v1.6.0</title>
 <style>
 :root{
   --green:#059669; --green-dark:#065f46; --green-light:#a7f3d0; --green-bg:#ecfdf5;
@@ -238,7 +238,7 @@ kbd{background:#eef2f1; border:1px solid var(--line); border-radius:5px; padding
 <body>
 
 <header id="topbar">
-  <div class="brand">🕌 محرر المحتوى<small>مواقيت الصلاة</small></div>
+  <div class="brand">🕌 محرر المحتوى<small>مواقيت الصلاة</small><span id="brandVer" style="font-weight:700;font-size:10px;opacity:.7;border:1px solid currentColor;border-radius:6px;padding:1px 6px;margin-inline-start:8px;vertical-align:1px;white-space:nowrap">v1.6.0</span></div>
   <div id="topStats" class="hidden"></div>
   <div class="spacer"></div>
   <button class="tbtn" id="btnOpen">📂 فتح ملف</button>
@@ -263,7 +263,7 @@ kbd{background:#eef2f1; border:1px solid var(--line); border-radius:5px; padding
 <main id="welcome">
   <div class="wcard">
     <div class="logo">🕌</div>
-    <h1>محرر محتوى مواقيت الصلاة</h1>
+    <h1>محرر محتوى مواقيت الصلاة <span id="welcomeVer" style="font-size:12px;font-weight:700;opacity:.55;border:1px solid currentColor;border-radius:8px;padding:2px 8px;vertical-align:middle;white-space:nowrap">v1.6.0</span></h1>
     <p class="sub">عدِّل خانات ومحتويات التطبيق (أدعية، أذكار، أحاديث، رسائل…) من جهازك مباشرة — بدون GitHub</p>
     <div class="wbtns">
       <button class="wbtn" id="wOpen">
@@ -519,7 +519,13 @@ var MEDIA_PATH = "media";            /* مجلد الصور المرفوعة ف�
 var ICONS_FILE = "editor-icons.json"; /* قائمة «أيقوناتي» المشتركة بين الأجهزة */
 var EMOJI_SRC_EN = "https://cdn.jsdelivr.net/npm/emojibase-data@17/en/compact.json";
 var EMOJI_SRC_AR = "https://cdn.jsdelivr.net/npm/cldr-annotations-modern@45.0.0/annotations/ar/annotations.json";
-var EDITOR_VERSION = "1.5.0"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub */
+var EDITOR_VERSION = "1.6.0"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub (v1.6.0: رقم الإصدار ظاهر في عنوان المحرر وشارة الشريط العلوي وبطاقة الترحيب) */
+/* v1.6.0: العنوان والشارات تُبنى دائماً من EDITOR_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
+try {
+  document.title = "محرر محتوى مواقيت الصلاة v" + EDITOR_VERSION;
+  var _bVer = document.getElementById("brandVer"); if (_bVer) _bVer.textContent = "v" + EDITOR_VERSION;
+  var _wVer = document.getElementById("welcomeVer"); if (_wVer) _wVer.textContent = "v" + EDITOR_VERSION;
+} catch(eVerTitle) {}
 
 /* الخانات المعروفة للتطبيق (من أزرار التصفية داخل prayer-times.html) */
 var KNOWN_CATS = {
