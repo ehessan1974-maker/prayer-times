@@ -1,8 +1,8 @@
 {
-  "appVersion": "26.8",
+  "appVersion": "26.9",
   "htmlUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html",
   "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.8.apk",
   "apkSizeMB": "2.7",
-  "releasedAt": "2026-10-15",
-  "changelog": "جديد: رقم الإصدار الآن ظاهر في عنوان التطبيق وفي رأس الصفحة بجانب الاسم 🕌 — تعرف نسختك بنظرة واحدة (ومثله في عنوان المحرر v1.6.0). التحديث يصل تلقائياً داخل التطبيق."
+  "releasedAt": "2026-10-17",
+  "changelog": "جديد: 🔀 ترتيب حر للبيانات المتحركة — من الإعدادات ← ترتيب البيانات المتحركة: رتّب الأقسام (الشريط ودورة «الكل») وترتيب العناصر داخل كل قسم بالأسهم ▲▼، مع حفظ تلقائي على جهازك وزر استعادة الترتيب الأصلي."
 }

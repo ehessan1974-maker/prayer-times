@@ -9,11 +9,12 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>🕌 مواقيت الصلاة v26.8</title>
+<title>🕌 مواقيت الصلاة v26.9</title>
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
 <!-- v15: أشرطة تمرير عريضة وواضحة (الإعدادات وكل المناطق القابلة للتمرير) — تحكم أسهل بالفأرة واللمس والشاشة الذكية -->
 <!-- v25.37: [أمني] إزالة توكن تيليجرام من الكود (الإرسال عبر worker أو إعداد المدير) + مبدّل النسخة المبسطة Lite في الإعدادات + إصلاح فلتر رسائل الـ worker + إكمال ملفات build-apk.sh -->
+<!-- v26.9: ترتيب حر للبيانات المتحركة — نافذة جديدة في الإعدادات: ترتيب الأقسام (الشريط + دورة «الكل») وترتيب العناصر داخل كل قسم بالأسهم ▲▼ مع حفظ تلقائي محلي واستعادة الترتيب الأصلي -->
 <!-- v12: وضع الشاشة الذكية — لوحة 1600×900 ملء الشاشة بلا تمرير + خط الثلث المضمّن (v8) -->
 <!-- خط الثلث لاسم اليوم — مضمّن Base64 يعمل بلا إنترنت (v8) -->
 <style>
@@ -1576,6 +1577,16 @@ body.dark-mode .setting-box span, body.dark-mode .setting-box strong { color:#e8
 body.dark-mode .toggle-row .t-name { color:#e8f5ee; }
 body.dark-mode .toggle-label { color:#9fb8ab !important; }
 body.dark-mode .method-select, body.dark-mode .loc-inputs input, body.dark-mode .modal input[type="text"], body.dark-mode .modal input[type="number"] { background:#0f1a15; border-color:#2b4a3a; color:#e8f5ee; }
+/* v26.9: صفوف نافذة ترتيب البيانات المتحركة (فاتح + داكن) */
+.io-row { display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:5px;background:#ffffff; }
+.io-row-text { flex:1;font-size:12px;color:#065f46;font-weight:700;font-family:Tahoma,Arial,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.io-btn { min-width:36px;height:30px;border:1px solid #a7f3d0;background:#f0fdf4;color:#065f46;border-radius:8px;font-size:13px;cursor:pointer;font-family:Tahoma,Arial,sans-serif;line-height:1; }
+.io-btn:active { background:#059669;color:#ffffff; }
+body.dark-mode .io-row { background:#16241d;border-color:#2b4a3a; }
+body.dark-mode .io-row-text { color:#e8f5ee; }
+body.dark-mode .io-btn { background:#1a2a22;color:#e8f5ee;border-color:#2b4a3a; }
+/* v26.9: قائمة اختيار القسم في نافذة الترتيب — الوضع الليلي */
+body.dark-mode #ioCatSelect { background:#0f1a15;border-color:#2b4a3a;color:#e8f5ee; }
 /* v25.34: إصلاح ألوان تصحيح المواقيت وفواصل الإقامة في الوضع الليلي */
 body.dark-mode #timeOffsetsSettings span[style*="color:#374151"],
 body.dark-mode #iqamaSettings span[style*="color:#374151"] { color:#e8f5ee !important; }
@@ -1662,7 +1673,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 <div class="header">
   <div class="header-inner">
     <div class="title-cell" style="display:table-cell;vertical-align:middle;width:auto;white-space:nowrap;padding-left:4px;">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.8</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.9</span></h1>
     </div>
     <div class="ramadan-cell" style="display:table-cell;vertical-align:middle;padding:0 4px;">
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
@@ -1740,28 +1751,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <!-- Islamic Info Section -->
     <div class="info-section" id="infoSection" style="display:none;">
       <div id="infoCatBar" style="overflow-x:auto;white-space:nowrap;padding:4px 0 6px;margin-bottom:4px;-webkit-overflow-scrolling:touch;display:none;">
-        <span onclick="toggleCatFilter('all')" id="catBtn_all" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:#059669;color:white;font-size:9px;cursor:pointer;margin:0 2px;">الكل</span>
-        <span onclick="toggleCatFilter('hadith')" id="catBtn_hadith" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🕌 أحاديث</span>
-        <span onclick="toggleCatFilter('quran')" id="catBtn_quran" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📖 قرآن</span>
-        <span onclick="toggleCatFilter('azkar')" id="catBtn_azkar" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🤲 أذكار</span>
-        <span onclick="toggleCatFilter('azkar-after-prayer')" id="catBtn_azkar-after-prayer" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🕌 بعد الصلاة</span>
-        <span onclick="toggleCatFilter('azkar-morning')" id="catBtn_azkar-morning" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🌅 الصباح</span>
-        <span onclick="toggleCatFilter('azkar-evening')" id="catBtn_azkar-evening" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🌙 المساء</span>
-        <span onclick="toggleCatFilter('azkar-friday')" id="catBtn_azkar-friday" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🕌 الجمعة</span>
-        <span onclick="toggleCatFilter('ehemessages')" id="catBtn_ehemessages" style="display:inline-block;position:relative;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💬 رسائل<span id="msgNewDot" style="display:none;position:absolute;top:-7px;left:-7px;min-width:15px;height:15px;line-height:15px;text-align:center;background:#dc2626;color:white;border-radius:8px;font-size:8px;font-weight:700;padding:0 3px;-webkit-box-shadow:0 1px 3px rgba(0,0,0,0.4);box-shadow:0 1px 3px rgba(0,0,0,0.4);"></span></span>
-        <span onclick="toggleCatFilter('today')" id="catBtn_today" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📅 أحداث</span>
-        <span onclick="toggleCatFilter('health')" id="catBtn_health" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💊 صحة</span>
-        <span onclick="toggleCatFilter('food')" id="catBtn_food" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🍯 أطعمة</span>
-        <span onclick="toggleCatFilter('jokes')" id="catBtn_jokes" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">😂 نكت</span>
-        <span onclick="toggleCatFilter('world')" id="catBtn_world" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🌍 طرائف</span>
-        <span onclick="toggleCatFilter('dua')" id="catBtn_dua" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🤲 أدعية</span>
-        <span onclick="toggleCatFilter('wisdom')" id="catBtn_wisdom" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💎 حكم</span>
-        <span onclick="toggleCatFilter('prophet')" id="catBtn_prophet" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📜 أنبياء</span>
-        <span onclick="toggleCatFilter('seasons')" id="catBtn_seasons" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🌡️ فصول</span>
-        <span onclick="toggleCatFilter('poetry')" id="catBtn_poetry" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🎼 شعر</span>
-        <span onclick="toggleCatFilter('quran-tafseer')" id="catBtn_quran-tafseer" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">📝 إعراب</span>
-        <span onclick="toggleCatFilter('vitamins')" id="catBtn_vitamins" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💊 فيتامينات</span>
-        <span onclick="toggleCatFilter('stars')" id="catBtn_stars" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">🌟 نجوم</span>
+        <!-- v26.9: أزرار الأقسام تُبنى ديناميكياً عبر renderInfoCatBar() — الترتيب يُحفظ محلياً ويُعدَّل من الإعدادات → ترتيب البيانات المتحركة -->
       </div>
       <div class="info-card vertical-scroll-mode" id="infoCard" onclick="nextInfo()">
         <div class="info-track-window" id="infoTrackWindow">
@@ -1928,9 +1918,41 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <button id="liteSwitchBtn" class="btn btn-outline" style="width:100%;background:#f0fdf4;color:#047857;border-color:#6ee7b7;" onclick="switchLiteVersion()">🪶 التبديل إلى النسخة المبسطة</button>
     </div>
 
+    <!-- v26.9: ترتيب البيانات المتحركة -->
+    <div class="modal-section">
+      <div class="sec-title">🔀 ترتيب البيانات المتحركة</div>
+      <div class="sec-desc">رتّب الأقسام (أحاديث، قرآن، أذكار…) وترتيب العناصر داخل كل قسم حسب رغبتك في بطاقة المعلومات المتحركة — يُحفظ تلقائياً على جهازك.</div>
+      <button class="btn btn-outline" style="width:100%;background:#f0fdf4;color:#065f46;border-color:#86efac;" onclick="openInfoOrderModal()">🔀 ترتيب الأقسام والعناصر</button>
+    </div>
+
     <div class="modal-section">
       <div class="sec-title">ℹ️ معلومات</div>
       <button class="btn btn-outline" style="width:100%;" onclick="closeSettings();openCredits();">حول البرنامج</button>
+    </div>
+  </div>
+  </div></div>
+</div>
+
+<!-- v26.9: نافذة ترتيب البيانات المتحركة -->
+<div class="modal-overlay" id="infoOrderModal">
+  <div class="modal-center"><div class="modal-center-inner">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="closeInfoOrderModal()">✕</button>
+    <h2>🔀 ترتيب البيانات المتحركة</h2>
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <button id="ioTabCats" class="btn btn-outline btn-sm" onclick="ioShowTab('cats')" style="flex:1;background:#059669;color:white;border-color:#059669;font-weight:700;">🗂️ ترتيب الأقسام</button>
+      <button id="ioTabItems" class="btn btn-outline btn-sm" onclick="ioShowTab('items')" style="flex:1;">📝 عناصر قسم</button>
+    </div>
+    <div id="ioCatsPane">
+      <div class="sec-desc" style="margin-bottom:6px;">رتّب ظهور الأقسام في الشريط وفي دورة «الكل» بالأسهم ▲▼. زر «الكل» يبقى أولاً دائماً، والترتيب يُحفظ تلقائياً أثناء التحريك.</div>
+      <div id="ioCatsList" style="max-height:320px;overflow-y:auto;"></div>
+      <button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px;background:#fef2f2;color:#b91c1c;border-color:#fca5a5;" onclick="ioResetCats()">↩️ استعادة الترتيب الأصلي للأقسام</button>
+    </div>
+    <div id="ioItemsPane" style="display:none;">
+      <div class="sec-desc" style="margin-bottom:6px;">اختر قسماً ثم رتّب عناصره (النصوص التي تظهر في البطاقة المتحركة) بالأسهم ▲▼ — يُحفظ تلقائياً:</div>
+      <select id="ioCatSelect" onchange="ioRenderItems()" style="width:100%;padding:8px 10px;border:1px solid #a7f3d0;border-radius:8px;font-size:13px;font-family:Tahoma,Arial,sans-serif;background:white;color:#065f46;"></select>
+      <div id="ioItemsList" style="max-height:320px;overflow-y:auto;margin-top:8px;"></div>
+      <button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px;background:#fef2f2;color:#b91c1c;border-color:#fca5a5;" onclick="ioResetItems()">↩️ استعادة ترتيب عناصر هذا القسم</button>
     </div>
   </div>
   </div></div>
@@ -2344,15 +2366,151 @@ function toggleCatFilter(cat) {
   }
 }
 
+// ===== v26.9: ترتيب حر للبيانات المتحركة =====
+// أ) ترتيب الأقسام (شريط الأقسام + دورة «الكل») — يُحفظ في localStorage
+// ب) ترتيب العناصر داخل كل قسم — يُحفظ في localStorage بمفاتيح ثابتة (هاش) تصمد أمام تحديثات content.json
+var INFO_CAT_ORDER_KEY = "info-cat-order-v1";
+var INFO_ITEM_ORDER_KEY = "info-item-order-v1";
+var INFO_CAT_LABELS = {
+  "hadith": "🕌 أحاديث",
+  "quran": "📖 قرآن",
+  "azkar": "🤲 أذكار",
+  "azkar-after-prayer": "🕌 بعد الصلاة",
+  "azkar-morning": "🌅 الصباح",
+  "azkar-evening": "🌙 المساء",
+  "azkar-friday": "🕌 الجمعة",
+  "ehemessages": "💬 رسائل",
+  "today": "📅 أحداث",
+  "health": "💊 صحة",
+  "food": "🍯 أطعمة",
+  "jokes": "😂 نكت",
+  "world": "🌍 طرائف",
+  "dua": "🤲 أدعية",
+  "wisdom": "💎 حكم",
+  "prophet": "📜 أنبياء",
+  "seasons": "🌡️ فصول",
+  "poetry": "🎼 شعر",
+  "quran-tafseer": "📝 إعراب",
+  "vitamins": "💊 فيتامينات",
+  "stars": "🌟 نجوم"
+};
+
+// مفتاح ثابت للعنصر: هاش djb2 من (القسم + النص + المصدر) — يبقى صالحاً بعد إعادة تحميل content.json
+function infoItemKey(item) {
+  var s = (item && item.cat ? item.cat : "") + "\u0001" + (item && item.text ? String(item.text) : "") + "\u0001" + (item && item.src ? String(item.src) : "");
+  var h = 5381;
+  for (var i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) | 0; }
+  return (h >>> 0).toString(36);
+}
+
+// ترتيب الأقسام المحفوظ (مع دمج أي أقسام جديدة غير معروفة سابقاً في نهاية الترتيب)
+function getInfoCatOrder() {
+  var base = INFO_CATEGORIES.slice();
+  try {
+    var saved = JSON.parse(localStorage.getItem(INFO_CAT_ORDER_KEY) || "null");
+    if (saved && saved.length) {
+      var seen = {}, out = [];
+      for (var i = 0; i < saved.length; i++) {
+        if (base.indexOf(saved[i]) !== -1 && !seen[saved[i]]) { out.push(saved[i]); seen[saved[i]] = 1; }
+      }
+      for (var j = 0; j < base.length; j++) { if (!seen[base[j]]) out.push(base[j]); }
+      return out;
+    }
+  } catch (e) {}
+  return base;
+}
+
+function setInfoCatOrder(arr) {
+  try { localStorage.setItem(INFO_CAT_ORDER_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+
+function getAllItemOrders() {
+  try { return JSON.parse(localStorage.getItem(INFO_ITEM_ORDER_KEY) || "{}") || {}; } catch (e) { return {}; }
+}
+
+function setCatItemOrder(cat, keys) {
+  try {
+    var all = getAllItemOrders();
+    if (keys && keys.length) all[cat] = keys; else delete all[cat];
+    localStorage.setItem(INFO_ITEM_ORDER_KEY, JSON.stringify(all));
+  } catch (e) {}
+}
+
+// تطبيق الترتيب المحفوظ على قائمة عناصر — العناصر غير المعروفة (جديدة) تلحق بالنهاية بترتيبها الطبيعي
+function applyInfoOrder(items, cat) {
+  if (!items || items.length < 2 || !cat) return items;
+  var saved = getAllItemOrders()[cat] || null;
+  if (!saved || !saved.length) return items;
+  var pos = {};
+  for (var i = 0; i < saved.length; i++) { pos[saved[i]] = i; }
+  var known = [], unknown = [];
+  for (var j = 0; j < items.length; j++) {
+    var k = infoItemKey(items[j]);
+    if (pos.hasOwnProperty(k)) known.push({ p: pos[k], it: items[j] });
+    else unknown.push(items[j]);
+  }
+  known.sort(function (a, b) { return a.p - b.p; });
+  var out = [];
+  for (var m = 0; m < known.length; m++) out.push(known[m].it);
+  for (var n = 0; n < unknown.length; n++) out.push(unknown[n]);
+  return out;
+}
+
+// بناء شريط الأقسام ديناميكياً حسب الترتيب المحفوظ — زر «الكل» يبقى أولاً دائماً
+function renderInfoCatBar() {
+  var bar = el("infoCatBar");
+  if (!bar) return;
+  var cats = ["all"].concat(getInfoCatOrder());
+  var html = "";
+  for (var i = 0; i < cats.length; i++) {
+    var c = cats[i];
+    var label = INFO_CAT_LABELS[c] || c;
+    if (c === "all") {
+      html += '<span onclick="toggleCatFilter(\'all\')" id="catBtn_all" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:#059669;color:white;font-size:9px;cursor:pointer;margin:0 2px;">الكل</span>';
+    } else if (c === "ehemessages") {
+      html += '<span onclick="toggleCatFilter(\'ehemessages\')" id="catBtn_ehemessages" style="display:inline-block;position:relative;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">💬 رسائل<span id="msgNewDot" style="display:none;position:absolute;top:-7px;left:-7px;min-width:15px;height:15px;line-height:15px;text-align:center;background:#dc2626;color:white;border-radius:8px;font-size:8px;font-weight:700;padding:0 3px;-webkit-box-shadow:0 1px 3px rgba(0,0,0,0.4);box-shadow:0 1px 3px rgba(0,0,0,0.4);"></span></span>';
+    } else {
+      html += '<span onclick="toggleCatFilter(\'' + c + '\')" id="catBtn_' + c + '" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:white;color:#065f46;font-size:9px;cursor:pointer;margin:0 2px;">' + label + '</span>';
+    }
+  }
+  bar.innerHTML = html;
+  // إعادة تطبيق تظليل القسم النشط بعد إعادة البناء (بدون آثار جانبية toggleCatFilter)
+  var active = infoCatFilter || "all";
+  var isDark = document.body.classList.contains("dark-mode");
+  var allBtns = bar.querySelectorAll("span[id^='catBtn_']");
+  for (var b = 0; b < allBtns.length; b++) {
+    var bb = allBtns[b];
+    var bCat = bb.id.replace("catBtn_", "");
+    if (bCat === active) {
+      bb.style.background = "#059669"; bb.style.color = "white"; bb.style.borderColor = "#059669"; bb.style.fontWeight = "700";
+    } else {
+      if (isDark) {
+        bb.style.background = "#1f3a2c"; bb.style.color = "#e8f5ee"; bb.style.borderColor = "#2f7d5c";
+      } else {
+        bb.style.background = "white"; bb.style.color = "#065f46"; bb.style.borderColor = "#a7f3d0";
+      }
+      bb.style.fontWeight = "400";
+    }
+  }
+}
+
 function getFilteredItems() {
   if (!cachedInfoItems || cachedInfoItems.length === 0) return [];
   if (infoCatFilter === "all") {
-    // تطبيق فلتر audience على كل العناصر
-    var all = [];
-    for (var a = 0; a < cachedInfoItems.length; a++) {
-      if (messageIsForMe(cachedInfoItems[a])) all.push(cachedInfoItems[a]);
+    // v26.9: دورة «الكل» تمر على الأقسام حسب الترتيب المحفوظ، وداخل كل قسم حسب ترتيب عناصره المحفوظ
+    var order = getInfoCatOrder();
+    var out = [];
+    for (var c = 0; c < order.length; c++) {
+      var catItems = [];
+      for (var a = 0; a < cachedInfoItems.length; a++) {
+        if (cachedInfoItems[a].cat === order[c] && messageIsForMe(cachedInfoItems[a])) {
+          catItems.push(cachedInfoItems[a]);
+        }
+      }
+      catItems = applyInfoOrder(catItems, order[c]);
+      for (var k = 0; k < catItems.length; k++) out.push(catItems[k]);
     }
-    return all;
+    return out;
   }
   var filtered = [];
   for (var i = 0; i < cachedInfoItems.length; i++) {
@@ -2360,8 +2518,159 @@ function getFilteredItems() {
       filtered.push(cachedInfoItems[i]);
     }
   }
-  return filtered;
+  // v26.9: تطبيق ترتيب العناصر المحفوظ لهذا القسم
+  return applyInfoOrder(filtered, infoCatFilter);
 }
+
+// ===== v26.9: نافذة ترتيب البيانات المتحركة =====
+var ioTab = "cats";
+var ioItemsCache = []; // نسخة العناصر المعروضة حالياً في تبويب العناصر (مرتبة)
+var ioCurrentCat = "";
+
+function openInfoOrderModal() {
+  el("infoOrderModal").classList.add("show");
+  ioShowTab("cats");
+  ioRenderCats();
+  ioPopulateCatSelect();
+}
+
+function closeInfoOrderModal() { el("infoOrderModal").classList.remove("show"); }
+
+function ioShowTab(t) {
+  ioTab = t;
+  var activeStyle = "flex:1;background:#059669;color:white;border-color:#059669;font-weight:700;";
+  var idleStyle = "flex:1;";
+  el("ioTabCats").style.cssText = (t === "cats") ? activeStyle : idleStyle;
+  el("ioTabItems").style.cssText = (t === "items") ? activeStyle : idleStyle;
+  el("ioCatsPane").style.display = (t === "cats") ? "block" : "none";
+  el("ioItemsPane").style.display = (t === "items") ? "block" : "none";
+  if (t === "cats") ioRenderCats();
+  else { ioPopulateCatSelect(); ioRenderItems(); }
+}
+
+function ioCatCount(cat) {
+  var n = 0;
+  for (var i = 0; i < cachedInfoItems.length; i++) {
+    if (cachedInfoItems[i].cat === cat) n++;
+  }
+  return n;
+}
+
+function ioRenderCats() {
+  var wrap = el("ioCatsList");
+  if (!wrap) return;
+  var order = getInfoCatOrder();
+  var html = "";
+  for (var i = 0; i < order.length; i++) {
+    var c = order[i];
+    var label = INFO_CAT_LABELS[c] || c;
+    var cnt = ioCatCount(c);
+    var upStyle = (i === 0) ? "opacity:.35;pointer-events:none;" : "";
+    var dnStyle = (i === order.length - 1) ? "opacity:.35;pointer-events:none;" : "";
+    html += '<div class="io-row">' +
+      '<span class="io-row-text">' + label + ' <span style="color:#9ca3af;font-weight:400;font-size:10px;">(' + cnt + ' عنصراً)</span></span>' +
+      '<button class="io-btn" style="' + upStyle + '" onclick="ioMoveCat(' + i + ',-1)" title="أعلى">▲</button>' +
+      '<button class="io-btn" style="' + dnStyle + '" onclick="ioMoveCat(' + i + ',1)" title="أسفل">▼</button>' +
+      '</div>';
+  }
+  wrap.innerHTML = html || '<div style="text-align:center;color:#9ca3af;font-size:11px;padding:16px;">لا توجد أقسام</div>';
+}
+
+function ioMoveCat(idx, dir) {
+  var order = getInfoCatOrder();
+  var j = idx + dir;
+  if (j < 0 || j >= order.length) return;
+  var tmp = order[idx]; order[idx] = order[j]; order[j] = tmp;
+  setInfoCatOrder(order);
+  ioRenderCats();
+  renderInfoCatBar();
+  ioRefreshCarousel();
+}
+
+function ioResetCats() {
+  try { localStorage.removeItem(INFO_CAT_ORDER_KEY); } catch (e) {}
+  ioRenderCats();
+  renderInfoCatBar();
+  ioRefreshCarousel();
+}
+
+function ioPopulateCatSelect() {
+  var sel = el("ioCatSelect");
+  if (!sel) return;
+  var order = getInfoCatOrder();
+  var html = "";
+  for (var i = 0; i < order.length; i++) {
+    var c = order[i];
+    var label = INFO_CAT_LABELS[c] || c;
+    var cnt = ioCatCount(c);
+    html += '<option value="' + c + '">' + label + ' (' + cnt + ')</option>';
+  }
+  sel.innerHTML = html;
+  // الحفاظ على القسم المختار إن كان لا يزال موجوداً
+  if (ioCurrentCat && order.indexOf(ioCurrentCat) !== -1) sel.value = ioCurrentCat;
+  else ioCurrentCat = order.length ? order[0] : "";
+  sel.value = ioCurrentCat;
+}
+
+function ioRenderItems() {
+  var wrap = el("ioItemsList");
+  if (!wrap) return;
+  var sel = el("ioCatSelect");
+  ioCurrentCat = sel ? sel.value : "";
+  if (!ioCurrentCat) { wrap.innerHTML = ""; ioItemsCache = []; return; }
+  // عرض كل عناصر القسم بالترتيب الحالي المطبّق (نفس ترتيب البطاقة المتحركة)
+  var items = [];
+  for (var i = 0; i < cachedInfoItems.length; i++) {
+    if (cachedInfoItems[i].cat === ioCurrentCat) items.push(cachedInfoItems[i]);
+  }
+  items = applyInfoOrder(items, ioCurrentCat);
+  ioItemsCache = items;
+  var html = "";
+  for (var j = 0; j < items.length; j++) {
+    var it = items[j];
+    var icon = it.icon || "📖";
+    var text = String(it.text || "");
+    var short = text.length > 60 ? text.slice(0, 60) + "…" : text;
+    var upStyle = (j === 0) ? "opacity:.35;pointer-events:none;" : "";
+    var dnStyle = (j === items.length - 1) ? "opacity:.35;pointer-events:none;" : "";
+    html += '<div class="io-row">' +
+      '<span class="io-row-text"><span style="margin-left:4px;">' + icon + '</span> ' + escapeHtml(short) + (it.src ? ' <span style="color:#9ca3af;font-weight:400;font-size:9px;">— ' + escapeHtml(String(it.src)) + '</span>' : '') + '</span>' +
+      '<button class="io-btn" style="' + upStyle + '" onclick="ioMoveItem(' + j + ',-1)" title="أعلى">▲</button>' +
+      '<button class="io-btn" style="' + dnStyle + '" onclick="ioMoveItem(' + j + ',1)" title="أسفل">▼</button>' +
+      '</div>';
+  }
+  wrap.innerHTML = html || '<div style="text-align:center;color:#9ca3af;font-size:11px;padding:16px;">لا توجد عناصر في هذا القسم بعد — تأكد من تحميل البيانات</div>';
+}
+
+function ioMoveItem(idx, dir) {
+  if (!ioCurrentCat || !ioItemsCache.length) return;
+  var j = idx + dir;
+  if (j < 0 || j >= ioItemsCache.length) return;
+  var tmp = ioItemsCache[idx]; ioItemsCache[idx] = ioItemsCache[j]; ioItemsCache[j] = tmp;
+  // حفظ الترتيب الجديد كمفاتيح ثابتة للعناصر
+  var keys = [];
+  for (var i = 0; i < ioItemsCache.length; i++) keys.push(infoItemKey(ioItemsCache[i]));
+  setCatItemOrder(ioCurrentCat, keys);
+  ioRenderItems();
+  ioRefreshCarousel();
+}
+
+function ioResetItems() {
+  if (!ioCurrentCat) return;
+  setCatItemOrder(ioCurrentCat, null);
+  ioRenderItems();
+  ioRefreshCarousel();
+}
+
+function ioRefreshCarousel() {
+  // إعادة رسم البطاقة المتحركة فوراً بعد أي تغيير في الترتيب
+  try {
+    if (onlineInfoEnabled && cachedInfoItems && cachedInfoItems.length) displayCurrentInfo(true);
+  } catch (e) {}
+}
+
+// v26.9: بناء شريط الأقسام حسب الترتيب المحفوظ عند الإقلاع — بعد تعريف محرك الترتيب بالكامل
+try { renderInfoCatBar(); } catch (e) {}
 
 var CONTENT_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/content.json";
 
@@ -6914,7 +7223,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.8"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.8: رقم الإصدار ظاهر في عنوان التطبيق وفي رأس الصفحة)
+var CURRENT_APP_VERSION = "26.9"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.9: ترتيب حر للبيانات المتحركة)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
