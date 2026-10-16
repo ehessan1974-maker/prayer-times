@@ -9,12 +9,17 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>🕌 مواقيت الصلاة v26.9</title>
+<!-- v26.10: خطوط عربية لقارئ الأحاديث — تحميل غير حاجب (media=print) مع بدائل نظامية عند غياب الاتصال -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
+<title>🕌 مواقيت الصلاة v26.10</title>
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
 <!-- v15: أشرطة تمرير عريضة وواضحة (الإعدادات وكل المناطق القابلة للتمرير) — تحكم أسهل بالفأرة واللمس والشاشة الذكية -->
 <!-- v25.37: [أمني] إزالة توكن تيليجرام من الكود (الإرسال عبر worker أو إعداد المدير) + مبدّل النسخة المبسطة Lite في الإعدادات + إصلاح فلتر رسائل الـ worker + إكمال ملفات build-apk.sh -->
 <!-- v26.9: ترتيب حر للبيانات المتحركة — نافذة جديدة في الإعدادات: ترتيب الأقسام (الشريط + دورة «الكل») وترتيب العناصر داخل كل قسم بالأسهم ▲▼ مع حفظ تلقائي محلي واستعادة الترتيب الأصلي -->
+<!-- v26.10: مكتبة الأحاديث الكاملة — 12 كتاباً (البخاري، مسلم، الترمذي، أبو داود، النسائي، ابن ماجه، موطأ مالك، الدارمي، رياض الصالحين، الأدب المفرد، الأربعون النووية والقدسية) بقارئ بملء الشاشة: أبواب منسّقة بفهرس منسدل، بحث يتجاهل التشكيل أو بالرقم مع «افتح في سياقه»، حفظ موضع القراءة والاستئناف، دعاء البدء ودعاء الختم، نسخ الحديث، وضع ليلي — التحميل عند الحاجة من hadith-data/ في المستودع العام (jsdelivr مع بديل raw) -->
 <!-- v12: وضع الشاشة الذكية — لوحة 1600×900 ملء الشاشة بلا تمرير + خط الثلث المضمّن (v8) -->
 <!-- خط الثلث لاسم اليوم — مضمّن Base64 يعمل بلا إنترنت (v8) -->
 <style>
@@ -1587,6 +1592,151 @@ body.dark-mode .io-row-text { color:#e8f5ee; }
 body.dark-mode .io-btn { background:#1a2a22;color:#e8f5ee;border-color:#2b4a3a; }
 /* v26.9: قائمة اختيار القسم في نافذة الترتيب — الوضع الليلي */
 body.dark-mode #ioCatSelect { background:#0f1a15;border-color:#2b4a3a;color:#e8f5ee; }
+
+/* ===== v26.10: مكتبة الأحاديث ===== */
+/* زر الدخول أسفل بطاقة المعلومات */
+.hle-entry { display:flex;align-items:center;gap:10px;margin:6px 0 2px;padding:9px 12px;border-radius:14px;cursor:pointer;
+  background:linear-gradient(135deg,#065f46 0%,#059669 100%);box-shadow:0 2px 8px rgba(5,150,105,0.25); }
+.hle-icon { font-size:22px;line-height:1; }
+.hle-text { flex:1;display:flex;flex-direction:column;gap:1px; }
+.hle-text b { color:#ffffff;font-size:13px;font-family:Tahoma,Arial,sans-serif; }
+.hle-text small { color:#d1fae5;font-size:10px;font-family:Tahoma,Arial,sans-serif; }
+.hle-arrow { color:#d1fae5;font-size:20px;font-weight:700;line-height:1; }
+.hle-entry:active { transform:scale(0.98); }
+
+/* الحاوية بملء الشاشة */
+#hadithReader { display:none;position:fixed;inset:0;z-index:99999;background:#f4fbf7;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain; }
+#hadithReader.open { display:block; }
+#hadithReader * { box-sizing:border-box; }
+.hl-header { position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:8px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));
+  background:linear-gradient(135deg,#065f46,#047857);box-shadow:0 2px 8px rgba(0,0,0,0.18); }
+.hl-back { width:34px;height:34px;border:none;border-radius:10px;background:rgba(255,255,255,0.16);color:#ffffff;font-size:22px;line-height:1;cursor:pointer;flex-shrink:0; }
+.hl-title-wrap { flex:1;min-width:0; }
+.hl-title { color:#ffffff;font-size:15px;font-weight:700;font-family:Tahoma,Arial,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.hl-subtitle { color:#a7f3d0;font-size:10px;font-family:Tahoma,Arial,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px; }
+.hl-icon-btn { width:34px;height:34px;border:none;border-radius:10px;background:rgba(255,255,255,0.16);color:#ffffff;font-size:15px;cursor:pointer;flex-shrink:0; }
+
+/* شريط التقدم */
+.hl-progress { padding:6px 12px;background:#ecfdf5;border-bottom:1px solid #a7f3d0; }
+.hl-progress-info { display:flex;justify-content:space-between;font-size:10px;color:#065f46;font-family:Tahoma,Arial,sans-serif;margin-bottom:3px; }
+.hl-progress-bar-wrap { height:5px;background:#d1fae5;border-radius:3px;overflow:hidden; }
+.hl-progress-bar { height:100%;background:linear-gradient(90deg,#059669,#10b981);border-radius:3px;transition:width 0.25s ease; }
+
+.hl-view { padding:10px 12px 40px;max-width:760px;margin:0 auto; }
+
+/* بطاقة متابعة القراءة */
+.hl-resume { display:flex;flex-direction:column;gap:4px;padding:10px 12px;margin-bottom:10px;border:1.5px solid #fbbf24;border-radius:14px;background:#fffbeb;cursor:pointer; }
+.hl-resume-badge { align-self:flex-start;font-size:10px;font-weight:700;color:#92400e;background:#fde68a;border-radius:10px;padding:2px 10px;font-family:Tahoma,Arial,sans-serif; }
+.hl-resume-body { font-size:12px;color:#78350f;font-family:Tahoma,Arial,sans-serif;line-height:1.7; }
+
+/* شبكة الكتب */
+.hl-lib-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px; }
+.hl-book { display:flex;flex-direction:column;gap:4px;padding:12px 10px;border-radius:16px;border:1px solid #d1fae5;background:#ffffff;cursor:pointer;box-shadow:0 1px 4px rgba(6,95,70,0.08);position:relative;overflow:hidden; }
+.hl-book:active { transform:scale(0.97); }
+.hl-book-icon { width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:2px; }
+.hl-book-name { font-size:13px;font-weight:700;color:#064e3b;font-family:Tahoma,Arial,sans-serif;line-height:1.5; }
+.hl-book-author { font-size:10px;color:#6b7280;font-family:Tahoma,Arial,sans-serif;line-height:1.6; }
+.hl-book-meta { font-size:10px;color:#059669;font-family:Tahoma,Arial,sans-serif; }
+.hl-book-progress { height:4px;background:#d1fae5;border-radius:2px;overflow:hidden;margin-top:3px; }
+.hl-book-progress i { display:block;height:100%;background:#f59e0b;border-radius:2px; }
+.hl-loading { grid-column:1/-1;text-align:center;color:#6b7280;font-size:12px;padding:30px 0;font-family:Tahoma,Arial,sans-serif; }
+.hl-credit { text-align:center;font-size:9.5px;color:#9ca3af;font-family:Tahoma,Arial,sans-serif;margin-top:16px;line-height:1.8; }
+
+/* شريط فهرس الكتاب */
+.hl-book-bar { display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:8px;border:1px solid #a7f3d0;border-radius:12px;background:#ecfdf5; }
+.hl-book-bar-label { font-size:11px;color:#065f46;font-weight:700;font-family:Tahoma,Arial,sans-serif;flex-shrink:0; }
+.hl-book-bar select { flex:1;padding:7px 10px;border:1px solid #a7f3d0;border-radius:10px;font-size:12px;font-family:Tahoma,Arial,sans-serif;background:#ffffff;color:#064e3b;max-width:100%; }
+
+/* دعاء البدء */
+.hl-dua { position:relative;padding:10px 12px;margin-bottom:10px;border:1px dashed #fbbf24;border-radius:12px;background:#fffbeb; }
+.hl-dua-text { font-size:12px;color:#78350f;line-height:2;font-family:"Amiri","Noto Naskh Arabic","Traditional Arabic",Tahoma,Arial,sans-serif; }
+.hl-dua-close { position:absolute;top:4px;left:6px;border:none;background:transparent;color:#b45309;font-size:12px;cursor:pointer; }
+
+/* الأبواب والأحاديث */
+.hl-chapter { margin-bottom:6px; }
+.hl-chapter-title { text-align:center;font-size:14px;font-weight:700;color:#ffffff;background:linear-gradient(135deg,#065f46,#047857);
+  border-radius:12px;padding:9px 12px;margin:14px 0 10px;font-family:Tahoma,Arial,sans-serif;box-shadow:0 1px 5px rgba(6,95,70,0.25); }
+.hl-hadith { border:1px solid #d1fae5;border-radius:14px;background:#ffffff;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(6,95,70,0.06); }
+.hl-h-head { display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px; }
+.hl-h-num { font-size:10px;font-weight:700;color:#065f46;background:#d1fae5;border-radius:10px;padding:3px 10px;font-family:Tahoma,Arial,sans-serif; }
+.hl-copy { border:1px solid #a7f3d0;background:#f0fdf4;border-radius:8px;font-size:12px;padding:3px 8px;cursor:pointer;color:#065f46;line-height:1.4; }
+.hl-h-text { font-size:16.5px;line-height:2.15;color:#1f2937;text-align:justify;word-break:break-word;
+  font-family:"Amiri","Noto Naskh Arabic","Scheherazade New","Traditional Arabic",Tahoma,Arial,sans-serif; }
+.hl-h-text mark { background:#fde68a;color:#78350f;border-radius:3px;padding:0 2px; }
+
+/* نهاية الكتاب والتحميل */
+.hl-sentinel { text-align:center;font-size:11px;color:#6b7280;padding:10px 0 18px;font-family:Tahoma,Arial,sans-serif; }
+.hl-sentinel button { margin-top:6px;padding:6px 16px;border:1px solid #a7f3d0;border-radius:10px;background:#ffffff;color:#065f46;font-size:12px;cursor:pointer;font-family:Tahoma,Arial,sans-serif; }
+.hl-book-end { text-align:center;padding:20px 10px 30px; }
+.hl-book-end-emoji { font-size:30px; }
+.hl-book-end-title { font-size:14px;font-weight:700;color:#065f46;margin:6px 0;font-family:Tahoma,Arial,sans-serif; }
+.hl-book-end-dua { font-size:13px;color:#6b7280;line-height:2.1;font-family:"Amiri","Noto Naskh Arabic","Traditional Arabic",Tahoma,Arial,sans-serif; }
+
+/* البحث */
+.hl-search-box { margin-bottom:10px; }
+.hl-search-box select { width:100%;padding:8px 10px;border:1px solid #a7f3d0;border-radius:10px;font-size:12px;font-family:Tahoma,Arial,sans-serif;background:#ffffff;color:#064e3b;margin-bottom:8px; }
+.hl-search-input-wrap { display:flex;gap:6px; }
+.hl-search-input-wrap input { flex:1;padding:9px 12px;border:1.5px solid #a7f3d0;border-radius:12px;font-size:13px;font-family:Tahoma,Arial,sans-serif;background:#ffffff;color:#1f2937;text-align:right; }
+.hl-search-go { padding:0 18px;border:none;border-radius:12px;background:#059669;color:#ffffff;font-size:13px;font-weight:700;cursor:pointer;font-family:Tahoma,Arial,sans-serif; }
+.hl-search-hint { font-size:10px;color:#6b7280;font-family:Tahoma,Arial,sans-serif;margin-top:6px;line-height:1.8; }
+.hl-search-res { border:1px solid #d1fae5;border-radius:14px;background:#ffffff;padding:11px 13px;margin-bottom:9px; }
+.hl-search-res-head { display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap; }
+.hl-search-res-loc { font-size:10px;color:#065f46;background:#d1fae5;border-radius:10px;padding:2px 9px;font-family:Tahoma,Arial,sans-serif; }
+.hl-search-res-open { border:none;background:#059669;color:#ffffff;border-radius:9px;font-size:10.5px;padding:4px 11px;cursor:pointer;font-family:Tahoma,Arial,sans-serif; }
+.hl-search-res-text { font-size:14px;line-height:2;color:#374151;text-align:justify;word-break:break-word;
+  font-family:"Amiri","Noto Naskh Arabic","Traditional Arabic",Tahoma,Arial,sans-serif; }
+.hl-search-res-text mark { background:#fde68a;color:#78350f;border-radius:3px;padding:0 2px; }
+.hl-search-empty { text-align:center;color:#6b7280;font-size:12px;padding:26px 0;font-family:Tahoma,Arial,sans-serif;line-height:2; }
+
+/* إشعار منبثق داخلي */
+.hl-toast { position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#065f46;color:#ffffff;font-size:12px;
+  font-family:Tahoma,Arial,sans-serif;padding:8px 18px;border-radius:20px;z-index:100001;box-shadow:0 3px 10px rgba(0,0,0,0.3);opacity:0;transition:opacity 0.25s ease;pointer-events:none; }
+.hl-toast.show { opacity:1; }
+
+/* وميض الحديث المستهدف بعد البحث */
+@keyframes hlFlash { 0% { background:#fde68a; } 100% { background:#ffffff; } }
+.hl-hadith.hl-flash { animation:hlFlash 2.2s ease; }
+
+/* ===== الوضع الليلي لمكتبة الأحاديث ===== */
+body.dark-mode #hadithReader { background:#0d1512; }
+body.dark-mode .hl-header { background:linear-gradient(135deg,#0b2b1f,#113f2e); }
+body.dark-mode .hl-back, body.dark-mode .hl-icon-btn { background:rgba(255,255,255,0.1);color:#e8f5ee; }
+body.dark-mode .hl-subtitle { color:#6ee7b7; }
+body.dark-mode .hl-progress { background:#12251c;border-bottom-color:#2b4a3a; }
+body.dark-mode .hl-progress-info { color:#9fb8ab; }
+body.dark-mode .hl-progress-bar-wrap { background:#1f3a2c; }
+body.dark-mode .hl-resume { background:#2a2310;border-color:#b45309; }
+body.dark-mode .hl-resume-badge { background:#4a3a10;color:#fcd34d; }
+body.dark-mode .hl-resume-body { color:#fde68a; }
+body.dark-mode .hl-book { background:#131f19;border-color:#2b4a3a;box-shadow:none; }
+body.dark-mode .hl-book-name { color:#e8f5ee; }
+body.dark-mode .hl-book-author { color:#9fb8ab; }
+body.dark-mode .hl-book-progress { background:#1f3a2c; }
+body.dark-mode .hl-book-bar { background:#12251c;border-color:#2b4a3a; }
+body.dark-mode .hl-book-bar-label { color:#9fb8ab; }
+body.dark-mode .hl-book-bar select { background:#0f1a15;border-color:#2b4a3a;color:#e8f5ee; }
+body.dark-mode .hl-dua { background:#2a2310;border-color:#b45309; }
+body.dark-mode .hl-dua-text { color:#fde68a; }
+body.dark-mode .hl-dua-close { color:#fcd34d; }
+body.dark-mode .hl-chapter-title { background:linear-gradient(135deg,#134e39,#1a6b4c); }
+body.dark-mode .hl-hadith { background:#131f19;border-color:#2b4a3a; }
+body.dark-mode .hl-h-num { background:#1f3a2c;color:#6ee7b7; }
+body.dark-mode .hl-copy { background:#1a2a22;color:#e8f5ee;border-color:#2b4a3a; }
+body.dark-mode .hl-h-text { color:#e8f5ee; }
+body.dark-mode .hl-h-text mark { background:#4a3a10;color:#fde68a; }
+body.dark-mode .hl-search-box select { background:#0f1a15;border-color:#2b4a3a;color:#e8f5ee; }
+body.dark-mode .hl-search-input-wrap input { background:#0f1a15;border-color:#2b4a3a;color:#e8f5ee; }
+body.dark-mode .hl-search-res { background:#131f19;border-color:#2b4a3a; }
+body.dark-mode .hl-search-res-loc { background:#1f3a2c;color:#6ee7b7; }
+body.dark-mode .hl-search-res-text { color:#c9d8cf; }
+body.dark-mode .hl-search-res-text mark { background:#4a3a10;color:#fde68a; }
+body.dark-mode .hl-sentinel { color:#9fb8ab; }
+body.dark-mode .hl-sentinel button { background:#131f19;color:#e8f5ee;border-color:#2b4a3a; }
+body.dark-mode .hl-book-end-title { color:#6ee7b7; }
+body.dark-mode .hl-book-end-dua { color:#9fb8ab; }
+body.dark-mode .hl-toast { background:#1f3a2c;color:#e8f5ee; }
+body.dark-mode .hl-hadith.hl-flash { animation:hlFlashDark 2.2s ease; }
+@keyframes hlFlashDark { 0% { background:#4a3a10; } 100% { background:#131f19; } }
 /* v25.34: إصلاح ألوان تصحيح المواقيت وفواصل الإقامة في الوضع الليلي */
 body.dark-mode #timeOffsetsSettings span[style*="color:#374151"],
 body.dark-mode #iqamaSettings span[style*="color:#374151"] { color:#e8f5ee !important; }
@@ -1763,6 +1913,15 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
         <div class="info-nav" id="infoNav" style="display:none;">اضغط لإيقاف الحركة</div>
         <div class="info-pause-hint" id="infoPauseHint">اضغط للإيقاف المؤقت</div>
       </div>
+      <!-- v26.10: زر مكتبة الأحاديث — يظهر عند اختيار قسم الأحاديث 🕌 -->
+      <div id="hadithLibEntry" class="hle-entry" style="display:none;" onclick="openHadithLibrary(event)">
+        <span class="hle-icon">📚</span>
+        <span class="hle-text">
+          <b>مكتبة الأحاديث الكاملة</b>
+          <small>صحيح البخاري، صحيح مسلم و10 كتب أخرى — اضغط للقراءة</small>
+        </span>
+        <span class="hle-arrow">‹</span>
+      </div>
     </div>
   </div>
 </div>
@@ -1925,6 +2084,13 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <button class="btn btn-outline" style="width:100%;background:#f0fdf4;color:#065f46;border-color:#86efac;" onclick="openInfoOrderModal()">🔀 ترتيب الأقسام والعناصر</button>
     </div>
 
+    <!-- v26.10: مكتبة الأحاديث -->
+    <div class="modal-section">
+      <div class="sec-title">📚 مكتبة الأحاديث</div>
+      <div class="sec-desc">اقرأ صحيح البخاري وصحيح مسلم وجامع الترمذي ورياض الصالحين وغيرها (12 كتاباً — أكثر من 42 ألف حديث) بأبوابها المنسّقة، مع بحث وشريط الفهرس وحفظ موضع القراءة والرجوع إليه — التحميل عند الحاجة.</div>
+      <button class="btn btn-outline" style="width:100%;background:#f0fdf4;color:#065f46;border-color:#86efac;" onclick="closeSettings();openHadithLibrary();">📖 فتح مكتبة الأحاديث</button>
+    </div>
+
     <div class="modal-section">
       <div class="sec-title">ℹ️ معلومات</div>
       <button class="btn btn-outline" style="width:100%;" onclick="closeSettings();openCredits();">حول البرنامج</button>
@@ -1956,6 +2122,71 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     </div>
   </div>
   </div></div>
+</div>
+
+<!-- v26.10: مكتبة الأحاديث — قارئ بملء الشاشة (المكتبة / القراءة / البحث) -->
+<div id="hadithReader" role="dialog" aria-label="مكتبة الأحاديث">
+  <div class="hl-header">
+    <button class="hl-back" id="hlBackBtn" onclick="hlGoBack()" aria-label="رجوع">‹</button>
+    <div class="hl-title-wrap">
+      <div class="hl-title" id="hlTitle">مكتبة الأحاديث</div>
+      <div class="hl-subtitle" id="hlSubtitle">اختر كتاباً للقراءة</div>
+    </div>
+    <button class="hl-icon-btn" id="hlSearchBtn" onclick="hlOpenSearch()" aria-label="بحث">🔍</button>
+  </div>
+
+  <!-- شريط تقدم التحميل -->
+  <div class="hl-progress" id="hlProgress" style="display:none;">
+    <div class="hl-progress-info"><span id="hlProgressText">جاري التحميل...</span><span id="hlProgressPct">0%</span></div>
+    <div class="hl-progress-bar-wrap"><div class="hl-progress-bar" id="hlProgressBar" style="width:0%;"></div></div>
+  </div>
+
+  <!-- ===== عرض المكتبة: شبكة الكتب ===== -->
+  <div class="hl-view" id="hlViewLib">
+    <div id="hlResumeCard" class="hl-resume" style="display:none;" onclick="hlResumeReading()">
+      <div class="hl-resume-badge">↩️ متابعة القراءة</div>
+      <div class="hl-resume-body" id="hlResumeBody"></div>
+    </div>
+    <div class="hl-lib-grid" id="hlBooksGrid">
+      <div class="hl-loading">⏳ جاري تحميل قائمة الكتب...</div>
+    </div>
+    <div class="hl-credit">📿 المصدر: نسخ عربية مفتوحة من sunnah.com (مستودع hadith-json) — تحميل عند الحاجة مع بقاء موضع قراءتك محفوظاً على جهازك</div>
+  </div>
+
+  <!-- ===== عرض القراءة: أبواب الكتاب وأحاديثه ===== -->
+  <div class="hl-view" id="hlViewBook" style="display:none;">
+    <div class="hl-book-bar">
+      <span class="hl-book-bar-label">📑 الفهرس:</span>
+      <select id="hlChapterSelect" onchange="hlJumpToChapter(this.value)"></select>
+    </div>
+    <div class="hl-dua" id="hlDuaStart">
+      <div class="hl-dua-text">دعاءَ قراءةِ الحديث: «اللَّهُمَّ انْفَعْنِي بِمَا عَلَّمْتَنِي، وَعَلِّمْنِي مَا يَنْفَعُنِي، وَزِدْنِي عِلْمًا»</div>
+      <button class="hl-dua-close" onclick="hlDismissDua()" aria-label="إخفاء الدعاء">✕</button>
+    </div>
+    <div id="hlBookContent"></div>
+    <div class="hl-sentinel" id="hlSentinel">
+      <span id="hlSentinelText">⏳ جاري تحميل الأبواب التالية...</span>
+      <button id="hlLoadMoreBtn" style="display:none;" onclick="hlLoadNextChapter()">⬇️ تحميل المزيد</button>
+    </div>
+    <div class="hl-book-end" id="hlBookEnd" style="display:none;">
+      <div class="hl-book-end-emoji">🏁</div>
+      <div class="hl-book-end-title">اكتمل هذا الكتاب — الحمد لله</div>
+      <div class="hl-book-end-dua">«الحمدُ للهِ الذي بِنِعْمَتِهِ تَتِمُّ الصَّالِحاتُ»<br>ونَضَّرَ اللهُ امرأً سمع مقالتي فوعاها وفهمها وبلغها</div>
+    </div>
+  </div>
+
+  <!-- ===== عرض البحث ===== -->
+  <div class="hl-view" id="hlViewSearch" style="display:none;">
+    <div class="hl-search-box">
+      <select id="hlSearchBook" onchange="hlSearchBookChanged()"></select>
+      <div class="hl-search-input-wrap">
+        <input type="search" id="hlSearchInput" placeholder="ابحث في الكتاب... كلمة أو أكثر أو رقم حديث" onkeydown="if(event && event.keyCode===13){hlRunSearch();return false;}">
+        <button class="hl-search-go" onclick="hlRunSearch()">بحث</button>
+      </div>
+      <div class="hl-search-hint" id="hlSearchHint">💡 اكتب كلمة أو أكثر (البحث يتجاهل التشكيل)، أو أدخل رقم حديث للانتقال إليه مباشرة.</div>
+    </div>
+    <div id="hlSearchResults"></div>
+  </div>
 </div>
 
 <!-- v22: نافذة اتجاه القبلة (بوصلة احترافية) -->
@@ -2359,6 +2590,7 @@ function toggleCatFilter(cat) {
   currentInfoIdx = 0;
   el("infoSection").style.display = "block";
   if (el("infoCatBar")) el("infoCatBar").style.display = "block";
+  try { hlUpdateEntry(); } catch (e) {} // v26.10: زر مكتبة الأحاديث يظهر مع قسم الأحاديث
   var filtered = getFilteredItems();
   displayCurrentInfo(true); // v25.39: إعادة رسم قسرية عند تبديل القسم حتى مع الإيقاف المؤقت
   if (cachedInfoItems.length === 0) {
@@ -2671,6 +2903,702 @@ function ioRefreshCarousel() {
 
 // v26.9: بناء شريط الأقسام حسب الترتيب المحفوظ عند الإقلاع — بعد تعريف محرك الترتيب بالكامل
 try { renderInfoCatBar(); } catch (e) {}
+
+// ====================================================================
+// ===== v26.10: مكتبة الأحاديث الكاملة (تحميل عند الحاجة) =====
+// ====================================================================
+// 12 كتاباً: البخاري، مسلم، الترمذي، أبو داود، النسائي، ابن ماجه، موطأ مالك،
+// الدارمي، رياض الصالحين، الأدب المفرد، الأربعون النووية، الأربعون القدسية
+// البيانات في المستودع العام: hadith-data/{book}/index.json + {book}/{chapter}.json + {book}/search.json
+var HL_BASE = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/hadith-data/";
+var HL_RAW_BASE = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/hadith-data/";
+var HL_LAST_KEY = "hadith-last-v1";
+var HL_RECENT_KEY = "hadith-recent-v1";
+var HL_DUA_DISMISS_KEY = "hadith-dua-dismissed-v1";
+
+// أيقونات وألوان الكتب (متناوبة)
+var HL_BOOK_ICONS = ["📗", "📘", "📙", "📕", "📔", "📒"];
+var HL_BOOK_COLORS = [["#065f46","#d1fae5"],["#1d4ed8","#dbeafe"],["#92400e","#fef3c7"],["#991b1b","#fee2e2"],["#065f46","#d1fae5"],["#5b21b6","#ede9fe"]];
+
+var hlState = {
+  screen: "lib",        // lib | book | search
+  prevScreen: "lib",
+  books: null,          // فهرس عام {books:[...]}
+  bookIdx: null,        // فهرس الكتاب المفتوح في hlState.books.books
+  chapters: null,       // أبواب الكتاب المفتوح [[id,title,count],...]
+  chPtr: 0,             // مؤشر الباب القادم للتحميل
+  loadedCh: {},         // الأبواب المحمّلة: id -> true
+  loadingCh: false,
+  io: null,             // IntersectionObserver
+  resume: null,         // موضع الاستئناف {c, r}
+  searchIdx: {},        // ذاكرة ملفات البحث لكل كتاب
+  searchBase: null,     // الكتاب المحدد في البحث
+  saveTimer: null,
+  suppressSave: false   // منع حفظ الموضع أثناء قفزة الاستئناف/البحث
+};
+
+// تجاوز محلي للاختبار (window.HL_DATA_BASE_OVERRIDE)
+function hlDataUrl(path) {
+  var b = (window.HL_DATA_BASE_OVERRIDE || HL_BASE);
+  return b + path;
+}
+
+// جلب JSON: fetch ثم XHR ثم رابط خام (raw.githubusercontent) كحل أخير
+function hlFetchJSON(path, cb, errCb) {
+  var done = false;
+  function finish(data) { if (done) return; done = true; try { cb(data); } catch (e) { if (errCb) errCb(e); } }
+  function fail(err) {
+    if (done) return;
+    // المحاولة الثانية: رابط خام مباشر (يتجاوز كاش jsdelivr)
+    hlXhrJSON(HL_RAW_BASE + path, function (d2) { finish(d2); }, function () {
+      if (done) return; done = true; if (errCb) errCb(err);
+    });
+  }
+  if (window.fetch) {
+    try {
+      fetch(hlDataUrl(path), { cache: "default" }).then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      }).then(function (j) { finish(j); }).catch(function (e) { hlXhrJSON(hlDataUrl(path), function (d) { finish(d); }, function () { fail(e); }); });
+      return;
+    } catch (e) {}
+  }
+  hlXhrJSON(hlDataUrl(path), function (d) { finish(d); }, function (e2) { fail(e2); });
+}
+
+function hlXhrJSON(url, cb, errCb) {
+  try {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.timeout = 30000;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status === 200 || (xhr.status === 0 && xhr.responseText && xhr.responseText.charAt(0) === "{")) {
+        try { cb(JSON.parse(xhr.responseText)); } catch (e) { if (errCb) errCb(e); }
+      } else if (errCb) { errCb(new Error("HTTP " + xhr.status)); }
+    };
+    xhr.ontimeout = xhr.onerror = function () { if (errCb) errCb(new Error("network")); };
+    xhr.send(null);
+  } catch (e) { if (errCb) errCb(e); }
+}
+
+// تطبيع النص العربي للبحث — يطابق norm_ar() في سكربت البناء
+function hlNorm(s) {
+  if (!s) return "";
+  s = String(s)
+    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, "")
+    .replace(/[أإآٱ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").replace(/ؤ/g, "و").replace(/ئ/g, "ي");
+  return s.replace(/\s+/g, " ").trim();
+}
+
+function hlToast(msg) {
+  try {
+    var t = document.createElement("div");
+    t.className = "hl-toast"; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { t.classList.add("show"); }, 30);
+    setTimeout(function () { t.classList.remove("show"); setTimeout(function () { try { document.body.removeChild(t); } catch (e) {} }, 400); }, 1900);
+  } catch (e) {}
+}
+
+function hlEscape(s) {
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// إظهار/إخفاء زر «مكتبة الأحاديث» أسفل البطاقة حسب القسم النشط
+function hlUpdateEntry() {
+  var e = el("hadithLibEntry");
+  if (!e) return;
+  e.style.display = (infoCatFilter === "hadith") ? "flex" : "none";
+}
+
+// ---------- فتح وإغلاق القارئ ----------
+function openHadithLibrary(ev) {
+  if (ev) { try { ev.stopPropagation(); ev.preventDefault(); } catch (e) {} }
+  el("hadithReader").classList.add("open");
+  try { document.body.style.overflow = "hidden"; } catch (e) {}
+  hlShowLib();
+}
+
+function closeHadithLibrary() {
+  el("hadithReader").classList.remove("open");
+  try { document.body.style.overflow = ""; } catch (e) {}
+  hlDetachIO();
+}
+
+// إعادة عرض شاشة القراءة نفسها (بدون إعادة تحميل الكتاب)
+function hlShowBook() {
+  var meta = hlCurrentMeta();
+  if (!meta) { hlShowLib(); return; }
+  hlSwitchView("book");
+  hlSetHeader(meta.name, (meta.author || "") + " • " + meta.total.toLocaleString("ar-EG") + " حديثاً");
+  el("hlProgress").style.display = "none";
+  hlAttachIO();
+  try { hlMaybeLoadNext(); } catch (e) {}
+}
+
+// زر الرجوع حسب الشاشة الحالية
+function hlGoBack() {
+  if (hlState.screen === "book") hlShowLib();
+  else if (hlState.screen === "search") {
+    if (hlState.prevScreen === "book" && hlState.bookIdx !== null) hlShowBook();
+    else hlShowLib();
+  } else closeHadithLibrary();
+}
+
+function hlSetHeader(title, sub) {
+  el("hlTitle").textContent = title;
+  el("hlSubtitle").textContent = sub || "";
+}
+
+function hlSwitchView(v) {
+  el("hlViewLib").style.display = v === "lib" ? "block" : "none";
+  el("hlViewBook").style.display = v === "book" ? "block" : "none";
+  el("hlViewSearch").style.display = v === "search" ? "block" : "none";
+  hlState.prevScreen = hlState.screen;
+  hlState.screen = v;
+}
+
+// ---------- شاشة المكتبة ----------
+function hlShowLib() {
+  hlDetachIO();
+  hlSwitchView("lib");
+  hlSetHeader("مكتبة الأحاديث", "12 كتاباً — التحميل عند الحاجة");
+  hlRenderResume();
+  if (hlState.books) { hlRenderBooks(); return; }
+  el("hlBooksGrid").innerHTML = '<div class="hl-loading">⏳ جاري تحميل قائمة الكتب...</div>';
+  hlFetchJSON("index.json", function (d) {
+    hlState.books = d;
+    hlRenderBooks();
+  }, function () {
+    el("hlBooksGrid").innerHTML = '<div class="hl-loading">⚠️ تعذر تحميل قائمة الكتب — تحقق من اتصالك بالإنترنت ثم أعد المحاولة.<br><br><button class="hl-search-res-open" onclick="hlShowLib()">🔄 إعادة المحاولة</button></div>';
+  });
+}
+
+function hlGetLast() {
+  try { return JSON.parse(localStorage.getItem(HL_LAST_KEY) || "null"); } catch (e) { return null; }
+}
+
+function hlRenderResume() {
+  var card = el("hlResumeCard"), body = el("hlResumeBody");
+  var last = hlGetLast();
+  if (!last || !last.b || !last.bn) { card.style.display = "none"; return; }
+  var chTxt = last.ct ? " — " + last.ct : "";
+  body.innerHTML = "توقفت في <b>" + hlEscape(last.bn) + "</b>" + hlEscape(chTxt) + " (حديث " + hlEscape(last.n || "?") + ")<br><small>اضغط للمتابعة من حيث توقفت</small>";
+  card.style.display = "flex";
+}
+
+function hlBookProgress(bookId) {
+  // شريط تقدم تقريبي: نسبة رقم الباب المحفوظ إلى عدد الأبواب
+  var last = hlGetLast();
+  if (!last || last.b !== bookId || !hlState.books) return null;
+  var bk = null;
+  for (var i = 0; i < hlState.books.books.length; i++) if (hlState.books.books[i].id === bookId) bk = hlState.books.books[i];
+  if (!bk || !bk.chapters) return null;
+  var pct = null;
+  if (last.ci) { var n = parseInt(last.ci, 10); if (!isNaN(n)) pct = Math.min(100, Math.round(n / bk.chapters * 100)); }
+  return pct;
+}
+
+function hlRenderBooks() {
+  var grid = el("hlBooksGrid");
+  var bs = hlState.books.books;
+  var html = "";
+  for (var i = 0; i < bs.length; i++) {
+    var b = bs[i];
+    var icon = HL_BOOK_ICONS[i % HL_BOOK_ICONS.length];
+    var col = HL_BOOK_COLORS[i % HL_BOOK_COLORS.length];
+    var pct = hlBookProgress(b.id);
+    var prog = (pct !== null && pct > 0) ? '<div class="hl-book-progress"><i style="width:' + pct + '%"></i></div>' : "";
+    html += '<div class="hl-book" onclick="hlOpenBook(\'' + b.id + '\')">' +
+      '<div class="hl-book-icon" style="background:' + col[1] + ';">' + icon + '</div>' +
+      '<div class="hl-book-name">' + hlEscape(b.name) + '</div>' +
+      '<div class="hl-book-author">' + hlEscape(b.author || "") + '</div>' +
+      '<div class="hl-book-meta">' + b.chapters + ' باباً • ' + b.total.toLocaleString("ar-EG") + ' حديثاً</div>' +
+      prog + '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function hlResumeReading() {
+  var last = hlGetLast();
+  if (!last || !last.b) return;
+  hlOpenBook(last.b, last);
+}
+
+// ---------- شاشة القراءة ----------
+function hlOpenBook(bookId, resume) {
+  if (!hlState.books) { hlToast("⏳ انتظر تحميل قائمة الكتب"); return; }
+  var bs = hlState.books ? hlState.books.books : null;
+  var meta = null;
+  if (bs) for (var i = 0; i < bs.length; i++) if (bs[i].id === bookId) { meta = bs[i]; hlState.bookIdx = i; break; }
+  if (!meta) { hlToast("⏳ لم تُحمّل قائمة الكتب بعد"); return; }
+  hlState.chapters = null;
+  hlState.chPtr = 0;
+  hlState.loadedCh = {};
+  hlState.loadingCh = false;
+  hlState.resume = resume || null;
+  hlState.suppressSave = true;
+  el("hlBookContent").innerHTML = '<div class="hl-loading">⏳ جاري فتح الكتاب...</div>';
+  el("hlBookEnd").style.display = "none";
+  el("hlSentinel").style.display = "none";
+  el("hlDuaStart").style.display = (localStorage.getItem(HL_DUA_DISMISS_KEY) === "1") ? "none" : "block";
+  hlSwitchView("book");
+  hlSetHeader(meta.name, (meta.author || "") + " • " + meta.total.toLocaleString("ar-EG") + " حديثاً");
+  hlFetchJSON(bookId + "/index.json", function (d) {
+    hlState.chapters = d.ch;
+    hlRenderChapterSelect();
+    var startCh = null;
+    if (resume && resume.c) {
+      for (var k = 0; k < d.ch.length; k++) if (String(d.ch[k][0]) === String(resume.c)) { startCh = d.ch[k][0]; hlState.chPtr = k + 1; break; }
+    }
+    if (startCh === null) startCh = d.ch.length ? d.ch[0][0] : null;
+    if (startCh !== null) {
+      hlLoadChapter(startCh, function () {
+        if (resume && resume.r) {
+          // التمرير إلى موضع الاستئناف بعد اكتمال الرسم
+          var tries = 0;
+          var doScroll = function () {
+            var rd = el("hadithReader");
+            var max = rd.scrollHeight - rd.clientHeight;
+            if (max > 50) {
+              rd.scrollTop = resume.r * max;
+              setTimeout(function () { hlState.suppressSave = false; }, 900);
+            } else if (++tries < 8) { setTimeout(doScroll, 120); }
+            else { hlState.suppressSave = false; }
+          };
+          setTimeout(doScroll, 180);
+        } else {
+          el("hadithReader").scrollTop = 0;
+          hlState.suppressSave = false;
+        }
+        hlAttachIO();
+        hlMaybeLoadNext();
+      });
+    } else {
+      el("hlBookContent").innerHTML = '<div class="hl-loading">لا توجد أبواب في هذا الكتاب</div>';
+    }
+    hlSaveLast({ b: bookId, bn: meta.name });
+  }, function () {
+    el("hlBookContent").innerHTML = '<div class="hl-loading">⚠️ تعذر فتح الكتاب — تحقق من الاتصال ثم أعد المحاولة.<br><br><button class="hl-search-res-open" onclick="hlOpenBook(\'' + bookId + '\')">🔄 إعادة المحاولة</button></div>';
+  });
+}
+
+function hlCurrentMeta() {
+  return (hlState.books && hlState.bookIdx !== null) ? hlState.books.books[hlState.bookIdx] : null;
+}
+
+function hlRenderChapterSelect() {
+  var sel = el("hlChapterSelect");
+  var opts = "";
+  for (var i = 0; i < hlState.chapters.length; i++) {
+    var c = hlState.chapters[i];
+    opts += '<option value="' + hlEscape(c[0]) + '">' + hlEscape(c[1]) + ' (' + c[2] + ')</option>';
+  }
+  sel.innerHTML = opts;
+  sel.selectedIndex = Math.max(0, hlState.chPtr - 1);
+}
+
+function hlLoadChapter(chId, cb) {
+  var meta = hlCurrentMeta();
+  if (!meta || hlState.loadedCh[chId]) { if (cb) cb(); return; }
+  hlFetchJSON(meta.id + "/" + chId + ".json", function (d) {
+    hlState.loadedCh[chId] = true;
+    var title = d.t || "";
+    var html = '<div class="hl-chapter" id="hlch_' + hlEscape(String(chId)) + '">';
+    html += '<div class="hl-chapter-title">📕 ' + hlEscape(title) + '</div>';
+    for (var i = 0; i < d.h.length; i++) {
+      var h = d.h[i];
+      html += '<div class="hl-hadith" data-num="' + hlEscape(String(h[0])) + '">' +
+        '<div class="hl-h-head"><span class="hl-h-num">حديث ' + hlEscape(String(h[0])) + '</span>' +
+        '<button class="hl-copy" onclick="hlCopyHadith(this)">📋 نسخ</button></div>' +
+        '<div class="hl-h-text">' + hlEscape(h[1]) + '</div></div>';
+    }
+    html += '</div>';
+    var content = el("hlBookContent");
+    content.insertAdjacentHTML("beforeend", html);
+    if (cb) cb();
+  }, function () {
+    if (cb) cb();
+  });
+}
+
+// تحميل الباب التالي في التسلسل (تحميل كسول عند التمرير)
+function hlLoadNextChapter() {
+  if (hlState.loadingCh || !hlState.chapters) return;
+  if (hlState.chPtr >= hlState.chapters.length) {
+    el("hlSentinel").style.display = "none";
+    el("hlBookEnd").style.display = "block";
+    return;
+  }
+  hlState.loadingCh = true;
+  var ch = hlState.chapters[hlState.chPtr];
+  el("hlSentinel").style.display = "block";
+  el("hlSentinelText").textContent = "⏳ جاري تحميل: " + ch[1] + "...";
+  el("hlLoadMoreBtn").style.display = "none";
+  var meta = hlCurrentMeta();
+  hlLoadChapter(ch[0], function () {
+    hlState.chPtr++;
+    hlState.loadingCh = false;
+    var sel = el("hlChapterSelect");
+    sel.selectedIndex = Math.max(0, hlState.chPtr - 1);
+    hlSaveLast({ b: meta.id, bn: meta.name, ci: ch[0], ct: ch[1], n: (hlState.lastReadNum || "") });
+    if (hlState.chPtr >= hlState.chapters.length) {
+      el("hlSentinel").style.display = "none";
+      el("hlBookEnd").style.display = "block";
+    } else {
+      el("hlSentinelText").textContent = "⬇️ مرّر للتحميل: " + hlState.chapters[hlState.chPtr][1];
+      el("hlLoadMoreBtn").style.display = "inline-block";
+      setTimeout(hlMaybeLoadNext, 250);
+    }
+  });
+}
+
+function hlMaybeLoadNext() {
+  // تحميل تلقائي عندما يقترب المستخدم من نهاية المحتوى
+  try {
+    var rd = el("hadithReader");
+    if (rd.scrollHeight - rd.scrollTop - rd.clientHeight < rd.clientHeight * 1.6) hlLoadNextChapter();
+  } catch (e) {}
+}
+
+function hlAttachIO() {
+  // تحميل تلقائي عند ظهور نهاية المحتوى (بديل آمن إن لم يتوفر IntersectionObserver)
+  hlDetachIO();
+  if ("IntersectionObserver" in window) {
+    hlState.io = new IntersectionObserver(function (en) {
+      if (en && en[0] && en[0].isIntersecting) hlLoadNextChapter();
+    }, { root: el("hadithReader"), rootMargin: "600px 0px" });
+    hlState.io.observe(el("hlSentinel"));
+  }
+}
+
+function hlDetachIO() {
+  if (hlState.io) { try { hlState.io.disconnect(); } catch (e) {} hlState.io = null; }
+}
+
+function hlJumpToChapter(chId) {
+  if (chId === null || chId === undefined || chId === "") return;
+  var rd = el("hadithReader");
+  var target = el("hlch_" + String(chId));
+  if (target) { rd.scrollTop = target.offsetTop - 60; hlSaveLastFromScroll(); return; }
+  // الباب غير محمّل بعد: جلب متوازٍ للأبواب الناقصة حتى الباب المطلوب ثم إدراجها بالترتيب
+  var idx = -1;
+  for (var i = 0; i < hlState.chapters.length; i++) if (String(hlState.chapters[i][0]) === String(chId)) { idx = i; break; }
+  if (idx < 0) return;
+  var missing = [];
+  for (var m = 0; m <= idx; m++) {
+    var cid = String(hlState.chapters[m][0]);
+    if (!hlState.loadedCh[cid]) missing.push(m);
+  }
+  if (!missing.length) {
+    hlState.chPtr = Math.max(hlState.chPtr, idx + 1);
+    var t0 = el("hlch_" + String(chId));
+    if (t0) { rd.scrollTop = t0.offsetTop - 60; hlSaveLastFromScroll(); }
+    return;
+  }
+  el("hlSentinel").style.display = "block";
+  el("hlLoadMoreBtn").style.display = "none";
+  hlState.loadingCh = true;
+  el("hlSentinelText").textContent = "⏳ جاري الانتقال إلى: " + hlState.chapters[idx][1] + " (" + missing.length + " باباً)...";
+  var pending = missing.length, inserted = 0;
+  var tryInsert = function () {
+    // إدراج الأبواب المكتملة بالترتيب
+    while (missing.length && hlState._fetched && hlState._fetched[String(hlState.chapters[missing[0]][0])]) {
+      var mi = missing.shift();
+      var cid = String(hlState.chapters[mi][0]);
+      var data = hlState._fetched[cid]; delete hlState._fetched[cid];
+      hlInsertChapter(cid, data);
+      inserted++;
+      el("hlSentinelText").textContent = "⏳ تحميل " + inserted + "/" + pending + "...";
+    }
+    if (!missing.length) {
+      hlState._fetched = {};
+      hlState.loadingCh = false;
+      hlState.chPtr = Math.max(hlState.chPtr, idx + 1);
+      el("hlSentinel").style.display = "none";
+      var sel = el("hlChapterSelect");
+      sel.selectedIndex = Math.max(0, hlState.chPtr - 1);
+      var t2 = el("hlch_" + String(chId));
+      if (t2) { rd.scrollTop = t2.offsetTop - 60; hlSaveLastFromScroll(); }
+      try { hlMaybeLoadNext(); } catch (e) {}
+    }
+  };
+  if (!hlState._fetched) hlState._fetched = {};
+  for (var k = 0; k < missing.length; k++) {
+    (function (mi) {
+      var cid = String(hlState.chapters[mi][0]);
+      var meta = hlCurrentMeta();
+      hlFetchJSON(meta.id + "/" + cid + ".json", function (d) {
+        hlState._fetched[cid] = d;
+        tryInsert();
+      }, function () {
+        pending--; // فشل باب: تجاوزه لكي لا يعلق الانتقال
+        tryInsert();
+      });
+    })(missing[k]);
+  }
+}
+
+// إدراج باب مُحمّل مسبقاً في DOM (نفس بناء hlLoadChapter بدون جلب)
+function hlInsertChapter(chId, d) {
+  hlState.loadedCh[chId] = true;
+  var title = d.t || "";
+  var html = '<div class="hl-chapter" id="hlch_' + hlEscape(String(chId)) + '">';
+  html += '<div class="hl-chapter-title">📕 ' + hlEscape(title) + '</div>';
+  for (var i = 0; i < d.h.length; i++) {
+    var h = d.h[i];
+    html += '<div class="hl-hadith" data-num="' + hlEscape(String(h[0])) + '">' +
+      '<div class="hl-h-head"><span class="hl-h-num">حديث ' + hlEscape(String(h[0])) + '</span>' +
+      '<button class="hl-copy" onclick="hlCopyHadith(this)">📋 نسخ</button></div>' +
+      '<div class="hl-h-text">' + hlEscape(h[1]) + '</div></div>';
+  }
+  html += '</div>';
+  el("hlBookContent").insertAdjacentHTML("beforeend", html);
+}
+
+function hlDismissDua() {
+  el("hlDuaStart").style.display = "none";
+  try { localStorage.setItem(HL_DUA_DISMISS_KEY, "1"); } catch (e) {}
+}
+
+// ---------- حفظ موضع القراءة ----------
+function hlSaveLast(extra) {
+  var last = hlGetLast() || {};
+  for (var k in (extra || {})) last[k] = extra[k];
+  last.t = Date.now();
+  try { localStorage.setItem(HL_LAST_KEY, JSON.stringify(last)); } catch (e) {}
+  // سجل الكتب الأخيرة
+  try {
+    var rec = JSON.parse(localStorage.getItem(HL_RECENT_KEY) || "[]");
+    rec = rec.filter(function (r) { return r.b !== last.b; });
+    rec.unshift({ b: last.b, bn: last.bn, t: last.t });
+    localStorage.setItem(HL_RECENT_KEY, JSON.stringify(rec.slice(0, 3)));
+  } catch (e2) {}
+}
+
+// تحديد الباب الظاهر حالياً أعلى الشاشة وحفظ الموضع (نسبة التمرير)
+function hlSaveLastFromScroll() {
+  if (hlState.suppressSave || hlState.screen !== "book" || !hlState.chapters) return;
+  var meta = hlCurrentMeta();
+  if (!meta) return;
+  var rd = el("hadithReader");
+  var ratio = rd.scrollHeight > rd.clientHeight ? rd.scrollTop / (rd.scrollHeight - rd.clientHeight) : 0;
+  var topCh = null, topChTitle = "";
+  var chs = el("hlBookContent").querySelectorAll(".hl-chapter");
+  for (var i = 0; i < chs.length; i++) {
+    if (chs[i].offsetTop - 80 <= rd.scrollTop) topCh = chs[i];
+  }
+  var chId = null, chNum = "";
+  if (topCh) {
+    chId = topCh.id.replace("hlch_", "");
+    for (var j = 0; j < hlState.chapters.length; j++) if (String(hlState.chapters[j][0]) === String(chId)) { chNum = String(hlState.chapters[j][0]); topChTitle = hlState.chapters[j][1]; break; }
+  }
+  // أقرب حديث مرئي (للعرض في بطاقة المتابعة)
+  var nearNum = "";
+  var hs = el("hlBookContent").querySelectorAll(".hl-hadith");
+  for (var m = 0; m < hs.length; m++) { if (hs[m].offsetTop - 140 <= rd.scrollTop) nearNum = hs[m].getAttribute("data-num") || ""; else break; }
+  hlState.lastReadNum = nearNum;
+  hlSaveLast({ b: meta.id, bn: meta.name, c: chId, ci: chNum, ct: topChTitle, n: nearNum, r: Math.min(0.999, Math.max(0, ratio)) });
+}
+
+// ---------- النسخ ----------
+function hlCopyHadith(btn) {
+  try {
+    var box = btn.closest(".hl-hadith");
+    var txt = box.querySelector(".hl-h-text").textContent;
+    var num = box.getAttribute("data-num");
+    var bn = el("hlTitle").textContent;
+    var full = bn + " — حديث " + num + "\n" + txt;
+    var done = function () { hlToast("✓ تم نسخ الحديث"); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(full).then(done, function () { hlCopyFallback(full, done); });
+    } else hlCopyFallback(full, done);
+  } catch (e) {}
+}
+
+function hlCopyFallback(txt, done) {
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    done();
+  } catch (e) {}
+}
+
+// ---------- البحث ----------
+function hlOpenSearch() {
+  if (!hlState.books) { hlToast("⏳ انتظر تحميل قائمة الكتب"); return; }
+  hlSwitchView("search");
+  var sel = el("hlSearchBook");
+  if (!sel.options.length) {
+    var opts = "";
+    for (var i = 0; i < hlState.books.books.length; i++) {
+      var b = hlState.books.books[i];
+      opts += '<option value="' + hlEscape(b.id) + '">' + hlEscape(b.name) + " (" + b.total.toLocaleString("ar-EG") + " حديثاً)</option>";
+    }
+    sel.innerHTML = opts;
+  }
+  var meta = hlCurrentMeta();
+  sel.value = meta ? meta.id : sel.value;
+  hlState.searchBase = sel.value;
+  hlSetHeader("البحث في الأحاديث", "داخل الكتاب المحدد");
+  setTimeout(function () { try { el("hlSearchInput").focus(); } catch (e) {} }, 150);
+}
+
+function hlSearchBookChanged() {
+  hlState.searchBase = el("hlSearchBook").value;
+  hlState.searchIdx[hlState.searchBase] = hlState.searchIdx[hlState.searchBase] || null;
+}
+
+function hlLoadSearchIdx(bookId, cb, prog) {
+  if (hlState.searchIdx[bookId]) { cb(hlState.searchIdx[bookId]); return; }
+  var show = function (txt, pct) { if (prog) prog(txt, pct); };
+  show("جاري تحميل فهرس البحث (مرة واحدة لكل جلسة)...", 12);
+  hlFetchJSON(bookId + "/search.json", function (d) {
+    show("معالجة الفهرس...", 80);
+    setTimeout(function () {
+      hlState.searchIdx[bookId] = d.s;
+      show("", 100);
+      cb(d.s);
+    }, 60);
+  }, function () {
+    if (prog) prog("⚠️ تعذر تحميل فهرس البحث — تحقق من الاتصال", 100);
+    if (cb) cb(null);
+  });
+}
+
+function hlHighlight(text, words) {
+  // text مطبَّع (بدون تشكيل) — نغلّف مواضع الكلمات بـ <mark>
+  var out = "", i = 0, low = text;
+  var marks = [];
+  for (var w = 0; w < words.length; w++) {
+    var wd = words[w];
+    if (!wd) continue;
+    var pos = 0, idx;
+    while ((idx = low.indexOf(wd, pos)) !== -1) {
+      marks.push([idx, idx + wd.length]);
+      pos = idx + wd.length;
+      if (marks.length > 400) break;
+    }
+  }
+  if (!marks.length) return hlEscape(text);
+  marks.sort(function (a, b) { return a[0] - b[0]; });
+  var merged = [marks[0]];
+  for (var m = 1; m < marks.length; m++) {
+    var last = merged[merged.length - 1];
+    if (marks[m][0] <= last[1]) last[1] = Math.max(last[1], marks[m][1]);
+    else merged.push(marks[m]);
+  }
+  for (var k = 0; k < merged.length; k++) {
+    out += hlEscape(text.slice(i, merged[k][0])) + "<mark>" + hlEscape(text.slice(merged[k][0], merged[k][1])) + "</mark>";
+    i = merged[k][1];
+  }
+  out += hlEscape(text.slice(i));
+  return out;
+}
+
+function hlRunSearch() {
+  var q = hlNorm(el("hlSearchInput").value || "");
+  var bookId = hlState.searchBase || el("hlSearchBook").value;
+  var box = el("hlSearchResults");
+  var hint = el("hlSearchHint");
+  if (!q) { box.innerHTML = '<div class="hl-search-empty">✍️ اكتب كلمة أو رقم حديث ثم اضغط بحث</div>'; return; }
+  box.innerHTML = '<div class="hl-search-empty">⏳ جاري البحث...</div>';
+  hlLoadSearchIdx(bookId, function (rows) {
+    if (!rows) { box.innerHTML = '<div class="hl-search-empty">⚠️ تعذر البحث — تحقق من الاتصال</div>'; return; }
+    var words = q.split(" ").filter(function (w) { return w; });
+    var isNum = /^\d+$/.test(q.replace(/\s/g, ""));
+    var res = [];
+    if (isNum) {
+      var numQ = parseInt(q, 10);
+      for (var i = 0; i < rows.length && res.length < 60; i++) if (rows[i][0] === numQ) res.push(rows[i]);
+    }
+    if (!res.length) {
+      for (var j = 0; j < rows.length && res.length < 60; j++) {
+        var t = rows[j][2];
+        var ok = true;
+        for (var w2 = 0; w2 < words.length; w2++) if (t.indexOf(words[w2]) === -1) { ok = false; break; }
+        if (ok) res.push(rows[j]);
+      }
+    }
+    var meta = hlCurrentMeta();
+    var bn = "";
+    var bopts = el("hlSearchBook").options;
+    for (var o = 0; o < bopts.length; o++) if (bopts[o].value === bookId) bn = bopts[o].text.replace(/\s*\(.*\)$/, "");
+    if (!res.length) {
+      box.innerHTML = '<div class="hl-search-empty">🔍 لا نتائج لـ «' + hlEscape(el("hlSearchInput").value) + '» في ' + hlEscape(bn) + '<br><small>جرّب كلمات أقل أو كلمة بلا تشكيل</small></div>';
+      return;
+    }
+    var html = '<div class="hl-search-empty" style="padding:8px 0;">✅ ' + res.length + ' نتيجة في ' + hlEscape(bn) + '</div>';
+    for (var r = 0; r < res.length; r++) {
+      var row = res[r];
+      var snippet = row[2];
+      if (snippet.length > 340) {
+        var firstHit = snippet.indexOf(words[0] || snippet.slice(0, 10));
+        var st = Math.max(0, firstHit - 120);
+        snippet = (st > 0 ? "… " : "") + snippet.slice(st, st + 340) + " …";
+      }
+      html += '<div class="hl-search-res">' +
+        '<div class="hl-search-res-head"><span class="hl-search-res-loc">حديث ' + hlEscape(String(row[0])) + '</span>' +
+        '<button class="hl-search-res-open" onclick="hlSearchGoto(\'' + bookId + '\',\'' + hlEscape(String(row[1])) + '\',' + JSON.stringify(String(row[0])).replace(/"/g, "&quot;") + ')">📖 افتح في سياقه</button></div>' +
+        '<div class="hl-search-res-text">' + hlHighlight(snippet, words) + '</div></div>';
+    }
+    box.innerHTML = html;
+    if (isNum && res.length === 1) hint.textContent = "💡 وُجد الحديث رقم " + res[0][0] + " — اضغط «افتح في سياقه» لقراءته ضمن بابه.";
+  }, function (txt, pct) {
+    // شريط تقدم التحميل
+    var p = el("hlProgress");
+    if (pct >= 100 && !txt) { p.style.display = "none"; return; }
+    p.style.display = "block";
+    el("hlProgressText").textContent = txt || "";
+    el("hlProgressPct").textContent = "";
+    el("hlProgressBar").style.width = (pct || 8) + "%";
+  });
+}
+
+// الانتقال من نتيجة البحث إلى الحديث في سياقه
+function hlSearchGoto(bookId, chId, num) {
+  var openIt = function () {
+    hlSwitchView("book");
+    hlJumpToChapter(chId);
+    setTimeout(function () {
+      var rd = el("hadithReader");
+      var hs = el("hlBookContent").querySelectorAll('.hl-hadith[data-num="' + num + '"]');
+      for (var i = 0; i < hs.length; i++) {
+        var inCh = true;
+        var p = hs[i].closest ? hs[i].closest(".hl-chapter") : null;
+        if (p && p.id !== "hlch_" + String(chId)) inCh = false;
+        if (inCh) {
+          rd.scrollTop = hs[i].offsetTop - 90;
+          hs[i].classList.remove("hl-flash");
+          void hs[i].offsetWidth;
+          hs[i].classList.add("hl-flash");
+          break;
+        }
+      }
+    }, 900);
+  };
+  if (hlState.bookIdx === null || (hlCurrentMeta() && hlCurrentMeta().id !== bookId)) {
+    hlOpenBook(bookId, { c: chId, r: null });
+    setTimeout(openIt, 700);
+  } else openIt();
+}
+
+// ---------- تمرير القارئ: حفظ الموضع + تحميل كسول ----------
+(function () {
+  var rd = el("hadithReader");
+  if (!rd) return;
+  rd.addEventListener("scroll", function () {
+    try { hlMaybeLoadNext(); } catch (e) {}
+    if (hlState.saveTimer) clearTimeout(hlState.saveTimer);
+    hlState.saveTimer = setTimeout(function () {
+      try { hlSaveLastFromScroll(); } catch (e) {}
+    }, 600);
+  }, { passive: true });
+})();
 
 var CONTENT_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/content.json";
 
@@ -7223,7 +8151,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.9"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.9: ترتيب حر للبيانات المتحركة)
+var CURRENT_APP_VERSION = "26.10"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.10: مكتبة الأحاديث الكاملة)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
