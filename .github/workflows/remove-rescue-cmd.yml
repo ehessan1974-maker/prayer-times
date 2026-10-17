@@ -1,0 +1,45 @@
+name: إزالة أمر الإنقاذ المؤقت من content.json
+
+# v26.17: أمر الإنقاذ (rescue-2617-20261018) أُضيف لإنقاذ الأجهزة العالقة على إصدارات قديمة.
+# يجب إزالته بعد نافذة قصيرة لأن بقاؤه يجعل الأجهزة القديمة جداً (بلا fetch) تعيد التحميل كل دقيقة.
+# هذا السير يعمل يومياً 10:00 بتوقيت دمشق: يزيل الأمر إن كنا في/بعد 2026-10-20، وإلا لا يفعل شيئاً.
+# بعد الإزالة الناجحة تصبح كل التشغيلات اللاحقة NOOP (آمن للاستمرار).
+
+on:
+  schedule:
+    - cron: "0 7 * * *" # 10:00 بتوقيت دمشق (UTC+3) يومياً
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rescue-cmd-removal
+  cancel-in-progress: false
+
+jobs:
+  remove-if-due:
+    runs-on: ubuntu-latest
+    steps:
+      - name: سحب المستودع
+        uses: actions/checkout@v4
+
+      - name: إزالة الأمر إن حان موعده
+        run: python3 .github/scripts/remove_rescue_cmd.py
+
+      - name: حفظ ونشر التغيير إن وُجد
+        run: |
+          if git diff --quiet -- content.json; then
+            echo "لا تغيير في content.json — انتهى"
+            exit 0
+          fi
+          git config user.name  "rescue-cleanup-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content.json
+          git commit -m "إزالة أمر الإنقاذ المؤقت rescue-2617-20261018 من content.json — انتهت نافذة الإنقاذ (يومان)"
+          git push
+          echo "تم النشر"
+
+      - name: تنبيه كاش jsDelivr
+        run: |
+          curl -s "https://purge.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/content.json" -o /dev/null -w "purge: %{http_code}\n" || true
