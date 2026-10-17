@@ -905,20 +905,32 @@
                         ملف APK — تطبيق أندرويد
                     </span>
                 </div>
+                <div id="changelogBox" style="display:none;background:var(--green-50);border:1.5px solid var(--green-200);border-radius:14px;padding:14px 18px;margin-top:16px;text-align:right;">
+                    <div style="font-size:13.5px;font-weight:800;color:var(--green-800);margin-bottom:6px;">🆕 ما الجديد في الإصدار <span id="changelogVer"></span>؟</div>
+                    <p id="changelogText" style="font-size:12.5px;color:var(--gray-700);line-height:2;margin:0;"></p>
+                </div>
                 <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
-                    <a id="downloadApkBtn" href="https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.8.apk" class="btn-download" download style="width:100%;justify-content:center;font-size:14px;padding:14px 20px;">
+                    <a id="downloadApkBtn" href="https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.9.apk" class="btn-download" download style="width:100%;justify-content:center;font-size:14px;padding:14px 20px;">
                         <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                         تحميل التطبيق ( يتطلب نظام أندرويد 4.4 " KitKat " أو أحدث )
                     </a>
                     <div style="display:flex;flex-direction:column;gap:8px;">
-                        <a href="https://ehessan1974-maker.github.io/prayer-times/public/prayer-times-v26.8.apk" download class="btn-open-web" style="width:100%;justify-content:center;font-size:12px;padding:10px 16px;opacity:.85;">
+                        <a id="apkAlt1" href="https://ehessan1974-maker.github.io/prayer-times/public/prayer-times-v26.9.apk" download class="btn-open-web" style="width:100%;justify-content:center;font-size:12px;padding:10px 16px;opacity:.85;">
                             رابط بديل 1 — تحميل APK من GitHub Pages ( إن تعذر التحميل أعلاه )
                         </a>
-                        <a href="https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.8.apk" download class="btn-open-web" style="width:100%;justify-content:center;font-size:12px;padding:10px 16px;opacity:.85;">
+                        <a id="apkAlt2" href="https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.9.apk" download class="btn-open-web" style="width:100%;justify-content:center;font-size:12px;padding:10px 16px;opacity:.85;">
                             رابط بديل 2 — تحميل APK من GitHub مباشرة ( إن تعذر الرابطان أعلاه )
                         </a>
                     </div>
-                    
+                    <!-- v26.11: النسخة الإلكترونية HTML — فتح مباشر في المتصفح أو تحميل الملف للاستخدام دون اتصال -->
+                    <div style="display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--green-200);padding-top:12px;">
+                        <a id="openWebBtn" href="https://ehessan1974-maker.github.io/prayer-times/prayer-times.html" target="_blank" rel="noopener" class="btn-open-web" style="width:100%;justify-content:center;font-size:13.5px;padding:13px 18px;background:#ecfdf5;border:2px solid var(--green-400);color:var(--green-800);font-weight:800;opacity:1;">
+                            🌐 فتح النسخة الإلكترونية مباشرة (HTML) — بلا تحميل
+                        </a>
+                        <a id="downloadHtmlBtn" href="https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html" download class="btn-open-web" style="width:100%;justify-content:center;font-size:12px;padding:10px 16px;opacity:.85;">
+                            ⬇️ أو حمّل ملف HTML واحفظه للاستخدام دون اتصال — يُحدَّث تلقائياً عند فتحه مع وجود إنترنت
+                        </a>
+                    </div>
                 </div>
                 <!-- v25.41: رموز QR — امسح بالكاميرا للتحميل أو لفتح نسخة الويب -->
                 <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:18px;padding-top:18px;border-top:1px dashed var(--green-200);">
@@ -927,7 +939,12 @@
                         <div id="qrApk" style="display:flex;justify-content:center;"></div>
                         <div style="font-size:10.5px;color:#6b7280;margin-top:8px;line-height:1.6;">وجّه كاميرا الهاتف نحو الرمز<br>لتحميل أحدث إصدار مباشرة</div>
                     </div>
-                    
+                    <!-- v26.11: رمز QR للنسخة الإلكترونية HTML -->
+                    <div style="text-align:center;flex:1;min-width:180px;background:#ffffff;border:1px solid var(--green-200);border-radius:14px;padding:14px 10px;box-shadow:0 2px 10px rgba(6,95,70,.07);">
+                        <div style="font-size:13px;font-weight:800;color:var(--green-600);margin-bottom:10px;">🌐 امسح لفتح النسخة الإلكترونية</div>
+                        <div id="qrWeb" style="display:flex;justify-content:center;"></div>
+                        <div style="font-size:10.5px;color:#6b7280;margin-top:8px;line-height:1.6;">وجّه كاميرا الهاتف نحو الرمز<br>لتشغيل التطبيق في المتصفح فوراً</div>
+                    </div>
                 </div>
                 <style>
                     #qrApk svg, #qrWeb svg { width:140px; height:140px; display:block; }
@@ -2868,7 +2885,8 @@ return qrcode;
 //    حجم APK الآن مُخزَّن في version.json نفسه
 // 4. cache-busting قوي مع Date.now()
 // v25.41: توليد رموز QR للتحميل (APK) ونسخة الويب — مضمّن محلياً بلا خدمات خارجية
-var WEB_APP_URL_QR = ""; // closed-source: web edition no longer public
+// v26.11: إعادة تفعيل رمز النسخة الإلكترونية HTML — متاحة الآن عبر GitHub Pages
+var WEB_APP_URL = "https://ehessan1974-maker.github.io/prayer-times/prayer-times.html";
 function _renderQRTo(targetId, text) {
   try {
     var target = document.getElementById(targetId);
@@ -2880,7 +2898,7 @@ function _renderQRTo(targetId, text) {
   } catch (e) {}
 }
 function renderApkQR(url) { _renderQRTo("qrApk", url); }
-function renderWebQR() { /* closed-source: removed */ }
+function renderWebQR() { _renderQRTo("qrWeb", WEB_APP_URL); }
 (function() {
   var versionUrl = "./version.json?t=" + Date.now();
   var versionUrlFallback = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json?t=" + Date.now();
@@ -2902,6 +2920,25 @@ function renderWebQR() { /* closed-source: removed */ }
       var sizeEl = document.getElementById("apkSize");
       if (sizeEl) sizeEl.textContent = info.apkSizeMB;
     }
+    // v26.11: تحديث الروابط البديلة لـ APK لتطابق رابط التحميل الرئيسي دائماً
+    var alt1 = document.getElementById("apkAlt1"), alt2 = document.getElementById("apkAlt2");
+    if (alt1) alt1.href = apkUrl.replace("cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main", "ehessan1974-maker.github.io/prayer-times");
+    if (alt2) alt2.href = apkUrl.replace("cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main", "raw.githubusercontent.com/ehessan1974-maker/prayer-times/main");
+    // v26.11: تحديث رابط تحميل ملف HTML من version.json (htmlUrl)
+    var htmlUrl = info.htmlUrl || "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html";
+    var hBtn = document.getElementById("downloadHtmlBtn");
+    if (hBtn) hBtn.href = htmlUrl;
+    // v26.11: عرض «ما الجديد في هذا الإصدار» من حقل changelog في version.json
+    if (info.changelog) {
+      var cBox = document.getElementById("changelogBox");
+      var cTxt = document.getElementById("changelogText");
+      var cVer = document.getElementById("changelogVer");
+      if (cBox && cTxt) {
+        cTxt.textContent = info.changelog;
+        if (cVer) cVer.textContent = ver;
+        cBox.style.display = "block";
+      }
+    }
   }
   fetch(versionUrl, { cache: "no-store" })
     .then(function(r) {
@@ -2920,7 +2957,7 @@ function renderWebQR() { /* closed-source: removed */ }
     });
   // v25.41: التوليد الأولي — APK من الرابط الافتراضي (يُحدَّث تلقائياً عند وصول version.json) + الويب
   var _apkBtn0 = document.getElementById("downloadApkBtn");
-  renderApkQR(_apkBtn0 && _apkBtn0.href ? _apkBtn0.href : "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.8.apk");
+  renderApkQR(_apkBtn0 && _apkBtn0.href ? _apkBtn0.href : "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.9.apk");
   renderWebQR();
 })();
 </script>
