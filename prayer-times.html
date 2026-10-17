@@ -894,6 +894,7 @@ body.dark-mode .msged-audience-add-name { background:#0f1f18; color:#e2e8f0; bor
 }
 #imgViewer {
   position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0; /* v26.14: بديل للمتصفحات القديمة */
   inset: 0;
   background: rgba(0, 0, 0, .9);
   display: none;
@@ -1649,10 +1650,12 @@ body.dark-mode #ioCatSelect { background:#0f1a15;border-color:#2b4a3a;color:#e8f
 .hle-entry:active { transform:scale(0.98); }
 
 /* الحاوية بملء الشاشة */
-#hadithReader { display:none;position:fixed;inset:0;z-index:99999;background:#f4fbf7;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain; }
+/* v26.14: دعم WebView القديم (سامسونغ J5 وغيره — Chromium 37):
+   inset:0 لا يُفهم عنده فيكون للنافذة موضع/حجم خاطئ ولا تظهر — أضفنا top/right/bottom/left الصريحة قبلها */
+#hadithReader { display:none;position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:99999;background:#f4fbf7;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain; }
 #hadithReader.open { display:block; }
 #hadithReader * { box-sizing:border-box; }
-.hl-header { position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:8px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));
+.hl-header { position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:8px;padding:10px 12px;padding-top:10px;padding-top:calc(10px + env(safe-area-inset-top,0px));
   background:linear-gradient(135deg,#065f46,#047857);box-shadow:0 2px 8px rgba(0,0,0,0.18); }
 .hl-back { width:34px;height:34px;border:none;border-radius:10px;background:rgba(255,255,255,0.16);color:#ffffff;font-size:22px;line-height:1;cursor:pointer;flex-shrink:0; }
 .hl-title-wrap { flex:1;min-width:0; }
@@ -1674,7 +1677,13 @@ body.dark-mode #ioCatSelect { background:#0f1a15;border-color:#2b4a3a;color:#e8f
 .hl-resume-body { font-size:12px;color:#78350f;font-family:Tahoma,Arial,sans-serif;line-height:1.7; }
 
 /* شبكة الكتب */
-.hl-lib-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px; }
+/* v26.14: شبكة الكتب — fallback flex للمتصفحات القديمة (Grid غير مدعوم قبل Chrome 57) */
+.hl-lib-grid { display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;-webkit-align-items:stretch;align-items:stretch; }
+.hl-lib-grid .hl-book { -webkit-flex:1 1 45%;flex:1 1 45%;min-width:140px; }
+@supports (display:grid) {
+  .hl-lib-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px; }
+  .hl-lib-grid .hl-book { flex:none;min-width:0; }
+}
 .hl-book { display:flex;flex-direction:column;gap:4px;padding:12px 10px;border-radius:16px;border:1px solid #d1fae5;background:#ffffff;cursor:pointer;box-shadow:0 1px 4px rgba(6,95,70,0.08);position:relative;overflow:hidden; }
 .hl-book:active { transform:scale(0.97); }
 .hl-book-icon { width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:2px; }
@@ -1872,7 +1881,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 <div class="header">
   <div class="header-inner">
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.13</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.14</span></h1>
     </div>
     <div class="ramadan-cell">
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
@@ -3454,7 +3463,13 @@ function hlSaveLastFromScroll() {
 // ---------- النسخ ----------
 function hlCopyHadith(btn) {
   try {
-    var box = btn.closest(".hl-hadith");
+    /* v26.14: closest غير مدعوم في WebView القديم (Chromium 41-) — بديل يدوي */
+    var box = btn;
+    while (box && box !== document) {
+      if (box.classList && box.classList.contains("hl-hadith")) break;
+      box = box.parentNode;
+    }
+    if (!box || box === document || !box.querySelector) return;
     var txt = box.querySelector(".hl-h-text").textContent;
     var num = box.getAttribute("data-num");
     var bn = el("hlTitle").textContent;
@@ -8296,7 +8311,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.13"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.13: إصلاح اختفاء زر الإعدادات ⚙️ + السطر العلوي صار شريطاً قابلًا للسحب يميناً/يساراً)
+var CURRENT_APP_VERSION = "26.14"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.14: مكتبة الأحاديث لا تفتح على WebView القديم — بدائل CSS لـ inset/grid/env + حماية closest)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
