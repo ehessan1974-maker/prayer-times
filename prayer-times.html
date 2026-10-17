@@ -56,10 +56,53 @@ body {
   border-bottom: 1px solid #a7f3d0;
   padding: 4px 8px;
 }
+/* v26.13: تحويل الترويسة من display:table إلى flex — الجدول كان يتمدد على الشاشات الضيقة
+   وفي RTL يخرج الفائض إلى اليسار فتختفي الأزرار (زر الإعدادات ⚙️) خارج حافة الشاشة.
+   v26.13 (تحديث بطلب المستخدم): السطر العلوي صار شريطاً قابلاً للسحب يميناً/يساراً —
+   عند ضيق الشاشة لا يُقص ولا ينكمش المحتوى بل يُسحب/يُمرَّر أفقياً باللمس أو بالفأرة. */
 .header-inner {
   max-width: 600px; margin: 0 auto;
-  display: table;
+  display: -webkit-flex; display: flex;
+  -webkit-align-items: center; align-items: center;
+  -webkit-justify-content: space-between; justify-content: space-between;
+  -webkit-flex-wrap: nowrap; flex-wrap: nowrap;
   width: 100%;
+  min-width: 0;
+  overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.header-inner::-webkit-scrollbar { display: none; }
+/* v26.13: قواعد خلايا الترويسة — لا انكماش: العناصر بعرضها الطبيعي والفيضان يُسحب */
+.title-cell {
+  -webkit-flex: 0 0 auto; flex: 0 0 auto;
+  white-space: nowrap;
+  padding-left: 4px;
+}
+.ramadan-cell {
+  -webkit-flex: 0 0 auto; flex: 0 0 auto;
+  padding: 0 4px;
+}
+.btns-cell {
+  -webkit-flex: 0 0 auto; flex: 0 0 auto;
+  white-space: nowrap;
+  text-align: left;
+  padding-right: 2px;
+}
+/* v26.13: شاشات ضيقة جداً — تصغير الأزرار والعنوان لضمان التسع على 320px دون خروج أي زر
+   (important لتتغلب على الأنماط inline الموجودة على العنوان والشارة وأيقونة الحالة) */
+@media screen and (max-width: 430px) {
+  .header { padding: 4px 6px; }
+  .header-inner { gap: 0; }
+  .title-cell { padding-left: 2px; }
+  .title-cell h1 { font-size: 12px !important; }
+  .hdr-app-ver { font-size: 8px !important; padding: 1px 4px !important; }
+  .ramadan-cell { padding: 0 1px; }
+  .header .header-ramadan { padding: 2px 2px; }
+  .btns-cell { padding-right: 1px; }
+  .header-btns .icon-btn { width: 27px; height: 27px; line-height: 25px; font-size: 12px; margin: 0; }
+  .header-btns .icon-btn + .icon-btn { margin-right: 1px; }
+  .header-btns #onlineIcon { font-size: 11px !important; }
 }
 .header-ramadan {
   background: linear-gradient(to right, #ecfdf5, #f0fdfa, #ecfdf5);
@@ -1828,13 +1871,13 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 <!-- Header -->
 <div class="header">
   <div class="header-inner">
-    <div class="title-cell" style="display:table-cell;vertical-align:middle;width:auto;white-space:nowrap;padding-left:4px;">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.9</span></h1>
+    <div class="title-cell">
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.13</span></h1>
     </div>
-    <div class="ramadan-cell" style="display:table-cell;vertical-align:middle;padding:0 4px;">
+    <div class="ramadan-cell">
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
-    <div class="btns-cell" style="display:table-cell;vertical-align:middle;width:auto;white-space:nowrap;text-align:left;padding-right:2px;">
+    <div class="btns-cell">
       <div class="header-btns" style="display:inline-block;">
         <span id="onlineIcon" style="font-size:14px;vertical-align:middle;">🟢</span>
         <button class="icon-btn" id="infoToggleBtn" onclick="toggleOnlineInfo()" title="معلومات وأحاديث" style="vertical-align:middle;">📚</button>
@@ -6276,9 +6319,11 @@ function renderRamadan() {
   box.style.display = "block";
   if (info.isRamadan) {
     box.className = "header-ramadan ramadan-active";
+    /* v26.13: أُلغي طلب حذف الصورة — صورة الهلال عادت بطلب المستخدم */
     box.innerHTML = '<span class="hr-icon">\uD83C\uDF19</span><span class="hr-title">رمضان كريم - متبقّي ' + toAr(info.days) + ' يوم</span>';
   } else {
     box.className = "header-ramadan";
+    /* v26.13: أُلغي طلب حذف الصورة — صورة المسجد عادت بطلب المستخدم */
     box.innerHTML = '<span class="hr-icon">\uD83D\uDD4C</span><span class="hr-title">باقي لرمضان ' + toAr(info.days) + ' يوم</span>';
   }
 }
@@ -8251,13 +8296,41 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.12"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.12: إصلاح وصول التحديثات — raw أولاً وتجربة كل المصادر)
+var CURRENT_APP_VERSION = "26.13"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.13: إصلاح اختفاء زر الإعدادات ⚙️ + السطر العلوي صار شريطاً قابلًا للسحب يميناً/يساراً)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
   var _hdrVer = document.getElementById("hdrAppVer");
   if (_hdrVer) _hdrVer.textContent = "v" + CURRENT_APP_VERSION;
 } catch(eVerTitle) {}
+
+/* v26.13: السطر العلوي شريط قابل للسحب يميناً/يساراً — على شاشات اللمس يعمل التمرير الأصلي
+   تلقائياً (overflow-x:auto)، وهذا الكود يضيف السحب بالفأرة للحاسوب: اضغط واسحب الشريط.
+   تُمنع «النقرة» بعد السحب الفعلي حتى لا يُفتح زر بالخطأ أثناء التدوير. */
+(function headerDragToScroll() {
+  try {
+    var strip = document.querySelector(".header-inner");
+    if (!strip) return;
+    var _down = false, _x0 = 0, _l0 = 0, _moved = false;
+    strip.addEventListener("mousedown", function(e) {
+      _down = true; _moved = false; _x0 = e.pageX; _l0 = strip.scrollLeft;
+    });
+    window.addEventListener("mousemove", function(e) {
+      if (!_down) return;
+      var dx = e.pageX - _x0;
+      if (Math.abs(dx) > 4) _moved = true;
+      if (_moved) strip.scrollLeft = _l0 - dx;
+    });
+    window.addEventListener("mouseup", function() { _down = false; });
+    strip.addEventListener("click", function(e) {
+      if (_moved) { e.preventDefault(); e.stopPropagation(); _moved = false; }
+    }, true);
+    // مؤشر يد على الحاسوب عندما يفيض الشريط فقط
+    function _updGrab() { strip.style.cursor = (strip.scrollWidth > strip.clientWidth + 1) ? "grab" : ""; }
+    window.addEventListener("resize", _updGrab);
+    setTimeout(_updGrab, 300);
+  } catch(eHdrDrag) {}
+})();
 
 // ===== v20: Telegram Bot لجلب معرّفات الأجهزة + عداد المستخدمين =====
 // v25.37 [أمني]: أُزيل توكن البوت من الكود العام — كان مكشوفاً في مستودع عام
