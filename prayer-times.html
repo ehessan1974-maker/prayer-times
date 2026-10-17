@@ -3904,10 +3904,21 @@ var _liveRefreshTimer = null;
 // v25.3: محرر الرسائل حُذف في v19.0 — لا حاجة لدمج التعديلات المحلية
 // الأخطاء السابقة (editorMsgs غير معرّف) كانت تمنع displayCurrentInfo() من العمل
 function applyFetchedContent(items) {
-  cachedInfoItems = items;
-  currentInfoIdx = 0;
   // v20.3: فحص أوامر التحديث من المدير (للمستخدمين الذين لديهم نسخ قديمة بدون دوال التحديث)
+  // — يُنفَّذ على القائمة الخام قبل التصفية حتى يرى أوامر النظام
   try { checkUpdateCommand(items); } catch(e) {}
+  // v26.17: فصل أوامر النظام (cat يبدأ بـ _) عن المحتوى المعروض —
+  // أداة وقائية: عرض البطاقات مفهرس بـ INFO_CATEGORIES ولا يُظهرها أصلاً، وهذه طبقة حماية إضافية مستقبلاً
+  var visibleItems = [];
+  if (items && items.length) {
+    for (var fi = 0; fi < items.length; fi++) {
+      var fIt = items[fi];
+      if (fIt && fIt.cat && String(fIt.cat).charAt(0) === "_") continue;
+      visibleItems.push(fIt);
+    }
+  }
+  cachedInfoItems = visibleItems;
+  currentInfoIdx = 0;
   // اكتشاف الرسائل الجديدة/المعدلة القادمة من GitHub + تهيئة أول تشغيل
   try {
     var unseen = msgFindUnseen(msgsFromItems(items));
@@ -3940,6 +3951,14 @@ function checkUpdateCommand(items) {
         // أمر بسيط: إعادة تحميل الصفحة
         setTimeout(function() { location.reload(); }, 500);
       } else if (item.cmd === "load_url" && item.url) {
+        // v26.17: بوابة الإصدار — إذا بلغت النسخة الحالية نسخة الأمر أو تجاوزتها فلا تُنفّذ
+        // (يمنع حلقة إعادة الكتابة كل 60 ثانية على الأجهزة المحدّثة أثناء بقاء أمر الإنقاذ في content.json)
+        var targetV = String(item.version || "");
+        if (targetV && /^\d/.test(targetV)) {
+          var cmpRes = -1;
+          try { cmpRes = compareVersions(CURRENT_APP_VERSION, targetV); } catch(eCmp) { cmpRes = -1; }
+          if (cmpRes >= 0) continue; // النسخة الحالية >= المستهدفة — تجاهل الأمر
+        }
         // تحميل HTML جديد من URL
         loadUpdateFromUrl(item.url, item.version || "");
       }
@@ -3947,16 +3966,20 @@ function checkUpdateCommand(items) {
   }
 }
 
-// v20.3: تحميل HTML جديد من URL محدد (يُستخدم لإجبار التحديث)
+// v26.17: تحميل HTML جديد من URL محدد (يُستخدم لإجبار التحديث)
+// v26.17: XHR أولاً بدل fetch — يعمل حتى على WebView قديم بلا fetch (Chromium 37 / سامسونغ J5)
+// وهو نفس المسار المُجرّب في fetchContentJSONViaXHR (يصل المحتوى للأجهزة العالقة فعلاً)
 function loadUpdateFromUrl(url, version) {
   try {
     if (!url) return;
     var sep = url.indexOf("?") === -1 ? "?" : "&";
     var fullUrl = url + sep + "t=" + Date.now();
-    fetch(fullUrl).then(function(r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.text();
-    }).then(function(html) {
+    var _luOk = function(html) {
+      // فحص صحة الاستجابة: HTML حقيقي (البرنامج أكبر من 100KB) وليس صفحة خطأ
+      if (!html || typeof html !== "string" || html.length < 100000) {
+        setTimeout(function() { location.reload(); }, 500);
+        return;
+      }
       // حفظ HTML في localStorage (للمتصفحات)
       try { localStorage.setItem("pt-pending-update-html", html); } catch(e) {}
       // محاولة استبدال الصفحة الحالية بالكود الجديد عبر document.write
@@ -3966,10 +3989,33 @@ function loadUpdateFromUrl(url, version) {
         document.write(html);
         document.close();
       }, 100);
-    }).catch(function(err) {
+    };
+    var _luFail = function() {
       // fallback: إعادة تحميل بسيطة (ستجلب النسخة الجديدة من GitHub Pages)
       setTimeout(function() { location.reload(); }, 500);
-    });
+    };
+    try {
+      var xhu = new XMLHttpRequest();
+      xhu.open("GET", fullUrl, true);
+      xhu.timeout = 20000;
+      xhu.onreadystatechange = function() {
+        if (xhu.readyState !== 4) return;
+        if (xhu.status === 200) _luOk(xhu.responseText);
+        else _luFail();
+      };
+      xhu.onerror = _luFail;
+      xhu.ontimeout = _luFail;
+      xhu.send();
+    } catch(eXhr) {
+      if (typeof fetch === "function") {
+        fetch(fullUrl).then(function(r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.text();
+        }).then(_luOk).catch(_luFail);
+      } else {
+        _luFail();
+      }
+    }
   } catch(e) {
     setTimeout(function() { location.reload(); }, 500);
   }
@@ -8457,7 +8503,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.16"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.16: إصلاح جذري لعدم وصول التحديثات لأندرويد — إنقاذ JS مباشر + حماية من الارتداد)
+var CURRENT_APP_VERSION = "26.17"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.17: قناة إنقاذ جماعية للأجهزة العالقة عبر أمر تحديث في content.json + بوابة إصدار تمنع حلقة إعادة الكتابة + XHR بدل fetch لتوافق WebView القديم)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
