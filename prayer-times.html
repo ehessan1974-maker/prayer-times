@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.11</title>
+<title>🕌 مواقيت الصلاة v26.12</title>
 <!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -8236,14 +8236,22 @@ function compareVersions(a, b) {
 // =====================================================================
 // v25.43: مصادر تحديث متعددة — إذا فشل jsDelivr (حجب/تعثر شبكة/كاش قديم) نجرّب GitHub Pages ثم raw مباشرة.
 // الفحص يبدأ بالمصدر الذي نجح آخر مرة (_updateSourceIdx لاصق).
+// v25.43: مصادر تحديث متعددة — إذا فشل مصدر (حجب/تعثر شبكة) نجرّب التالي.
+// v26.12 [إصلاح جذري لعدم وصول التحديثات]: كان الترتيب jsdelivr أولاً — وjsdelivr يخزّن نسخة main حتى 12 ساعة،
+// فكانت الأجهزة تفحصه، تنجح، تقارن نسخة قديمة بنسختها فتظن أنها محدّثة ولا تُجرّب المصادر الطازجة أبداً.
+// الترتيب الجديد: raw أولاً (بلا كاش، يُحدّث فور الدفع)، ثم Pages، ثم jsdelivr أخيراً.
+// + منطق «جرّب كل المصادر قبل الحكم بأنك محدّث» في _appVersionCallback.
+// ملاحظة تشغيلية: بعد كل نشر جديد يُنصح بعمل purge لكاش jsdelivr:
+//   curl https://purge.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json
+//   curl https://purge.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/prayer-times.html
 var UPDATE_SOURCE_URLS = [
-  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json",
+  "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json",
   "https://ehessan1974-maker.github.io/prayer-times/version.json",
-  "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json"
+  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json"
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.11"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.11: بحث شامل في كل كتب الأحاديث)
+var CURRENT_APP_VERSION = "26.12"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.12: إصلاح وصول التحديثات — raw أولاً وتجربة كل المصادر)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
@@ -8612,6 +8620,7 @@ var _updateSourceIdx = 0;   // المصدر الذي نجح آخر مرة — ا
 var _updateTriedCount = 0;  // كم مصدراً جُرّب في الفحص الحالي
 var _updateCurrentIdx = 0;  // المصدر الجاري حالياً
 var _updateManual = false;  // فحص يدوي (من زر الإعدادات) — يُظهر رسائل صريحة
+var _updateBestInfo = null; // v26.12: أحدث معلومة وصلت من المصادر الناجحة (للرسالة اليدوية)
 
 function _updateCheckFinished(ok, info) {
   if (!_updateManual) return;
@@ -8624,14 +8633,16 @@ function _updateCheckFinished(ok, info) {
   if (cmp > 0) {
     showNotification("🔄 يوجد تحديث جديد v" + info.appVersion + " — اضغط الشريط الأخضر أسفل الشاشة");
   } else {
-    showNotification("✅ أنت على أحدث نسخة (v" + CURRENT_APP_VERSION + ") — الفحص تم بنجاح");
+    showNotification("✅ أنت على أحدث نسخة (v" + CURRENT_APP_VERSION + ") — الفحص تم بنجاح عبر كل المصادر");
   }
 }
 
 function _updateTryNextSource() {
   _updateTriedCount++;
   if (_updateTriedCount >= UPDATE_SOURCE_URLS.length) {
-    _updateCheckFinished(false, null);
+    // v26.12: إن نجح أي مصدر (ولو قدّم نسخة قديمة من كاش) فهذا ليس فشل اتصال
+    if (_updateBestInfo) { _updateCheckFinished(true, _updateBestInfo); }
+    else { _updateCheckFinished(false, null); }
     return;
   }
   _updateCurrentIdx = (_updateCurrentIdx + 1) % UPDATE_SOURCE_URLS.length;
@@ -8666,6 +8677,7 @@ function _doCheckFrom(idx) {
 function checkAppUpdate() {
   if (!navigator.onLine) { _updateCheckFinished(false, null); return; }
   _updateTriedCount = 0;
+  _updateBestInfo = null; // v26.12
   _updateCurrentIdx = _updateSourceIdx;
   _doCheckFrom(_updateCurrentIdx);
 }
@@ -8693,8 +8705,14 @@ function _appVersionCallback(data) {
   }
   // نجح هذا المصدر — اجعله الافتراضي للفحص القادم
   _updateSourceIdx = _updateCurrentIdx;
-  // v25.20: مقارنة رقمية — فقط أظهر التوست إذا كانت النسخة الجديدة أحدث
+  // v26.12: المقارنة الرقمية — المصدر نجح لكن نسخته أقدم/مساوية (كاش CDN قديم)؟ جرّب المصادر الباقية
+  // قبل الحكم بأن النسخة محدّثة — هذا يمنع كاش قديم من إخفاء تحديث حقيقي متاح من مصدر آخر
   var cmp = compareVersions(String(info.appVersion), CURRENT_APP_VERSION);
+  if (cmp <= 0 && _updateTriedCount < UPDATE_SOURCE_URLS.length - 1) {
+    if (!_updateBestInfo || compareVersions(String(info.appVersion), String(_updateBestInfo.appVersion)) > 0) _updateBestInfo = info;
+    _updateTryNextSource();
+    return;
+  }
   if (cmp > 0) {
     try { localStorage.setItem("pt-update-info", JSON.stringify({version: info.appVersion, url: info.htmlUrl||"", releasedAt: info.releasedAt||""})); } catch(e2) {}
     // v25.50: تخفيف الإلحاح — التوست التلقائي مرة كل 30 دقيقة لكل نسخة
@@ -8710,7 +8728,7 @@ function _appVersionCallback(data) {
   } else {
     hideUpdateToast();
   }
-  _updateCheckFinished(true, info);
+  _updateCheckFinished(true, cmp > 0 ? info : (_updateBestInfo || info));
 }
 
 function registerServiceWorker() {
