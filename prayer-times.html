@@ -8457,7 +8457,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.15"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.15: ترتيب الأقسام والعناصر بالسحب والإفلات ⠿ باللمس والفأرة)
+var CURRENT_APP_VERSION = "26.16"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.16: إصلاح جذري لعدم وصول التحديثات لأندرويد — إنقاذ JS مباشر + حماية من الارتداد)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
@@ -8779,38 +8779,179 @@ function clearAllCachesAndReload() {
 
 // v25.50: دالة الاستدعاء الرجعي المسمّاة — تستدعيها Java عبر evaluateJavascript
 // بعد اكتمال التنزيل (النمط الصحيح: اسم نصي مثل fetchUrl/_appVersionCallback)
+//
+// ===== v26.16 [إنقاذ تحديث أندرويد — إصلاح «التحديث لا يصل لأجهزة الأندرويد»] =====
+// التشخيص: كود Java في APKs المنشورة (UpdateChecker) ينزّل التحديث من jsDelivr حصرياً،
+// وjsDelivr قد يخدم نسخة قديمة لأيام (كاش إقليمي/حدود GitHub API) — وكانت المقارنة النصية
+// equals تقبل أي نسخة مختلفة، فتتجمد الأجهزة على قديم، أو تنزّل HTML أقدم (ارتداد للخلف).
+// هذا القسم يمنح JS قدرة إنقاذ مستقلة عن Java:
+//   1) قراءة نسخة الملف المحفوظ في filesDir عبر XHR (الجسر يسمح file access) — لكشف الارتداد.
+//   2) عند فشل تنزيل Java أو كونه سيرتدّنا للخلف: جلب HTML من raw/Pages/jsDelivr مباشرة
+//      وعرض النسخة الجديدة فوراً عبر document.write (نفس نمط checkUpdateCommand الموجود).
+//   لا يمكن حفظ الملف من JS (الجسر القديم بلا دالة حفظ) — لذا التحديث المباشر يعمل
+//   خلال الجلسة ويُعاد تلقائياً عند كل إقلاع حتى يصل Java المُصلَّح (APK v26.16+).
+var UPDATE_HTML_SOURCE_URLS = [
+  "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/",
+  "https://ehessan1974-maker.github.io/prayer-times/",
+  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/"
+];
+
+function _ptUpdateHtmlName() {
+  try { return (location.href.indexOf("prayer-times-lite") !== -1) ? "prayer-times-lite.html" : "prayer-times.html"; }
+  catch(e) { return "prayer-times.html"; }
+}
+
+function _parseAppVersionFromHtml(html) {
+  try {
+    if (!html || typeof html !== "string") return "";
+    // v26.16 إصلاح: استهدف التصريح نفسه (CURRENT_APP_VERSION = "x.y") — الاعتماد على أول ذكر
+    // للاسم كان يلتقط استخداماً مبكراً في الكود فيفشل التحقق دائماً على الملف الحقيقي
+    var m = html.match(/CURRENT_APP_VERSION\s*=\s*"([0-9]+(?:\.[0-9]+)*)"/);
+    return (m && m[1]) ? m[1] : "";
+  } catch(e) { return ""; }
+}
+
+// قراءة نسخة HTML المحفوظ في filesDir (إن أمكن) — تُستخدم لكشف «الارتداد» قبل/بعد تنزيل Java
+function _readFilesDirVersion(cb) {
+  var name = _ptUpdateHtmlName();
+  var paths = [
+    "file:///data/user/0/com.ehessan.prayertimes/files/" + name,
+    "file:///data/data/com.ehessan.prayertimes/files/" + name
+  ];
+  var idx = 0;
+  function tryNext() {
+    if (idx >= paths.length) { try { cb(""); } catch(eC) {} return; }
+    try {
+      var x = new XMLHttpRequest();
+      var settled = false;
+      x.open("GET", paths[idx] + "?t=" + Date.now(), true);
+      x.timeout = 4000;
+      x.onreadystatechange = function() {
+        if (settled || x.readyState !== 4) return;
+        settled = true;
+        var v = (x.responseText && x.responseText.length > 1000) ? _parseAppVersionFromHtml(x.responseText) : "";
+        if (v) { try { cb(v); } catch(eC2) {} return; }
+        idx++; tryNext();
+      };
+      x.ontimeout = function() { if (settled) return; settled = true; idx++; tryNext(); };
+      x.onerror = function() { if (settled) return; settled = true; idx++; tryNext(); };
+      x.send();
+    } catch(e) { idx++; tryNext(); }
+  }
+  tryNext();
+}
+
+// جلب HTML التحديث من سلسلة المصادر (raw أولاً) — يُقبل فقط HTML أحدث من نسختنا (لا ارتداد)
+function _jsRescueFetchHtml(cb) {
+  var name = _ptUpdateHtmlName();
+  var idx = 0;
+  function tryNext() {
+    if (idx >= UPDATE_HTML_SOURCE_URLS.length) { try { cb(null); } catch(eC) {} return; }
+    var url = UPDATE_HTML_SOURCE_URLS[idx] + name + "?t=" + Date.now();
+    idx++;
+    try {
+      var x = new XMLHttpRequest();
+      var settled = false;
+      x.open("GET", url, true);
+      x.timeout = 25000;
+      x.onreadystatechange = function() {
+        if (settled || x.readyState !== 4) return;
+        settled = true;
+        var html = (x.status === 200) ? x.responseText : null;
+        var v = _parseAppVersionFromHtml(html || "");
+        if (html && html.length > 1000 && v && compareVersions(v, CURRENT_APP_VERSION) > 0) {
+          try { cb(html); } catch(eC2) {}
+          return;
+        }
+        tryNext();
+      };
+      x.ontimeout = function() { if (settled) return; settled = true; tryNext(); };
+      x.onerror = function() { if (settled) return; settled = true; tryNext(); };
+      x.send();
+    } catch(e) { tryNext(); }
+  }
+  tryNext();
+}
+
+// تطبيق التحديث المباشر: استبدال الصفحة الحالية بالكود الجديد خلال الجلسة
+function _jsRescueApply(html) {
+  try { localStorage.setItem("pt-jswrite-applied", CURRENT_APP_VERSION); } catch(e) {}
+  try { showNotification("⏳ تفعيل التحديث مباشرة..."); } catch(eN) {}
+  setTimeout(function() {
+    try {
+      document.open();
+      document.write(html);
+      document.close();
+    } catch(eW) {
+      try { location.reload(); } catch(eR) {}
+    }
+  }, 600);
+}
+
 function _updateDownloadDone(success) {
   var ok = (success === true || success === "true");
-  try {
-    if (ok) showNotification("✅ تم تنزيل التحديث — جارٍ إعادة التحميل...");
-    else showNotification("⚠️ لم يكتمل التنزيل الآن — سيعاد التحميل من آخر نسخة محفوظة، ويُطبّق التحديث تلقائياً لاحقاً");
-  } catch(eN) {}
-  try {
-    if (window.AndroidPrayer && typeof AndroidPrayer.reloadUpdatedHtml === "function") {
-      try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e3) {}
+  if (!ok) {
+    // v26.16: فشل تنزيل Java (غالباً كاش jsDelivr القديم) — يتولّى JS الإنقاذ مباشرة
+    try { showNotification("⏳ المسار الأصلي لم يكتمل — جارٍ التحميل عبر المصادر المباشرة..."); } catch(eN) {}
+    _jsRescueFetchHtml(function(html) {
+      if (html) { _jsRescueApply(html); return; }
+      showNotification("⚠️ تعذر تنزيل التحديث الآن — تحقق من اتصال الإنترنت وحاول مجدداً");
+      try {
+        if (window.AndroidPrayer && typeof AndroidPrayer.reloadUpdatedHtml === "function") {
+          AndroidPrayer.reloadUpdatedHtml(); return;
+        }
+      } catch(e3) {}
+      clearAllCachesAndReload();
+    });
+    return;
+  }
+  try { showNotification("✅ تم تنزيل التحديث — جارٍ التحقق قبل إعادة التحميل..."); } catch(eN2) {}
+  // v26.16: تحقق ما بعد التنزيل — إن كان الملف المحفوظ أقدم من نسختنا (ارتداد من كاش
+  // jsDelivr في كود Java القديم) فلا نعيد التحميل، بل نطبّق التحديث المباشر.
+  _readFilesDirVersion(function(fv) {
+    if (fv && compareVersions(fv, CURRENT_APP_VERSION) < 0) {
+      _jsRescueFetchHtml(function(html2) {
+        if (html2) { _jsRescueApply(html2); return; }
+        showNotification("⚠️ تعذر إتمام التحديث الآن — سيُعاد المحاولة تلقائياً لاحقاً");
+      });
+      return;
     }
-  } catch(e2) {}
-  // fallback: مسح الكاش وإعادة التحميل (متصفح أو جسر قديم)
-  clearAllCachesAndReload();
+    try {
+      if (window.AndroidPrayer && typeof AndroidPrayer.reloadUpdatedHtml === "function") {
+        AndroidPrayer.reloadUpdatedHtml(); return;
+      }
+    } catch(e2) {}
+    clearAllCachesAndReload();
+  });
 }
 
 function applyAppUpdate(userTriggered) {
   hideUpdateToast();
   // v25.33: على أندرويد، حمّل التحديث أولاً ثم أعد التحميل من الملف المحدّث
-  // v25.50 إصلاح جذري: كان يُمرّر دالة مجهولة إلى الجسر (String) فتصل إلى Java كنص
-  // مصدر للدالة، فيفشل evaluateJavascript بصمت ولا يُعاد تحميل WebView أبداً —
-  // الضغط كان ينزّل التحديث للملفات لكنه لا يطبّقه إلا بعد إعادة تشغيل التطبيق،
-  // فتبدو رسالة التحديث كأنها لا تُجدي وتعود باستمرار.
-  // الصحيح: تمرير اسم دالة عامة (كما في fetchUrl/_appVersionCallback)
+  // v25.50 إصلاح جذري: تمرير اسم دالة عامة إلى الجسر (لا دالة مجهولة)
+  // v26.16: فحص قبل الاستدعاء — إن كان الملف المحفوظ في filesDir أقدم من نسختنا
+  // فسيرتدّ بنا كود Java القديم للخلف عند إعادة التحميل؛ نتجاوز Java ونستخدم الإنقاذ المباشر.
   if (window.AndroidPrayer) {
-    showNotification("⏳ جارٍ تحميل التحديث...");
-    if (typeof AndroidPrayer.downloadAppUpdate === "function") {
-      try { AndroidPrayer.downloadAppUpdate("_updateDownloadDone"); return; } catch(e) {}
-    }
-    // fallback: أعد التحميل من الملف المحدّث مباشرة إن وُجد
-    if (typeof AndroidPrayer.reloadUpdatedHtml === "function") {
-      try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e2) {}
-    }
+    _readFilesDirVersion(function(fv0) {
+      if (fv0 && compareVersions(fv0, CURRENT_APP_VERSION) < 0) {
+        showNotification("⏳ جارٍ تحميل التحديث عبر المصادر المباشرة...");
+        _jsRescueFetchHtml(function(html) {
+          if (html) { _jsRescueApply(html); return; }
+          showNotification("⚠️ تعذر التحديث الآن — تحقق من الإنترنت وحاول مجدداً");
+        });
+        return;
+      }
+      showNotification("⏳ جارٍ تحميل التحديث...");
+      if (typeof AndroidPrayer.downloadAppUpdate === "function") {
+        try { AndroidPrayer.downloadAppUpdate("_updateDownloadDone"); return; } catch(e) {}
+      }
+      // fallback: أعد التحميل من الملف المحدّث مباشرة إن وُجد
+      if (typeof AndroidPrayer.reloadUpdatedHtml === "function") {
+        try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e2) {}
+      }
+      clearAllCachesAndReload();
+    });
+    return;
   }
   // على المتصفح: امسح الكاش وأعد التحميل
   clearAllCachesAndReload();

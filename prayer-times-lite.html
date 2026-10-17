@@ -223,7 +223,7 @@ var latitude = null, longitude = null;
 var prayerData = null;
 var cachedInfoItems = [];
 var currentInfoIdx = 0;
-var CURRENT_APP_VERSION = "26.8"; /* v26.8: رقم الإصدار ظاهر في عنوان التطبيق وفي رأس الصفحة */
+var CURRENT_APP_VERSION = "26.16"; /* v26.16: إصلاح وصول التحديثات — مصادر raw أولاً + رد نداء مسمّى + إنقاذ مباشر + مقارنة رقمية */
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION */
 try {
   document.title = "مواقيت الصلاة v" + CURRENT_APP_VERSION;
@@ -543,11 +543,18 @@ function __reelsCloseAll(){
   __reelsResetVisual();
   __reelsApi.el.className = "";
 }
-// v25.43: مصادر متعددة — إذا فشل jsDelivr نجرّب GitHub Pages ثم raw مباشرة
+// v25.43: مصادر متعددة — v26.16: raw أولاً (بلا كاش ويُحدّث فور الدفع) ثم Pages ثم jsDelivr أخيراً
+// (كان الترتيب jsDelivr أولاً — وكاشه قد يخدم نسخة قديمة لأيام فتجمّد الأجهزة أو ترتد للخلف)
 var UPDATE_SOURCE_URLS = [
-  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json",
+  "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json",
   "https://ehessan1974-maker.github.io/prayer-times/version.json",
-  "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json"
+  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json"
+];
+// v26.16: مصادر HTML للإنقاذ المباشر (نفس الترتيب)
+var LITE_HTML_SOURCE_URLS = [
+  "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/",
+  "https://ehessan1974-maker.github.io/prayer-times/",
+  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/"
 ];
 var CONTENT_URL = "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/content.json";
 
@@ -827,8 +834,35 @@ function _liteDoCheck() {
   try {
     if (window.AndroidPrayer && AndroidPrayer.fetchUrl) {
       AndroidPrayer.fetchUrl(url, "_versionCallback");
+      return;
     }
   } catch(e) {}
+  // v26.16: بديل XHR للمتصفح — كان الفحص يعمل داخل تطبيق أندرويد فقط
+  try {
+    var x = new XMLHttpRequest();
+    x.open("GET", url, true);
+    x.timeout = 8000;
+    x.onreadystatechange = function() {
+      if (x.readyState === 4 && x.status === 200) _versionCallback(x.responseText);
+    };
+    x.onerror = function() { _versionCallback(""); };
+    x.ontimeout = function() { _versionCallback(""); };
+    x.send();
+  } catch(e2) {}
+}
+
+// v26.16: مقارنة إصدارات رقمية — تمنع ظهور التوست لنسخة أقدم (كاش قديم) وترتدادنا للخلف
+function liteCompareVersions(a, b) {
+  try {
+    var pa = String(a).trim().split("."), pb = String(b).trim().split(".");
+    var n = Math.max(pa.length, pb.length);
+    for (var i = 0; i < n; i++) {
+      var va = (i < pa.length) ? (parseInt(pa[i], 10) || 0) : 0;
+      var vb = (i < pb.length) ? (parseInt(pb[i], 10) || 0) : 0;
+      if (va !== vb) return (va < vb) ? -1 : 1;
+    }
+    return 0;
+  } catch(e) { return 0; }
 }
 
 function _versionCallback(data) {
@@ -850,25 +884,137 @@ function _versionCallback(data) {
     return;
   }
   _liteUpdateIdx = _liteUpdateCur;
-  if (String(info.appVersion) !== CURRENT_APP_VERSION) {
+  // v26.16: قارن رقمياً — اعرض التوست فقط إذا كانت النسخة المعروضة أحدث فعلاً من نسختنا
+  if (liteCompareVersions(String(info.appVersion), CURRENT_APP_VERSION) > 0) {
     el("updateToast").style.display = "block";
   }
+}
+
+// ===== v26.16: إنقاذ تحديث lite — النسخ القديمة كانت تمرّر دالة مجهولة للجسر الأصلي
+// فيفشل evaluateJavascript بصمت ولا يُعاد التحميل أبداً (زر التحديث لا يجدي)،
+// وكود Java ينزّل من jsDelivr حصرياً (كاش قديم = تجمّد أو ارتداد للخلف).
+// الإصلاح: ردّ نداء مسمّى + فحص الملف المحفوظ قبل/بعد تنزيل Java + إنقاذ مباشر
+// عبر جلب HTML من raw/Pages/jsDelivr وعرضه فوراً بـ document.write.
+function _liteParseAppVersion(html) {
+  try {
+    if (!html || typeof html !== "string") return "";
+    // v26.16: استهدف التصريح نفسه — أول ذكر للاسم قد يكون استخداماً لا تصريحاً
+    var m = html.match(/CURRENT_APP_VERSION\s*=\s*"([0-9]+(?:\.[0-9]+)*)"/);
+    return (m && m[1]) ? m[1] : "";
+  } catch(e) { return ""; }
+}
+
+function _liteRescueFetchHtml(cb) {
+  var idx = 0;
+  function tryNext() {
+    if (idx >= LITE_HTML_SOURCE_URLS.length) { try { cb(null); } catch(eC) {} return; }
+    var url = LITE_HTML_SOURCE_URLS[idx] + "prayer-times-lite.html?t=" + Date.now();
+    idx++;
+    try {
+      var x = new XMLHttpRequest();
+      var settled = false;
+      x.open("GET", url, true);
+      x.timeout = 25000;
+      x.onreadystatechange = function() {
+        if (settled || x.readyState !== 4) return;
+        settled = true;
+        var html = (x.status === 200) ? x.responseText : null;
+        var v = _liteParseAppVersion(html || "");
+        // اقبل فقط HTML أحدث من نسختنا — يمنع كاش قديم من ارتدادنا للخلف
+        if (html && html.length > 1000 && v && liteCompareVersions(v, CURRENT_APP_VERSION) > 0) {
+          try { cb(html); } catch(eC2) {}
+          return;
+        }
+        tryNext();
+      };
+      x.ontimeout = function() { if (settled) return; settled = true; tryNext(); };
+      x.onerror = function() { if (settled) return; settled = true; tryNext(); };
+      x.send();
+    } catch(e) { tryNext(); }
+  }
+  tryNext();
+}
+
+function _liteRescueApply(html) {
+  setTimeout(function() {
+    try {
+      document.open();
+      document.write(html);
+      document.close();
+    } catch(eW) {
+      try { location.reload(); } catch(eR) {}
+    }
+  }, 600);
+}
+
+// قراءة نسخة الملف المحفوظ في filesDir (لدفع lite) — لكشف الارتداد
+function _liteReadFilesDirVersion(cb) {
+  var paths = [
+    "file:///data/user/0/com.ehessan.prayertimes/files/prayer-times-lite.html",
+    "file:///data/data/com.ehessan.prayertimes/files/prayer-times-lite.html"
+  ];
+  var idx = 0;
+  function tryNext() {
+    if (idx >= paths.length) { try { cb(""); } catch(eC) {} return; }
+    try {
+      var x = new XMLHttpRequest();
+      var settled = false;
+      x.open("GET", paths[idx] + "?t=" + Date.now(), true);
+      x.timeout = 4000;
+      x.onreadystatechange = function() {
+        if (settled || x.readyState !== 4) return;
+        settled = true;
+        var v = (x.responseText && x.responseText.length > 1000) ? _liteParseAppVersion(x.responseText) : "";
+        if (v) { try { cb(v); } catch(eC2) {} return; }
+        idx++; tryNext();
+      };
+      x.ontimeout = function() { if (settled) return; settled = true; idx++; tryNext(); };
+      x.onerror = function() { if (settled) return; settled = true; idx++; tryNext(); };
+      x.send();
+    } catch(e) { idx++; tryNext(); }
+  }
+  tryNext();
+}
+
+// v26.16: رد نداء مسمّى عالمي — Java يستدعيه باسم نصي بعد اكتمال التنزيل
+function _liteUpdateDownloadDone(success) {
+  var ok = (success === true || success === "true");
+  if (!ok) {
+    _liteRescueFetchHtml(function(html) { if (html) _liteRescueApply(html); });
+    return;
+  }
+  // تحقق ما بعد التنزيل: إن كان الملف المحفوظ أقدم من نسختنا (ارتداد كاش Java القديم) فلا نعيد التحميل
+  _liteReadFilesDirVersion(function(fv) {
+    if (fv && liteCompareVersions(fv, CURRENT_APP_VERSION) < 0) {
+      _liteRescueFetchHtml(function(html2) { if (html2) _liteRescueApply(html2); });
+      return;
+    }
+    if (window.AndroidPrayer && typeof AndroidPrayer.reloadUpdatedHtml === "function") {
+      try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e) {}
+    }
+    window.location.reload();
+  });
 }
 
 function applyUpdate() {
   el("updateToast").style.display = "none";
   if (window.AndroidPrayer && typeof AndroidPrayer.downloadAppUpdate === "function") {
-    try {
-      AndroidPrayer.downloadAppUpdate(function(success) {
-        if (window.AndroidPrayer && typeof AndroidPrayer.reloadUpdatedHtml === "function") {
-          try { AndroidPrayer.reloadUpdatedHtml(); return; } catch(e) {}
-        }
-        // fallback: أعد التحميل
-        window.location.reload();
-      });
-      return;
-    } catch(e) {}
+    // v26.16: فحص قبل الاستدعاء — إن كان الملف المحفوظ أقدم من نسختنا فسيرتدّ بنا Java القديم
+    _liteReadFilesDirVersion(function(fv0) {
+      if (fv0 && liteCompareVersions(fv0, CURRENT_APP_VERSION) < 0) {
+        _liteRescueFetchHtml(function(html) { if (html) _liteRescueApply(html); });
+        return;
+      }
+      try {
+        // الاسم النصي لدالة عامة — الدالة المجهولة كانت تصل إلى Java كنص مصدر وتفشل بصمت
+        AndroidPrayer.downloadAppUpdate("_liteUpdateDownloadDone");
+      } catch(e) {
+        _liteRescueFetchHtml(function(html) { if (html) _liteRescueApply(html); });
+      }
+    });
+    return;
   }
+  // متصفح: إن وُجدت نسخة أحدث (أو الكاش قديم) امسح وأعد التحميل
   window.location.reload();
 }
 
