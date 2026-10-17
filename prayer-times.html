@@ -1635,6 +1635,16 @@ body.dark-mode .method-select, body.dark-mode .loc-inputs input, body.dark-mode 
 body.dark-mode .io-row { background:#16241d;border-color:#2b4a3a; }
 body.dark-mode .io-row-text { color:#e8f5ee; }
 body.dark-mode .io-btn { background:#1a2a22;color:#e8f5ee;border-color:#2b4a3a; }
+/* v26.15: السحب والإفلات لترتيب الأقسام والعناصر — يعمل باللمس والفأرة حتى على WebView القديم */
+.io-drag-handle { min-width:28px;height:30px;line-height:30px;text-align:center;color:#94a3b8;font-size:16px;cursor:grab;flex-shrink:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none; }
+.io-drag-handle:active { color:#059669; }
+.io-row.io-dragging { opacity:.55;border-style:dashed;border-color:#059669;background:#ecfdf5; }
+.io-row.io-drop-above { box-shadow:0 -2px 0 0 #059669; }
+.io-row.io-drop-below { box-shadow:0 2px 0 0 #059669; }
+body.io-drag-active { -webkit-user-select:none;user-select:none; }
+body.io-drag-active * { cursor:grabbing !important; }
+body.dark-mode .io-row.io-dragging { background:#1a3a2c; }
+body.dark-mode .io-drag-handle { color:#6b8f7e; }
 /* v26.9: قائمة اختيار القسم في نافذة الترتيب — الوضع الليلي */
 body.dark-mode #ioCatSelect { background:#0f1a15;border-color:#2b4a3a;color:#e8f5ee; }
 
@@ -1881,7 +1891,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 <div class="header">
   <div class="header-inner">
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.14</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.15</span></h1>
     </div>
     <div class="ramadan-cell">
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
@@ -2168,12 +2178,12 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <button id="ioTabItems" class="btn btn-outline btn-sm" onclick="ioShowTab('items')" style="flex:1;">📝 عناصر قسم</button>
     </div>
     <div id="ioCatsPane">
-      <div class="sec-desc" style="margin-bottom:6px;">رتّب ظهور الأقسام في الشريط وفي دورة «الكل» بالأسهم ▲▼. زر «الكل» يبقى أولاً دائماً، والترتيب يُحفظ تلقائياً أثناء التحريك.</div>
+      <div class="sec-desc" style="margin-bottom:6px;">رتّب ظهور الأقسام في الشريط وفي دورة «الكل» — اسحب أي قسم من مقبضه ⠿ وأفلته حيث تريد، أو استخدم الأسهم ▲▼. زر «الكل» يبقى أولاً دائماً، والترتيب يُحفظ تلقائياً أثناء التحريك.</div>
       <div id="ioCatsList" style="max-height:320px;overflow-y:auto;"></div>
       <button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px;background:#fef2f2;color:#b91c1c;border-color:#fca5a5;" onclick="ioResetCats()">↩️ استعادة الترتيب الأصلي للأقسام</button>
     </div>
     <div id="ioItemsPane" style="display:none;">
-      <div class="sec-desc" style="margin-bottom:6px;">اختر قسماً ثم رتّب عناصره (النصوص التي تظهر في البطاقة المتحركة) بالأسهم ▲▼ — يُحفظ تلقائياً:</div>
+      <div class="sec-desc" style="margin-bottom:6px;">اختر قسماً ثم رتّب عناصره (النصوص التي تظهر في البطاقة المتحركة) — اسحب أي عنصر من مقبضه ⠿ وأفلته في موضعه، أو استخدم الأسهم ▲▼ — يُحفظ تلقائياً:</div>
       <select id="ioCatSelect" onchange="ioRenderItems()" style="width:100%;padding:8px 10px;border:1px solid #a7f3d0;border-radius:8px;font-size:13px;font-family:Tahoma,Arial,sans-serif;background:white;color:#065f46;"></select>
       <div id="ioItemsList" style="max-height:320px;overflow-y:auto;margin-top:8px;"></div>
       <button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px;background:#fef2f2;color:#b91c1c;border-color:#fca5a5;" onclick="ioResetItems()">↩️ استعادة ترتيب عناصر هذا القسم</button>
@@ -2857,7 +2867,8 @@ function ioRenderCats() {
     var cnt = ioCatCount(c);
     var upStyle = (i === 0) ? "opacity:.35;pointer-events:none;" : "";
     var dnStyle = (i === order.length - 1) ? "opacity:.35;pointer-events:none;" : "";
-    html += '<div class="io-row">' +
+    html += '<div class="io-row" data-io-idx="' + i + '">' +
+      '<span class="io-drag-handle" title="اسحب لإعادة الترتيب">⠿</span>' +
       '<span class="io-row-text">' + label + ' <span style="color:#9ca3af;font-weight:400;font-size:10px;">(' + cnt + ' عنصراً)</span></span>' +
       '<button class="io-btn" style="' + upStyle + '" onclick="ioMoveCat(' + i + ',-1)" title="أعلى">▲</button>' +
       '<button class="io-btn" style="' + dnStyle + '" onclick="ioMoveCat(' + i + ',1)" title="أسفل">▼</button>' +
@@ -2923,7 +2934,8 @@ function ioRenderItems() {
     var short = text.length > 60 ? text.slice(0, 60) + "…" : text;
     var upStyle = (j === 0) ? "opacity:.35;pointer-events:none;" : "";
     var dnStyle = (j === items.length - 1) ? "opacity:.35;pointer-events:none;" : "";
-    html += '<div class="io-row">' +
+    html += '<div class="io-row" data-io-idx="' + j + '">' +
+      '<span class="io-drag-handle" title="اسحب لإعادة الترتيب">⠿</span>' +
       '<span class="io-row-text"><span style="margin-left:4px;">' + icon + '</span> ' + escapeHtml(short) + (it.src ? ' <span style="color:#9ca3af;font-weight:400;font-size:9px;">— ' + escapeHtml(String(it.src)) + '</span>' : '') + '</span>' +
       '<button class="io-btn" style="' + upStyle + '" onclick="ioMoveItem(' + j + ',-1)" title="أعلى">▲</button>' +
       '<button class="io-btn" style="' + dnStyle + '" onclick="ioMoveItem(' + j + ',1)" title="أسفل">▼</button>' +
@@ -2958,6 +2970,140 @@ function ioRefreshCarousel() {
     if (onlineInfoEnabled && cachedInfoItems && cachedInfoItems.length) displayCurrentInfo(true);
   } catch (e) {}
 }
+
+// ====================================================================
+// ===== v26.15: السحب والإفلات لإعادة الترتيب (بلمس الهاتف وبالفأرة) =====
+// ====================================================================
+/* ملاحظات التوافق: بدون HTML5 Drag & Drop (لا يعمل باللمس على الهواتف) — تنفيذ مخصص
+   بـ Touch/Mouse Events المتوفرة حتى في WebView القديم (Chromium 37) دون closest/Poiner/let. */
+var ioDragState = null;
+
+function ioApplyDragOrder(kind, from, to) {
+  // to = موضع الإدراج بعد إزالة العنصر المصدر (منطق التزيح مطبق في المتصل)
+  if (from === to || from < 0) return;
+  if (kind === "cats") {
+    var order = getInfoCatOrder();
+    if (from >= order.length) return;
+    if (to > order.length - 1) to = order.length - 1;
+    var it = order.splice(from, 1)[0];
+    order.splice(to, 0, it);
+    setInfoCatOrder(order);
+    ioRenderCats();
+    renderInfoCatBar();
+    ioRefreshCarousel();
+  } else {
+    if (!ioCurrentCat || !ioItemsCache.length) return;
+    if (from >= ioItemsCache.length) return;
+    if (to > ioItemsCache.length - 1) to = ioItemsCache.length - 1;
+    var it2 = ioItemsCache.splice(from, 1)[0];
+    ioItemsCache.splice(to, 0, it2);
+    var keys = [];
+    for (var i = 0; i < ioItemsCache.length; i++) keys.push(infoItemKey(ioItemsCache[i]));
+    setCatItemOrder(ioCurrentCat, keys);
+    ioRenderItems();
+    ioRefreshCarousel();
+  }
+}
+
+function _ioBindDrag(c, kind) {
+  if (!c || c.getAttribute("data-io-drag")) return;
+  c.setAttribute("data-io-drag", "1");
+
+  function begin(cy, target) {
+    // السحب يبدأ من مقبض ⠿ فقط (حتى لا يتعارض مع التمرير الطبيعي والنقر على الأسهم)
+    var t = target;
+    while (t && t !== c) {
+      if (t.classList && t.classList.contains("io-drag-handle")) break;
+      t = t.parentNode;
+    }
+    if (!t || t === c) return false;
+    var row = t;
+    while (row && row !== c && !(row.classList && row.classList.contains("io-row"))) row = row.parentNode;
+    if (!row || row === c) return false;
+    var rows = c.querySelectorAll(".io-row");
+    var idx = -1;
+    for (var i = 0; i < rows.length; i++) if (rows[i] === row) { idx = i; break; }
+    if (idx < 0) return false;
+    ioDragState = { c: c, kind: kind, idx: idx, row: row, y0: cy, active: false, target: idx, pos: "", nRows: rows.length };
+    try { if (navigator.vibrate) navigator.vibrate(12); } catch (eV) {}
+    return true;
+  }
+
+  function move(cy, e) {
+    if (!ioDragState || ioDragState.c !== c) return;
+    if (!ioDragState.active) {
+      if (Math.abs(cy - ioDragState.y0) < 5) return;
+      ioDragState.active = true;
+      ioDragState.row.classList.add("io-dragging");
+      document.body.classList.add("io-drag-active");
+    }
+    if (e && e.cancelable) e.preventDefault();
+    // تمرير تلقائي للحاوية عند الاقتراب من الحواف
+    var cr = c.getBoundingClientRect();
+    if (cy < cr.top + 36) c.scrollTop -= Math.ceil((cr.top + 36 - cy) / 5);
+    else if (cy > cr.bottom - 36) c.scrollTop += Math.ceil((cy - (cr.bottom - 36)) / 5);
+    // إبراز موضع الإفلات: أقرب صف (بخلاف المسحوب) للمؤشر
+    var rows = c.querySelectorAll(".io-row");
+    var best = -1, bestDist = 1e9, bestPos = "";
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i] === ioDragState.row) continue;
+      var rc = rows[i].getBoundingClientRect();
+      var mid = rc.top + rc.height / 2;
+      var d = Math.abs(cy - mid);
+      if (d < bestDist) { bestDist = d; best = i; bestPos = (cy < mid) ? "above" : "below"; }
+    }
+    for (var k = 0; k < rows.length; k++) {
+      if (rows[k] === ioDragState.row) continue;
+      rows[k].classList.remove("io-drop-above");
+      rows[k].classList.remove("io-drop-below");
+      if (k === best) rows[k].classList.add(bestPos === "above" ? "io-drop-above" : "io-drop-below");
+    }
+    ioDragState.target = (best >= 0) ? best : ioDragState.idx;
+    ioDragState.pos = (best >= 0) ? bestPos : "";
+  }
+
+  function end() {
+    if (!ioDragState || ioDragState.c !== c) return;
+    var st = ioDragState;
+    ioDragState = null;
+    st.row.classList.remove("io-dragging");
+    document.body.classList.remove("io-drag-active");
+    var rows = c.querySelectorAll(".io-row");
+    for (var k = 0; k < rows.length; k++) {
+      rows[k].classList.remove("io-drop-above");
+      rows[k].classList.remove("io-drop-below");
+    }
+    if (!st.active) return; // لمسة عادية دون سحب
+    // موضع الإدراج النهائي: قبل/بعد الهدف ثم تعديل التزيح بعد إزالة المصدر
+    var to = st.target;
+    if (st.pos === "below") to = to + 1;
+    if (st.pos === "above" && to > st.idx) to = to - 1;
+    if (st.pos === "below" && to > st.idx + 1) to = to - 1;
+    if (to === st.idx) return;
+    ioApplyDragOrder(st.kind, st.idx, to);
+  }
+
+  c.addEventListener("mousedown", function (e) {
+    if (begin(e.clientY, e.target)) { try { e.preventDefault(); } catch (eMD) {} }
+  });
+  c.addEventListener("touchstart", function (e) {
+    if (e.touches && e.touches.length === 1) begin(e.touches[0].clientY, e.target);
+  }, false);
+  c.addEventListener("touchmove", function (e) {
+    if (ioDragState && ioDragState.c === c && e.touches && e.touches.length === 1) move(e.touches[0].clientY, e);
+  }, { passive: false });
+  c.addEventListener("touchend", function () { end(); });
+  c.addEventListener("touchcancel", function () { end(); });
+  // mousemove/mouseup على window حتى لا يتوقف السحب عند خروج المؤشر من الحاوية
+  window.addEventListener("mousemove", function (e) {
+    if (ioDragState && ioDragState.c === c) move(e.clientY, e);
+  }, false);
+  window.addEventListener("mouseup", function () { if (ioDragState && ioDragState.c === c) end(); });
+}
+try {
+  _ioBindDrag(el("ioCatsList"), "cats");
+  _ioBindDrag(el("ioItemsList"), "items");
+} catch (eIoDrag) {}
 
 // v26.9: بناء شريط الأقسام حسب الترتيب المحفوظ عند الإقلاع — بعد تعريف محرك الترتيب بالكامل
 try { renderInfoCatBar(); } catch (e) {}
@@ -8311,7 +8457,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.14"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.14: مكتبة الأحاديث لا تفتح على WebView القديم — بدائل CSS لـ inset/grid/env + حماية closest)
+var CURRENT_APP_VERSION = "26.15"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.15: ترتيب الأقسام والعناصر بالسحب والإفلات ⠿ باللمس والفأرة)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
