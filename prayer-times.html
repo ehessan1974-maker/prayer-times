@@ -13,7 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.10</title>
+<title>🕌 مواقيت الصلاة v26.11</title>
+<!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
 <!-- v15: أشرطة تمرير عريضة وواضحة (الإعدادات وكل المناطق القابلة للتمرير) — تحكم أسهل بالفأرة واللمس والشاشة الذكية -->
@@ -1687,6 +1688,10 @@ body.dark-mode #ioCatSelect { background:#0f1a15;border-color:#2b4a3a;color:#e8f
   font-family:"Amiri","Noto Naskh Arabic","Traditional Arabic",Tahoma,Arial,sans-serif; }
 .hl-search-res-text mark { background:#fde68a;color:#78350f;border-radius:3px;padding:0 2px; }
 .hl-search-empty { text-align:center;color:#6b7280;font-size:12px;padding:26px 0;font-family:Tahoma,Arial,sans-serif;line-height:2; }
+/* v26.11: رأس مجموعة نتائج كتاب في البحث الشامل */
+.hl-search-book-head { display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 0 8px;padding:7px 12px;border-radius:11px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:12.5px;font-weight:bold;font-family:Tahoma,Arial,sans-serif; }
+.hl-search-book-head:first-of-type { margin-top:0; }
+.hl-search-book-count { background:#059669;color:#ffffff;border-radius:9px;padding:1px 9px;font-size:10px;font-family:Tahoma,Arial,sans-serif; }
 
 /* إشعار منبثق داخلي */
 .hl-toast { position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#065f46;color:#ffffff;font-size:12px;
@@ -1730,6 +1735,7 @@ body.dark-mode .hl-search-res { background:#131f19;border-color:#2b4a3a; }
 body.dark-mode .hl-search-res-loc { background:#1f3a2c;color:#6ee7b7; }
 body.dark-mode .hl-search-res-text { color:#c9d8cf; }
 body.dark-mode .hl-search-res-text mark { background:#4a3a10;color:#fde68a; }
+body.dark-mode .hl-search-book-head { background:#12241b;border-color:#2b4a3a;color:#6ee7b7; }
 body.dark-mode .hl-sentinel { color:#9fb8ab; }
 body.dark-mode .hl-sentinel button { background:#131f19;color:#e8f5ee;border-color:#2b4a3a; }
 body.dark-mode .hl-book-end-title { color:#6ee7b7; }
@@ -2180,10 +2186,10 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <div class="hl-search-box">
       <select id="hlSearchBook" onchange="hlSearchBookChanged()"></select>
       <div class="hl-search-input-wrap">
-        <input type="search" id="hlSearchInput" placeholder="ابحث في الكتاب... كلمة أو أكثر أو رقم حديث" onkeydown="if(event && event.keyCode===13){hlRunSearch();return false;}">
+        <input type="search" id="hlSearchInput" placeholder="ابحث في كل الكتب أو كتاب محدد... كلمة أو أكثر أو رقم حديث" onkeydown="if(event && event.keyCode===13){hlRunSearch();return false;}">
         <button class="hl-search-go" onclick="hlRunSearch()">بحث</button>
       </div>
-      <div class="hl-search-hint" id="hlSearchHint">💡 اكتب كلمة أو أكثر (البحث يتجاهل التشكيل)، أو أدخل رقم حديث للانتقال إليه مباشرة.</div>
+      <div class="hl-search-hint" id="hlSearchHint">💡 افتراضياً يبحث في كل الكتب — أو اختر كتاباً من القائمة. البحث يتجاهل التشكيل، أو أدخل رقم حديث. (فهرس «كل الكتب» يُحمَّل مرة واحدة لكل جلسة)</div>
     </div>
     <div id="hlSearchResults"></div>
   </div>
@@ -3434,23 +3440,108 @@ function hlOpenSearch() {
   hlSwitchView("search");
   var sel = el("hlSearchBook");
   if (!sel.options.length) {
-    var opts = "";
+    var opts = '<option value="">📚 كل الكتب — بحث شامل</option>'; /* v26.11 */
     for (var i = 0; i < hlState.books.books.length; i++) {
       var b = hlState.books.books[i];
       opts += '<option value="' + hlEscape(b.id) + '">' + hlEscape(b.name) + " (" + b.total.toLocaleString("ar-EG") + " حديثاً)</option>";
     }
     sel.innerHTML = opts;
   }
-  var meta = hlCurrentMeta();
-  sel.value = meta ? meta.id : sel.value;
-  hlState.searchBase = sel.value;
-  hlSetHeader("البحث في الأحاديث", "داخل الكتاب المحدد");
+  sel.value = ""; /* v26.11: الافتراضي البحث الشامل في كل الكتب */
+  hlState.searchBase = "";
+  hlSetHeader("البحث في الأحاديث", "في كل الكتب أو كتاب محدد");
   setTimeout(function () { try { el("hlSearchInput").focus(); } catch (e) {} }, 150);
 }
 
 function hlSearchBookChanged() {
   hlState.searchBase = el("hlSearchBook").value;
-  hlState.searchIdx[hlState.searchBase] = hlState.searchIdx[hlState.searchBase] || null;
+  if (hlState.searchBase) hlState.searchIdx[hlState.searchBase] = hlState.searchIdx[hlState.searchBase] || null;
+}
+
+// v26.11: جلب فهارس كل الكتب بالتوازي (4 دفعة واحدة) — مرة واحدة لكل جلسة، مع تقرير عن المتعثر
+function hlLoadAllSearchIdx(cb, prog) {
+  var books = hlState.books.books, need = [];
+  for (var i = 0; i < books.length; i++) if (!hlState.searchIdx[books[i].id]) need.push(books[i]);
+  if (!need.length) { cb([]); return; }
+  var failed = [], doneN = 0, idx = 0, slots = 4;
+  var launch = function () {
+    while (idx < need.length && slots > 0) {
+      slots--;
+      (function (b) {
+        hlLoadSearchIdx(b.id, function (rows) {
+          slots++; doneN++;
+          if (!rows) failed.push(b.name);
+          if (prog) prog(doneN, need.length, b.name, !!rows);
+          launch();
+          if (doneN === need.length) cb(failed);
+        });
+      })(need[idx++]);
+    }
+  };
+  launch();
+}
+
+// v26.11: تنفيذ البحث الشامل — يجمع النتائج من كل الكتب مجمّعة بالكتاب مع الانتقال المباشر لأي كتاب
+function hlRunGlobalSearch(q) {
+  var box = el("hlSearchResults");
+  var words = q.split(" ").filter(function (w) { return w; });
+  var isNum = /^\d+$/.test(q.replace(/\s/g, ""));
+  var numQ = isNum ? parseInt(q, 10) : 0;
+  box.innerHTML = '<div class="hl-search-empty">⏳ جاري تجهيز فهارس كل الكتب (مرة واحدة لكل جلسة)...</div>';
+  var p = el("hlProgress");
+  var showProg = function (doneN, total, name) {
+    if (doneN >= total) { p.style.display = "none"; return; }
+    p.style.display = "block";
+    el("hlProgressText").textContent = "📥 فهرس " + (name || "") + " (" + doneN + "/" + total + ")...";
+    el("hlProgressPct").textContent = "";
+    el("hlProgressBar").style.width = Math.max(8, Math.round(doneN / total * 100)) + "%";
+  };
+  hlLoadAllSearchIdx(function (failed) {
+    p.style.display = "none";
+    var books = hlState.books.books;
+    var groups = [], totalRes = 0, truncated = false, searched = 0;
+    for (var i = 0; i < books.length; i++) {
+      var rows = hlState.searchIdx[books[i].id];
+      if (!rows) continue;
+      searched++;
+      var res = [];
+      if (isNum) {
+        for (var x = 0; x < rows.length && res.length < 40; x++) if (rows[x][0] === numQ) res.push(rows[x]);
+      }
+      if (!res.length) {
+        for (var j = 0; j < rows.length && res.length < 40; j++) {
+          var t = rows[j][2], ok = true;
+          for (var w2 = 0; w2 < words.length; w2++) if (t.indexOf(words[w2]) === -1) { ok = false; break; }
+          if (ok) res.push(rows[j]);
+        }
+      }
+      if (res.length >= 40) truncated = true;
+      if (res.length) { groups.push({ id: books[i].id, name: books[i].name, res: res }); totalRes += res.length; }
+    }
+    if (!totalRes) {
+      box.innerHTML = '<div class="hl-search-empty">🔍 لا نتائج لـ «' + hlEscape(el("hlSearchInput").value) + '» في كل الكتب' + (searched < books.length ? '<br><small>⚠️ تعذر تحميل بعض الكتب — أعد المحاولة</small>' : '') + '<br><small>جرّب كلمات أقل أو كلمة بلا تشكيل</small></div>';
+      return;
+    }
+    var html = '<div class="hl-search-empty" style="padding:8px 0;">✅ ' + totalRes.toLocaleString("ar-EG") + ' نتيجة في كل الكتب (' + groups.length + ' كتاباً)' + (truncated ? '<br><small>يُعرض الحد الأقصى لكل كتاب (40) — أضف كلمات لتضييق البحث</small>' : '') + '</div>';
+    if (failed && failed.length) html += '<div class="hl-search-empty" style="padding:4px 0;color:#b45309;">⚠️ لم تُحمَّل فهارس: ' + hlEscape(failed.join("، ")) + '</div>';
+    for (var g = 0; g < groups.length; g++) {
+      var G = groups[g];
+      html += '<div class="hl-search-book-head"><span>📖 ' + hlEscape(G.name) + '</span><span class="hl-search-book-count">' + G.res.length.toLocaleString("ar-EG") + '</span></div>';
+      for (var r = 0; r < G.res.length; r++) {
+        var row = G.res[r], snippet = row[2];
+        if (snippet.length > 340) {
+          var firstHit = snippet.indexOf(words[0] || snippet.slice(0, 10));
+          var st = Math.max(0, firstHit - 120);
+          snippet = (st > 0 ? "… " : "") + snippet.slice(st, st + 340) + " …";
+        }
+        html += '<div class="hl-search-res">' +
+          '<div class="hl-search-res-head"><span class="hl-search-res-loc">حديث ' + hlEscape(String(row[0])) + '</span>' +
+          '<button class="hl-search-res-open" onclick="hlSearchGoto(\'' + G.id + '\',\'' + hlEscape(String(row[1])) + '\',' + JSON.stringify(String(row[0])).replace(/"/g, "&quot;") + ')">📖 افتح في سياقه</button></div>' +
+          '<div class="hl-search-res-text">' + hlHighlight(snippet, words) + '</div></div>';
+      }
+    }
+    box.innerHTML = html;
+  }, showProg);
 }
 
 function hlLoadSearchIdx(bookId, cb, prog) {
@@ -3502,10 +3593,11 @@ function hlHighlight(text, words) {
 
 function hlRunSearch() {
   var q = hlNorm(el("hlSearchInput").value || "");
-  var bookId = hlState.searchBase || el("hlSearchBook").value;
+  var bookId = (hlState.searchBase == null) ? el("hlSearchBook").value : hlState.searchBase;
   var box = el("hlSearchResults");
   var hint = el("hlSearchHint");
   if (!q) { box.innerHTML = '<div class="hl-search-empty">✍️ اكتب كلمة أو رقم حديث ثم اضغط بحث</div>'; return; }
+  if (!bookId) { hlRunGlobalSearch(q); return; } /* v26.11: بحث شامل في كل الكتب */
   box.innerHTML = '<div class="hl-search-empty">⏳ جاري البحث...</div>';
   hlLoadSearchIdx(bookId, function (rows) {
     if (!rows) { box.innerHTML = '<div class="hl-search-empty">⚠️ تعذر البحث — تحقق من الاتصال</div>'; return; }
@@ -8151,7 +8243,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.10"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.10: مكتبة الأحاديث الكاملة)
+var CURRENT_APP_VERSION = "26.11"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.11: بحث شامل في كل كتب الأحاديث)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
