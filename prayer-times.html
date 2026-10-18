@@ -1662,6 +1662,42 @@ body.dark-mode #ioCatSelect { background:#0f1a15;border-color:#2b4a3a;color:#e8f
 /* الحاوية بملء الشاشة */
 /* v26.14: دعم WebView القديم (سامسونغ J5 وغيره — Chromium 37):
    inset:0 لا يُفهم عنده فيكون للنافذة موضع/حجم خاطئ ولا تظهر — أضفنا top/right/bottom/left الصريحة قبلها */
+/* ===== v26.18: المترجم عربي⇄إنكليزي 🌐 — نمط نوافذ البرنامج، متوافق مع WebView القديم ===== */
+#translatorWin { display:none;position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:99999;background:#f4fbf7;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain; }
+#translatorWin.open { display:block; }
+#translatorWin * { box-sizing:border-box; }
+.tr-header { position:-webkit-sticky;position:sticky;top:0;z-index:5;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;background:#065f46;color:#fff;padding:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,.18); }
+.tr-back { background:rgba(255,255,255,.14);border:0;color:#fff;font-size:22px;line-height:1;width:36px;height:36px;border-radius:10px;cursor:pointer;-webkit-flex:0 0 auto;flex:0 0 auto;padding:0; }
+.tr-title-wrap { -webkit-flex:1 1 auto;flex:1 1 auto;margin:0 10px;min-width:0; }
+.tr-title { font-size:15px;font-weight:800; }
+.tr-subtitle { font-size:11px;opacity:.88;margin-top:2px; }
+.tr-body { padding:12px 12px 24px;max-width:680px;margin:0 auto; }
+.tr-dirbar { text-align:center;margin-bottom:12px; }
+.tr-pill { display:inline-block;padding:8px 16px;border-radius:22px;background:#e6f4ef;color:#065f46;font-weight:800;font-size:13px;border:1px solid #b5ddcc;cursor:pointer;vertical-align:middle;font-family:inherit; }
+.tr-pill.active { background:#065f46;color:#fff;border-color:#065f46; }
+.tr-swap { display:inline-block;width:38px;height:38px;border-radius:50%;background:#065f46;color:#fff;font-size:17px;border:0;cursor:pointer;margin:0 8px;vertical-align:middle;padding:0; }
+.tr-card { background:#ffffff;border:1px solid #d1e7dd;border-radius:12px;padding:10px;margin-bottom:12px; }
+.tr-label { font-size:11px;font-weight:800;color:#065f46;margin-bottom:6px;display:block; }
+.tr-count { float:left;font-size:10px;color:#9ca3af;font-weight:400; }
+#trInput { display:block;width:100%;min-height:96px;resize:vertical;border:1px solid #cfe7db;border-radius:10px;padding:10px 12px;font-size:16px;line-height:1.7;color:#1f2937;background:#fbfefd;font-family:inherit;-webkit-appearance:none;appearance:none; }
+#trInput:focus { outline:none;border-color:#065f46; }
+.tr-out { min-height:96px;padding:10px 12px;border:1px dashed #cfe7db;border-radius:10px;background:#fbfefd;font-size:16px;line-height:1.9;color:#111827;word-wrap:break-word;overflow-wrap:break-word;white-space:pre-wrap; }
+.tr-out.empty { color:#9ca3af;font-size:13px; }
+.tr-tools { margin-top:8px; }
+.tr-act { display:inline-block;padding:7px 12px;border-radius:9px;background:#e6f4ef;border:1px solid #b5ddcc;color:#065f46;font-size:12px;font-weight:800;cursor:pointer;margin-left:6px;font-family:inherit; }
+.tr-act:disabled { opacity:.45;cursor:default; }
+.tr-main { display:block;width:100%;padding:12px;border:0;border-radius:12px;background:#065f46;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:10px;box-shadow:0 2px 6px rgba(6,95,70,.25); }
+.tr-main:disabled { opacity:.6; }
+.tr-status { font-size:11px;color:#6b7280;margin:0 0 10px;min-height:15px;text-align:center; }
+.tr-status.err { color:#dc2626;font-weight:700; }
+body.dark-mode #translatorWin { background:#0d1512; }
+body.dark-mode .tr-card { background:#11211b;border-color:#1e3a2f; }
+body.dark-mode #trInput, body.dark-mode .tr-out { background:#0c1813;border-color:#2a4a3b;color:#e5f3ec; }
+body.dark-mode .tr-label { color:#7fd7ae; }
+body.dark-mode .tr-pill { background:#14261e;color:#a7e3c4;border-color:#2a4a3b; }
+body.dark-mode .tr-pill.active { background:#10b981;color:#04120c;border-color:#10b981; }
+body.dark-mode .tr-act { background:#14261e;color:#a7e3c4;border-color:#2a4a3b; }
+body.dark-mode .tr-out.empty { color:#4b6b5c; }
 #hadithReader { display:none;position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:99999;background:#f4fbf7;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain; }
 #hadithReader.open { display:block; }
 #hadithReader * { box-sizing:border-box; }
@@ -1900,6 +1936,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-btns" style="display:inline-block;">
         <span id="onlineIcon" style="font-size:14px;vertical-align:middle;">🟢</span>
         <button class="icon-btn" id="infoToggleBtn" onclick="toggleOnlineInfo()" title="معلومات وأحاديث" style="vertical-align:middle;">📚</button>
+        <button class="icon-btn" id="translatorBtn" onclick="openTranslator(event)" title="المترجم عربي-إنكليزي مع ناطق" style="vertical-align:middle;">🌐</button>
         <button class="icon-btn" id="qiblaBtn" onclick="openQibla()" title="اتجاه القبلة" style="vertical-align:middle;">🧭</button>
         <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="الوضع الليلي/النهاري" style="vertical-align:middle;">🌙</button>
         <button class="icon-btn" onclick="openSettings()" style="vertical-align:middle;">⚙️</button>
@@ -2193,6 +2230,40 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 </div>
 
 <!-- v26.10: مكتبة الأحاديث — قارئ بملء الشاشة (المكتبة / القراءة / البحث) -->
+<!-- ===== v26.18: نافذة المترجم عربي⇄إنكليزي مع ناطق ===== -->
+<div id="translatorWin" role="dialog" aria-label="المترجم">
+  <div class="tr-header">
+    <button class="tr-back" onclick="closeTranslator()" aria-label="رجوع">‹</button>
+    <div class="tr-title-wrap">
+      <div class="tr-title">المترجم 🌐</div>
+      <div class="tr-subtitle" id="trDirLabel">من العربية إلى الإنجليزية</div>
+    </div>
+  </div>
+  <div class="tr-body">
+    <div class="tr-dirbar">
+      <span class="tr-pill active" id="trPillAr" onclick="trSetDir('ar')">عربي</span><button class="tr-swap" id="trSwapBtn" onclick="trSwap()" aria-label="تبديل الاتجاه مع نقل النص">⇄</button><span class="tr-pill" id="trPillEn" onclick="trSetDir('en')">إنكليزي</span>
+    </div>
+    <div class="tr-card">
+      <span class="tr-label">النص الأصلي <span class="tr-count" id="trCount">0 / 1500</span></span>
+      <textarea id="trInput" oninput="trOnInput()" onkeydown="trKey(event)" placeholder="اكتب نصاً عربياً للترجمة إلى الإنكليزية…"></textarea>
+      <div class="tr-tools">
+        <button class="tr-act" id="trSpeakSrc" onclick="trSpeakInput()">🔊 ناطق</button>
+        <button class="tr-act" id="trSpeakStop" onclick="trStopSpeak()" style="display:none;">⏹ إيقاف النطق</button>
+      </div>
+    </div>
+    <button class="tr-main" id="trGoBtn" onclick="trTranslate(true)">🔄 ترجمة</button>
+    <div class="tr-status" id="trStatus"></div>
+    <div class="tr-card">
+      <span class="tr-label">الترجمة</span>
+      <div class="tr-out empty" id="trOutput" dir="ltr">ستظهر الترجمة هنا…</div>
+      <div class="tr-tools">
+        <button class="tr-act" id="trSpeakDst" onclick="trSpeakOutput()">🔊 ناطق</button>
+        <button class="tr-act" id="trCopyBtn" onclick="trCopyOut()">📋 نسخ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="hadithReader" role="dialog" aria-label="مكتبة الأحاديث">
   <div class="hl-header">
     <button class="hl-back" id="hlBackBtn" onclick="hlGoBack()" aria-label="رجوع">‹</button>
@@ -8484,6 +8555,272 @@ function compareVersions(a, b) {
 }
 
 // =====================================================================
+// ===== v26.18: المترجم عربي⇄إنكليزي مع ناطق 🌐 =====
+// سلسلة مصادر ترجمة (dict-chrome-ex أولاً — مجرّب ومتسامح مع حدود الطلب، ثم gtx،
+// ثم MyMemory) — كلها CORS مفتوح وتعمل عبر XHR (بلا fetch) حتى على WebView القديم.
+// الناطق: translate_tts عبر <audio> (MP3 — يعمل على Chromium 37) ثم speechSynthesis احتياطاً.
+// =====================================================================
+var TR_MAX = 1500;
+var trState = { src: "ar", dst: "en", autoTimer: null, lastSrcIdx: 0, queue: [], cur: null, lang: "ar", busy: false };
+
+function trParseArr(r) {
+  if (!r) return "";
+  if (typeof r === "string") return r;
+  if (typeof r[0] === "string") return r[0];
+  var out = "", i, j, seg;
+  for (i = 0; i < r.length; i++) {
+    if (typeof r[i] === "string") { out += r[i]; continue; }
+    if (Object.prototype.toString.call(r[i]) === "[object Array]") {
+      for (j = 0; j < r[i].length; j++) {
+        seg = r[i][j];
+        if (typeof seg === "string") out += seg;
+        else if (seg && typeof seg[0] === "string") out += seg[0];
+      }
+    }
+  }
+  return out;
+}
+
+var TR_SOURCES = [
+  { name: "chrome", maxChunk: 0,
+    build: function (q, s, d) { return "https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=" + s + "&tl=" + d + "&q=" + encodeURIComponent(q); },
+    parse: function (r) { return trParseArr(r); } },
+  { name: "gtx", maxChunk: 0,
+    build: function (q, s, d) { return "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + s + "&tl=" + d + "&dt=t&q=" + encodeURIComponent(q); },
+    parse: function (r) { var out = "", i; if (r && r[0] && Object.prototype.toString.call(r[0]) === "[object Array]") { for (i = 0; i < r[0].length; i++) { if (r[0][i] && typeof r[0][i][0] === "string") out += r[0][i][0]; } } return out; } },
+  { name: "mymemory", maxChunk: 460,
+    build: function (q, s, d) { return "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(q) + "&langpair=" + s + "|" + d; },
+    parse: function (r) { var t = (r && r.responseData && r.responseData.translatedText) || ""; if (t && String(t).indexOf("MYMEMORY WARNING") === -1) return String(t); return ""; } }
+];
+
+function trClean(s) { return String(s || "").replace(/^\s+|\s+$/g, "").replace(/\s+/g, " "); }
+
+function trStatus(msg, isErr) { var s = el("trStatus"); if (!s) return; s.textContent = msg || ""; s.className = "tr-status" + (isErr ? " err" : ""); }
+
+function trToast(msg) { try { if (typeof hlToast === "function") { hlToast(msg); return; } } catch (e) {} try { alert(msg); } catch (e2) {} }
+
+function trXhr(url, ok, fail) {
+  try {
+    var x = new XMLHttpRequest();
+    x.open("GET", url, true);
+    x.timeout = 12000;
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4) return;
+      if (x.status === 200) {
+        var data = null;
+        try { data = JSON.parse(x.responseText); } catch (e) { fail("badjson"); return; }
+        ok(data);
+      } else fail("http" + x.status);
+    };
+    x.onerror = function () { fail("net"); };
+    x.ontimeout = function () { fail("timeout"); };
+    x.send();
+  } catch (e) { fail("exc"); }
+}
+
+// تقسيم النص الطويل على حدود الكلمات (بلا lookbehind — توافق قديم)
+function trSplitChunks(text, max) {
+  var out = [], buf = "", toks = String(text).split(/(\s+)/), i;
+  for (i = 0; i < toks.length; i++) {
+    if ((buf + toks[i]).length > max && buf.replace(/\s/g, "")) {
+      out.push(buf.replace(/^\s+|\s+$/g, ""));
+      buf = "";
+    }
+    buf += toks[i];
+  }
+  if (buf.replace(/\s/g, "")) out.push(buf.replace(/^\s+|\s+$/g, ""));
+  return out;
+}
+
+function trTranslateChunked(text, src, done, fail) {
+  if (!src.maxChunk || text.length <= src.maxChunk) {
+    trXhr(src.build(text, trState.src, trState.dst), function (r) {
+      var t = src.parse(r);
+      if (t) done(t); else fail();
+    }, fail);
+    return;
+  }
+  var parts = trSplitChunks(text, src.maxChunk), acc = [], idx = 0;
+  var next = function () {
+    if (idx >= parts.length) { done(trClean(acc.join(" "))); return; }
+    trXhr(src.build(parts[idx], trState.src, trState.dst), function (r) {
+      var t = src.parse(r);
+      if (!t) { fail(); return; }
+      acc.push(t); idx++; next();
+    }, fail);
+  };
+  next();
+}
+
+function trTranslate(manual) {
+  var inp = el("trInput");
+  if (!inp) return;
+  var q = trClean(inp.value || "");
+  if (!q) { if (manual) trStatus("اكتب نصاً أولاً", true); return; }
+  if (trState.busy) return;
+  trState.busy = true;
+  el("trGoBtn").disabled = true;
+  trStatus("جارٍ الترجمة…");
+  var order = [trState.lastSrcIdx], i;
+  for (i = 0; i < TR_SOURCES.length; i++) { if (i !== trState.lastSrcIdx) order.push(i); }
+  trTryChain(order, 0, q);
+}
+
+function trTryChain(order, pos, q) {
+  if (pos >= order.length) {
+    trState.busy = false;
+    el("trGoBtn").disabled = false;
+    trStatus("✗ تعذّر الوصول لخدمة الترجمة — تحقق من اتصال الإنترنت وحاول مجدداً", true);
+    return;
+  }
+  var s = TR_SOURCES[order[pos]];
+  trTranslateChunked(q, s, function (result) {
+    if (!result || !trClean(result)) { trTryChain(order, pos + 1, q); return; }
+    trState.lastSrcIdx = order[pos];
+    trState.busy = false;
+    el("trGoBtn").disabled = false;
+    var out = el("trOutput");
+    out.textContent = result;
+    out.className = "tr-out";
+    trStatus("✓ تمت الترجمة");
+  }, function () { trTryChain(order, pos + 1, q); });
+}
+
+function trOnInput() {
+  var inp = el("trInput");
+  var v = inp.value || "";
+  if (v.length > TR_MAX) { inp.value = v.substring(0, TR_MAX); v = inp.value; }
+  el("trCount").textContent = v.length + " / " + TR_MAX;
+  if (trState.autoTimer) clearTimeout(trState.autoTimer);
+  trState.autoTimer = setTimeout(function () { trTranslate(false); }, 900);
+}
+
+function trKey(e) { try { if ((e.ctrlKey || e.metaKey) && (e.key === "Enter" || e.keyCode === 10 || e.keyCode === 13)) { e.preventDefault(); trTranslate(true); } } catch (e2) {} }
+
+function trApplyDir() {
+  var src = trState.src, dst = trState.dst;
+  el("trPillAr").className = "tr-pill" + (src === "ar" ? " active" : "");
+  el("trPillEn").className = "tr-pill" + (src === "en" ? " active" : "");
+  el("trDirLabel").textContent = src === "ar" ? "من العربية إلى الإنجليزية" : "من الإنجليزية إلى العربية";
+  var inp = el("trInput"), out = el("trOutput");
+  // dir يقبل ltr/rtl فقط — رموز اللغات (ar/en) قيم غير صالحة يتجاهلها المتصفح
+  inp.dir = src === "ar" ? "rtl" : "ltr";
+  out.dir = dst === "ar" ? "rtl" : "ltr";
+  inp.placeholder = src === "ar" ? "اكتب نصاً عربياً للترجمة إلى الإنكليزية…" : "Type English text to translate into Arabic…";
+  if (trClean(inp.value)) {
+    if (trState.autoTimer) clearTimeout(trState.autoTimer);
+    trState.autoTimer = setTimeout(function () { trTranslate(false); }, 400);
+  }
+}
+
+function trSetDir(s) { if (s === trState.src) return; trState.src = s; trState.dst = s === "ar" ? "en" : "ar"; trApplyDir(); }
+
+function trSwap() {
+  var t = trState.src; trState.src = trState.dst; trState.dst = t;
+  var inp = el("trInput"), out = el("trOutput"), tmp = trClean(out.textContent) ? out.textContent : "";
+  out.textContent = inp.value || "";
+  out.className = inp.value ? "tr-out" : "tr-out empty";
+  inp.value = tmp;
+  el("trCount").textContent = (inp.value || "").length + " / " + TR_MAX;
+  trApplyDir();
+}
+
+function openTranslator(ev) {
+  if (ev) { try { ev.stopPropagation(); ev.preventDefault(); } catch (e) {} }
+  el("translatorWin").classList.add("open");
+  try { document.body.style.overflow = "hidden"; } catch (e) {}
+  trApplyDir();
+  try { el("trInput").focus(); } catch (e2) {}
+}
+
+function closeTranslator() {
+  el("translatorWin").classList.remove("open");
+  try { document.body.style.overflow = ""; } catch (e) {}
+  trStopSpeak();
+}
+
+function trCopyOut() {
+  var t = el("trOutput").textContent || "";
+  if (!trClean(t)) return;
+  var done = function () { trToast("✓ تم النسخ"); };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, function () { trCopyFallback(t, done); });
+      return;
+    }
+  } catch (e) {}
+  trCopyFallback(t, done);
+}
+
+function trCopyFallback(t, done) {
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = t;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed"; ta.style.top = "-1000px";
+    document.body.appendChild(ta);
+    ta.select();
+    try { ta.setSelectionRange(0, t.length); } catch (eR) {}
+    var okc = false;
+    try { okc = document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+    if (okc) done(); else trToast("حدّد النص وانسخه يدوياً");
+  } catch (e) { trToast("تعذّر النسخ"); }
+}
+
+// ===== الناطق: translate_tts عبر <audio> (يعمل على القديم) ثم speechSynthesis احتياطاً =====
+function trSpeakText(text, lang) {
+  var t = trClean(text);
+  if (!t) return;
+  trStopSpeak();
+  trState.queue = trSplitChunks(t, 180);
+  trState.lang = lang;
+  trSetSpeakUi(true);
+  trSpeakNext();
+}
+
+function trSpeakNext() {
+  if (!trState.queue.length) { trSetSpeakUi(false); return; }
+  var part = trState.queue.shift();
+  var url = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=" + trState.lang + "&q=" + encodeURIComponent(part);
+  var a;
+  try { a = new Audio(url); } catch (eA) { trSpeakFallback(part); return; }
+  trState.cur = a;
+  a.onended = function () { trState.cur = null; trSpeakNext(); };
+  a.onerror = function () { trState.cur = null; trSpeakFallback(part); };
+  try {
+    var p = a.play();
+    if (p && p.catch) p.catch(function () { trState.cur = null; trSpeakFallback(part); });
+  } catch (eP) { trState.cur = null; trSpeakFallback(part); }
+}
+
+function trSpeakFallback(part) {
+  try {
+    if (window.speechSynthesis && typeof SpeechSynthesisUtterance !== "undefined") {
+      var u = new SpeechSynthesisUtterance(part);
+      u.lang = trState.lang === "ar" ? "ar-SA" : "en-US";
+      u.onend = function () { trSpeakNext(); };
+      u.onerror = function () { trSpeakNext(); };
+      window.speechSynthesis.speak(u);
+      return;
+    }
+  } catch (e) {}
+  trSetSpeakUi(false);
+  trToast("تعذّر تشغيل النطق على هذا الجهاز");
+}
+
+function trStopSpeak() {
+  try { trState.queue = []; } catch (e) {}
+  if (trState.cur) { try { trState.cur.pause(); trState.cur.src = ""; } catch (e) {} trState.cur = null; }
+  try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e2) {}
+  trSetSpeakUi(false);
+}
+
+function trSetSpeakUi(busy) { try { el("trSpeakStop").style.display = busy ? "inline-block" : "none"; } catch (e) {} }
+function trSpeakInput() { trSpeakText(el("trInput").value || "", trState.src); }
+function trSpeakOutput() { trSpeakText(el("trOutput").textContent || "", trState.dst); }
+
+// =====================================================================
 // ===== AUTO UPDATE — فحص version.json دورياً وتحديث التطبيق =====
 // =====================================================================
 // v25.43: مصادر تحديث متعددة — إذا فشل jsDelivr (حجب/تعثر شبكة/كاش قديم) نجرّب GitHub Pages ثم raw مباشرة.
@@ -8503,7 +8840,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.17"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.17: قناة إنقاذ جماعية للأجهزة العالقة عبر أمر تحديث في content.json + بوابة إصدار تمنع حلقة إعادة الكتابة + XHR بدل fetch لتوافق WebView القديم)
+var CURRENT_APP_VERSION = "26.18"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.18: المترجم عربي⇄إنكليزي مع ناطق 🔊 — ترجمة جمل كاملة بسلسلة مصادر احتياطية + ناطق يعمل حتى على WebView القديم)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
