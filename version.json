@@ -1,8 +1,8 @@
 {
-  "appVersion": "26.19",
-  "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.19.apk",
-  "apkSizeMB": "2.7",
-  "releasedAt": "2026-10-18",
-  "changelog": "ترقية المترجم 🌐: يعمل الآن بلا إنترنت بقاموس مدمج (كلمات وجمل شائعة) + فونيتيكس (نطق تقريبي بالعربي واللاتيني) + ناطق بخيارات (صوت الجهاز أو صوت الإنترنت، سرعة، تكرار، اختيار الصوت) + سجل ترجمة يستعاد بضغطة + تدقيق إملائي باقتراحات تصحيح + كتابة مواضيع إنكليزية من فكرة أو قوالب جاهزة. الإنترنت اختياري الآن للترجمة الأدق."
+ "appVersion": "26.20",
+ "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
+ "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.20.apk",
+ "apkSizeMB": "3.2",
+ "releasedAt": "2026-10-18",
+ "changelog": "قاموس ضخم 📖: توسعة القاموس المدمج إلى ~3600 مدخل أصلي (يومي + مدرسي + ديني + تقني) + طبقة مفتوحة من Wiktionary (~18 ألف كلمة بالاتجاهين، رخصة CC BY-SA) تعمل بلا إنترنت + وضع قاموس جديد يعرض كل معاني الكلمة مع النطق والفونيتيكس + إصلاح تكرار الضمائر في الترجمة. الملف أصبح 1.7MB ويحمّل بنفس السرعة."
 }
