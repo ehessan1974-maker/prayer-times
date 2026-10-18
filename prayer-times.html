@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.12</title>
+<title>🕌 مواقيت الصلاة v26.19</title>
 <!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -1690,6 +1690,60 @@ body.dark-mode #ioCatSelect { background:#0f1a15;border-color:#2b4a3a;color:#e8f
 .tr-main:disabled { opacity:.6; }
 .tr-status { font-size:11px;color:#6b7280;margin:0 0 10px;min-height:15px;text-align:center; }
 .tr-status.err { color:#dc2626;font-weight:700; }
+/* ===== v26.19: أوضاع المترجم وناطق وفونيتيكس وسجل وكتابة ===== */
+.tr-modes { text-align:center;margin:-2px 0 12px; }
+.tr-modes label { display:inline-block;margin:0 4px 6px;font-size:12px;color:#0b3d2e;cursor:pointer;background:#e6f4ef;border:1px solid #b5ddcc;border-radius:14px;padding:5px 10px; }
+.tr-modes input { vertical-align:middle;margin-left:4px; }
+.tr-chipbtn { display:inline-block;margin:0 3px 6px;background:#065f46;color:#fff;border:0;border-radius:14px;padding:6px 12px;font-size:12px;font-family:inherit;cursor:pointer; }
+.tr-opts { background:#eaf6f0;border:1px solid #b5ddcc;border-radius:12px;padding:10px 12px;margin-bottom:12px; }
+.tr-opt-row { margin:7px 0;font-size:13px;color:#0b3d2e; }
+.tr-opt-row select { font-family:inherit;font-size:13px;padding:4px 6px;border-radius:8px;border:1px solid #b5ddcc;background:#fff;color:#0b3d2e;max-width:62%;vertical-align:middle; }
+.tr-opt-row input[type=range] { width:55%;vertical-align:middle; }
+.tr-opt-note { font-size:11px;color:#4b7a68;margin-top:8px;line-height:1.6; }
+.tr-ph { font-size:13px;color:#4b7a68;margin:8px 4px 0;line-height:1.7; }
+.tr-fix { margin:8px 0 0;background:#fff7e6;border:1px solid #e3c88a;border-radius:10px;padding:8px 10px;font-size:12px;color:#7a5a12; }
+.tr-fix-lbl { font-weight:800; }
+.tr-fix-row { margin:5px 0 0; }
+.tr-fix-word { display:inline-block;margin-left:4px;font-weight:700; }
+.tr-fix-btn { background:#065f46;color:#fff;border:0;border-radius:10px;padding:3px 10px;margin:0 3px;font-size:12px;font-family:inherit;cursor:pointer; }
+.tr-break { margin-top:10px;line-height:2;display:none; }
+.tr-brk-title { font-size:12px;font-weight:800;color:#0b3d2e;margin-bottom:4px; }
+.tr-brk { display:inline-block;background:#e6f4ef;border:1px solid #b5ddcc;border-radius:10px;padding:2px 8px;margin:2px;font-size:12px;color:#0b3d2e; }
+#trHistWin,#trWriterWin { display:none;position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:100001;background:#f4fbf7;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain; }
+#trHistWin.open,#trWriterWin.open { display:block; }
+#trHistWin *,#trWriterWin * { box-sizing:border-box; }
+.tr-hist-item { position:relative;background:#fff;border:1px solid #cfe7dc;border-radius:12px;padding:10px 12px;margin:8px 0;cursor:pointer; }
+.tr-hist-dir { font-size:11px;color:#4b7a68;margin-bottom:4px; }
+.tr-hist-q { font-size:13px;font-weight:700;color:#0b3d2e; }
+.tr-hist-r { font-size:13px;color:#333;margin-top:2px; }
+.tr-hist-del { position:absolute;top:8px;left:8px;background:transparent;border:0;color:#b00;font-size:14px;cursor:pointer;padding:4px; }
+.tr-hist-empty { text-align:center;color:#4b7a68;font-size:13px;padding:30px 10px; }
+.tr-topics { text-align:center;margin-bottom:10px; }
+.tr-topic { display:inline-block;background:#e6f4ef;border:1px solid #b5ddcc;color:#065f46;border-radius:16px;padding:7px 14px;margin:3px;font-size:13px;font-family:inherit;cursor:pointer; }
+.tr-topic.active { background:#065f46;color:#fff;border-color:#065f46; }
+.tr-tpl-row { background:#fff;border:1px solid #cfe7dc;border-radius:10px;padding:8px 10px;margin:6px 0;font-size:13px;color:#0b3d2e; }
+.tr-tpl-row input { width:100%;margin-top:6px;padding:7px 8px;border:1px solid #b5ddcc;border-radius:8px;font-family:inherit;font-size:14px;box-sizing:border-box; }
+.tr-tpl-fixed { color:#0a8f5b;font-weight:800; }
+body.dark-mode #translatorWin .tr-modes label { background:#10231c;border-color:#1e4436;color:#b7e2d0; }
+body.dark-mode .tr-chipbtn { background:#0d5c44; }
+body.dark-mode .tr-opts { background:#10231c;border-color:#1e4436; }
+body.dark-mode .tr-opt-row { color:#b7e2d0; }
+body.dark-mode .tr-opt-row select { background:#0d1512;color:#b7e2d0;border-color:#1e4436; }
+body.dark-mode .tr-opt-note { color:#6fa08c; }
+body.dark-mode .tr-ph { color:#6fa08c; }
+body.dark-mode .tr-fix { background:#241d0d;border-color:#5c4a1e;color:#d8b866; }
+body.dark-mode .tr-fix-btn { background:#0d5c44; }
+body.dark-mode .tr-brk-title { color:#b7e2d0; }
+body.dark-mode .tr-brk { background:#10231c;border-color:#1e4436;color:#b7e2d0; }
+body.dark-mode #trHistWin,body.dark-mode #trWriterWin { background:#0d1512; }
+body.dark-mode .tr-hist-item,body.dark-mode .tr-tpl-row { background:#10231c;border-color:#1e4436; }
+body.dark-mode .tr-hist-q,body.dark-mode .tr-tpl-row { color:#b7e2d0; }
+body.dark-mode .tr-hist-r { color:#cde8dc; }
+body.dark-mode .tr-hist-dir { color:#6fa08c; }
+body.dark-mode .tr-hist-empty { color:#6fa08c; }
+body.dark-mode .tr-topic { background:#10231c;border-color:#1e4436;color:#b7e2d0; }
+body.dark-mode .tr-topic.active { background:#0d5c44;color:#fff; }
+
 body.dark-mode #translatorWin { background:#0d1512; }
 body.dark-mode .tr-card { background:#11211b;border-color:#1e3a2f; }
 body.dark-mode #trInput, body.dark-mode .tr-out { background:#0c1813;border-color:#2a4a3b;color:#e5f3ec; }
@@ -2243,6 +2297,40 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <div class="tr-dirbar">
       <span class="tr-pill active" id="trPillAr" onclick="trSetDir('ar')">عربي</span><button class="tr-swap" id="trSwapBtn" onclick="trSwap()" aria-label="تبديل الاتجاه مع نقل النص">⇄</button><span class="tr-pill" id="trPillEn" onclick="trSetDir('en')">إنكليزي</span>
     </div>
+<div class="tr-modes">
+  <label><input type="checkbox" id="trPhChk" checked onchange="try{localStorage.setItem('trPhOn',this.checked?'1':'0')}catch(e){}trPhoneticsRefresh()"> فونيتيكس</label>
+  <label><input type="checkbox" id="trNetChk" checked onchange="try{localStorage.setItem('trUseOnline',this.checked?'1':'0')}catch(e){}"> استخدام الإنترنت</label>
+  <button class="tr-chipbtn" onclick="trHistOpen()">🕘 السجل</button>
+  <button class="tr-chipbtn" onclick="trWriterOpen()">✍️ كتابة مواضيع</button>
+  <button class="tr-chipbtn" onclick="trSpToggle()">⚙ خيارات الناطق</button>
+</div>
+<div class="tr-opts" id="trSpOpts" style="display:none;">
+  <div class="tr-opt-row"><span>مصدر الصوت:</span>
+    <select id="trSpMode" onchange="trSpSave('mode',this.value)">
+      <option value="auto">تلقائي (الأفضل المتاح)</option>
+      <option value="device">صوت الجهاز — يعمل بلا إنترنت</option>
+      <option value="net">صوت الإنترنت — نطق بشري أوضح</option>
+    </select>
+  </div>
+  <div class="tr-opt-row"><span>السرعة: <b id="trSpRateV">1.0</b></span>
+    <input type="range" id="trSpRate" min="0.5" max="1.5" step="0.1" value="1" oninput="el('trSpRateV').textContent=this.value;trSpSave('rate',this.value)">
+  </div>
+  <div class="tr-opt-row"><span>صوت العربية:</span>
+    <select id="trSpVar" onchange="trSpSave('var',this.value)"><option value="">افتراضي الجهاز</option></select>
+  </div>
+  <div class="tr-opt-row"><span>صوت الإنجليزية:</span>
+    <select id="trSpVen" onchange="trSpSave('ven',this.value)"><option value="">افتراضي الجهاز</option></select>
+  </div>
+  <div class="tr-opt-row"><span>التكرار:</span>
+    <select id="trSpRep" onchange="trSpSave('rep',this.value)">
+      <option value="1">مرة واحدة</option>
+      <option value="2">مرتان</option>
+      <option value="3">3 مرات</option>
+    </select>
+  </div>
+  <div class="tr-opt-note" id="trSpNote">💡 «صوت الجهاز» يعمل بلا إنترنت. «صوت الإنترنت» نطق بشري أوضح ويحتاج اتصالاً.</div>
+</div>
+
     <div class="tr-card">
       <span class="tr-label">النص الأصلي <span class="tr-count" id="trCount">0 / 1500</span></span>
       <textarea id="trInput" oninput="trOnInput()" onkeydown="trKey(event)" placeholder="اكتب نصاً عربياً للترجمة إلى الإنكليزية…"></textarea>
@@ -2250,6 +2338,8 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
         <button class="tr-act" id="trSpeakSrc" onclick="trSpeakInput()">🔊 ناطق</button>
         <button class="tr-act" id="trSpeakStop" onclick="trStopSpeak()" style="display:none;">⏹ إيقاف النطق</button>
       </div>
+      <div class="tr-ph" id="trPhSrc" style="display:none;"></div>
+      <div class="tr-fix" id="trFix" style="display:none;"></div>
     </div>
     <button class="tr-main" id="trGoBtn" onclick="trTranslate(true)">🔄 ترجمة</button>
     <div class="tr-status" id="trStatus"></div>
@@ -2260,7 +2350,35 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
         <button class="tr-act" id="trSpeakDst" onclick="trSpeakOutput()">🔊 ناطق</button>
         <button class="tr-act" id="trCopyBtn" onclick="trCopyOut()">📋 نسخ</button>
       </div>
+      <div class="tr-ph" id="trPhDst" style="display:none;"></div>
+      <div class="tr-break" id="trBreak" style="display:none;"></div>
     </div>
+  </div>
+</div>
+
+<div id="trHistWin" role="dialog" aria-label="سجل الترجمة">
+  <div class="tr-header">
+    <button class="tr-back" onclick="trHistClose()" aria-label="رجوع">‹</button>
+    <div class="tr-title-wrap"><div class="tr-title">سجل الترجمة 🕘</div><div class="tr-subtitle">اضغط أي عنصر لاستعادته — يُحفظ على جهازك</div></div>
+    <button class="tr-back" onclick="trHistClear()" aria-label="تفريغ السجل">🗑</button>
+  </div>
+  <div class="tr-body"><div id="trHistList"></div></div>
+</div>
+
+<div id="trWriterWin" role="dialog" aria-label="كتابة مواضيع">
+  <div class="tr-header">
+    <button class="tr-back" onclick="trWriterClose()" aria-label="رجوع">‹</button>
+    <div class="tr-title-wrap"><div class="tr-title">كتابة مواضيع ✍️</div><div class="tr-subtitle">اختر قالباً واملأ الفراغات أو اكتب فكرتك — والنص يولّد بالإنكليزية</div></div>
+  </div>
+  <div class="tr-body">
+    <div class="tr-topics" id="trTopics"></div>
+    <div id="trTplArea"></div>
+    <div class="tr-card" style="margin-top:10px;">
+      <span class="tr-label">أو اكتب فكرتك (جملة أو نقطة في كل سطر)</span>
+      <textarea id="trIdea" placeholder="مثال:&#10;اسمي احمد&#10;انا من دمشق&#10;احب كرة القدم"></textarea>
+    </div>
+    <button class="tr-main" id="trGenBtn" onclick="trWriterGenerate()">✨ توليد النص الإنكليزي</button>
+    <div class="tr-opt-note">💡 مع تفعيل «استخدام الإنترنت» تكون الترجمة أدق وأجمل؛ وبلا إنترنت يعمل القاموس المدمج بنص بسيط. النص الناتج يظهر في المترجم مع الفونيتيكس والناطق.</div>
   </div>
 </div>
 
@@ -8555,13 +8673,13 @@ function compareVersions(a, b) {
 }
 
 // =====================================================================
-// ===== v26.18: المترجم عربي⇄إنكليزي مع ناطق 🌐 =====
+// ===== v26.18: المترجم عربي⇄إنكليزي مع ناطق 🌐 — v26.19: + قاموس مدمج بلا إنترنت + فونيتيكس + خيارات ناطق + سجل + تدقيق + كتابة مواضيع =====
 // سلسلة مصادر ترجمة (dict-chrome-ex أولاً — مجرّب ومتسامح مع حدود الطلب، ثم gtx،
 // ثم MyMemory) — كلها CORS مفتوح وتعمل عبر XHR (بلا fetch) حتى على WebView القديم.
 // الناطق: translate_tts عبر <audio> (MP3 — يعمل على Chromium 37) ثم speechSynthesis احتياطاً.
 // =====================================================================
 var TR_MAX = 1500;
-var trState = { src: "ar", dst: "en", autoTimer: null, lastSrcIdx: 0, queue: [], cur: null, lang: "ar", busy: false };
+var trState = { src: "ar", dst: "en", autoTimer: null, lastSrcIdx: 0, queue: [], cur: null, lang: "ar", busy: false, spLang: "ar", spMode: "auto", tplLines: [] }; // v26.19 + خيارات الناطق وقوالب الكتابة
 
 function trParseArr(r) {
   if (!r) return "";
@@ -8652,39 +8770,9 @@ function trTranslateChunked(text, src, done, fail) {
   next();
 }
 
-function trTranslate(manual) {
-  var inp = el("trInput");
-  if (!inp) return;
-  var q = trClean(inp.value || "");
-  if (!q) { if (manual) trStatus("اكتب نصاً أولاً", true); return; }
-  if (trState.busy) return;
-  trState.busy = true;
-  el("trGoBtn").disabled = true;
-  trStatus("جارٍ الترجمة…");
-  var order = [trState.lastSrcIdx], i;
-  for (i = 0; i < TR_SOURCES.length; i++) { if (i !== trState.lastSrcIdx) order.push(i); }
-  trTryChain(order, 0, q);
-}
+// (v26.19) استُبدل trTranslate بنسخة القاموس-أولاً — انظر محرك v26.19 أدناه
 
-function trTryChain(order, pos, q) {
-  if (pos >= order.length) {
-    trState.busy = false;
-    el("trGoBtn").disabled = false;
-    trStatus("✗ تعذّر الوصول لخدمة الترجمة — تحقق من اتصال الإنترنت وحاول مجدداً", true);
-    return;
-  }
-  var s = TR_SOURCES[order[pos]];
-  trTranslateChunked(q, s, function (result) {
-    if (!result || !trClean(result)) { trTryChain(order, pos + 1, q); return; }
-    trState.lastSrcIdx = order[pos];
-    trState.busy = false;
-    el("trGoBtn").disabled = false;
-    var out = el("trOutput");
-    out.textContent = result;
-    out.className = "tr-out";
-    trStatus("✓ تمت الترجمة");
-  }, function () { trTryChain(order, pos + 1, q); });
-}
+// (v26.19) استُبدل trTryChain بنسخة القاموس-أولاً — انظر محرك v26.19 أدناه
 
 function trOnInput() {
   var inp = el("trInput");
@@ -8711,6 +8799,7 @@ function trApplyDir() {
     if (trState.autoTimer) clearTimeout(trState.autoTimer);
     trState.autoTimer = setTimeout(function () { trTranslate(false); }, 400);
   }
+  trPhoneticsRefresh();
 }
 
 function trSetDir(s) { if (s === trState.src) return; trState.src = s; trState.dst = s === "ar" ? "en" : "ar"; trApplyDir(); }
@@ -8731,10 +8820,13 @@ function openTranslator(ev) {
   try { document.body.style.overflow = "hidden"; } catch (e) {}
   trApplyDir();
   try { el("trInput").focus(); } catch (e2) {}
+  try { trSpInitUi(); } catch (e3) {}
 }
 
 function closeTranslator() {
   el("translatorWin").classList.remove("open");
+  try { el("trHistWin").classList.remove("open"); } catch (eH) {}
+  try { el("trWriterWin").classList.remove("open"); } catch (eW) {}
   try { document.body.style.overflow = ""; } catch (e) {}
   trStopSpeak();
 }
@@ -8769,45 +8861,11 @@ function trCopyFallback(t, done) {
 }
 
 // ===== الناطق: translate_tts عبر <audio> (يعمل على القديم) ثم speechSynthesis احتياطاً =====
-function trSpeakText(text, lang) {
-  var t = trClean(text);
-  if (!t) return;
-  trStopSpeak();
-  trState.queue = trSplitChunks(t, 180);
-  trState.lang = lang;
-  trSetSpeakUi(true);
-  trSpeakNext();
-}
+// (v26.19) استُبدل trSpeakText بنسخة الخيارات — انظر محرك v26.19 أدناه
 
-function trSpeakNext() {
-  if (!trState.queue.length) { trSetSpeakUi(false); return; }
-  var part = trState.queue.shift();
-  var url = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=" + trState.lang + "&q=" + encodeURIComponent(part);
-  var a;
-  try { a = new Audio(url); } catch (eA) { trSpeakFallback(part); return; }
-  trState.cur = a;
-  a.onended = function () { trState.cur = null; trSpeakNext(); };
-  a.onerror = function () { trState.cur = null; trSpeakFallback(part); };
-  try {
-    var p = a.play();
-    if (p && p.catch) p.catch(function () { trState.cur = null; trSpeakFallback(part); });
-  } catch (eP) { trState.cur = null; trSpeakFallback(part); }
-}
+// (v26.19) استُبدل trSpeakNext بنسخة الخيارات — انظر محرك v26.19 أدناه
 
-function trSpeakFallback(part) {
-  try {
-    if (window.speechSynthesis && typeof SpeechSynthesisUtterance !== "undefined") {
-      var u = new SpeechSynthesisUtterance(part);
-      u.lang = trState.lang === "ar" ? "ar-SA" : "en-US";
-      u.onend = function () { trSpeakNext(); };
-      u.onerror = function () { trSpeakNext(); };
-      window.speechSynthesis.speak(u);
-      return;
-    }
-  } catch (e) {}
-  trSetSpeakUi(false);
-  trToast("تعذّر تشغيل النطق على هذا الجهاز");
-}
+// (v26.19) استُبدل trSpeakFallback بمحرك v26.19 (trSpeakDev/trSpeakNet/trSpeakGiveUp)
 
 function trStopSpeak() {
   try { trState.queue = []; } catch (e) {}
@@ -8818,6 +8876,949 @@ function trStopSpeak() {
 
 function trSetSpeakUi(busy) { try { el("trSpeakStop").style.display = busy ? "inline-block" : "none"; } catch (e) {} }
 function trSpeakInput() { trSpeakText(el("trInput").value || "", trState.src); }
+function trSpeakOutput() { trSpeakText(el("trOutput").textContent || "", trState.dst); }
+
+// ===== v26.19: القاموس المدمج — الجزء 1: الأساسيات (ضمائر، أسئلة، وقت، أرقام، عائلة، وظائف نحوية، صفات) =====
+var TR_DICT_P1 =
+"انا|i,انت|you,هو|he,هي|she,نحن|we,هم|they,هن|they,انتما|you two,هما|they two," +
+"ماذا|what,مين|who,من هو|who is he,اين|where,متى|when,لماذا|why,كيف|how,كم|how much,اي|which,هل|is it,وين|where," +
+"يوم|day,ليل|night,صباح|morning,ضحى|forenoon,مساء|evening,عصر|afternoon,ظهر|noon," +
+"اسبوع|week,شهر|month,سنه|year,ساعة|hour,دقيقة|minute,ثانية|second,لحظة|moment," +
+"اليوم|today,غدا|tomorrow,امس|yesterday,الان|now,وقت|time,دائما|always,احيانا|sometimes,ابدا|never,قريبا|soon," +
+"باكر|early,tomorrow|tomorrow,بعد غد|after tomorrow,الليلة|tonight,فجر|dawn,شروق|sunrise,غروب|sunset," +
+"خمس|five,ثلاث|three,عشر|ten,واحد|one,اثنان|two,اثنين|two,ثلاثة|three,اربعة|four,خمسة|five,ستة|six,سبعة|seven,ثمانية|eight,تسعة|nine,عشرة|ten," +
+"عشر|ten,احد|eleven,اثنا عشر|twelve,عشرون|twenty,ثلاثون|thirty,اربعون|forty,خمسون|fifty,ستون|sixty,سبعون|seventy,ثمانون|eighty,تسعون|ninety," +
+"مئة|hundred,مائة|hundred,مئتان|two hundred,الف|thousand,الفان|two thousand,نصف|half,ربع|quarter,ثلث|third," +
+"اول|first,ثاني|second,ثالث|third,اخير|last,التالي|next,السابق|previous," +
+"اب|father,ام|mother,ابن|son,ابنة|daughter,اخ|brother,اخت|sister,جد|grandfather,جدة|grandmother," +
+"عم|uncle,عمة|aunt,خال|uncle,خالة|aunt,عائلة|family,اسرة|family,زوج|husband,زوجة|wife," +
+"طفل|child,اطفال|children,ولد|boy,بنت|girl,رجل|man,رجال|men,امرأة|woman,نساء|women," +
+"شاب|young man,فتاة|young girl,رضيع|baby,قريب|relative,جار|neighbor,ضيف|guest,صديق|friend,اصدقاء|friends,صاحب|owner," +
+"في|in,على|on,تحت|under,فوق|above,امام|in front,خلف|behind,بين|between,مع|with,بدون|without,الى|to,من|from,عن|about,عند|at," +
+"هذا|this,هذه|this,هذان|these two,ذلك|that,تلك|that,هؤلاء|these,كل|all,كل|every,يوميا|daily,بعض|some,جميع|all," +
+"لا|no,نعم|yes,ايضا|also,لكن|but,لان|because,اذا|if,عندما|when,قبل|before,بعد|after,هنا|here,هناك|there," +
+"جدا|very,اكثر|more,اقل|less,نفس|same,شيء|thing,شيء ما|something,لا شيء|nothing,كل شيء|everything," +
+"و|and,ثم|then,او|or,معا|together,وحده|alone," +
+"كبير|big,صغير|small,جميل|beautiful,قبيح|ugly,جيد|good,حسن|good,سيئ|bad,جديد|new,قديم|old," +
+"ساخن|hot,بارد|cold,دافئ|warm,سهل|easy,صعب|hard,قريب|near,بعيد|far,سعيد|happy,حزين|sad," +
+"متعب|tired,جائع|hungry,عطشان|thirsty,طويل|tall,قصير|short,سمين|fat,نحيف|thin,قوي|strong,ضعيف|weak," +
+"غني|rich,فقير|poor,نظيف|clean,متسخ|dirty,سريع|fast,بطيء|slow,ثقيل|heavy,خفيف|light," +
+"كثير|many,قليل|few,صحيح|right,خطا|wrong,ممكن|possible,مستحيل|impossible,مشغول|busy,حر|free," +
+"حلو|sweet,حامض|sour,مالح|salty,لذيذ|delicious,كريم|generous,ذكي|smart,غبي|stupid,خجول|shy," +
+"شجاع|brave,هادئ|calm,غاضب|angry,خائف|afraid,صبور|patient,مبتهج|cheerful,نعسان|sleepy,وحيد|lonely," +
+"ملون|colorful,مشهور|famous,غريب|strange,مهم|important,مفيد|useful,خفيف الظل|funny,جاد|serious," +
+"اسود|black,ابيض|white,احمر|red,ازرق|blue,اخضر|green,اصفر|yellow,رمادي|gray,بني|brown,وردي|pink,بنفسجي|purple,ذهبي|golden,لون|color," +
+"مال|money,حياة|life,موت|death,حب|love,سعادة|happiness,حزن|sadness,امل|hope,خوف|fear,فرح|joy,غضب|anger," +
+"خصم|enemy,سفر|travel,عطلة|holiday,هدية|gift,لعبة|game,سبب|reason,مشكلة|problem,حل|solution," +
+"سؤال|question,جواب|answer,معلومة|information,سر|secret,حلم|dream,واقع|reality,فكرة|idea,خبر|news," +
+"صوت|voice,ضوء|light,ظل|shadow,طعام|food,شراب|drink,نعم بالله|yes by god,نصف الليل|midnight";
+
+// ===== v26.19: القاموس المدمج — الجزء 2: الأفعال (بصيغها) + الأكل + الجسد + الأماكن + الطبيعة + المواصلات + التقنية + العمل + الدين =====
+var TR_DICT_P2 =
+"كان|was,يكون|is,يكون|be,اصبح|became,صار|became,يصبح|becomes," +
+"ذهب|went,يذهب|goes,اذهب|go,نذهب|we go,تذهب|she goes,اذهبوا|go," +
+"جاء|came,يأتي|comes,تأتي|she comes,تعال|come,اجء|come,تعالوا|come," +
+"اكل|ate,ياكل|eats,كلي|eat,نشرب|we drink,شرب|drank,يشرب|drinks,اشرب|i drink," +
+"نام|slept,ينام|sleeps,نم|sleep,استيقظ|woke up,يستيقظ|wakes up,قام|stood up,يجلس|sits,جلس|sat,اقعد|sit down," +
+"عمل|worked,يعمل|works,اشتغل|worked,يشتغل|works,درس|studied,يدرس|studies," +
+"كتب|wrote,يكتب|writes,اكتب|i write,قرا|read,يقرا|reads,اقرا|i read," +
+"قال|said,يقول|says,قل|say,تكلم|spoke,يتكلم|speaks,حكى|talked,اتكلم|i speak," +
+"سال|asked,يسال|asks,اجاب|answered,يجيب|answers,فهم|understood,يفهم|understands,افهم|i understand," +
+"عرف|knew,يعرف|knows,اعرف|i know,علم|knew,لا اعرف|i do not know,اريد|want,يريد|wants,تريد|she wants,نريد|we want," +
+"احب|i love,يحب|loves,تحب|loves,نبني|we build,بنى|built,يكره|hates,كره|hate," +
+"را|saw,يرى|sees,اشوف|i see,شفت|i saw,سمع|heard,يسمع|hears,اسمع|i hear,نظر|looked,ينظر|looks," +
+"مشى|walked,يمشي|walks,ركض|ran,يركض|runs,سار|walked,يمشي|goes," +
+"فتح|opened,يفتح|opens,افتح|open,اغلق|closed,يغلق|closes,سكّر|closed," +
+"اشترى|bought,يشتري|buys,اشتري|buy,باع|sold,يبيع|sells,دفع|paid,يدفع|pays," +
+"اعطى|gave,يعطي|gives,خذ|take,خذوا|take,اخذ|took,ياخذ|takes,وضع|put,يضع|puts," +
+"ساعد|helped,يساعد|helps,انتظر|waited,ينتظر|waits,ضحك|laughed,يضحك|laughs,بكى|cried,يبكي|cries," +
+"صلى|prayed,يصلي|prays,سافر|traveled,يسافر|travels,وصل|arrived,يصل|arrives,عاد|returned,يرجع|returns,رجع|returned," +
+"بدأ|started,يبدأ|starts,ابدا|never,انتهى|finished,ينتهي|finishes,خلص|finished,يخلص|finishes," +
+"قدر|could,يقدر|can,استطاع|could,لازم|must,يجب|must,ينبغي|should," +
+"دخل|entered,يدخل|enters,خرج|left,يخرج|goes out,لعب|played,يلعب|plays,غنى|sang,يغني|sings," +
+"طبخ|cooked,يطبخ|cooks,غسل|washed,يغسل|washes,نظف|cleaned,ينظف|cleans,كسر|broke,يكسر|breaks," +
+"رمى|threw,يرمي|throws,وقف|stopped,يتوقف|stops,تحرك|moved,يتحرك|moves,ارسل|sent,يرسل|sends," +
+"تعلم|learned,يتعلم|learns,علم|taught,يعلم|teaches,نسى|forgot,ينسى|forgets,تذكر|remembered,يتذكر|remembers," +
+"حاول|tried,يحاول|tries,نجح|succeeded,ينجح|succeeds,فشل|failed,يفشل|fails," +
+"صعد|went up,يصعد|goes up,نزل|went down,ينزل|goes down,شعر|felt,يشعر|feels,احس|felt," +
+"فكر|thought,يفكر|thinks,ظن|thought,يظن|thinks,خاف|feared,يخاف|fears,استخدم|used,يستخدم|uses," +
+"دفع|pushed,سحب|pulled,يجر|pulls,حمل|carried,يحمل|carries,لبس|wore,يلبس|wears,لباس|clothes," +
+"سكن|lived,يسكن|lives,عاش|lived,يعيش|lives,مات|died,يموت|dies,ولد|born,اكتشف|discovered,يكتشف|discovers," +
+"ماء|water,خبز|bread,ارز|rice,لحم|meat,دجاج|chicken,سمك|fish,حليب|milk,جبنة|cheese,بيض|eggs," +
+"تفاح|apple,برتقال|orange,موز|banana,عنب|grapes,بطيخ|watermelon,خيار|cucumber,طماطم|tomato,بطاطا|potato," +
+"بصل|onion,ثوم|garlic,سكر|sugar,ملح|salt,فلفل|pepper,زيت|oil,شاي|tea,قهوة|coffee,عصير|juice," +
+"عسل|honey,فطور|breakfast,غداء|lunch,عشاء|dinner,وجبة|meal,حلويات|sweets,فواكه|fruits,خضار|vegetables," +
+"مطعم|restaurant,مقهى|cafe,سوق|market,متجر|shop,فاتورة|bill,ثمن|price,تسوق|shopping," +
+"راس|head,شعر|hair,عين|eye,عيون|eyes,اذن|ear,فم|mouth,انف|nose,وجه|face," +
+"يد|hand,ايدي|hands,اصبع|finger,رجل|leg,قدم|foot,قلب|heart,دم|blood,بطن|stomach,ظهر|back," +
+"اسنان|teeth,سن|tooth,لسان|tongue,جلد|skin,عظم|bone,مخ|brain,بصر|sight," +
+"بيت|house,شقة|apartment,غرفة|room,مطبخ|kitchen,حمام|bathroom,باب|door,نافذة|window," +
+"مدرسة|school,جامعة|university,مكتب|office,مسجد|mosque,مستشفى|hospital,صيدلية|pharmacy," +
+"طريق|road,شارع|street,جسر|bridge,مدينة|city,قرية|village,بلد|country,عالم|world," +
+"محطة|station,مطار|airport,حديقة|park,شاطئ|beach,جبل|mountain,بحر|sea,نهر|river," +
+"شجرة|tree,ازهار|flowers,زهرة|flower,سماء|sky,شمس|sun,قمر|moon,نجم|star,نجوم|stars," +
+"هواء|air,نار|fire,ارض|earth,مطر|rain,ثلج|snow,ريح|wind,رياح|winds,غيمة|cloud,طقس|weather,رمل|sand," +
+"سيارة|car,حافلة|bus,قطار|train,طائرة|airplane,دراجة|bicycle,سفينة|ship,تاكسي|taxi," +
+"مفتاح|key,رحلة|trip,تذكرة|ticket,سائق|driver,سرعة|speed,طيران|flying," +
+"هاتف|phone,جوال|mobile,حاسوب|computer,لابتوب|laptop,انترنت|internet," +
+"موقع|website,برنامج|program,صورة|picture,فيديو|video,اغنية|song,رسالة|message," +
+"كلمة|word,جملة|sentence,لغة|language,اسم|name,كتاب|book,قصة|story,صحيفة|newspaper," +
+"قلم|pen,ورقة|paper,صفحة|page,طاولة|table,كرسي|chair,سرير|bed,وسادة|pillow," +
+"بطانية|blanket,مصباح|lamp,ساعة|clock,حقيبة|bag,ملابس|clothes,حذاء|shoe,قميص|shirt," +
+"عمل|work,وظيفة|job,مهنة|profession,رئيس|boss,عامل|worker,طبيب|doctor,ممرضة|nurse," +
+"مدرس|teacher,معلم|teacher,طالب|student,مهندس|engineer,محامي|lawyer,مزارع|farmer," +
+"خباز|baker,طباخ|cook,تاجر|merchant,بائع|seller,شرطي|policeman,جندي|soldier," +
+"رئيس|president,وزير|minister,مدير|manager,موظف|employee,نحو|grammar," +
+"صلاة|prayer,قران|quran,الله|god,اسلام|islam,مسلم|muslim,صيام|fasting," +
+"رمضان|ramadan,زكاة|zakat,حج|pilgrimage,مكة|mecca,المدينة|medina," +
+"دعاء|supplication,اذان|call to prayer,امام|imam,وضوء|ablution,جماعة|congregation," +
+"سورة|surah,اية|verse,دين|religion,ايمان|faith,رحمة|mercy,جنة|paradise,شكر|thanks," +
+"نوافل|voluntary prayers,سنه|sunnah,صوم|fasting,محرم|haram,حلال|halal";
+
+// ===== v26.19: القاموس المدمج — الجزء 3: الجمل الشائعة (ترجمة جملة كاملة بجودة أعلى) =====
+var TR_PHRASES_STR =
+"السلام عليكم|peace be upon you,وعليكم السلام|and peace be upon you too," +
+"صباح الخير|good morning,مساء الخير|good evening,تصبح على خير|good night,ليلة سعيدة|good night," +
+"كيف حالك|how are you,كيف الحال|how are you,كيفك|how are you,شلونك|how are you," +
+"بخير الحمد لله|i am fine thank god,الحمد لله بخير|i am fine praise be to god,تمام الحمد لله|i am fine thank god," +
+"ما اسمك|what is your name,اسمي|my name is,اسمي|i am called,تشرفنا|pleased to meet you," +
+"شكرا|thank you,شكرا جزيلا|thank you very much,الف شكر|thanks a lot,ممتاز|excellent," +
+"عفوا|you are welcome,عفوا|excuse me,اسف|sorry,آسف|sorry,اسف جدا|very sorry,لا مشكلة|no problem,لا يهم|it does not matter," +
+"من فضلك|please,رجاء|please,لو سمحت|please,الى اللقاء|goodbye,مع السلامة|goodbye,في امان الله|goodbye," +
+"احبك|i love you,احبك|i love you,افتقدك|i miss you,وحشتني|i miss you," +
+"لا افهم|i do not understand,انا لا افهم|i do not understand,ماذا تقول|what are you saying,اعده من فضلك|repeat please," +
+"هل تتكلم انكليزي|do you speak english,هل تتكلم عربي|do you speak arabic,انا من سوريا|i am from syria,من اين انت|where are you from," +
+"اين الحمام|where is the bathroom,اين المحطة|where is the station,اين المطار|where is the airport,اين المسجد|where is the mosque," +
+"كم الثمن|how much is it,بكم هذا|how much is this,غال جدا|too expensive,رخيص|cheap,ارخص|cheaper," +
+"اريد هذا|i want this,لا اريد شيئا|i want nothing,الحساب من فضلك|the bill please," +
+"المساعدة|help,النقذة|help,ساعدني|help me,انا تائه|i am lost,انني تائه|i am lost," +
+"احترس|be careful,بسرعة|quickly,ببطء|slowly,توقف|stop,انتظر|wait,انتظرني|wait for me," +
+"انا جائع|i am hungry,انا عطشان|i am thirsty,انا متعب|i am tired,انا سعيد|i am happy,انا حزين|i am sad," +
+"ليس صحيحا|it is not true,صحيح|correct,بالضبط|exactly,بالطبع|of course,مستحيل|impossible,ربما|maybe," +
+"الحمد لله|praise be to god,ان شاء الله|god willing,ما شاء الله|god has willed it,بسم الله|in the name of god," +
+"استغفر الله|i ask god forgiveness,سبحان الله|glory be to god,الله اكبر|god is greatest," +
+"للصلاة|to prayer,قد اكتملت الصلاة|prayer is established,حفظ الله|god protect," +
+"جيد جدا|very good,كويس|good,مشان هيك|that is why,عشان|because,هاي|hi,اهلا|hello,مرحبا|welcome,اهلا وسهلا|welcome," +
+"كيف اساعدك|how can i help you,بالمرة القادمة|next time,انتهينا|we are done,خلصنا|we finished," +
+"عندي سؤال|i have a question,عندي|i have,ليس عندي|i do not have,ما عندي|i do not have," +
+"احتاج مساعدة|i need help,محتاج|i need,استطيع|i can,لا استطيع|i cannot,غير ممكن|not possible," +
+"راح اجي|i will come,سوف اذهب|i will go,راح اروح|i will go,بدي|i want,ما بدي|i do not want," +
+"good morning|صباح الخير,good evening|مساء الخير,good night|تصبح على خير," +
+"how are you|كيف حالك,i am fine|بخير,thank you|شكرا,thank you very much|شكرا جزيلا," +
+"you are welcome|عفوا,please|من فضلك,excuse me|عفوا,sorry|اسف,no problem|لا مشكلة," +
+"what is your name|ما اسمك,my name is|اسمي,pleased to meet you|تشرفنا," +
+"i love you|احبك,i miss you|افتقدك,i do not understand|لا افهم," +
+"do you speak english|هل تتكلم انكليزي,where are you from|من اين انت," +
+"where is the bathroom|اين الحمام,how much is it|كم الثمن,how much is this|بكم هذا," +
+"i want this|اريد هذا,the bill please|الحساب من فضلك,help me|ساعدني," +
+"be careful|احترس,wait|انتظر,stop|توقف,come here|تعال هنا,go away|اذهب بعيدا," +
+"i am hungry|انا جائع,i am thirsty|انا عطشان,i am tired|انا متعب,i am happy|انا سعيد," +
+"today|اليوم,tomorrow|غدا,yesterday|امس,now|الان,later|لاحقا," +
+"what time is it|كم الساعة,it is late|ان الوقت تأخر,hurry up|اسرع,slowly|ببطء," +
+"i have a question|عندي سؤال,i have|عندي,i do not have|ليس عندي,i need|احتاج," +
+"i can|استطيع,i cannot|لا استطيع,of course|بالطبع,maybe|ربما,always|دائما,never|ابدا," +
+"praise be to god|الحمد لله,god willing|ان شاء الله,in the name of god|بسم الله," +
+"peace be upon you|السلام عليكم,and peace be upon you|وعليكم السلام," +
+"goodbye|الى اللقاء,hello|مرحبا,hi|اهلا,welcome|اهلا وسهلا," +
+"next time|المرة القادمة,right now|الآن,at home|في البيت,in the morning|في الصباح," +
+"at night|في الليل,every day|كل يوم,once a week|مرة كل اسبوع," +
+"i want to eat|اريد ان اكل,i want to drink|اريد ان اشرب,i want to sleep|اريد ان انام," +
+"i want to go|اريد ان اذهب,let us go|هيا نذهب,come with me|تعال معي," +
+"look at this|انظر لهذا,listen to me|اسمعني,listen|اسمع,talk to me|تحدث معي," +
+"how old are you|كم عمرك,i am thirty years old|عمري ثلاثون سنة," +
+"i am learning english|اتعلم الانكليزية,i am learning arabic|اتعلم العربية," +
+"speak slowly please|تكلم ببطء من فضلك,what does this mean|ماذا يعني هذا," +
+"welcome|مرحبا بك,how can i help|كيف اساعد,i do not know|لا اعرف," +
+"i know|اعرف,i think|اعتقد,i believe|اذن|so,i am busy|انا مشغول," +
+"i am free|انا حر,come in|تفضل ادخل,sit down|اجلس,get up|انضةض," +
+"open the door|افتح الباب,close the door|اغلق الباب,turn on the light|اضئ الضوء," +
+"turn off the light|اطفئ الضوء,give me|اعطني,show me|اورني," +
+"one moment|لحظة واحدة,just a minute|دقيقة واحدة,see you later|اراك لاحقا," +
+"see you tomorrow|اراك غدا,take care|اعتني بنفسك,get well soon|شفاك الله," +
+"congratulations|مبروك,happy birthday|عيد ميلاد سعيد,happy eid|عيد سعيد," +
+"good luck|حظا سعيدا,god bless you|بارك الله فيك,inshallah|ان شاء الله," +
+"no thanks|لا شكرا,yes please|نعم من فضلك,a little|قليل,alot|كثير," +
+"too much|كثير جدا,a few|قليل,more please|المزيد من فضلك," +
+"finished|انتهى,not yet|ليس بعد,already|اصلا,still|ما زال," +
+"what happened|ماذا حدث,nothing happened|لم يحدث شيء,no problem at all|لا مشكلة ابدا";
+
+// =====================================================================
+// ===== v26.19: ترقية المترجم — قاموس مدمج بلا إنترنت + فونيتيكس + ناطق بخيارات + سجل + تدقيق إملائي + كتابة مواضيع =====
+// =====================================================================
+var TR_DICT_P4 =
+"دمشق|damascus,حلب|aleppo,حمص|homs,حماة|hama,اللاذقية|latakia,طرطوس|tartus,درعا|daraa," +
+"سوريا|syria,لبنان|lebanon,الاردن|jordan,العراق|iraq,مصر|egypt,فلسطين|palestine,السعودية|saudi arabia," +
+"الكويت|kuwait,قطر|qatar,تركيا|turkey,المغرب|morocco,الجزائر|algeria,تونس|tunisia,اليمن|yemen," +
+"الرياض|riyadh,جدة|jeddah,بيروت|beirut,عمان|amman,بغداد|baghdad,القاهرة|cairo," +
+"قراءة|reading,كتابة|writing,سباحة|swimming,موسيقى|music,رسم|drawing,تصوير|photography,شطرنج|chess," +
+"رياضة|sports,كرة القدم|football,تنس|tennis,رياضيات|mathematics,علوم|science,فيزياء|physics,كيمياء|chemistry," +
+"تاريخ|history,جغرافيا|geography,انكليزي|english,عربي|arabic,فرنسي|french,فن|art,مكتبة|library,ملعب|playground," +
+"حصة|class,امتحان|exam,اجازة|vacation,عمر|age,ان|that,ان|to,عشرون|twenty,ثلاثين|thirty,اربعين|forty,خمسين|fifty,ستين|sixty,سبعين|seventy,ثمانين|eighty,تسعين|ninety,اعيش|i live,اتقن|master,حلمي|my dream,لدي|i have,نجتمع|we gather," +
+"اتناول|i eat,امارس|i practice,فراغي|free time,اتمرن|i exercise,اهم|most important,مفضل|favorite," +
+"اوقات|times,عمل|job,دراسة|studying,اكتب|i write,اقرا|i read,اسكن|i live,جميلة|beautiful,كبيرة|big," +
+"طويلة|long,حلوة|sweet,واسعة|wide,نظيفة|clean,قريبة|near";
+
+function trNormAr(s) {
+  return String(s || "")
+    .replace(/[\u064B-\u0652\u0670\u0640]/g, "")
+    .replace(/[٠-٩]/g, function (d) { return String("٠١٢٣٤٥٦٧٨٩".indexOf(d)); })
+    .replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه")
+    .replace(/[^\u0600-\u06FF0-9\s]/g, " ")
+    .replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+}
+function trNormEn(s) {
+  return String(s || "").toLowerCase().replace(/[^a-z0-9'\s]/g, " ").replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+}
+
+var TR_DICT_STR = TR_DICT_P1 + TR_DICT_P2 + TR_PHRASES_STR + TR_DICT_P4;
+var trDict = {}, trDictR = {}, trPhrases = {}, trPhrasesR = {}, trPhrasesH = {}, trDictT = {}, trDictReady = false;
+function trLightAr(s) {
+  return String(s || "").replace(/[\u064B-\u0652\u0670\u0640]/g, "")
+    .replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي")
+    .replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+}
+(function trBuildDict() {
+  try {
+    var arr = TR_DICT_STR.split(","), i, pr, a, e;
+    for (i = 0; i < arr.length; i++) {
+      pr = arr[i].split("|");
+      if (pr.length !== 2) continue;
+      a = trNormAr(pr[0]); e = trNormEn(pr[1]);
+      if (!a || !e) continue;
+      if (!trDict[a]) trDict[a] = e;
+      if (!trDictR[e]) trDictR[e] = a;
+      if (String(pr[0]).indexOf("ة") !== -1) {
+        var lt = trLightAr(pr[0]);
+        if (lt && !trDictT[lt]) trDictT[lt] = e; // خريطة ة الدقيقة — تمنع تصادم كرة/كره
+      }
+    }
+    arr = TR_PHRASES_STR.split(",");
+    for (i = 0; i < arr.length; i++) {
+      pr = arr[i].split("|");
+      if (pr.length !== 2) continue;
+      a = trLightAr(pr[0]); e = trNormEn(pr[1]);
+      if (!a || !e) continue;
+      if (!trPhrases[a]) trPhrases[a] = pr[1];
+      if (!trPhrasesR[e]) trPhrasesR[e] = pr[0];
+      var ah = trNormAr(pr[0]);
+      if (ah && ah !== a && !trPhrasesH[ah]) trPhrasesH[ah] = pr[1];
+    }
+    trDictReady = true;
+  } catch (e) { trDictReady = false; }
+})();
+
+var TR_AR_SUF = ["تها", "تين", "هم", "هن", "ها", "كم", "كن", "نا", "ات", "ون", "ين", "يا", "تي", "ك", "ي", "ه", "ا"];
+var TR_AR_PRE = ["وال", "فال", "بال", "كال", "لل", "ال", "و", "ف", "ب", "ك", "ل"];
+
+function trArLookup(w) {
+  if (!w) return null;
+  // 1) الخريطة الدقيقة (تحفظ ة) — تمنع تصادم كرة/كره
+  if (trDictT[w]) return trDictT[w];
+  // 2) الخريطة المدمجة (ة=ه)
+  if (trDict[w]) return trDict[w];
+  var h = trNormAr(w);
+  if (h !== w && trDict[h]) return trDict[h];
+  var i, j, b, b2;
+  // البدائر أولاً (واربعين → اربعين → forty قبل قص اللواحق)
+  for (i = 0; i < TR_AR_PRE.length; i++) {
+    if (w.indexOf(TR_AR_PRE[i]) === 0 && w.length > TR_AR_PRE[i].length + 1) {
+      b = w.substring(TR_AR_PRE[i].length);
+      if (trDictT[b]) return trDictT[b];
+      if (trDict[b]) return trDict[b];
+      for (j = 0; j < TR_AR_SUF.length; j++) {
+        if (b.length > TR_AR_SUF[j].length + 1 && b.substring(b.length - TR_AR_SUF[j].length) === TR_AR_SUF[j]) {
+          b2 = b.substring(0, b.length - TR_AR_SUF[j].length);
+          if (trDictT[b2]) return trDictT[b2];
+          if (trDict[b2]) return trDict[b2];
+          if (trDictT[b2 + "ة"]) return trDictT[b2 + "ة"];
+          if (trDict[b2 + "ه"]) return trDict[b2 + "ه"];
+        }
+      }
+    }
+  }
+  for (i = 0; i < TR_AR_SUF.length; i++) {
+    if (w.length > TR_AR_SUF[i].length + 1 && w.substring(w.length - TR_AR_SUF[i].length) === TR_AR_SUF[i]) {
+      b = w.substring(0, w.length - TR_AR_SUF[i].length);
+      if (trDictT[b]) return trDictT[b];
+      if (trDict[b]) return trDict[b];
+      if (trDictT[b + "ة"]) return trDictT[b + "ة"];
+      if (trDict[b + "ه"]) return trDict[b + "ه"];
+      for (j = 0; j < TR_AR_PRE.length; j++) {
+        if (b.indexOf(TR_AR_PRE[j]) === 0 && b.length > TR_AR_PRE[j].length + 1) {
+          b2 = b.substring(TR_AR_PRE[j].length);
+          if (trDictT[b2]) return trDictT[b2];
+          if (trDict[b2]) return trDict[b2];
+          if (trDictT[b2 + "ة"]) return trDictT[b2 + "ة"];
+          if (trDict[b2 + "ه"]) return trDict[b2 + "ه"];
+        }
+      }
+    }
+  }
+  for (i = 0; i < TR_AR_PRE.length; i++) {
+    if (w.indexOf(TR_AR_PRE[i]) === 0 && w.length > TR_AR_PRE[i].length + 1) {
+      b = w.substring(TR_AR_PRE[i].length);
+      if (trDictT[b]) return trDictT[b];
+      if (trDict[b]) return trDict[b];
+    }
+  }
+  return null;
+}
+
+function trEnLem(w) {
+  if (!w) return null;
+  if (trDictR[w]) return trDictR[w];
+  var n = w.length, c = [], i, b, b2;
+  if (n > 3 && w.charAt(n - 1) === "s") c.push(w.substring(0, n - 1));
+  if (n > 4 && w.substring(n - 2) === "es") c.push(w.substring(0, n - 2));
+  if (n > 5 && w.substring(n - 3) === "ies") c.push(w.substring(0, n - 3) + "y");
+  if (n > 5 && w.substring(n - 3) === "ing") { c.push(w.substring(0, n - 3)); c.push(w.substring(0, n - 3) + "e"); }
+  if (n > 4 && w.substring(n - 2) === "ed") { c.push(w.substring(0, n - 2)); c.push(w.substring(0, n - 2) + "e"); c.push(w.substring(0, n - 1)); }
+  for (i = 0; i < c.length; i++) { if (trDictR[c[i]]) return trDictR[c[i]]; }
+  for (i = 0; i < c.length; i++) {
+    b = c[i];
+    if (b.length > 2 && b.charAt(b.length - 1) === b.charAt(b.length - 2)) {
+      b2 = b.substring(0, b.length - 1);
+      if (trDictR[b2]) return trDictR[b2];
+    }
+  }
+  return null;
+}
+
+var TR_NUM_AR = ["صفر", "واحد", "اثنان", "ثلاثة", "اربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة", "عشرة", "احد عشر", "اثنا عشر"];
+var TR_NUM_AR_TENS = ["", "", "عشرون", "ثلاثون", "اربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"];
+var TR_NUM_EN = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+var TR_NUM_EN_TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+function trNumToWords(n, toAr) {
+  if (isNaN(n) || n < 0 || n > 999999) return null;
+  function u(v) {
+    if (v < 13) return toAr ? TR_NUM_AR[v] : TR_NUM_EN[v];
+    if (v < 20) return toAr ? (TR_NUM_AR[v - 10] + " عشر") : (TR_NUM_EN[v - 10] + "teen");
+    var t = Math.floor(v / 10), o = v % 10;
+    if (toAr) return o ? (TR_NUM_AR[o] + " و" + TR_NUM_AR_TENS[t]) : TR_NUM_AR_TENS[t];
+    return o ? (TR_NUM_EN_TENS[t] + " " + TR_NUM_EN[o]) : TR_NUM_EN_TENS[t];
+  }
+  var out = "", rest = n;
+  if (rest >= 1000) { out = u(Math.floor(rest / 1000)) + (toAr ? " الف" : " thousand"); rest = rest % 1000; if (rest) out += toAr ? " و" : " "; }
+  if (rest >= 100) { out += u(Math.floor(rest / 100)) + (toAr ? " مئة" : " hundred"); rest = rest % 100; if (rest) out += toAr ? " و" : " "; }
+  if (rest) out += u(rest);
+  return out.replace(/^\s+|\s+$/g, "");
+}
+
+// ===== الفونيتيكس: عربي→لاتيني =====
+function trPhAr(s) {
+  var M = { "ا": "a", "أ": "a", "إ": "i", "آ": "aa", "ب": "b", "ت": "t", "ث": "th", "ج": "j", "ح": "h", "خ": "kh", "د": "d", "ذ": "dh", "ر": "r", "ز": "z", "س": "s", "ش": "sh", "ص": "s", "ض": "d", "ط": "t", "ظ": "z", "ع": "a", "غ": "gh", "ف": "f", "ق": "q", "ك": "k", "ل": "l", "م": "m", "ن": "n", "ه": "h", "و": "w", "ي": "y", "ء": "'", "ئ": "y", "ؤ": "w", "ة": "a", "ى": "a" };
+  var words = String(s || "").split(/(\s+)/), out = "", wi, nw, i, ch, o, lead, n;
+  for (wi = 0; wi < words.length; wi++) {
+    var w = words[wi];
+    if (!w) continue;
+    if (/^\s+$/.test(w)) { out += " "; continue; }
+    nw = w.replace(/[\u064B-\u0652\u0670\u0640]/g, "");
+    lead = "";
+    if (nw.length > 2 && nw.charAt(0) === "ا" && nw.charAt(1) === "ل") { lead = "al-"; nw = nw.substring(2); }
+    o = ""; n = nw.length;
+    for (i = 0; i < n; i++) {
+      ch = nw.charAt(i);
+      if (M[ch] !== undefined) o += M[ch];
+      else if (!/[\u0600-\u06FF]/.test(ch)) o += ch;
+    }
+    out += lead + o;
+  }
+  return out.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+}
+
+// ===== الفونيتيكس: إنكليزي→حروف عربية (تقريبي) =====
+var TR_EN_PH_RULES = [
+  ["tion", "شن"], ["sion", "شن"], ["cious", "شس"], ["tious", "شس"], ["ough", "او"], ["augh", "اف"],
+  ["ight", "ايت"], ["eigh", "اي"], ["tch", "تش"], ["ch", "تش"], ["sh", "ش"], ["ph", "ف"], ["th", "ث"],
+  ["ck", "ك"], ["qu", "كو"], ["wh", "و"], ["gh", "غ"], ["kn", "ن"], ["wr", "ر"],
+  ["ee", "ي"], ["ea", "ي"], ["oo", "و"], ["ou", "او"], ["ow", "او"], ["ai", "اي"], ["ay", "اي"],
+  ["ei", "اي"], ["ey", "اي"], ["oi", "وي"], ["oy", "وي"], ["ar", "ار"], ["or", "اور"], ["er", "ير"],
+  ["ir", "ير"], ["ur", "ير"], ["ll", "ل"], ["ss", "س"], ["tt", "ت"], ["mm", "م"], ["nn", "ن"], ["pp", "ب"],
+  ["rr", "ر"], ["dd", "د"], ["ff", "ف"], ["cc", "ك"], ["gg", "ج"], ["bb", "ب"]
+];
+var TR_EN_PH_CH = { "a": "ا", "e": "ي", "i": "ي", "o": "و", "u": "و", "y": "ي", "b": "ب", "c": "ك", "d": "د", "f": "ف", "g": "ج", "h": "ه", "j": "ج", "k": "ك", "l": "ل", "m": "م", "n": "ن", "p": "ب", "q": "ك", "r": "ر", "s": "س", "t": "ت", "v": "ف", "w": "و", "x": "كس", "z": "ز" };
+
+function trPhEnWord(w) {
+  var s = String(w || "").toLowerCase().replace(/[^a-z']/g, "");
+  if (!s) return String(w || "");
+  if (s.length > 2 && s.charAt(s.length - 1) === "e" && s !== "the") s = s.substring(0, s.length - 1);
+  var out = "", i = 0, j, found;
+  while (i < s.length) {
+    found = null;
+    for (j = 0; j < TR_EN_PH_RULES.length; j++) {
+      if (s.substring(i, i + TR_EN_PH_RULES[j][0].length) === TR_EN_PH_RULES[j][0]) { found = TR_EN_PH_RULES[j]; break; }
+    }
+    if (found) { out += found[1]; i += found[0].length; continue; }
+    out += (TR_EN_PH_CH[s.charAt(i)] || s.charAt(i));
+    i++;
+  }
+  return out;
+}
+function trPhEn(s) {
+  var toks = String(s || "").split(/(\s+)/), out = [], i;
+  for (i = 0; i < toks.length; i++) {
+    if (!toks[i]) continue;
+    if (/^\s+$/.test(toks[i])) { out.push(" "); continue; }
+    out.push(trPhEnWord(toks[i]));
+  }
+  return out.join("").replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+}
+function trPhonetics(text, lang) { return lang === "ar" ? trPhAr(text) : trPhEn(text); }
+
+// ===== التدقيق الإملائي: مسافة تحرير محدودة + اقتراحات =====
+function trLev(a, b, maxD) {
+  var la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > maxD) return maxD + 1;
+  var i, j, prev, cur, d, best;
+  var row = [];
+  for (j = 0; j <= lb; j++) row.push(j);
+  for (i = 1; i <= la; i++) {
+    prev = row[0]; row[0] = i; best = row[0];
+    for (j = 1; j <= lb; j++) {
+      d = (a.charAt(i - 1) === b.charAt(j - 1)) ? 0 : 1;
+      cur = Math.min(row[j] + 1, row[j - 1] + 1, prev + d);
+      prev = row[j]; row[j] = cur;
+      if (cur < best) best = cur;
+    }
+    if (best > maxD) return maxD + 1;
+  }
+  return row[lb];
+}
+function trSuggest(w, isAr) {
+  var cands = [w], i, j, res = [], out = [], seen = {};
+  if (isAr) {
+    for (i = 0; i < TR_AR_PRE.length; i++) {
+      if (w.indexOf(TR_AR_PRE[i]) === 0 && w.length > TR_AR_PRE[i].length + 1) cands.push(w.substring(TR_AR_PRE[i].length));
+    }
+  } else {
+    if (w.length > 3 && w.charAt(w.length - 1) === "s") cands.push(w.substring(0, w.length - 1));
+  }
+  var k, src;
+  for (j = 0; j < cands.length; j++) {
+    src = isAr ? trDict : trDictR;
+    var keys = [], wl = cands[j].length;
+    if (wl < 3) continue;
+    for (k in src) { if (src.hasOwnProperty(k)) keys.push(k); }
+    for (i = 0; i < keys.length; i++) {
+      if (Math.abs(keys[i].length - wl) > 2) continue;
+      var d = trLev(cands[j], keys[i], 2);
+      if (d <= 2) res.push([keys[i], d]);
+    }
+  }
+  res.sort(function (x, y) { return x[1] - y[1]; });
+  for (i = 0; i < res.length && out.length < 3; i++) {
+    if (!seen[res[i][0]]) { seen[res[i][0]] = 1; out.push(res[i][0]); }
+  }
+  return out;
+}
+
+// ===== الترجمة المحلية (بلا إنترنت) — مطابقة جملة كاملة ثم n-gram ثم كلمة بكلمة =====
+function trOfflineTranslate(q) {
+  if (!trDictReady) return null;
+  var isAr = /[\u0600-\u06FF]/.test(q);
+  var lq = isAr ? trLightAr(q) : trNormEn(q);
+  if (!lq) return null;
+  var ph = isAr ? trPhrases : trPhrasesR;
+  var phH = isAr ? trPhrasesH : null;
+  // 1) جملة كاملة (خفيف ثم ثقيل)
+  if (ph[lq]) return { text: ph[lq], full: true, phrase: true, brk: [], miss: 0 };
+  var hq = isAr ? trNormAr(q) : lq;
+  if (phH && hq !== lq && phH[hq]) return { text: phH[hq], full: true, phrase: true, brk: [], miss: 0 };
+  // 2) مسار الكلمات مع n-gram للجمل المركبة (مثل كرة القدم)
+  var toks = lq.split(" "), i, w, hit, miss = 0, out = [], brk = [], valid = 0;
+  var toArNum = !isAr;
+  if (toks.length === 1 && /^[0-9]+$/.test(toks[0])) {
+    var nw = trNumToWords(parseInt(toks[0], 10), toArNum);
+    if (nw) return { text: nw, full: true, phrase: false, brk: [[toks[0], nw]], miss: 0 };
+  }
+  i = 0;
+  while (i < toks.length) {
+    w = toks[i];
+    if (!w) { i++; continue; }
+    // n-gram: أطول تطابق 5..2 كلمات في جدول الجمل والقاموس (مثل كرة القدم)
+    hit = null;
+    var n, g, t;
+    for (n = Math.min(5, toks.length - i); n >= 2; n--) {
+      g = toks.slice(i, i + n).join(" ");
+      t = ph[g] || (phH && phH[g]) || (isAr ? (trDictT[g] || trDict[g]) : trDictR[g]) || null;
+      if (t) { hit = { text: t, len: n }; break; }
+    }
+    if (hit) {
+      var gtxt = toks.slice(i, i + hit.len).join(" ");
+      out.push(hit.text); brk.push([gtxt, hit.text]); valid++;
+      i += hit.len;
+      continue;
+    }
+    if (/^[0-9]+$/.test(w)) {
+      var nw2 = trNumToWords(parseInt(w, 10), toArNum) || w;
+      out.push(nw2); brk.push([w, nw2]); valid++;
+      i++;
+      continue;
+    }
+    var d = isAr ? trArLookup(w) : trEnLem(w);
+    if (d) { out.push(d); brk.push([w, d]); valid++; }
+    else { miss++; out.push(w); brk.push([w, null]); }
+    i++;
+  }
+  if (!valid) return null;
+  return { text: out.join(" "), full: miss === 0, phrase: false, brk: brk, miss: miss };
+}
+
+function trEsc(s) {
+  return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function trUseOnline() {
+  var c = el("trNetChk");
+  if (c) return !!c.checked;
+  return true;
+}
+
+function trShowResult(text) {
+  var out = el("trOutput");
+  out.textContent = text;
+  out.className = "tr-out";
+  trPhoneticsRefresh();
+}
+
+function trSetBusy(b) { trState.busy = b; try { el("trGoBtn").disabled = b; } catch (e) {} }
+
+// ===== التدفق الجديد: القاموس المدمج أولاً ثم الإنترنت عند الحاجة =====
+function trTranslate(manual) {
+  var inp = el("trInput");
+  if (!inp) return;
+  var q = trClean(inp.value || "");
+  if (!q) { if (manual) trStatus("اكتب نصاً أولاً", true); return; }
+  if (trState.busy) return;
+  trSetBusy(true);
+  trStatus("جارٍ الترجمة…");
+  trFixClear();
+  var off = trOfflineTranslate(q);
+  trPhShow("trPhSrc", q, trState.src);
+  if (off && off.full) {
+    trSetBusy(false);
+    trShowResult(off.text);
+    trShowBreak(off);
+    trHistSave(q, off.text, trState.src + ">" + trState.dst, "dict");
+    trStatus(off.phrase ? "✓ جملة كاملة من القاموس المدمج — عملت بلا إنترنت" : "✓ ترجمة القاموس المدمج — عملت بلا إنترنت");
+    trMaybeFix(off);
+    return;
+  }
+  if (!trUseOnline()) {
+    trSetBusy(false);
+    if (off) {
+      trShowResult(off.text);
+      trShowBreak(off);
+      trHistSave(q, off.text, trState.src + ">" + trState.dst, "dict");
+      trStatus("✓ ترجمة تقريبية من القاموس — فعّل «استخدام الإنترنت» لترجمة أدق", true);
+      trMaybeFix(off);
+    } else {
+      el("trOutput").className = "tr-out empty";
+      trStatus("✗ لا أستطيع الترجمة بلا إنترنت — القاموس المدمج لا يغطي هذا النص", true);
+    }
+    return;
+  }
+  var order = [trState.lastSrcIdx], i;
+  for (i = 0; i < TR_SOURCES.length; i++) { if (i !== trState.lastSrcIdx) order.push(i); }
+  trTryChain(order, 0, q, off);
+}
+
+function trTryChain(order, pos, q, off) {
+  if (pos >= order.length) {
+    trSetBusy(false);
+    if (off) {
+      trShowResult(off.text);
+      trShowBreak(off);
+      trHistSave(q, off.text, trState.src + ">" + trState.dst, "dict");
+      trStatus("✗ الإنترنت متعثر — عرضت ترجمة القاموس المدمج (تقريبية)", true);
+      trMaybeFix(off);
+    } else {
+      trStatus("✗ تعذّر الوصول لخدمة الترجمة — تحقق من اتصال الإنترنت وحاول مجدداً", true);
+    }
+    return;
+  }
+  var s = TR_SOURCES[order[pos]];
+  trTranslateChunked(q, s, function (result) {
+    if (!result || !trClean(result)) { trTryChain(order, pos + 1, q, off); return; }
+    trState.lastSrcIdx = order[pos];
+    trSetBusy(false);
+    trShowResult(result);
+    el("trBreak").style.display = "none";
+    trHistSave(q, result, trState.src + ">" + trState.dst, "net");
+    trStatus("✓ تمت الترجمة عبر الإنترنت");
+  }, function () { trTryChain(order, pos + 1, q, off); });
+}
+
+// ===== تفصيل كلمة بكلمة =====
+function trShowBreak(off) {
+  var bx = el("trBreak");
+  if (!bx) return;
+  if (!off || off.phrase || !off.brk || !off.brk.length) { bx.style.display = "none"; bx.innerHTML = ""; return; }
+  var html = "<div class='tr-brk-title'>📖 كلمة بكلمة:</div>", i;
+  for (i = 0; i < off.brk.length && i < 60; i++) {
+    html += "<span class='tr-brk'><b>" + trEsc(off.brk[i][0]) + "</b> = " + (off.brk[i][1] === null ? "؟" : trEsc(off.brk[i][1])) + "</span> ";
+  }
+  bx.innerHTML = html;
+  bx.style.display = "block";
+}
+
+// ===== تدقيق إملائي وتصحيح =====
+var trFixData = [];
+function trFixClear() {
+  trFixData = [];
+  try { var fx = el("trFix"); fx.style.display = "none"; fx.innerHTML = ""; } catch (e) {}
+}
+function trMaybeFix(off) {
+  trFixClear();
+  if (!off || off.phrase || !off.brk || !off.miss) return;
+  var fixes = [], i, seen = {};
+  for (i = 0; i < off.brk.length && fixes.length < 3; i++) {
+    if (off.brk[i][1] === null && !seen[off.brk[i][0]]) {
+      seen[off.brk[i][0]] = 1;
+      var sugg = trSuggest(off.brk[i][0], /[\u0600-\u06FF]/.test(off.brk[i][0]));
+      if (sugg.length) fixes.push({ w: off.brk[i][0], s: sugg });
+    }
+  }
+  if (!fixes.length) return;
+  trFixData = fixes;
+  var html = "<span class='tr-fix-lbl'>✍️ تدقيق إملائي — هل تقصد:</span>", f, s2;
+  for (f = 0; f < fixes.length; f++) {
+    html += "<div class='tr-fix-row'><span class='tr-fix-word'>«" + trEsc(fixes[f].w) + "»</span>";
+    for (s2 = 0; s2 < fixes[f].s.length; s2++) {
+      html += "<button class='tr-fix-btn' onclick='trApplyFix(" + f + "," + s2 + ")'>" + trEsc(fixes[f].s[s2]) + "</button>";
+    }
+    html += "</div>";
+  }
+  var fx = el("trFix");
+  fx.innerHTML = html;
+  fx.style.display = "block";
+}
+function trApplyFix(fi, si) {
+  var f = trFixData[fi];
+  if (!f) return;
+  var rep = f.s[si];
+  var inp = el("trInput");
+  var isAr = /[\u0600-\u06FF]/.test(rep) || /[\u0600-\u06FF]/.test(f.w);
+  var toks = (inp.value || "").split(/(\s+)/), i, nt;
+  for (i = 0; i < toks.length; i++) {
+    if (!toks[i] || /^\s+$/.test(toks[i])) continue;
+    nt = isAr ? trNormAr(toks[i]) : trNormEn(toks[i]);
+    if (nt === f.w) { toks[i] = rep; break; }
+  }
+  inp.value = toks.join("");
+  el("trCount").textContent = inp.value.length + " / " + TR_MAX;
+  trFixClear();
+  trTranslate(true);
+}
+
+// ===== الفونيتيكس — العرض =====
+function trPhShow(id, text, lang) {
+  var e2 = el(id);
+  if (!e2) return;
+  var chk = el("trPhChk");
+  var on = chk ? chk.checked : true;
+  if (!on || !trClean(text)) { e2.style.display = "none"; e2.textContent = ""; return; }
+  e2.textContent = "🗣 نطق تقريبي: " + trPhonetics(text, lang);
+  e2.style.display = "block";
+  e2.dir = lang === "ar" ? "ltr" : "rtl";
+}
+function trPhoneticsRefresh() {
+  try {
+    trPhShow("trPhSrc", el("trInput").value || "", trState.src);
+    var out = el("trOutput");
+    var has = out.className.indexOf("empty") === -1;
+    trPhShow("trPhDst", has ? (out.textContent || "") : "", trState.dst);
+  } catch (e) {}
+}
+
+// ===== السجل =====
+function trHistLoad() {
+  try { var h = JSON.parse(localStorage.getItem("trHistV1") || "[]"); return h || []; } catch (e) { return []; }
+}
+function trHistSave(q, r, dir, mode) {
+  try {
+    var h = trHistLoad();
+    if (h.length && h[0].q === q && h[0].r === r) return;
+    h.unshift({ q: q, r: r, d: dir, m: mode, t: Date.now() });
+    if (h.length > 60) h.length = 60;
+    localStorage.setItem("trHistV1", JSON.stringify(h));
+  } catch (e) {}
+}
+function trHistTime(ts) {
+  try { var d = new Date(ts), h = d.getHours(), m = d.getMinutes(); return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m; } catch (e) { return ""; }
+}
+function trHistRender() {
+  var h = trHistLoad(), html = "", i, it;
+  if (!h.length) { el("trHistList").innerHTML = "<div class='tr-hist-empty'>لا يوجد سجل بعد — كل ترجمة ناجحة تُحفظ هنا تلقائياً على جهازك</div>"; return; }
+  for (i = 0; i < h.length; i++) {
+    it = h[i];
+    var badge = it.m === "net" ? "🌐" : (it.m === "write" ? "✍️" : "📦");
+    html += "<div class='tr-hist-item' onclick='trHistRestore(" + i + ")'>" +
+      "<div class='tr-hist-dir'>" + (it.d === "ar>en" ? "عربي → إنكليزي" : "إنكليزي → عربي") + " · " + trHistTime(it.t) + " · " + badge + "</div>" +
+      "<div class='tr-hist-q'>" + trEsc(String(it.q).substring(0, 120)) + "</div>" +
+      "<div class='tr-hist-r'>" + trEsc(String(it.r).substring(0, 160)) + "</div>" +
+      "<button class='tr-hist-del' onclick='trHistDel(event," + i + ")'>✕</button></div>";
+  }
+  el("trHistList").innerHTML = html;
+}
+function trHistOpen() { trHistRender(); el("trHistWin").classList.add("open"); }
+function trHistClose() { el("trHistWin").classList.remove("open"); }
+function trHistClear() { try { localStorage.removeItem("trHistV1"); } catch (e) {} trHistRender(); }
+function trHistRestore(i) {
+  var h = trHistLoad(), it = h[i];
+  if (!it) return;
+  trState.src = it.d === "ar>en" ? "ar" : "en";
+  trState.dst = it.d === "ar>en" ? "en" : "ar";
+  el("trInput").value = it.q;
+  el("trCount").textContent = it.q.length + " / " + TR_MAX;
+  trApplyDir();
+  trShowResult(it.r);
+  trHistClose();
+}
+function trHistDel(ev, i) {
+  try { ev.stopPropagation(); } catch (e) {}
+  var h = trHistLoad();
+  h.splice(i, 1);
+  try { localStorage.setItem("trHistV1", JSON.stringify(h)); } catch (e2) {}
+  trHistRender();
+}
+
+// ===== كتابة المواضيع ✍️ =====
+var TR_TOPICS = [
+  { t: "👤 عن نفسي", s: ["اسمي ___", "انا عمري ___ سنة", "انا من ___", "اعيش في ___", "اعمل ___", "احب ___", "حلمي ان اصبح ___"] },
+  { t: "👨‍👩‍👧 عائلتي", s: ["عائلتي تضم ___", "ابي يعمل ___", "امي تعمل ___", "لدي ___ اخوة", "نحن نسكن في ___", "نجتمع كل ___", "احب عائلتي كثيرا"] },
+  { t: "🌞 يومي", s: ["استيقظ في الساعة ___", "اتناول الفطور في ___", "اذهب الى ___ في الصباح", "اعود الى البيت في ___", "في المساء ___", "انام في الساعة ___"] },
+  { t: "🏙 مدينتي", s: ["انا اعيش في مدينة ___", "مدينتي تقع في ___", "فيها ___", "الطقس فيها ___", "احب في مدينتي ___", "اهلا بكم في ___"] },
+  { t: "📚 مدرستي", s: ["ادرس في مدرسة ___", "مدرستي تقع في ___", "معلمي المفضل يدرس ___", "المواد التي احبها ___", "في الفسحة العب ___", "احب مدرستي لانها ___"] },
+  { t: "⚽ هواياتي", s: ["هواياتي كثيرة مثل ___", "في اوقات فراغي ___", "امارس الرياضة ___", "اقرا عن ___", "اشاهد ___"] },
+  { t: "🍎 صحتي", s: ["الصحة اهم من ___", "انام ___ ساعات كل ليلة", "اتناول ___", "اشرب ___", "اتمرن ___", "ابعد عن ___"] }
+];
+var trSelTopic = -1;
+function trWriterOpen() { try { trWriterRenderTemplates(); } catch (e) {} el("trWriterWin").classList.add("open"); }
+function trWriterClose() { el("trWriterWin").classList.remove("open"); }
+function trWriterRenderTemplates() {
+  var html = "", i;
+  for (i = 0; i < TR_TOPICS.length; i++) {
+    html += "<button class='tr-topic" + (i === trSelTopic ? " active" : "") + "' onclick='trWriterPick(" + i + ")'>" + TR_TOPICS[i].t + "</button> ";
+  }
+  el("trTopics").innerHTML = html;
+}
+function trWriterPick(i) {
+  trSelTopic = i;
+  trWriterRenderTemplates();
+  var s = TR_TOPICS[i].s, html = "", j;
+  trState.tplLines = s.slice(0);
+  for (j = 0; j < s.length; j++) {
+    if (s[j].indexOf("___") !== -1) {
+      html += "<div class='tr-tpl-row'><span class='tr-tpl-q'>" + trEsc(s[j]) + "</span><input type='text' id='trTplIn" + j + "' placeholder='اكتب هنا…'></div>";
+    } else {
+      html += "<div class='tr-tpl-row'><span class='tr-tpl-q'>" + trEsc(s[j]) + "</span><span class='tr-tpl-fixed'>✓</span></div>";
+    }
+  }
+  el("trTplArea").innerHTML = html;
+}
+function trLineTranslate(line, cb) {
+  var l = trClean(line);
+  if (!l) { cb(""); return; }
+  if (!/[\u0600-\u06FF]/.test(l)) { cb(l); return; }
+  var off = trOfflineTranslate(l);
+  if (off && off.full) { cb(off.text); return; }
+  if (trUseOnline()) {
+    var order = [trState.lastSrcIdx], i;
+    for (i = 0; i < TR_SOURCES.length; i++) { if (i !== trState.lastSrcIdx) order.push(i); }
+    var pos = 0;
+    var next = function () {
+      if (pos >= order.length) { cb(off ? off.text : l); return; }
+      var src = TR_SOURCES[order[pos]];
+      trTranslateChunked(l, src, function (r) {
+        if (r && trClean(r)) { trState.lastSrcIdx = order[pos]; cb(trClean(r)); }
+        else { pos++; next(); }
+      }, function () { pos++; next(); });
+    };
+    next();
+  } else { cb(off ? off.text : l); }
+}
+function trWriterGenerate() {
+  var lines = [], i, v, inpEl;
+  if (trSelTopic >= 0 && trState.tplLines && trState.tplLines.length) {
+    for (i = 0; i < trState.tplLines.length; i++) {
+      inpEl = el("trTplIn" + i);
+      if (inpEl) {
+        v = trClean(inpEl.value || "");
+        lines.push(v ? trState.tplLines[i].replace("___", v) : trState.tplLines[i].replace("___", "").replace(/\s+/g, " "));
+      } else { lines.push(trState.tplLines[i]); }
+    }
+  }
+  var idea = el("trIdea").value || "";
+  var ideaLines = idea.split(/\n+/), l;
+  for (i = 0; i < ideaLines.length; i++) {
+    l = trClean(ideaLines[i]);
+    if (l) lines.push(l);
+  }
+  lines = lines.slice(0, 30);
+  if (!lines.length) { trToast("اختر قالباً واملأ الفراغات أو اكتب فكرتك"); return; }
+  var btn = el("trGenBtn");
+  btn.disabled = true;
+  var results = new Array(lines.length), done = 0, prevSrc = trState.src, prevDst = trState.dst;
+  trState.src = "ar"; trState.dst = "en";
+  var finish = function () {
+    btn.disabled = false;
+    var para = "", i2;
+    for (i2 = 0; i2 < results.length; i2++) {
+      if (results[i2]) {
+        if (para) para += " ";
+        para += String(results[i2]).replace(/[.!،؟]+$/, "") + ".";
+      }
+    }
+    trState.src = prevSrc; trState.dst = prevDst;
+    el("trInput").value = lines.join(". ");
+    el("trCount").textContent = el("trInput").value.length + " / " + TR_MAX;
+    trState.src = "ar"; trState.dst = "en";
+    trApplyDir();
+    trShowResult(para);
+    el("trBreak").style.display = "none";
+    trHistSave(el("trInput").value, para, "ar>en", "write");
+    trStatus("✓ تولّد الموضوع الإنكليزي — استمع إليه بزر الناطق 🔊");
+    trWriterClose();
+  };
+  for (i = 0; i < lines.length; i++) {
+    (function (idx) {
+      trLineTranslate(lines[idx], function (r) { results[idx] = r; done++; if (done === lines.length) finish(); });
+    })(i);
+  }
+}
+
+// ===== الناطق بخيارات: صوت الجهاز (بلا إنترنت) أو صوت الإنترنت =====
+function trSpeakPrefs() {
+  try { var p = JSON.parse(localStorage.getItem("trSpPrefs") || "{}"); return p || {}; } catch (e) { return {}; }
+}
+function trSpSave(k, v) {
+  var p = trSpeakPrefs();
+  p[k] = v;
+  try { localStorage.setItem("trSpPrefs", JSON.stringify(p)); } catch (e) {}
+}
+function trListVoices() {
+  try {
+    if (window.speechSynthesis && speechSynthesis.getVoices) return speechSynthesis.getVoices() || [];
+  } catch (e) {}
+  return [];
+}
+function trFillVoiceSelects() {
+  var vs = trListVoices(), ars = [], ens = [], i;
+  for (i = 0; i < vs.length; i++) {
+    var L = (vs[i].lang || "").toLowerCase();
+    if (L.indexOf("ar") === 0) ars.push(vs[i]);
+    else if (L.indexOf("en") === 0) ens.push(vs[i]);
+  }
+  var sv = el("trSpVar"), se = el("trSpVen"), p = trSpeakPrefs();
+  if (sv) {
+    sv.innerHTML = "<option value=''>افتراضي الجهاز</option>";
+    for (i = 0; i < ars.length; i++) sv.innerHTML += "<option value='" + trEsc(ars[i].voiceURI) + "'>" + trEsc(ars[i].name) + "</option>";
+    if (p.var) { try { sv.value = p.var; } catch (e) {} }
+  }
+  if (se) {
+    se.innerHTML = "<option value=''>افتراضي الجهاز</option>";
+    for (i = 0; i < ens.length; i++) se.innerHTML += "<option value='" + trEsc(ens[i].voiceURI) + "'>" + trEsc(ens[i].name) + "</option>";
+    if (p.ven) { try { se.value = p.ven; } catch (e2) {} }
+  }
+  var note = el("trSpNote");
+  if (note) {
+    if (!vs.length) note.textContent = "⚠ هذا الجهاز لا يعرض أصوات نطق مثبتة — استخدم «صوت الإنترنت» (يحتاج اتصالاً).";
+    else if (!ars.length) note.textContent = "⚠ لا يوجد صوت عربي مثبت على الجهاز — العربية تعمل عبر «صوت الإنترنت»، والإنكليزية بصوت الجهاز بلا إنترنت.";
+    else note.textContent = "💡 «صوت الجهاز» يعمل بلا إنترنت. «صوت الإنترنت» نطق بشري أوضح ويحتاج اتصالاً.";
+  }
+}
+function trSpInitUi() {
+  try {
+    var p = trSpeakPrefs();
+    if (p.mode) el("trSpMode").value = p.mode;
+    if (p.rate) { el("trSpRate").value = p.rate; el("trSpRateV").textContent = p.rate; }
+    if (p.rep) el("trSpRep").value = String(p.rep);
+    var on = localStorage.getItem("trPhOn");
+    if (on === "0") el("trPhChk").checked = false;
+    var net = localStorage.getItem("trUseOnline");
+    if (net === "0") el("trNetChk").checked = false;
+    trFillVoiceSelects();
+  } catch (e) {}
+}
+function trSpToggle() {
+  var o = el("trSpOpts");
+  var show = o.style.display === "none";
+  o.style.display = show ? "block" : "none";
+  if (show) trFillVoiceSelects();
+}
+try {
+  if (window.speechSynthesis && speechSynthesis.addEventListener) speechSynthesis.addEventListener("voiceschanged", trFillVoiceSelects);
+  else if (window.speechSynthesis) speechSynthesis.onvoiceschanged = trFillVoiceSelects;
+} catch (e) {}
+
+function trSpeakText(text, lang) {
+  var t = trClean(text);
+  if (!t) return;
+  trStopSpeak();
+  var p = trSpeakPrefs();
+  var rep = parseInt(p.rep, 10) || 1;
+  if (rep > 3) rep = 3;
+  trState.spLang = lang;
+  trState.spMode = p.mode || "auto";
+  var chunks = trSplitChunks(t, 180), queue = [], r, c;
+  for (r = 0; r < rep; r++) { for (c = 0; c < chunks.length; c++) queue.push(chunks[c]); }
+  trState.queue = queue;
+  trSetSpeakUi(true);
+  trSpeakNext();
+}
+function trSpeakNext() {
+  if (!trState.queue.length) { trSetSpeakUi(false); return; }
+  var part = trState.queue.shift();
+  if (trState.spMode === "net") { trSpeakNet(part); return; }
+  if (trState.spMode === "device") { trSpeakDev(part, false); return; }
+  trSpeakDev(part, true);
+}
+function trSpeakDev(part, allowNet) {
+  try {
+    if (window.speechSynthesis && typeof SpeechSynthesisUtterance !== "undefined") {
+      var u = new SpeechSynthesisUtterance(part);
+      u.lang = trState.spLang === "ar" ? "ar-SA" : "en-US";
+      var p = trSpeakPrefs();
+      u.rate = Math.min(1.5, Math.max(0.5, parseFloat(p.rate) || 1));
+      var want = trState.spLang === "ar" ? p.var : p.ven;
+      if (want) {
+        var vs = trListVoices(), i;
+        for (i = 0; i < vs.length; i++) {
+          if (vs[i].voiceURI === want) { u.voice = vs[i]; u.lang = vs[i].lang; break; }
+        }
+      }
+      u.onend = function () { trSpeakNext(); };
+      u.onerror = function () { trSpeakNext(); };
+      window.speechSynthesis.speak(u);
+      return;
+    }
+  } catch (e) {}
+  if (allowNet) { trSpeakNet(part); return; }
+  trSpeakGiveUp();
+}
+function trSpeakNet(part) {
+  var p = trSpeakPrefs();
+  var rate = parseFloat(p.rate) || 1;
+  var url = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=" + trState.spLang + "&q=" + encodeURIComponent(part);
+  if (rate < 0.8) url += "&ttsspeed=0.24";
+  var a;
+  try { a = new Audio(url); } catch (eA) { trSpeakGiveUp(); return; }
+  trState.cur = a;
+  a.onended = function () { trState.cur = null; trSpeakNext(); };
+  a.onerror = function () { trState.cur = null; trSpeakGiveUp(); };
+  try {
+    var pr = a.play();
+    if (pr && pr.catch) pr.catch(function () { trState.cur = null; trSpeakGiveUp(); });
+  } catch (eP) { trState.cur = null; trSpeakGiveUp(); }
+}
+function trSpeakGiveUp() {
+  trState.queue = [];
+  trSetSpeakUi(false);
+  trToast("تعذّر تشغيل النطق — افتح ⚙ خيارات الناطق وجرّب مصدراً آخر");
+}
+
 function trSpeakOutput() { trSpeakText(el("trOutput").textContent || "", trState.dst); }
 
 // =====================================================================
@@ -8840,7 +9841,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.18"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.18: المترجم عربي⇄إنكليزي مع ناطق 🔊 — ترجمة جمل كاملة بسلسلة مصادر احتياطية + ناطق يعمل حتى على WebView القديم)
+var CURRENT_APP_VERSION = "26.19"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.19: المترجم بلا إنترنت بقاموس مدمج 📦 + فونيتيكس 🗣 + ناطق بخيارات ⚙ + سجل 🕘 + تدقيق إملائي ✍️ + كتابة مواضيع — والإنترنت اختياري للترجمة الأدق)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
