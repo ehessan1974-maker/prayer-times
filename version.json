@@ -1,7 +1,7 @@
 {
   "appVersion": "26.19",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.9.apk",
+  "apkUrl": "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/public/prayer-times-v26.19.apk",
   "apkSizeMB": "2.7",
   "releasedAt": "2026-10-18",
   "changelog": "ترقية المترجم 🌐: يعمل الآن بلا إنترنت بقاموس مدمج (كلمات وجمل شائعة) + فونيتيكس (نطق تقريبي بالعربي واللاتيني) + ناطق بخيارات (صوت الجهاز أو صوت الإنترنت، سرعة، تكرار، اختيار الصوت) + سجل ترجمة يستعاد بضغطة + تدقيق إملائي باقتراحات تصحيح + كتابة مواضيع إنكليزية من فكرة أو قوالب جاهزة. الإنترنت اختياري الآن للترجمة الأدق."
