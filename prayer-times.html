@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.20</title>
+<title>🕌 مواقيت الصلاة v26.21</title>
 <!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -1727,6 +1727,20 @@ body.dark-mode #ioCatSelect { background:#0f1a15;border-color:#2b4a3a;color:#e8f
 .tr-hist-r { font-size:13px;color:#333;margin-top:2px; }
 .tr-hist-del { position:absolute;top:8px;left:8px;background:transparent;border:0;color:#b00;font-size:14px;cursor:pointer;padding:4px; }
 .tr-hist-empty { text-align:center;color:#4b7a68;font-size:13px;padding:30px 10px; }
+
+/* v26.21: قاموسي ⭐ — إضافة كلمات الإنترنت للقاموس المحلي */
+#trAddWin,#trUserWin { display:none;position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:100001;background:#f4fbf7;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain; }
+#trAddWin.open,#trUserWin.open { display:block; }
+#trAddWin *,#trUserWin * { box-sizing:border-box; }
+.tr-addbox { margin-top:8px;text-align:center; }
+.tr-add-btn { background:#b45309;color:#fff;border:0;border-radius:12px;padding:8px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15); }
+.tr-add-hint { font-size:10px;color:#94a3b8;margin-top:3px; }
+.tr-add-in { width:100%;padding:9px 10px;border:1px solid #a7f3d0;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:#111;margin-top:4px; }
+.tr-main2 { background:#e2efe9 !important;color:#0b3d2e !important;box-shadow:none !important; }
+.tr-user-item { position:relative;background:#fff;border:1px solid #cfe7dc;border-radius:12px;padding:10px 12px;margin:8px 0; }
+.tr-user-x { font-size:14px;font-weight:700;color:#0b3d2e;word-break:break-word; }
+.tr-user-y { font-size:14px;color:#333;margin-top:2px;word-break:break-word; }
+.tr-user-d { font-size:11px;color:#4b7a68;margin-top:4px; }
 .tr-topics { text-align:center;margin-bottom:10px; }
 .tr-topic { display:inline-block;background:#e6f4ef;border:1px solid #b5ddcc;color:#065f46;border-radius:16px;padding:7px 14px;margin:3px;font-size:13px;font-family:inherit;cursor:pointer; }
 .tr-topic.active { background:#065f46;color:#fff;border-color:#065f46; }
@@ -1750,6 +1764,13 @@ body.dark-mode .tr-hist-q,body.dark-mode .tr-tpl-row { color:#b7e2d0; }
 body.dark-mode .tr-hist-r { color:#cde8dc; }
 body.dark-mode .tr-hist-dir { color:#6fa08c; }
 body.dark-mode .tr-hist-empty { color:#6fa08c; }
+body.dark-mode #trAddWin,body.dark-mode #trUserWin { background:#0d1512; }
+body.dark-mode .tr-add-in { background:#10231c;border-color:#1e4436;color:#e6f4ec; }
+body.dark-mode .tr-user-item { background:#10231c;border-color:#1e4436; }
+body.dark-mode .tr-user-x { color:#b7e2d0; }
+body.dark-mode .tr-user-y { color:#cde8dc; }
+body.dark-mode .tr-user-d { color:#6fa08c; }
+body.dark-mode .tr-main2 { background:#10231c !important;color:#b7e2d0 !important; }
 body.dark-mode .tr-topic { background:#10231c;border-color:#1e4436;color:#b7e2d0; }
 body.dark-mode .tr-topic.active { background:#0d5c44;color:#fff; }
 
@@ -2310,6 +2331,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
   <label><input type="checkbox" id="trPhChk" checked onchange="try{localStorage.setItem('trPhOn',this.checked?'1':'0')}catch(e){}trPhoneticsRefresh()"> فونيتيكس</label>
   <label><input type="checkbox" id="trNetChk" checked onchange="try{localStorage.setItem('trUseOnline',this.checked?'1':'0')}catch(e){}"> استخدام الإنترنت</label>
   <button class="tr-chipbtn" onclick="trHistOpen()">🕘 السجل</button>
+  <button class="tr-chipbtn" onclick="trUserOpen()">⭐ قاموسي</button>
   <button class="tr-chipbtn" onclick="trWriterOpen()">✍️ كتابة مواضيع</button>
   <button class="tr-chipbtn" onclick="trSpToggle()">⚙ خيارات الناطق</button>
   <button class="tr-chipbtn" id="trDefBtn" onclick="trDefToggle()">📖 قاموس</button>
@@ -2363,6 +2385,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       </div>
       <div class="tr-ph" id="trPhDst" style="display:none;"></div>
       <div class="tr-break" id="trBreak" style="display:none;"></div>
+      <div class="tr-addbox" id="trAddBox" style="display:none;"></div>
     </div>
   </div>
 </div>
@@ -2391,6 +2414,35 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <button class="tr-main" id="trGenBtn" onclick="trWriterGenerate()">✨ توليد النص الإنكليزي</button>
     <div class="tr-opt-note">💡 مع تفعيل «استخدام الإنترنت» تكون الترجمة أدق وأجمل؛ وبلا إنترنت يعمل القاموس المدمج بنص بسيط. النص الناتج يظهر في المترجم مع الفونيتيكس والناطق.</div>
   </div>
+</div>
+
+<!-- v26.21: نافذة إضافة كلمة إلى قاموسي ⭐ -->
+<div id="trAddWin" role="dialog" aria-label="إضافة إلى قاموسي">
+  <div class="tr-header">
+    <button class="tr-back" onclick="trAddClose()" aria-label="رجوع">‹</button>
+    <div class="tr-title-wrap"><div class="tr-title">إضافة إلى قاموسي ⭐</div><div class="tr-subtitle">تحقق من صحة الترجمة — عدّلها إن أردت ثم أضفها</div></div>
+  </div>
+  <div class="tr-body">
+    <div class="tr-card">
+      <span class="tr-label" id="trAddSrcLbl">الكلمة</span>
+      <input type="text" class="tr-add-in" id="trAddSrc" onkeydown="try{if(event.keyCode===13||event.key==='Enter'){trAddConfirm()}}catch(e){}">
+      <span class="tr-label" id="trAddDstLbl" style="margin-top:10px;">الترجمة</span>
+      <input type="text" class="tr-add-in" id="trAddDst" onkeydown="try{if(event.keyCode===13||event.key==='Enter'){trAddConfirm()}}catch(e){}">
+      <div class="tr-opt-note">💡 هذه الترجمة جاءت من الإنترنت — تأكد من صحتها قبل الإضافة (يمكنك تعديلها). بعد الإضافة ستعمل بلا إنترنت في الاتجاهين وتظهر بشارة ⭐.</div>
+    </div>
+    <button class="tr-main" onclick="trAddConfirm()">✓ أضف إلى قاموسي</button>
+    <button class="tr-main tr-main2" onclick="trAddClose()">إلغاء</button>
+  </div>
+</div>
+
+<!-- v26.21: نافذة قاموسي ⭐ — إدارة الكلمات المضافة -->
+<div id="trUserWin" role="dialog" aria-label="قاموسي">
+  <div class="tr-header">
+    <button class="tr-back" onclick="trUserClose()" aria-label="رجوع">‹</button>
+    <div class="tr-title-wrap"><div class="tr-title">قاموسي ⭐</div><div class="tr-subtitle" id="trUserSub">الكلمات التي تضيفها تُحفظ هنا وتعمل بلا إنترنت</div></div>
+    <button class="tr-back" onclick="trUserClearAll()" aria-label="حذف كل الكلمات">🗑</button>
+  </div>
+  <div class="tr-body"><div id="trUserList"></div></div>
 </div>
 
 <div id="hadithReader" role="dialog" aria-label="مكتبة الأحاديث">
@@ -9994,12 +10046,19 @@ function trOfflineTranslate(q) {
   if (!lq) return null;
   var ph = isAr ? trPhrases : trPhrasesR;
   var phH = isAr ? trPhrasesH : null;
+  // 0) قاموس المستخدم ⭐ أولاً — أعلى أولوية (كلمات تحقق منها المستخدم بنفسه)
+  if (trUserData.length) {
+    var uph = isAr ? trUAEph : trUEAph;
+    if (uph[lq]) return { text: uph[lq], full: true, phrase: true, user: true, brk: [[q, uph[lq], 1]], miss: 0 };
+    var unq = isAr ? trNormAr(q) : lq;
+    if (unq !== lq && uph[unq]) return { text: uph[unq], full: true, phrase: true, user: true, brk: [[q, uph[unq], 1]], miss: 0 };
+  }
   // 1) جملة كاملة (خفيف ثم ثقيل)
   if (ph[lq]) return { text: ph[lq], full: true, phrase: true, brk: [], miss: 0 };
   var hq = isAr ? trNormAr(q) : lq;
   if (phH && hq !== lq && phH[hq]) return { text: phH[hq], full: true, phrase: true, brk: [], miss: 0 };
   // 2) مسار الكلمات مع n-gram للجمل المركبة (مثل كرة القدم)
-  var toks = lq.split(" "), i, w, hit, miss = 0, out = [], brk = [], valid = 0;
+  var toks = lq.split(" "), i, w, hit, miss = 0, out = [], brk = [], valid = 0, uhits = 0;
   var toArNum = !isAr;
   if (toks.length === 1 && /^[0-9]+$/.test(toks[0])) {
     var nw = trNumToWords(parseInt(toks[0], 10), toArNum);
@@ -10009,17 +10068,18 @@ function trOfflineTranslate(q) {
   while (i < toks.length) {
     w = toks[i];
     if (!w) { i++; continue; }
-    // n-gram: أطول تطابق 5..2 كلمات في جدول الجمل والقاموس (مثل كرة القدم)
+    // n-gram: أطول تطابق 5..2 — قاموس المستخدم ⭐ أولاً ثم الجداول المدمجة (مثل كرة القدم)
     hit = null;
     var n, g, t;
     for (n = Math.min(5, toks.length - i); n >= 2; n--) {
       g = toks.slice(i, i + n).join(" ");
+      if (trUserData.length) { t = isAr ? trUAEph[g] : trUEAph[g]; if (t) { hit = { text: t, len: n, u: 1 }; uhits++; break; } }
       t = ph[g] || (phH && phH[g]) || (isAr ? (trDictT[g] || trDict[g]) : trDictR[g]) || null;
       if (t) { hit = { text: t, len: n }; break; }
     }
     if (hit) {
       var gtxt = toks.slice(i, i + hit.len).join(" ");
-      out.push(trDedupPrev(out, hit.text)); brk.push([gtxt, hit.text]); valid++;
+      out.push(trDedupPrev(out, hit.text)); brk.push([gtxt, hit.text, hit.u ? 1 : null]); valid++;
       i += hit.len;
       continue;
     }
@@ -10029,13 +10089,24 @@ function trOfflineTranslate(q) {
       i++;
       continue;
     }
+    var ud = trUserData.length ? (isAr ? trUserArWord(w) : trUEA[w]) : null;
+    if (!ud && !isAr && trUserData.length) {
+      var n3 = w.length, c3 = [], k3;
+      if (n3 > 3 && w.charAt(n3 - 1) === "s") c3.push(w.substring(0, n3 - 1));
+      if (n3 > 4 && w.substring(n3 - 2) === "es") c3.push(w.substring(0, n3 - 2));
+      if (n3 > 5 && w.substring(n3 - 3) === "ies") c3.push(w.substring(0, n3 - 3) + "y");
+      if (n3 > 5 && w.substring(n3 - 3) === "ing") { c3.push(w.substring(0, n3 - 3)); c3.push(w.substring(0, n3 - 3) + "e"); }
+      if (n3 > 4 && w.substring(n3 - 2) === "ed") { c3.push(w.substring(0, n3 - 2)); c3.push(w.substring(0, n3 - 2) + "e"); }
+      for (k3 = 0; k3 < c3.length; k3++) { if (trUEA[c3[k3]]) { ud = trUEA[c3[k3]]; break; } }
+    }
+    if (ud) { ud = trDedupPrev(out, ud); out.push(ud); brk.push([w, ud, 1]); uhits++; valid++; i++; continue; }
     var d = isAr ? trArLookup(w) : trEnLem(w);
     if (d) { d = trDedupPrev(out, d); out.push(d); brk.push([w, d]); valid++; }
     else { miss++; out.push(w); brk.push([w, null]); }
     i++;
   }
   if (!valid) return null;
-  return { text: out.join(" "), full: miss === 0, phrase: false, brk: brk, miss: miss };
+  return { text: out.join(" "), full: miss === 0, phrase: false, user: uhits > 0, umix: uhits > 0 && uhits < valid, brk: brk, miss: miss };
 }
 
 function trEsc(s) {
@@ -10067,6 +10138,7 @@ function trTranslate(manual) {
   trSetBusy(true);
   trStatus("جارٍ الترجمة…");
   trFixClear();
+  trAddHide();
   var off = trOfflineTranslate(q);
   trPhShow("trPhSrc", q, trState.src);
   if (off && off.full) {
@@ -10074,7 +10146,7 @@ function trTranslate(manual) {
     trShowResult(off.text);
     trShowBreak(off);
     trHistSave(q, off.text, trState.src + ">" + trState.dst, "dict");
-    trStatus(off.phrase ? "✓ جملة كاملة من القاموس المدمج — عملت بلا إنترنت" : "✓ ترجمة القاموس المدمج — عملت بلا إنترنت");
+    trStatus(off.user ? (off.umix ? "✓ ترجمة القاموس المدمج مع كلمات من قاموسك ⭐ — عملت بلا إنترنت" : "⭐ جاءت من قاموسك — عملت بلا إنترنت") : (off.phrase ? "✓ جملة كاملة من القاموس المدمج — عملت بلا إنترنت" : "✓ ترجمة القاموس المدمج — عملت بلا إنترنت"));
     trMaybeFix(off);
     return;
   }
@@ -10119,6 +10191,7 @@ function trTryChain(order, pos, q, off) {
     trShowResult(result);
     el("trBreak").style.display = "none";
     trHistSave(q, result, trState.src + ">" + trState.dst, "net");
+    trAddOffer(q, result);
     trStatus("✓ تمت الترجمة عبر الإنترنت");
   }, function () { trTryChain(order, pos + 1, q, off); });
 }
@@ -10130,7 +10203,7 @@ function trShowBreak(off) {
   if (!off || off.phrase || !off.brk || !off.brk.length) { bx.style.display = "none"; bx.innerHTML = ""; return; }
   var html = "<div class='tr-brk-title'>📖 كلمة بكلمة:</div>", i;
   for (i = 0; i < off.brk.length && i < 60; i++) {
-    html += "<span class='tr-brk'><b>" + trEsc(off.brk[i][0]) + "</b> = " + (off.brk[i][1] === null ? "؟" : trEsc(off.brk[i][1])) + "</span> ";
+    html += "<span class='tr-brk'><b>" + trEsc(off.brk[i][0]) + "</b> = " + (off.brk[i][1] === null ? "؟" : trEsc(off.brk[i][1])) + (off.brk[i][2] ? " ⭐" : "") + "</span> ";
   }
   bx.innerHTML = html;
   bx.style.display = "block";
@@ -10265,9 +10338,11 @@ function trDefLookup() {
     var k = cands[i];
     if (!k) continue;
     if (isAr) {
+      if (trUserData.length && (trUAE[k] || trUAEph[k])) trDefPush(senses, seen, trUAE[k] || trUAEph[k], "user");
       if (trAllA[k]) trDefPush(senses, seen, trAllA[k].join("/"), "base");
       if (trOpenA[k]) trDefPush(senses, seen, trOpenA[k].join("/"), "open");
     } else {
+      if (trUserData.length && (trUEA[k] || trUEAph[k])) trDefPush(senses, seen, trUEA[k] || trUEAph[k], "user");
       if (trAllE[k]) trDefPush(senses, seen, trAllE[k].join("/"), "base");
       if (trOpenE[k]) trDefPush(senses, seen, trOpenE[k].join("/"), "open");
     }
@@ -10286,7 +10361,7 @@ function trDefLookup() {
   var shown = Math.min(senses.length, 14);
   for (i = 0; i < shown; i++) {
     html += "<div class='tr-def-item'><span class='tr-def-num'>" + (i + 1) + ".</span> " + trEsc(senses[i].t) +
-      (senses[i].src === "open" ? " <span class='tr-def-badge'>🌐 موسّع</span>" : "") +
+      (senses[i].src === "user" ? " <span class='tr-def-badge' style='color:#b45309;font-weight:700;'>⭐ قاموسي</span>" : (senses[i].src === "open" ? " <span class='tr-def-badge'>🌐 موسّع</span>" : "")) +
       " <button class='tr-def-say' onclick='trDefSay(" + i + ")'>🔊</button></div>";
   }
   if (senses.length > shown) html += "<div class='tr-def-badge'>+" + (senses.length - shown) + "</div>";
@@ -10323,7 +10398,7 @@ function trHistRender() {
     it = h[i];
     var badge = it.m === "net" ? "🌐" : (it.m === "write" ? "✍️" : (it.m === "book" ? "📖" : "📦"));
     html += "<div class='tr-hist-item' onclick='trHistRestore(" + i + ")'>" +
-      "<div class='tr-hist-dir'>" + (it.d === "ar>en" ? "عربي → إنكليزي" : "إنكليزي → عربي") + " · " + trHistTime(it.t) + " · " + badge + "</div>" +
+      "<div class='tr-hist-dir'>" + (it.d === "ar>en" ? "عربي → إنكليزي" : "إنكليزي → عربي") + " · " + trHistTime(it.t) + " · " + badge + (trUserData.length && trUserHas(it.q, it.r) ? " ⭐" : "") + "</div>" +
       "<div class='tr-hist-q'>" + trEsc(String(it.q).substring(0, 120)) + "</div>" +
       "<div class='tr-hist-r'>" + trEsc(String(it.r).substring(0, 160)) + "</div>" +
       "<button class='tr-hist-del' onclick='trHistDel(event," + i + ")'>✕</button></div>";
@@ -10342,6 +10417,7 @@ function trHistRestore(i) {
   el("trCount").textContent = it.q.length + " / " + TR_MAX;
   trApplyDir();
   trShowResult(it.r);
+  if (it.m === "net") trAddOffer(it.q, it.r); else trAddHide();
   trHistClose();
 }
 function trHistDel(ev, i) {
@@ -10351,6 +10427,151 @@ function trHistDel(ev, i) {
   try { localStorage.setItem("trHistV1", JSON.stringify(h)); } catch (e2) {}
   trHistRender();
 }
+
+// ===== قاموسي ⭐ — كلمات أضافها المستخدم من ترجمات الإنترنت تعمل بلا إنترنت — v26.21 =====
+var trUAE = {}, trUAEph = {}, trUEA = {}, trUEAph = {}, trUserData = [];
+function trUserLoad() {
+  try { trUserData = JSON.parse(localStorage.getItem("trUserDictV1") || "[]") || []; } catch (e) { trUserData = []; }
+  if (Object.prototype.toString.call(trUserData) !== "[object Array]") trUserData = [];
+}
+function trUserBuild() {
+  trUAE = {}; trUAEph = {}; trUEA = {}; trUEAph = {};
+  var i, it, a, b, la, na, ne;
+  function put(m, k, v) { if (k && v && !m[k]) m[k] = v; }
+  for (i = 0; i < trUserData.length; i++) {
+    it = trUserData[i];
+    if (!it || !it.x || !it.y) continue;
+    if (it.d === "en>ar") { b = it.x; a = it.y; } else { a = it.x; b = it.y; }
+    la = trLightAr(a); na = trNormAr(a); ne = trNormEn(b);
+    if (!ne) continue;
+    if (la.indexOf(" ") !== -1) { put(trUAEph, la, b); if (na && na !== la) put(trUAEph, na, b); }
+    else { put(trUAE, la, b); if (na && na !== la) put(trUAE, na, b); }
+    if (ne.indexOf(" ") !== -1) put(trUEAph, ne, a); else put(trUEA, ne, a);
+  }
+}
+function trUserSide(s) {
+  s = trClean(s);
+  if (!s) return "";
+  return /[\u0600-\u06FF]/.test(s) ? trLightAr(s) : trNormEn(s);
+}
+function trUserArWord(w) {
+  if (trUAE[w]) return trUAE[w];
+  var h = trNormAr(w);
+  if (h !== w && trUAE[h]) return trUAE[h];
+  var i, j, b, b2;
+  for (i = 0; i < TR_AR_PRE.length; i++) {
+    if (w.indexOf(TR_AR_PRE[i]) === 0 && w.length > TR_AR_PRE[i].length + 1) {
+      b = w.substring(TR_AR_PRE[i].length);
+      if (trUAE[b]) return trUAE[b];
+      for (j = 0; j < TR_AR_SUF.length; j++) {
+        if (b.length > TR_AR_SUF[j].length + 1 && b.substring(b.length - TR_AR_SUF[j].length) === TR_AR_SUF[j]) {
+          b2 = b.substring(0, b.length - TR_AR_SUF[j].length);
+          if (trUAE[b2]) return trUAE[b2];
+          if (trUAE[b2 + "ة"]) return trUAE[b2 + "ة"];
+        }
+      }
+    }
+  }
+  for (i = 0; i < TR_AR_SUF.length; i++) {
+    if (w.length > TR_AR_SUF[i].length + 1 && w.substring(w.length - TR_AR_SUF[i].length) === TR_AR_SUF[i]) {
+      b = w.substring(0, w.length - TR_AR_SUF[i].length);
+      if (trUAE[b]) return trUAE[b];
+      if (trUAE[b + "ة"]) return trUAE[b + "ة"];
+    }
+  }
+  return null;
+}
+function trUserHas(x, y) {
+  var nx = trUserSide(x), ny = trUserSide(y), i, it;
+  if (!nx || !ny) return false;
+  for (i = 0; i < trUserData.length; i++) {
+    it = trUserData[i];
+    if (it && trUserSide(it.x) === nx && trUserSide(it.y) === ny) return true;
+  }
+  return false;
+}
+var trAddData = null;
+function trAddOffer(q, result) {
+  var bx = el("trAddBox");
+  if (!bx) return;
+  trAddData = null;
+  bx.style.display = "none"; bx.innerHTML = "";
+  var qc = trClean(q), rc = trClean(result);
+  if (!qc || !rc) return;
+  if (qc.split(" ").length > 12 || qc.length > 80 || rc.length > 120) return;
+  if (trUserHas(qc, rc)) return;
+  trAddData = { x: qc, y: rc, d: trState.src + ">" + trState.dst };
+  var sh = qc.length > 22 ? qc.substring(0, 22) + "…" : qc;
+  bx.innerHTML = "<button class='tr-add-btn' onclick='trAddOpen()'>➕ إضافة «" + trEsc(sh) + "» إلى قاموسي ⭐</button><div class='tr-add-hint'>بعد التحقق منها ستعمل هذه الترجمة بلا إنترنت</div>";
+  bx.style.display = "block";
+}
+function trAddHide() { trAddData = null; try { var b = el("trAddBox"); b.style.display = "none"; b.innerHTML = ""; } catch (e) {} }
+function trAddOpen() {
+  if (!trAddData) return;
+  var isEn = trAddData.d === "en>ar";
+  el("trAddSrc").value = trAddData.x;
+  el("trAddDst").value = trAddData.y;
+  el("trAddSrcLbl").textContent = isEn ? "الكلمة (إنكليزي)" : "الكلمة (عربي)";
+  el("trAddDstLbl").textContent = isEn ? "الترجمة (عربي)" : "الترجمة (إنكليزي)";
+  el("trAddSrc").dir = isEn ? "ltr" : "rtl";
+  el("trAddDst").dir = isEn ? "rtl" : "ltr";
+  el("trAddWin").classList.add("open");
+}
+function trAddClose() { try { el("trAddWin").classList.remove("open"); } catch (e) {} }
+function trAddConfirm() {
+  if (!trAddData) { trAddClose(); return; }
+  var x = trClean(el("trAddSrc").value), y = trClean(el("trAddDst").value);
+  if (!x || !y) { trToast("اكتب الكلمة وترجمتها قبل الإضافة"); return; }
+  if (trUserHas(x, y)) { trAddHide(); trAddClose(); trToast("هذه الترجمة موجودة في قاموسك مسبقاً ⭐"); return; }
+  if (trUserData.length >= 800) { trToast("قاموسك وصل 800 مدخل — احذف بعض الكلمات من «⭐ قاموسي»"); return; }
+  trUserData.push({ x: x, y: y, d: trAddData.d, t: Date.now() });
+  try { localStorage.setItem("trUserDictV1", JSON.stringify(trUserData)); } catch (e) { trUserData.pop(); trToast("تعذر الحفظ — ذاكرة الجهاز ممتلئة"); return; }
+  trUserBuild();
+  trAddHide();
+  trAddClose();
+  trStatus("⭐ حُفظت «" + x + "» في قاموسك — ستعمل بلا إنترنت في المرة القادمة");
+  trToast("⭐ أُضيفت «" + (x.length > 20 ? x.substring(0, 20) + "…" : x) + "» إلى قاموسك");
+  if (trDefOn) trDefLookup();
+}
+function trUserOpen() { trUserRender(); el("trUserWin").classList.add("open"); }
+function trUserClose() { el("trUserWin").classList.remove("open"); }
+function trUserRender() {
+  trUserLoad();
+  trUserBuild();
+  var sub = el("trUserSub"), list = el("trUserList"), html = "", i, it;
+  if (sub) sub.textContent = trUserData.length ? ("⭐ " + trUserData.length + " مدخل — يعمل بلا إنترنت في الاتجاهين") : "الكلمات التي تضيفها من ترجمات الإنترنت تُحفظ هنا وتعمل بلا إنترنت";
+  if (!list) return;
+  if (!trUserData.length) { list.innerHTML = "<div class='tr-hist-empty'>قاموسك فارغ بعد — بعد أي ترجمة عبر الإنترنت اضغط زر «➕ إضافة إلى قاموسي» لتصبح الكلمة متاحة بلا إنترنت</div>"; return; }
+  for (i = 0; i < trUserData.length; i++) {
+    it = trUserData[i];
+    if (!it || !it.x) continue;
+    html += "<div class='tr-user-item'><div class='tr-user-x'>" + trEsc(it.x) + "</div><div class='tr-user-y' dir='" + (/[\u0600-\u06FF]/.test(it.y) ? "rtl" : "ltr") + "'>" + trEsc(it.y) + "</div><div class='tr-user-d'>" + (it.d === "en>ar" ? "إنكليزي → عربي" : "عربي → إنكليزي") + " · " + trHistTime(it.t) + "</div><button class='tr-hist-del' onclick='trUserDel(" + i + ")'>✕</button></div>";
+  }
+  list.innerHTML = html;
+}
+function trUserDel(i) {
+  trUserLoad();
+  if (!trUserData[i]) return;
+  var w = trUserData[i].x;
+  trUserData.splice(i, 1);
+  try { localStorage.setItem("trUserDictV1", JSON.stringify(trUserData)); } catch (e) {}
+  trUserBuild();
+  trUserRender();
+  trToast("حُذفت «" + w + "» من قاموسك");
+}
+function trUserClearAll() {
+  trUserLoad();
+  if (!trUserData.length) return;
+  var ok = false;
+  try { ok = confirm("حذف كل كلمات قاموسي (" + trUserData.length + " مدخل)؟"); } catch (e) { ok = true; }
+  if (!ok) return;
+  trUserData = [];
+  try { localStorage.removeItem("trUserDictV1"); } catch (e2) {}
+  trUserBuild();
+  trUserRender();
+  trToast("تم تفريغ قاموسي ⭐");
+}
+trUserLoad(); trUserBuild();
 
 // ===== كتابة المواضيع ✍️ =====
 var TR_TOPICS = [
@@ -10609,7 +10830,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.20"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.20: قاموس موسّع ~3600 مدخل أصلي + طبقة مفتوحة من Wiktionary ~18 ألف كلمة CC BY-SA + وضع القاموس 📖 بكل المعاني والنطق)
+var CURRENT_APP_VERSION = "26.21"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.21: قاموسي ⭐ — إضافة كلمات ترجمات الإنترنت إلى قاموس محلي يعمل بلا إنترنت بعد تحقق المستخدم + نافذة إدارة مع حذف وتفريغ)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
