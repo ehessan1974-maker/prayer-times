@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.21</title>
+<title>🕌 مواقيت الصلاة v26.22</title>
 <!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -1770,6 +1770,10 @@ body.dark-mode .tr-user-item { background:#10231c;border-color:#1e4436; }
 body.dark-mode .tr-user-x { color:#b7e2d0; }
 body.dark-mode .tr-user-y { color:#cde8dc; }
 body.dark-mode .tr-user-d { color:#6fa08c; }
+.tr-user-acts { position:absolute;top:6px;left:6px;display:flex;align-items:center;gap:2px; }
+.tr-user-acts .tr-hist-del { position:static; }
+.tr-user-act { background:transparent;border:0;font-size:14px;cursor:pointer;padding:4px;color:#8a6d1a; }
+body.dark-mode .tr-user-act { color:#d9b45b; }
 body.dark-mode .tr-main2 { background:#10231c !important;color:#b7e2d0 !important; }
 body.dark-mode .tr-topic { background:#10231c;border-color:#1e4436;color:#b7e2d0; }
 body.dark-mode .tr-topic.active { background:#0d5c44;color:#fff; }
@@ -2331,7 +2335,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
   <label><input type="checkbox" id="trPhChk" checked onchange="try{localStorage.setItem('trPhOn',this.checked?'1':'0')}catch(e){}trPhoneticsRefresh()"> فونيتيكس</label>
   <label><input type="checkbox" id="trNetChk" checked onchange="try{localStorage.setItem('trUseOnline',this.checked?'1':'0')}catch(e){}"> استخدام الإنترنت</label>
   <button class="tr-chipbtn" onclick="trHistOpen()">🕘 السجل</button>
-  <button class="tr-chipbtn" onclick="trUserOpen()">⭐ قاموسي</button>
+  <button class="tr-chipbtn" onclick="trUserOpen()" title="قاموسي ⭐" aria-label="قاموسي">D</button>
   <button class="tr-chipbtn" onclick="trWriterOpen()">✍️ كتابة مواضيع</button>
   <button class="tr-chipbtn" onclick="trSpToggle()">⚙ خيارات الناطق</button>
   <button class="tr-chipbtn" id="trDefBtn" onclick="trDefToggle()">📖 قاموس</button>
@@ -2420,7 +2424,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 <div id="trAddWin" role="dialog" aria-label="إضافة إلى قاموسي">
   <div class="tr-header">
     <button class="tr-back" onclick="trAddClose()" aria-label="رجوع">‹</button>
-    <div class="tr-title-wrap"><div class="tr-title">إضافة إلى قاموسي ⭐</div><div class="tr-subtitle">تحقق من صحة الترجمة — عدّلها إن أردت ثم أضفها</div></div>
+    <div class="tr-title-wrap"><div class="tr-title" id="trAddTitle">إضافة إلى قاموسي ⭐</div><div class="tr-subtitle" id="trAddSub">تحقق من صحة الترجمة — عدّلها إن أردت ثم أضفها</div></div>
   </div>
   <div class="tr-body">
     <div class="tr-card">
@@ -2428,9 +2432,9 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <input type="text" class="tr-add-in" id="trAddSrc" onkeydown="try{if(event.keyCode===13||event.key==='Enter'){trAddConfirm()}}catch(e){}">
       <span class="tr-label" id="trAddDstLbl" style="margin-top:10px;">الترجمة</span>
       <input type="text" class="tr-add-in" id="trAddDst" onkeydown="try{if(event.keyCode===13||event.key==='Enter'){trAddConfirm()}}catch(e){}">
-      <div class="tr-opt-note">💡 هذه الترجمة جاءت من الإنترنت — تأكد من صحتها قبل الإضافة (يمكنك تعديلها). بعد الإضافة ستعمل بلا إنترنت في الاتجاهين وتظهر بشارة ⭐.</div>
+      <div class="tr-opt-note" id="trAddNote">💡 هذه الترجمة جاءت من الإنترنت — تأكد من صحتها قبل الإضافة (يمكنك تعديلها). بعد الإضافة ستعمل بلا إنترنت في الاتجاهين وتظهر بشارة ⭐.</div>
     </div>
-    <button class="tr-main" onclick="trAddConfirm()">✓ أضف إلى قاموسي</button>
+    <button class="tr-main" id="trAddBtn" onclick="trAddConfirm()">✓ أضف إلى قاموسي</button>
     <button class="tr-main tr-main2" onclick="trAddClose()">إلغاء</button>
   </div>
 </div>
@@ -8742,7 +8746,7 @@ function compareVersions(a, b) {
 // الناطق: translate_tts عبر <audio> (MP3 — يعمل على Chromium 37) ثم speechSynthesis احتياطاً.
 // =====================================================================
 var TR_MAX = 1500;
-var trState = { src: "ar", dst: "en", autoTimer: null, lastSrcIdx: 0, queue: [], cur: null, lang: "ar", busy: false, spLang: "ar", spMode: "auto", tplLines: [] }; // v26.19 + خيارات الناطق وقوالب الكتابة
+var trState = { src: "ar", dst: "en", autoTimer: null, lastSrcIdx: 0, queue: [], cur: null, lang: "ar", busy: false, spLang: "ar", spMode: "auto", tplLines: [], gen: 0 }; // v26.19 + خيارات الناطق وقوالب الكتابة
 
 function trParseArr(r) {
   if (!r) return "";
@@ -8843,7 +8847,22 @@ function trOnInput() {
   if (v.length > TR_MAX) { inp.value = v.substring(0, TR_MAX); v = inp.value; }
   el("trCount").textContent = v.length + " / " + TR_MAX;
   if (trState.autoTimer) clearTimeout(trState.autoTimer);
+  if (!trClean(v)) { trOutReset(); return; } // v26.22: تفريغ خانة الترجمة فور تفريغ خانة المصدر
   trState.autoTimer = setTimeout(function () { trTranslate(false); trDefAuto(); }, 900);
+}
+
+// v26.22: إعادة خانة الترجمة إلى حالتها الفارغة وإخفاء ما يتعلق بالترجمة السابقة
+function trOutReset() {
+  trState.gen++; // إلغاء أي ترجمة إنترنت جارية بدأت قبل التفريغ
+  var out = el("trOutput");
+  if (out) { out.textContent = "ستظهر الترجمة هنا…"; out.className = "tr-out empty"; }
+  try { el("trPhSrc").style.display = "none"; } catch (e) {}
+  try { el("trPhDst").style.display = "none"; } catch (e) {}
+  try { el("trBreak").style.display = "none"; } catch (e) {}
+  try { el("trDefBox").style.display = "none"; } catch (e) {}
+  try { trFixClear(); } catch (e2) {}
+  trAddHide();
+  trStatus("");
 }
 
 function trKey(e) { try { if ((e.ctrlKey || e.metaKey) && (e.key === "Enter" || e.keyCode === 10 || e.keyCode === 13)) { e.preventDefault(); trTranslate(true); } } catch (e2) {} }
@@ -10133,7 +10152,7 @@ function trTranslate(manual) {
   var inp = el("trInput");
   if (!inp) return;
   var q = trClean(inp.value || "");
-  if (!q) { if (manual) trStatus("اكتب نصاً أولاً", true); return; }
+  if (!q) { if (manual) { trOutReset(); trStatus("اكتب نصاً أولاً", true); } return; }
   if (trState.busy) return;
   trSetBusy(true);
   trStatus("جارٍ الترجمة…");
@@ -10184,7 +10203,9 @@ function trTryChain(order, pos, q, off) {
     return;
   }
   var s = TR_SOURCES[order[pos]];
+  var g = trState.gen; // v26.22: إلغاء النتيجة إن فُرّغت الخانة أثناء الترجمة
   trTranslateChunked(q, s, function (result) {
+    if (g !== trState.gen) { trSetBusy(false); return; }
     if (!result || !trClean(result)) { trTryChain(order, pos + 1, q, off); return; }
     trState.lastSrcIdx = order[pos];
     trSetBusy(false);
@@ -10193,7 +10214,7 @@ function trTryChain(order, pos, q, off) {
     trHistSave(q, result, trState.src + ">" + trState.dst, "net");
     trAddOffer(q, result);
     trStatus("✓ تمت الترجمة عبر الإنترنت");
-  }, function () { trTryChain(order, pos + 1, q, off); });
+  }, function () { if (g !== trState.gen) { trSetBusy(false); return; } trTryChain(order, pos + 1, q, off); });
 }
 
 // ===== تفصيل كلمة بكلمة =====
@@ -10491,6 +10512,15 @@ function trUserHas(x, y) {
   return false;
 }
 var trAddData = null;
+var trAddEdit = -1; // v26.22: -1 إضافة جديدة، وإلا فهرس مدخل يُعدَّل
+function trAddModeUi(addMode) { // v26.22: نصوص النافذة حسب الوضع
+  try {
+    el("trAddTitle").textContent = addMode ? "إضافة إلى قاموسي ⭐" : "تعديل كلمة ⭐";
+    el("trAddSub").textContent = addMode ? "تحقق من صحة الترجمة — عدّلها إن أردت ثم أضفها" : "عدّل الكلمة أو ترجمتها ثم احفظ التعديل";
+    el("trAddNote").textContent = addMode ? "💡 هذه الترجمة جاءت من الإنترنت — تأكد من صحتها قبل الإضافة (يمكنك تعديلها). بعد الإضافة ستعمل بلا إنترنت في الاتجاهين وتظهر بشارة ⭐." : "💡 عدّل ما تريد ثم اضغط «حفظ التعديل» — تبقى الكلمة تعمل بلا إنترنت في الاتجاهين ⭐.";
+    el("trAddBtn").textContent = addMode ? "✓ أضف إلى قاموسي" : "✓ حفظ التعديل";
+  } catch (e) {}
+}
 function trAddOffer(q, result) {
   var bx = el("trAddBox");
   if (!bx) return;
@@ -10508,6 +10538,8 @@ function trAddOffer(q, result) {
 function trAddHide() { trAddData = null; try { var b = el("trAddBox"); b.style.display = "none"; b.innerHTML = ""; } catch (e) {} }
 function trAddOpen() {
   if (!trAddData) return;
+  trAddEdit = -1; // v26.22: وضع إضافة
+  trAddModeUi(true);
   var isEn = trAddData.d === "en>ar";
   el("trAddSrc").value = trAddData.x;
   el("trAddDst").value = trAddData.y;
@@ -10519,9 +10551,30 @@ function trAddOpen() {
 }
 function trAddClose() { try { el("trAddWin").classList.remove("open"); } catch (e) {} }
 function trAddConfirm() {
-  if (!trAddData) { trAddClose(); return; }
   var x = trClean(el("trAddSrc").value), y = trClean(el("trAddDst").value);
-  if (!x || !y) { trToast("اكتب الكلمة وترجمتها قبل الإضافة"); return; }
+  if (!x || !y) { trToast("اكتب الكلمة وترجمتها قبل الحفظ"); return; }
+  if (trAddEdit >= 0) { // v26.22: حفظ تعديل مدخل موجود
+    var idx = trAddEdit, i, it, dupe = -1;
+    if (!trUserData[idx]) { trAddEdit = -1; trAddClose(); return; }
+    for (i = 0; i < trUserData.length; i++) {
+      if (i === idx) continue;
+      it = trUserData[i];
+      if (it && trUserSide(it.x) === trUserSide(x) && trUserSide(it.y) === trUserSide(y)) { dupe = i; break; }
+    }
+    if (dupe !== -1) { trToast("هذه الترجمة موجودة في قاموسك مسبقاً ⭐"); return; }
+    trUserData[idx] = { x: x, y: y, d: trUserData[idx].d, t: Date.now() };
+    try { localStorage.setItem("trUserDictV1", JSON.stringify(trUserData)); } catch (e) { trToast("تعذر الحفظ — ذاكرة الجهاز ممتلئة"); return; }
+    trAddEdit = -1;
+    trAddHide();
+    trAddClose();
+    trUserBuild();
+    trUserRender();
+    trStatus("✓ عُدّلت «" + x + "» في قاموسك");
+    trToast("✓ عُدّلت «" + (x.length > 20 ? x.substring(0, 20) + "…" : x) + "» في قاموسك");
+    if (trDefOn) trDefLookup();
+    return;
+  }
+  if (!trAddData) { trAddClose(); return; }
   if (trUserHas(x, y)) { trAddHide(); trAddClose(); trToast("هذه الترجمة موجودة في قاموسك مسبقاً ⭐"); return; }
   if (trUserData.length >= 800) { trToast("قاموسك وصل 800 مدخل — احذف بعض الكلمات من «⭐ قاموسي»"); return; }
   trUserData.push({ x: x, y: y, d: trAddData.d, t: Date.now() });
@@ -10532,6 +10585,23 @@ function trAddConfirm() {
   trStatus("⭐ حُفظت «" + x + "» في قاموسك — ستعمل بلا إنترنت في المرة القادمة");
   trToast("⭐ أُضيفت «" + (x.length > 20 ? x.substring(0, 20) + "…" : x) + "» إلى قاموسك");
   if (trDefOn) trDefLookup();
+}
+function trUserEdit(i) { // v26.22: تعديل كلمة من قاموسي
+  trUserLoad();
+  var it = trUserData[i];
+  if (!it || !it.x || !it.y) return;
+  trAddEdit = i;
+  trAddData = null;
+  trAddHide();
+  var isEn = it.d === "en>ar";
+  el("trAddSrc").value = it.x;
+  el("trAddDst").value = it.y;
+  el("trAddSrcLbl").textContent = isEn ? "الكلمة (إنكليزي)" : "الكلمة (عربي)";
+  el("trAddDstLbl").textContent = isEn ? "الترجمة (عربي)" : "الترجمة (إنكليزي)";
+  el("trAddSrc").dir = isEn ? "ltr" : "rtl";
+  el("trAddDst").dir = isEn ? "rtl" : "ltr";
+  trAddModeUi(false);
+  el("trAddWin").classList.add("open");
 }
 function trUserOpen() { trUserRender(); el("trUserWin").classList.add("open"); }
 function trUserClose() { el("trUserWin").classList.remove("open"); }
@@ -10545,7 +10615,7 @@ function trUserRender() {
   for (i = 0; i < trUserData.length; i++) {
     it = trUserData[i];
     if (!it || !it.x) continue;
-    html += "<div class='tr-user-item'><div class='tr-user-x'>" + trEsc(it.x) + "</div><div class='tr-user-y' dir='" + (/[\u0600-\u06FF]/.test(it.y) ? "rtl" : "ltr") + "'>" + trEsc(it.y) + "</div><div class='tr-user-d'>" + (it.d === "en>ar" ? "إنكليزي → عربي" : "عربي → إنكليزي") + " · " + trHistTime(it.t) + "</div><button class='tr-hist-del' onclick='trUserDel(" + i + ")'>✕</button></div>";
+    html += "<div class='tr-user-item'><div class='tr-user-x'>" + trEsc(it.x) + "</div><div class='tr-user-y' dir='" + (/[\u0600-\u06FF]/.test(it.y) ? "rtl" : "ltr") + "'>" + trEsc(it.y) + "</div><div class='tr-user-d'>" + (it.d === "en>ar" ? "إنكليزي → عربي" : "عربي → إنكليزي") + " · " + trHistTime(it.t) + "</div><div class='tr-user-acts'><button class='tr-user-act' title='تعديل الكلمة' onclick='trUserEdit(" + i + ")'>✏️</button><button class='tr-hist-del' title='حذف' onclick='trUserDel(" + i + ")'>✕</button></div></div>";
   }
   list.innerHTML = html;
 }
@@ -10830,7 +10900,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.21"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.21: قاموسي ⭐ — إضافة كلمات ترجمات الإنترنت إلى قاموس محلي يعمل بلا إنترنت بعد تحقق المستخدم + نافذة إدارة مع حذف وتفريغ)
+var CURRENT_APP_VERSION = "26.22"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.22: تعديل كلمات قاموسي ✏️ + تفريغ خانة الترجمة تلقائياً عند تفريغ خانة المصدر + زر القاموس بحرف D)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
