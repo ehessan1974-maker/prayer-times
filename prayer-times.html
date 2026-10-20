@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.23</title>
+<title>🕌 مواقيت الصلاة v26.32</title>
 <!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -1730,6 +1730,19 @@ body.dark-mode .tr-act.rec { color:#fca5a5;border-color:#7f1d1d;background:#2a12
 .tr-fix-row { margin:5px 0 0; }
 .tr-fix-word { display:inline-block;margin-left:4px;font-weight:700; }
 .tr-fix-btn { background:#065f46;color:#fff;border:0;border-radius:10px;padding:3px 10px;margin:0 3px;font-size:12px;font-family:inherit;cursor:pointer; }
+/* v26.32: اقتراح استبدال ترجمة القاعدة الخاطئة بترجمة جوجل */
+.tr-dbfix { margin-top:6px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:10px;padding:8px 10px; }
+.tr-dbfix-lbl { font-weight:800;color:#065f46;font-size:12px; }
+.tr-dbfix-row { margin:6px 0;font-size:13px;line-height:1.9; }
+.tr-dbfix-old { color:#b91c1c;text-decoration:line-through; }
+.tr-dbfix-arrow { color:#6b7280;margin:0 6px; }
+.tr-dbfix-new { color:#065f46;font-weight:800; }
+.tr-dbfix-acts { margin-top:4px; }
+.tr-dbfix-btn { background:#047857; }
+.tr-fix-btn2 { background:#fff;border:1px solid #d1d5db;color:#374151;border-radius:10px;padding:3px 10px;margin:0 3px;font-size:12px;font-family:inherit;cursor:pointer; }
+.tr-dbfix-hint { margin-top:5px;font-size:11px;color:#6b7280;line-height:1.7; }
+.tr-user-fixbadge { display:inline-block;background:#d1fae5;color:#065f46;border-radius:8px;padding:0 6px;font-size:10px;font-weight:700;margin-right:4px; }
+.tr-user-copyrow { margin-bottom:8px; }
 .tr-break { margin-top:10px;line-height:2;display:none; }
 .tr-brk-title { font-size:12px;font-weight:800;color:#0b3d2e;margin-bottom:4px; }
 .tr-brk { display:inline-block;background:#e6f4ef;border:1px solid #b5ddcc;border-radius:10px;padding:2px 8px;margin:2px;font-size:12px;color:#0b3d2e; }
@@ -1804,6 +1817,13 @@ body.dark-mode .tr-opt-note { color:#6fa08c; }
 body.dark-mode .tr-ph { color:#6fa08c; }
 body.dark-mode .tr-fix { background:#241d0d;border-color:#5c4a1e;color:#d8b866; }
 body.dark-mode .tr-fix-btn { background:#0d5c44; }
+body.dark-mode .tr-dbfix { background:#0c2018;border-color:#1d5c44; }
+body.dark-mode .tr-dbfix-lbl { color:#6ee7b7; }
+body.dark-mode .tr-dbfix-old { color:#f87171; }
+body.dark-mode .tr-dbfix-new { color:#6ee7b7; }
+body.dark-mode .tr-dbfix-hint { color:#9ca3af; }
+body.dark-mode .tr-fix-btn2 { background:#1f2937;border-color:#374151;color:#d1d5db; }
+body.dark-mode .tr-user-fixbadge { background:#0c2018;color:#6ee7b7; }
 body.dark-mode .tr-brk-title { color:#b7e2d0; }
 body.dark-mode .tr-brk { background:#10231c;border-color:#1e4436;color:#b7e2d0; }
 body.dark-mode #trHistWin,body.dark-mode #trWriterWin { background:#0d1512; }
@@ -2079,7 +2099,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.31</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.32</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2460,7 +2480,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <textarea id="trIdea" placeholder="مثال:&#10;اسمي احمد&#10;انا من دمشق&#10;احب كرة القدم"></textarea>
     </div>
     <button class="tr-main" id="trGenBtn" onclick="trWriterGenerate()">✨ توليد النص الإنكليزي</button>
-    <div class="tr-opt-note">💡 مع تفعيل «استخدام الإنترنت» تكون الترجمة أدق وأجمل؛ وبلا إنترنت يعمل القاموس المدمج بنص بسيط. النص الناتج يظهر في المترجم مع الفونيتيكس والناطق.</div>
+    <div class="tr-opt-note">💡 مع تفعيل «استخدام الإنترنت» تُستشار ترجمة جوجل فوراً ومباشرة أولاً — وإن اختلفت ترجمة القاعدة المدمجة يُقترح استبدالها بضغطة واحدة فيُحفظ التصحيح في «⭐ قاموسي». بلا إنترنت يعمل القاموس المدمج بنص بسيط.</div>
   </div>
 </div>
 
@@ -10295,7 +10315,19 @@ function trTranslate(manual) {
   trState.result = ""; trState.synHtml = ""; // v26.30: نظّف عرض الترجمة السابقة
   var off = trOfflineTranslate(q);
   trPhShow("trPhSrc", q, trState.src);
-  if (off && off.full) {
+  var nl = true; try { nl = navigator.onLine !== false; } catch (eNL) {} // v26.32
+  if (trUseOnline() && nl) { // v26.32: استشارة ترجمة جوجل فورية ومباشرة أولاً — القاموس المدمج عرض مبدئي فقط عند توفره
+    if (off && off.full) {
+      trShowResult(off.text);
+      trShowBreak(off);
+      trStatus("⏳ ترجمة مبدئية من القاموس — جارٍ استشارة ترجمة جوجل مباشرة…");
+    }
+    var order = [trState.lastSrcIdx], i;
+    for (i = 0; i < TR_SOURCES.length; i++) { if (i !== trState.lastSrcIdx) order.push(i); }
+    trTryChain(order, 0, q, off);
+    return;
+  }
+  if (off && off.full) { // بلا إنترنت: ترجمة القاموس المدمج الكاملة
     trSetBusy(false);
     trShowResult(off.text);
     trShowBreak(off);
@@ -10304,23 +10336,17 @@ function trTranslate(manual) {
     trMaybeFix(off);
     return;
   }
-  if (!trUseOnline()) {
-    trSetBusy(false);
-    if (off) {
-      trShowResult(off.text);
-      trShowBreak(off);
-      trHistSave(q, off.text, trState.src + ">" + trState.dst, "dict");
-      trStatus("✓ ترجمة تقريبية من القاموس — فعّل «استخدام الإنترنت» لترجمة أدق", true);
-      trMaybeFix(off);
-    } else {
-      el("trOutput").className = "tr-out empty";
-      trStatus("✗ لا أستطيع الترجمة بلا إنترنت — القاموس المدمج لا يغطي هذا النص", true);
-    }
-    return;
+  trSetBusy(false);
+  if (off) {
+    trShowResult(off.text);
+    trShowBreak(off);
+    trHistSave(q, off.text, trState.src + ">" + trState.dst, "dict");
+    trStatus("✓ ترجمة تقريبية من القاموس — فعّل «استخدام الإنترنت» لترجمة أدق", true);
+    trMaybeFix(off);
+  } else {
+    el("trOutput").className = "tr-out empty";
+    trStatus("✗ لا أستطيع الترجمة بلا إنترنت — القاموس المدمج لا يغطي هذا النص", true);
   }
-  var order = [trState.lastSrcIdx], i;
-  for (i = 0; i < TR_SOURCES.length; i++) { if (i !== trState.lastSrcIdx) order.push(i); }
-  trTryChain(order, 0, q, off);
 }
 
 function trTryChain(order, pos, q, off) {
@@ -10330,7 +10356,7 @@ function trTryChain(order, pos, q, off) {
       trShowResult(off.text);
       trShowBreak(off);
       trHistSave(q, off.text, trState.src + ">" + trState.dst, "dict");
-      trStatus("✗ الإنترنت متعثر — عرضت ترجمة القاموس المدمج (تقريبية)", true);
+      trStatus("✗ تعذّر الوصول لترجمة جوجل — عرضت ترجمة القاموس المدمج", true);
       trMaybeFix(off);
     } else {
       trStatus("✗ تعذّر الوصول لخدمة الترجمة — تحقق من اتصال الإنترنت وحاول مجدداً", true);
@@ -10347,8 +10373,9 @@ function trTryChain(order, pos, q, off) {
     trShowResult(result);
     el("trBreak").style.display = "none";
     trHistSave(q, result, trState.src + ">" + trState.dst, "net");
+    trDbFixOffer(q, off, result, s.name); // v26.32: اقتراح استبدال ترجمة القاعدة الخاطئة بترجمة جوجل — قبل دعوة الإضافة
     trAddOffer(q, result);
-    trStatus("✓ تمت الترجمة عبر الإنترنت");
+    trStatus("✓ استُشيرت " + (s.name === "mymemory" ? "MyMemory (بديل) — الشبكة الحالية تمنع ترجمة جوجل" : "ترجمة جوجل مباشرة"));
     trMaybeShowSyn(q, result, g); // v26.23: عرض المورد للكلمة المفردة
   }, function () { if (g !== trState.gen) { trSetBusy(false); return; } trTryChain(order, pos + 1, q, off); });
 }
@@ -10366,10 +10393,12 @@ function trShowBreak(off) {
   bx.style.display = "block";
 }
 
-// ===== تدقيق إملائي وتصحيح =====
+// ===== تدقيق إملائي وتصحيح ===== — v26.32: + اقتراح استبدال ترجمة القاعدة الخاطئة بترجمة جوجل
 var trFixData = [];
+var trDbFix = null; // v26.32: {q, d, db, goog, src, user} أو null
 function trFixClear() {
   trFixData = [];
+  trDbFix = null;
   try { var fx = el("trFix"); fx.style.display = "none"; fx.innerHTML = ""; } catch (e) {}
 }
 function trMaybeFix(off) {
@@ -10385,17 +10414,117 @@ function trMaybeFix(off) {
   }
   if (!fixes.length) return;
   trFixData = fixes;
-  var html = "<span class='tr-fix-lbl'>✍️ تدقيق إملائي — هل تقصد:</span>", f, s2;
-  for (f = 0; f < fixes.length; f++) {
-    html += "<div class='tr-fix-row'><span class='tr-fix-word'>«" + trEsc(fixes[f].w) + "»</span>";
-    for (s2 = 0; s2 < fixes[f].s.length; s2++) {
-      html += "<button class='tr-fix-btn' onclick='trApplyFix(" + f + "," + s2 + ")'>" + trEsc(fixes[f].s[s2]) + "</button>";
-    }
-    html += "</div>";
-  }
+  trFixRenderAll(); // v26.32: عارض موحد — تدقيق إملائي + اقتراح تصحيح القاعدة في الصندوق نفسه
+}
+
+// ===== v26.32: اقتراح استبدال ترجمة القاعدة الخاطئة بترجمة جوجل/الإنترنت =====
+function trFixRenderAll() {
   var fx = el("trFix");
-  fx.innerHTML = html;
-  fx.style.display = "block";
+  if (!fx) return;
+  var html = "", f, s2;
+  if (trFixData.length) {
+    html += "<span class='tr-fix-lbl'>✍️ تدقيق إملائي — هل تقصد:</span>";
+    for (f = 0; f < trFixData.length; f++) {
+      html += "<div class='tr-fix-row'><span class='tr-fix-word'>«" + trEsc(trFixData[f].w) + "»</span>";
+      for (s2 = 0; s2 < trFixData[f].s.length; s2++) {
+        html += "<button class='tr-fix-btn' onclick='trApplyFix(" + f + "," + s2 + ")'>" + trEsc(trFixData[f].s[s2]) + "</button>";
+      }
+      html += "</div>";
+    }
+  }
+  if (trDbFix) {
+    var srcL = trDbFix.src === "mymemory" ? "MyMemory (بديل جوجل)" : "ترجمة جوجل";
+    html += "<div class='tr-dbfix'><div class='tr-dbfix-lbl'>🔄 " + srcL + " تختلف عن " + (trDbFix.user ? "قاموسك ⭐" : "ترجمة القاعدة المدمجة") + ":</div>" +
+      "<div class='tr-dbfix-row'><span class='tr-dbfix-old'>«" + trEsc(trDbFix.db) + "»</span><span class='tr-dbfix-arrow'>←</span><span class='tr-dbfix-new'>«" + trEsc(trDbFix.goog) + "»</span></div>" +
+      "<div class='tr-dbfix-acts'><button class='tr-fix-btn tr-dbfix-btn' onclick='trDbFixApply()'>🔄 استبدال الترجمة الخاطئة</button>" +
+      "<button class='tr-fix-btn' onclick='trDbFixEdit()'>✏️ تحقق وعدّل</button>" +
+      "<button class='tr-fix-btn2' onclick='trDbFixIgnore()'>✕ تجاهل</button></div>" +
+      "<div class='tr-dbfix-hint'>الاستبدال يُدخل ترجمة " + srcL + " في «⭐ قاموسي» فتصح قاعدة الترجمة على جهازك دائماً حتى بلا إنترنت — ويمكنك التحقق والتعديل قبل الحفظ.</div></div>";
+  }
+  if (html) { fx.innerHTML = html; fx.style.display = "block"; }
+  else { fx.style.display = "none"; fx.innerHTML = ""; }
+}
+function trFixIgnLoad() {
+  var o = {};
+  try { o = JSON.parse(localStorage.getItem("trFixIgnV1") || "{}") || {}; } catch (e) { o = {}; }
+  return (o && typeof o === "object") ? o : {};
+}
+function trFixNorm(s, dstAr) {
+  var t = trClean(String(s || "")).toLowerCase();
+  t = t.replace(/[.,!?;:"'`\(\)\[\]؟!،؛…]/g, "").replace(/\s+/g, " ");
+  if (dstAr) { try { t = trNormAr(t); } catch (e) {} }
+  return t;
+}
+function trDbFixOffer(q, off, goog, srcName) { // v26.32: مقارنة ترجمة القاعدة بترجمة جوجل واقتراح الاستبدال عند الاختلاف
+  trDbFix = null;
+  var qc = trClean(q), gc = trClean(goog);
+  if (!off || !off.full || !off.text || !qc || !gc) { trFixRenderAll(); return; }
+  if (/^[0-9٠-٩]+$/.test(qc)) { trFixRenderAll(); return; } // الأرقام: التحويل الحرفي مقصود
+  if (qc.split(" ").length > 6 || qc.length > 60 || gc.length > 90) { trFixRenderAll(); return; }
+  if (!(off.phrase || (off.brk && off.brk.length === 1))) { trFixRenderAll(); return; } // دقة: كلمة مفردة أو عبارة كاملة فقط
+  var dstAr = trState.src !== "ar";
+  var ign = trFixIgnLoad(), key = trUserSide(qc) + "|" + (trState.src + ">" + trState.dst), k2, now = Date.now();
+  for (k2 in ign) { if (now - ign[k2] > 2592000000) delete ign[k2]; } // تنظيف تجاهل أقدم من 30 يوماً
+  if (ign[key]) { try { localStorage.setItem("trFixIgnV1", JSON.stringify(ign)); } catch (e2) {} trFixRenderAll(); return; }
+  var dbT = trClean(off.text), alts = dbT.split(/[\/،,]/), i, nb, same = false;
+  var gN = trFixNorm(gc, dstAr);
+  for (i = 0; i < alts.length; i++) {
+    nb = trFixNorm(alts[i], dstAr);
+    if (!nb) continue;
+    if (nb === gN || (nb.length > 3 && gN.length > 3 && (nb.indexOf(gN) !== -1 || gN.indexOf(nb) !== -1))) { same = true; break; }
+  }
+  if (same) { trFixRenderAll(); return; } // ترجمة القاعدة صحيحة — أحد بدائلها يطابق جوجل
+  trDbFix = { q: qc, d: trState.src + ">" + trState.dst, db: dbT, goog: gc, src: srcName || "", user: !!(off.user && !off.umix) };
+  trFixRenderAll();
+}
+function trUserUpsertFix(x, y, d) { // v26.32: إدخال/تحديث التصحيح — مدخل واحد لكل كلمة (الأول يفوز في خرائط البحث)
+  var nx = trUserSide(x), i, it;
+  for (i = 0; i < trUserData.length; i++) {
+    it = trUserData[i];
+    if (it && it.d === d && trUserSide(it.x) === nx) { trUserData[i] = { x: x, y: y, d: d, t: Date.now(), f: 1 }; return true; }
+  }
+  if (trUserData.length >= 800) return false;
+  trUserData.push({ x: x, y: y, d: d, t: Date.now(), f: 1 });
+  return true;
+}
+function trDbFixApply() { // v26.32: استبدال فوري بضغطة واحدة
+  if (!trDbFix) return;
+  var f = trDbFix;
+  trUserLoad();
+  if (!trUserUpsertFix(f.q, f.goog, f.d)) { trToast("قاموسك وصل 800 مدخل — احذف بعض الكلمات لتفعيل التصحيح"); return; }
+  try { localStorage.setItem("trUserDictV1", JSON.stringify(trUserData)); }
+  catch (e) { trToast("تعذر الحفظ — ذاكرة الجهاز ممتلئة"); return; }
+  trDbFix = null;
+  trUserBuild();
+  trFixRenderAll();
+  trStatus("🔄 صُححت ترجمة «" + f.q + "» — صارت «" + f.goog + "» في قاموسك وتُستخدم دائماً");
+  trToast("🔄 استُبدلت ترجمة القاعدة الخاطئة — تحقق منها في «⭐ قاموسي» (بشارة 🔄 تصحيح)");
+  if (trDefOn) trDefLookup();
+}
+function trDbFixEdit() { // v26.32: تحقق/تعديل قبل الحفظ — «أو أي ترجمة نتأكد من أنها صواب»
+  if (!trDbFix) return;
+  var f = trDbFix;
+  trAddEdit = -1;
+  trAddData = { x: f.q, y: f.goog, d: f.d, fx: 1 };
+  trAddModeUi(true);
+  var isEn = f.d === "en>ar";
+  el("trAddSrc").value = f.q;
+  el("trAddDst").value = f.goog;
+  el("trAddSrcLbl").textContent = isEn ? "الكلمة (إنكليزي)" : "الكلمة (عربي)";
+  el("trAddDstLbl").textContent = isEn ? "الترجمة (عربي)" : "الترجمة (إنكليزي)";
+  el("trAddSrc").dir = isEn ? "ltr" : "rtl";
+  el("trAddDst").dir = isEn ? "rtl" : "ltr";
+  try { el("trAddNote").textContent = "🔄 تصحيح ترجمة القاعدة — كانت القاعدة: «" + f.db + "». تأكد من الترجمة وعدّلها إن أردت ثم احفظ — تبقى على جهازك دائماً ⭐."; } catch (e2) {}
+  el("trAddWin").classList.add("open");
+}
+function trDbFixIgnore() { // v26.32: تجاهل هذا الاستبدال 30 يوماً
+  if (!trDbFix) return;
+  var ign = trFixIgnLoad();
+  ign[trUserSide(trDbFix.q) + "|" + trDbFix.d] = Date.now();
+  try { localStorage.setItem("trFixIgnV1", JSON.stringify(ign)); } catch (e) {}
+  trDbFix = null;
+  trFixRenderAll();
+  trToast("حسناً — لن يُقترح هذا الاستبدال مجدداً لمدة 30 يوماً");
 }
 function trApplyFix(fi, si) {
   var f = trFixData[fi];
@@ -10793,6 +10922,7 @@ function trAddOffer(q, result) {
   if (!bx) return;
   trAddData = null;
   bx.style.display = "none"; bx.innerHTML = "";
+  if (trDbFix) return; // v26.32: اقتراح التصحيح أولى — لا ازدواج بين دعوة الإضافة واقتراح الاستبدال
   var qc = trClean(q), rc = trClean(result);
   if (!qc || !rc) return;
   if (qc.split(" ").length > 12 || qc.length > 80 || rc.length > 120) return;
@@ -10843,8 +10973,12 @@ function trAddConfirm() {
   }
   if (!trAddData) { trAddClose(); return; }
   if (trUserHas(x, y)) { trAddHide(); trAddClose(); trToast("هذه الترجمة موجودة في قاموسك مسبقاً ⭐"); return; }
-  if (trUserData.length >= 800) { trToast("قاموسك وصل 800 مدخل — احذف بعض الكلمات من «⭐ قاموسي»"); return; }
-  trUserData.push({ x: x, y: y, d: trAddData.d, t: Date.now() });
+  if (trAddData.fx) { // v26.32: حفظ تصحيح القاعدة — استبدال مدخل الكلمة نفسها إن وجد
+    if (!trUserUpsertFix(x, y, trAddData.d)) { trToast("قاموسك وصل 800 مدخل — احذف بعض الكلمات من «⭐ قاموسي»"); return; }
+  } else {
+    if (trUserData.length >= 800) { trToast("قاموسك وصل 800 مدخل — احذف بعض الكلمات من «⭐ قاموسي»"); return; }
+    trUserData.push({ x: x, y: y, d: trAddData.d, t: Date.now() });
+  }
   try { localStorage.setItem("trUserDictV1", JSON.stringify(trUserData)); } catch (e) { trUserData.pop(); trToast("تعذر الحفظ — ذاكرة الجهاز ممتلئة"); return; }
   trUserBuild();
   trAddHide();
@@ -10875,15 +11009,17 @@ function trUserClose() { el("trUserWin").classList.remove("open"); }
 function trUserRender() {
   trUserLoad();
   trUserBuild();
-  var sub = el("trUserSub"), list = el("trUserList"), html = "", i, it;
+  var sub = el("trUserSub"), list = el("trUserList"), html = "", i, it, fixesN = 0; // v26.32
   if (sub) sub.textContent = trUserData.length ? ("⭐ " + trUserData.length + " مدخل — يعمل بلا إنترنت في الاتجاهين") : "الكلمات التي تضيفها من ترجمات الإنترنت تُحفظ هنا وتعمل بلا إنترنت";
   if (!list) return;
   if (!trUserData.length) { list.innerHTML = "<div class='tr-hist-empty'>قاموسك فارغ بعد — بعد أي ترجمة عبر الإنترنت اضغط زر «➕ إضافة إلى قاموسي» لتصبح الكلمة متاحة بلا إنترنت</div>"; return; }
   for (i = 0; i < trUserData.length; i++) {
     it = trUserData[i];
     if (!it || !it.x) continue;
-    html += "<div class='tr-user-item'><div class='tr-user-x'>" + trEsc(it.x) + "</div><div class='tr-user-y' dir='" + (/[\u0600-\u06FF]/.test(it.y) ? "rtl" : "ltr") + "'>" + trEsc(it.y) + "</div><div class='tr-user-d'>" + (it.d === "en>ar" ? "إنكليزي → عربي" : "عربي → إنكليزي") + " · " + trHistTime(it.t) + "</div><div class='tr-user-acts'><button class='tr-user-act' title='تعديل الكلمة' onclick='trUserEdit(" + i + ")'>✏️</button><button class='tr-hist-del' title='حذف' onclick='trUserDel(" + i + ")'>✕</button></div></div>";
+    if (it.f) fixesN++;
+    html += "<div class='tr-user-item'><div class='tr-user-x'>" + trEsc(it.x) + (it.f ? " <span class='tr-user-fixbadge'>🔄 تصحيح</span>" : "") + "</div><div class='tr-user-y' dir='" + (/[\u0600-\u06FF]/.test(it.y) ? "rtl" : "ltr") + "'>" + trEsc(it.y) + "</div><div class='tr-user-d'>" + (it.d === "en>ar" ? "إنكليزي → عربي" : "عربي → إنكليزي") + " · " + trHistTime(it.t) + "</div><div class='tr-user-acts'><button class='tr-user-act' title='تعديل الكلمة' onclick='trUserEdit(" + i + ")'>✏️</button><button class='tr-hist-del' title='حذف' onclick='trUserDel(" + i + ")'>✕</button></div></div>";
   }
+  if (fixesN) html = "<div class='tr-user-copyrow'><button class='tr-add-btn' onclick='trUserCopyFixes()'>📋 نسخ التصحيحات (" + fixesN + ") — لتثبيتها في قاعدة التطبيق</button></div>" + html; // v26.32
   list.innerHTML = html;
 }
 function trUserDel(i) {
@@ -10907,6 +11043,30 @@ function trUserClearAll() {
   trUserBuild();
   trUserRender();
   trToast("تم تفريغ قاموسي ⭐");
+}
+function trUserCopyFixes() { // v26.32: نسخ تصحيحات جوجل المحفوظة لتثبيتها في قاعدة التطبيق المصدرية
+  trUserLoad();
+  var out = [], i, it;
+  for (i = 0; i < trUserData.length; i++) {
+    it = trUserData[i];
+    if (it && it.f && it.x && it.y) out.push(it.x + " = " + it.y);
+  }
+  if (!out.length) { trToast("لا توجد تصحيحات محفوظة بعد"); return; }
+  var txt = out.join("\n");
+  try { if (window.AndroidPrayer && AndroidPrayer.copyText) { AndroidPrayer.copyText(txt); trToast("نُسخت " + out.length + " تصحيحات — أرسلها لتثبيتها في قاعدة التطبيق"); return; } } catch (e) {}
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = txt;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed"; ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    var okC = false;
+    try { okC = document.execCommand("copy"); } catch (e2) {}
+    document.body.removeChild(ta);
+    if (okC) { trToast("نُسخت " + out.length + " تصحيحات — أرسلها لتثبيتها في قاعدة التطبيق"); return; }
+  } catch (e3) {}
+  try { window.prompt("انسخ التصحيحات يدوياً:", txt); } catch (e4) {}
 }
 trUserLoad(); trUserBuild();
 
@@ -11120,7 +11280,7 @@ function trMicBridge(json) { // كولباك جسر الأندرويد
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.31.apk";
+var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.32.apk";
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -11450,7 +11610,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.31"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.31: أُزيل زر «فتح مكتبة الأحداث» من قائمة الإعدادات بطلب المستخدم — المكتبة تُفتح من زر 📖 في الترويسة أو من زر أسفل بطاقة قسم الأحداث)
+var CURRENT_APP_VERSION = "26.32"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.32: استشارة ترجمة جوجل فورية ومباشرة أولاً عند تفعيل الإنترنت — القاموس المدمج عرض مبدئي فقط — واقتراح استبدال ترجمة القاعدة الخاطئة بترجمة جوجل بضغطة واحدة أو التحقق والتعديل قبل الحفظ، التصحيح في «⭐ قاموسي» فيصح القاعدة دائماً حتى بلا إنترنت + بشارة التصحيح وزر نسخ التصحيحات)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
