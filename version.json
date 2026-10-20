@@ -1,8 +1,8 @@
 {
- "appVersion": "26.25",
+ "appVersion": "26.26",
  "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
- "apkUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.25.apk",
+ "apkUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.26.apk",
  "apkSizeMB": "3.2",
  "releasedAt": "2026-10-20",
- "changelog": "زر القاموس أصبح بحرف D في مكانه الصحيح (وضع المعاجم الكامل) وعاد زر «⭐ قاموسي» واضحاً بشكله الأصلي. رسالة الإدخال الصوتي الآن تذكر بدقة الإصدار المطلوب من تطبيق الهاتف. أيقونة الإنترنت 🟢 أصبحت تفاعلية — اضغطها لتعرف الحالة فوراً. زر القبلة أصبح 🕋 أوضح ومتوافقاً مع الأجهزة القديمة."
+ "changelog": "قناة إنقاذ جديدة لكل حالة مستعصية: من لا يعمل فيه زر الصوت 🎤 على هاتفه (تطبيق قديم) تظهر له بطاقة إنقاذ تلقائياً بزر تنزيل مباشر لآخر APK ونسخ الرابط — تصل عبر المحتوى لمن يحتاجها فعلاً (مرة كل 20 ساعة) وتختفي بمجرد التحديث. كذلك رسالة الصوت في الويبفيو القديم أصبحت بطاقة إنقاذ بدل صمت تام."
 }

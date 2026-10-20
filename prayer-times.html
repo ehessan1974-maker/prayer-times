@@ -2055,7 +2055,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.25</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.26</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -4261,6 +4261,30 @@ function checkUpdateCommand(items) {
         }
         // تحميل HTML جديد من URL
         loadUpdateFromUrl(item.url, item.version || "");
+      } else if (item.cmd === "show_rescue") {
+        // v26.26: قناة الإنقاذ الموجّهة عبر content.json — بطاقة إنقاذ تُعرض فقط لمن يعاني الحالة فعلاً
+        // topic=voice (الافتراضي): أجهزة APK قديمة بلا جسر الصوت فقط — المتصفح وAPK المحدّث يتجاهلان بصمت
+        // حقول اختيارية في العنصر: icon,title,msg,url,topic — والعرض مرة كل 20 ساعة كحد أقصى لكل جهاز
+        var _topic = String(item.topic || "voice");
+        var _showIt = true;
+        if (_topic === "voice") {
+          var _isNative = !!window.AndroidPrayer;
+          var _hasBridge = _isNative && !!(AndroidPrayer && AndroidPrayer.startSpeechInput);
+          _showIt = (_isNative && !_hasBridge);
+        }
+        if (_showIt) {
+          var _seenKey = "pt-rescue-seen-" + (item.id || _topic);
+          var _lastSeen = 0;
+          try { _lastSeen = parseInt(localStorage.getItem(_seenKey) || "0", 10); } catch (eR0) {}
+          if ((Date.now() - _lastSeen) > 20 * 3600 * 1000) {
+            try { localStorage.setItem(_seenKey, String(Date.now())); } catch (eR1) {}
+            var _ri = item.icon || "⬇";
+            var _rt = item.title || "تحديث التطبيق مطلوب";
+            var _rm = item.msg || RESCUE_VOICE_MSG;
+            var _ru = item.url || "";
+            setTimeout(function () { try { showRescueModal({ icon: _ri, title: _rt, body: _rm, url: _ru }); } catch (eR2) {} }, 1500);
+          }
+        }
       }
     }
   }
@@ -10808,7 +10832,7 @@ function trMicToggle() {
       return;
     }
   } catch (eB) {}
-  trToast("🎤 الصوت يحتاج تطبيق الهاتف v" + CURRENT_APP_VERSION + " أو أحدث — ثبّت آخر APK ثم أعد المحاولة، أو افتح المترجم في كروم");
+  showRescueModal({ icon: "🎤", title: "الإدخال الصوتي غير مدعوم في هذه النسخة", body: RESCUE_VOICE_MSG }); // v26.26: بطاقة إنقاذ (تنزيل APK / نسخ الرابط) بدل توست بلا مخرج
 }
 function trMicWeb(SR) {
   // إلغاء الأصوات المحيطة: طلب المايك بقيود عزل الضوضاء أولاً ثم بدء التعرف
@@ -10843,7 +10867,11 @@ function trMicWebStart(SR) {
     };
     r.onerror = function (ev) {
       trMicOn = false; trMicSetUi(false);
-      var m = { "not-allowed": "🎤 اسمح بالوصول للمايكروفون من إعدادات المتصفح", "no-speech": "🎤 لم ألتقط كلاماً — حاول مجدداً", "network": "🎤 الإدخال الصوتي يحتاج اتصالاً بالإنترنت", "audio-capture": "🎤 لم أجد مايكروفوناً على هذا الجهاز", "aborted": null }[ev.error];
+      var m = { "not-allowed": "🎤 اسمح بالوصول للمايكروفون من إعدادات المتصفح", "no-speech": "🎤 لم ألتقط كلاماً — حاول مجدداً", "network": "🎤 الإدخال الصوتي يحتاج اتصالاً بالإنترنت", "audio-capture": "🎤 لم أجد مايكروفوناً على هذا الجهاز", "service-not-allowed": "__RESCUE__", "aborted": null }[ev.error];
+      if (m === "__RESCUE__") { // v26.26: حالة مستعصية — محرك التعرف محظور/غائب في هذا الويبفيو القديم
+        showRescueModal({ icon: "🎤", title: "الإدخال الصوتي غير مدعوم في هذا الجهاز", body: RESCUE_VOICE_MSG });
+        return;
+      }
       if (m) trToast(m);
     };
     r.onend = function () {
@@ -10872,6 +10900,113 @@ function trMicBridge(json) { // كولباك جسر الأندرويد
       trMicOn = false; trMicSetUi(false);
       trToast("🎤 " + (d.text || "تعذر الإدخال الصوتي"));
     }
+  } catch (e) {}
+}
+
+// ===== v26.26: بطاقة الإنقاذ — لكل حالة مستعصية لا تُحل داخل الصفحة =====
+// (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — زر تنزيل APK مباشر + نسخ الرابط
+var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
+var RESCUE_APK_FALLBACK = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.26.apk";
+function rescueApkGet(cb) { // رابط APK الطازج من version.json (raw ثم jsDelivr) مع fallback ثابت
+  var urls = [
+    "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json",
+    "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json"
+  ];
+  var tried = 0;
+  var next = function () {
+    if (tried >= urls.length) { try { cb(RESCUE_APK_FALLBACK); } catch (eF) {} return; }
+    var base = urls[tried]; tried++;
+    var u = base + (base.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now();
+    try {
+      var x = new XMLHttpRequest();
+      x.open("GET", u, true); x.timeout = 8000;
+      x.onreadystatechange = function () {
+        if (x.readyState !== 4) return;
+        if (x.status === 200) {
+          try {
+            var j = JSON.parse(x.responseText);
+            if (j && j.apkUrl) { try { cb(j.apkUrl); } catch (eC2) {} return; }
+          } catch (eP) {}
+        }
+        next();
+      };
+      x.onerror = next; x.ontimeout = next;
+      x.send();
+    } catch (eX) { next(); }
+  };
+  next();
+}
+function rescueDoDownload() {
+  rescueApkGet(function (u) {
+    var w = null;
+    try { w = window.open(u, "_blank"); } catch (eO) {}
+    if (!w) { try { location.href = u; } catch (eL) {} } // ويبفيو بلا نوافذ خارجية: تنقل مباشر
+  });
+}
+function rescueCopyLink(btn) {
+  rescueApkGet(function (u) {
+    var ok = false;
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = u; ta.setAttribute("readonly", "readonly");
+      ta.style.position = "fixed"; ta.style.left = "-9999px"; ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+    } catch (eC) { ok = false; }
+    if (btn) {
+      var o = btn.textContent;
+      btn.textContent = ok ? "✓ نُسخ الرابط — افتحه في كروم على هاتفك" : "تعذر النسخ — الرابط: " + u;
+      setTimeout(function () { try { btn.textContent = o; } catch (eB) {} }, 3000);
+    }
+  });
+}
+function showRescueModal(opts) {
+  try {
+    opts = opts || {};
+    var dark = false;
+    try { dark = (" " + document.body.className + " ").indexOf(" dark-mode ") !== -1; } catch (eD) {}
+    var oldOv = document.getElementById("rescueOv");
+    if (oldOv && oldOv.parentNode) { try { oldOv.parentNode.removeChild(oldOv); } catch (eRm) {} } // بلا تكدّس
+    var url0 = opts.url || "";
+    var ov = document.createElement("div");
+    ov.setAttribute("id", "rescueOv");
+    ov.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.62);z-index:99998;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;padding:16px;";
+    var cardBg = dark ? "#173327" : "#ffffff";
+    var cardFg = dark ? "#e8f5ee" : "#065f46";
+    var subFg = dark ? "#a7d3bc" : "#33691e";
+    var btn2Bg = dark ? "rgba(255,255,255,0.10)" : "#ecfdf5";
+    var c = document.createElement("div");
+    c.style.cssText = "background:" + cardBg + ";color:" + cardFg + ";max-width:340px;width:100%;border-radius:18px;padding:18px 16px 12px;box-shadow:0 12px 40px rgba(0,0,0,0.35);font-family:Tahoma,Arial,sans-serif;text-align:center;max-height:86vh;overflow-y:auto;-webkit-overflow-scrolling:touch;";
+    var h = '<div style="font-size:34px;line-height:1.2;">' + (opts.icon || "⬇") + "</div>"
+      + '<div style="font-size:15px;font-weight:700;margin:6px 0 6px;">' + (opts.title || "تحديث التطبيق مطلوب") + "</div>"
+      + '<div style="font-size:12px;line-height:1.9;color:' + subFg + ';text-align:right;">' + (opts.body || RESCUE_VOICE_MSG) + "</div>";
+    c.innerHTML = h;
+    var b1 = document.createElement("button");
+    b1.style.cssText = "display:block;width:100%;margin:12px 0 8px;padding:11px 10px;border:none;border-radius:12px;background:#059669;color:#ffffff;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer;";
+    b1.textContent = "⬇ تنزيل التطبيق المحدّث (APK)";
+    b1.onclick = function () {
+      if (url0) {
+        var w = null;
+        try { w = window.open(url0, "_blank"); } catch (eO3) {}
+        if (!w) { try { location.href = url0; } catch (eL3) {} }
+      } else { rescueDoDownload(); }
+    };
+    c.appendChild(b1);
+    var b2 = document.createElement("button");
+    b2.style.cssText = "display:block;width:100%;margin:0 0 6px;padding:9px 10px;border:none;border-radius:12px;background:" + btn2Bg + ";color:" + cardFg + ";font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer;";
+    b2.textContent = "📋 نسخ رابط التحديث (افتحه في كروم)";
+    b2.onclick = function () { rescueCopyLink(b2); };
+    c.appendChild(b2);
+    var b3 = document.createElement("button");
+    b3.style.cssText = "display:block;width:100%;margin:0;padding:8px 10px;border:none;background:transparent;color:" + subFg + ";font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:underline;";
+    b3.textContent = "لاحقاً";
+    b3.onclick = function () { try { document.body.removeChild(ov); } catch (eR) {} };
+    c.appendChild(b3);
+    ov.appendChild(c);
+    ov.onclick = function (ev) { if (ev.target === ov) { try { document.body.removeChild(ov); } catch (eO2) {} } };
+    document.body.appendChild(ov);
   } catch (e) {}
 }
 
@@ -11132,7 +11267,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.25"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.25: زر القاموس D في مكانه الصحيح وعودة ⭐ قاموسي + رسالة صوت أوضح تذكر الإصدار المطلوب + أيقونة الإنترنت تفاعلية بضغط تشرح الحالة + زر القبلة 🕋 واضح ومتوافق مع الأجهزة القديمة)
+var CURRENT_APP_VERSION = "26.26"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.26: قناة الإنقاذ — بطاقة إنقاذ بزر تنزيل APK مباشر ونسخ الرابط لكل حالة مستعصية لا تُحل داخل الصفحة، تصل موجّهة عبر أمر show_rescue في content.json لمن لا يعمل فيه الصوت فقط (APK قديم بلا جسر) مرة كل 20 ساعة + تغطية service-not-allowed الصامتة في الويبفيو القديم)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
