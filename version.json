@@ -1,8 +1,8 @@
 {
- "appVersion": "26.22",
+ "appVersion": "26.23",
  "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
- "apkUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.22.apk",
+ "apkUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.23.apk",
  "apkSizeMB": "3.2",
  "releasedAt": "2026-10-20",
- "changelog": "تحسينات «قاموسي ⭐»: زر تعديل ✏️ لكل كلمة — عدّل الكلمة أو ترجمتها بعد إضافتها واحفظ التعديل فوراً. تفريغ خانة الترجمة تلقائياً عند تفريغ خانة النص الأصلي (مع إلغاء أي ترجمة جارية). زر فتح القاموس أصبح بحرف D."
+ "changelog": "عرض «المورد»: عند ترجمة كلمة واحدة تظهر كل الكلمات ذات المعنى نفسه مرتبة عمودياً وكل كلمة أمامها صيغتها (فعل/اسم/صفة…) مع كاش محلي. الإدخال الصوتي 🎤 في خانة المصدر مع عزل ضوضاء ويعمل أيضاً في تطبيق الهاتف. كل أزرار المترجم انتقلت أسفل خانات الترجمة، وزر «ترجمة» صار بجانب عربي/إنكليزي، ورأس الصفحة أنحف. + تحسينات 26.22: تعديل كلمات قاموسي ✏️ وتفريغ خانة الترجمة تلقائياً وزر D."
 }
