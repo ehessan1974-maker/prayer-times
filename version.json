@@ -1,8 +1,8 @@
 {
- "appVersion": "26.24",
+ "appVersion": "26.25",
  "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
- "apkUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.24.apk",
+ "apkUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.25.apk",
  "apkSizeMB": "3.2",
  "releasedAt": "2026-10-20",
- "changelog": "ترتيب جديد للترويسة: الأزرار أولاً على اليمين ثم خانة «باقي لرمضان» ثم اسم البرنامج. زر مكتبة الأحاديث 📖 انتقل إلى الترويسة مع أزرار المترجم والإعدادات، وزر مبدئي للقرآن الكريم 📗 بجانبها. إصلاح: أزرار أقسام البيانات المتحركة تتلون فوراً بلون الوضع الليلي دون الحاجة للضغط عليها."
+ "changelog": "زر القاموس أصبح بحرف D في مكانه الصحيح (وضع المعاجم الكامل) وعاد زر «⭐ قاموسي» واضحاً بشكله الأصلي. رسالة الإدخال الصوتي الآن تذكر بدقة الإصدار المطلوب من تطبيق الهاتف. أيقونة الإنترنت 🟢 أصبحت تفاعلية — اضغطها لتعرف الحالة فوراً. زر القبلة أصبح 🕋 أوضح ومتوافقاً مع الأجهزة القديمة."
 }

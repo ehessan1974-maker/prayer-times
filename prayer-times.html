@@ -2041,12 +2041,12 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <!-- v26.24: ترتيب الترويسة الجديد بطلب المستخدم — الأزرار أولاً (يمين) ثم باقي لرمضان ثم اسم البرنامج -->
     <div class="btns-cell">
       <div class="header-btns" style="display:inline-block;">
-        <span id="onlineIcon" style="font-size:14px;vertical-align:middle;">🟢</span>
+        <span id="onlineIcon" onclick="ptConnStatus()" title="حالة الاتصال بالإنترنت — اضغط للتفاصيل" style="font-size:14px;vertical-align:middle;cursor:pointer;">🟢</span>
         <button class="icon-btn" id="quranBtn" onclick="openQuran(event)" title="القرآن الكريم — قريباً بإذن الله" style="vertical-align:middle;">📗</button>
         <button class="icon-btn" id="hadithBtn" onclick="openHadithLibrary(event)" title="مكتبة الأحاديث الكاملة" style="vertical-align:middle;">📖</button>
         <button class="icon-btn" id="infoToggleBtn" onclick="toggleOnlineInfo()" title="معلومات وأحاديث" style="vertical-align:middle;">📚</button>
         <button class="icon-btn" id="translatorBtn" onclick="openTranslator(event)" title="المترجم عربي-إنكليزي مع ناطق" style="vertical-align:middle;">🌐</button>
-        <button class="icon-btn" id="qiblaBtn" onclick="openQibla()" title="اتجاه القبلة" style="vertical-align:middle;">🧭</button>
+        <button class="icon-btn" id="qiblaBtn" onclick="openQibla()" title="اتجاه القبلة — البوصلة" style="vertical-align:middle;">🕋</button>
         <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="الوضع الليلي/النهاري" style="vertical-align:middle;">🌙</button>
         <button class="icon-btn" onclick="openSettings()" title="الإعدادات" style="vertical-align:middle;">⚙️</button>
       </div>
@@ -2055,7 +2055,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.24</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.25</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2386,10 +2386,10 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
   <label><input type="checkbox" id="trPhChk" checked onchange="try{localStorage.setItem('trPhOn',this.checked?'1':'0')}catch(e){}trPhoneticsRefresh()"> فونيتيكس</label>
   <label><input type="checkbox" id="trNetChk" checked onchange="try{localStorage.setItem('trUseOnline',this.checked?'1':'0')}catch(e){}"> استخدام الإنترنت</label>
   <button class="tr-chipbtn" onclick="trHistOpen()">🕘 السجل</button>
-  <button class="tr-chipbtn" onclick="trUserOpen()" title="قاموسي ⭐" aria-label="قاموسي">D</button>
+  <button class="tr-chipbtn" onclick="trUserOpen()" title="قاموسي ⭐ — كلماتك المحفوظة على جهازك" aria-label="قاموسي">⭐ قاموسي</button>
   <button class="tr-chipbtn" onclick="trWriterOpen()">✍️ كتابة مواضيع</button>
   <button class="tr-chipbtn" onclick="trSpToggle()">⚙ خيارات الناطق</button>
-  <button class="tr-chipbtn" id="trDefBtn" onclick="trDefToggle()">📖 قاموس</button>
+  <button class="tr-chipbtn" id="trDefBtn" onclick="trDefToggle()" title="القاموس الكامل — وضع المعاجم (يعمل بلا إنترنت)">D</button>
 </div>
 <div class="tr-opts" id="trSpOpts" style="display:none;">
   <div class="tr-opt-row"><span>مصدر الصوت:</span>
@@ -6712,7 +6712,10 @@ function checkReminders(nowMs) {
 var notifTimeout = null;
 function showNotification(msg) {
   var banner = el("notifBanner");
-  if (!banner) return;
+  // v26.25 إصلاح جذري: العنصر notifBanner غير موجود في الصفحة — كانت كل الرسائل (38 موضعاً:
+  // كل رسائل نظام التحديث وتنبيهات الصلاة في المتصفح وشرح حالة الاتصال) تُبتلع بصمت!
+  // الرجوع إلى hlToast (نظام التوست العامل الذي يبني عناصره ديناميكياً) يستعيد الرسائل كلها.
+  if (!banner) { try { if (typeof hlToast === "function") hlToast(msg); } catch (eNt) {} return; }
   banner.textContent = msg;
   banner.style.display = "block";
   banner.style.opacity = "1";
@@ -10805,7 +10808,7 @@ function trMicToggle() {
       return;
     }
   } catch (eB) {}
-  trToast("🎤 الإدخال الصوتي غير مدعوم هنا — افتح المترجم في كروم أو حدّث تطبيق الهاتف");
+  trToast("🎤 الصوت يحتاج تطبيق الهاتف v" + CURRENT_APP_VERSION + " أو أحدث — ثبّت آخر APK ثم أعد المحاولة، أو افتح المترجم في كروم");
 }
 function trMicWeb(SR) {
   // إلغاء الأصوات المحيطة: طلب المايك بقيود عزل الضوضاء أولاً ثم بدء التعرف
@@ -11129,7 +11132,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.24"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.24: ترتيب الترويسة — الأزرار يميناً ثم باقي لرمضان ثم اسم البرنامج + زر الأحاديث 📖 وزر القرآن الكريم المبدئي 📗 في الترويسة + إصلاح تلون أزرار البيانات المتحركة فور تبديل الوضع الليلي)
+var CURRENT_APP_VERSION = "26.25"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.25: زر القاموس D في مكانه الصحيح وعودة ⭐ قاموسي + رسالة صوت أوضح تذكر الإصدار المطلوب + أيقونة الإنترنت تفاعلية بضغط تشرح الحالة + زر القبلة 🕋 واضح ومتوافق مع الأجهزة القديمة)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
@@ -11400,6 +11403,14 @@ function showUpdateToast(newVersion) {
 
 function hideUpdateToast() {
   if (_updateToastEl) _updateToastEl.style.display = "none";
+}
+
+// v26.25: أيقونة حالة الإنترنت أصبحت تفاعلية — الضغط يشرح المعنى بدل الغموض
+function ptConnStatus() {
+  var on = true;
+  try { on = navigator.onLine; } catch (e) {}
+  if (on) showNotification("🟢 متصل بالإنترنت — تحديث المواقيت والمعلومات والترجمة عبر الإنترنت شغّالة");
+  else showNotification("🔴 غير متصل — يعمل التطبيق بلا إنترنت: المواقيت المحفوظة والقاموس والأحاديث المحمّلة سابقاً");
 }
 
 // v23.4: مسح كل الكاش قبل التحديث
