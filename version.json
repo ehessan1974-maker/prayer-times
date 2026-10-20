@@ -1,13 +1,12 @@
 {
-  "appVersion": "26.30",
+  "appVersion": "26.31",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "apkUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.30.apk",
+  "apkUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.31.apk",
   "apkSizeMB": "3.2",
   "releasedAt": "2026-10-21",
   "changelog": [
-    "المعاني تُعرض الآن داخل خانة الترجمة نفسها — أُلغيت القائمة المنفصلة، وانسخ المعاني يدوياً بالتحديد أو بزر 📋 بسهولة",
-    "نوع الكلمة يُكتب بالعربية والإنكليزية معاً: اسم · Noun، فعل ماضٍ · Past verb، فاعل · Subject، مفعول به · Object، صفة · Adjective، حال · Adverb…",
-    "زر 🔊 الناطق ينطق الترجمة فقط بلا المعاني، والفونيتيكس للترجمة فقط"
+    "أُزيل زر «فتح مكتبة الأحاديث» من قائمة الإعدادات كما طُلب — المكتبة تُفتح من زر 📖 في الأعلى أو من زر أسفل بطاقة قسم الأحاديث",
+    "APK: رقم الإصدار الداخلي صار يطابق 26.31 في إعدادات أندرويد (كان عالقاً على 26.29)"
   ],
-  "version": "26.30"
+  "version": "26.31"
 }

@@ -2079,7 +2079,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.30</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.31</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2328,13 +2328,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <button class="btn btn-outline" style="width:100%;background:#f0fdf4;color:#065f46;border-color:#86efac;" onclick="openInfoOrderModal()">🔀 ترتيب الأقسام والعناصر</button>
     </div>
 
-    <!-- v26.10: مكتبة الأحاديث -->
-    <div class="modal-section">
-      <div class="sec-title">📚 مكتبة الأحاديث</div>
-      <div class="sec-desc">اقرأ صحيح البخاري وصحيح مسلم وجامع الترمذي ورياض الصالحين وغيرها (12 كتاباً — أكثر من 42 ألف حديث) بأبوابها المنسّقة، مع بحث وشريط الفهرس وحفظ موضع القراءة والرجوع إليه — التحميل عند الحاجة.</div>
-      <button class="btn btn-outline" style="width:100%;background:#f0fdf4;color:#065f46;border-color:#86efac;" onclick="closeSettings();openHadithLibrary();">📖 فتح مكتبة الأحاديث</button>
-    </div>
-
+    <!-- v26.31: أُزيل قسم «فتح مكتبة الأحاديث» من الإعدادات بطلب المستخدم — الزر في الترويسة 📖 وزر بطاقة قسم الأحاديث يكفيان -->
     <div class="modal-section">
       <div class="sec-title">ℹ️ معلومات</div>
       <button class="btn btn-outline" style="width:100%;" onclick="closeSettings();openCredits();">حول البرنامج</button>
@@ -11126,7 +11120,7 @@ function trMicBridge(json) { // كولباك جسر الأندرويد
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.30.apk";
+var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.31.apk";
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -11456,7 +11450,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.30"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.30: المعاني تُعرض داخل خانة الترجمة نفسها بدل القائمة المنفصلة ليسهل النسخ اليدوي منها بزر 📋 أو بالتحديد، ونوع الكلمة يُكتب بالعربية والإنكليزية معاً: اسم · Noun، فعل ماضٍ · Past verb، فاعل · Subject، مفعول به · Object، صفة · Adjective، حال · Adverb… + الناطق ينطق الترجمة فقط بلا المعاني)
+var CURRENT_APP_VERSION = "26.31"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.31: أُزيل زر «فتح مكتبة الأحداث» من قائمة الإعدادات بطلب المستخدم — المكتبة تُفتح من زر 📖 في الترويسة أو من زر أسفل بطاقة قسم الأحداث)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
