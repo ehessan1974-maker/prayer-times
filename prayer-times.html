@@ -2041,12 +2041,12 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     <!-- v26.24: ترتيب الترويسة الجديد بطلب المستخدم — الأزرار أولاً (يمين) ثم باقي لرمضان ثم اسم البرنامج -->
     <div class="btns-cell">
       <div class="header-btns" style="display:inline-block;">
-        <span id="onlineIcon" onclick="ptConnStatus()" title="حالة الاتصال بالإنترنت — اضغط للتفاصيل" style="font-size:14px;vertical-align:middle;cursor:pointer;">🟢</span>
+        <span id="onlineIcon" onclick="ptConnStatus()" title="حالة الاتصال بالإنترنت — اضغط للتفاصيل" style="font-size:11px;font-weight:700;vertical-align:middle;cursor:pointer;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.18);border-radius:8px;padding:2px 7px;white-space:nowrap;display:inline-block;color:#065f46;">🟢 متصل</span>
         <button class="icon-btn" id="quranBtn" onclick="openQuran(event)" title="القرآن الكريم — قريباً بإذن الله" style="vertical-align:middle;">📗</button>
         <button class="icon-btn" id="hadithBtn" onclick="openHadithLibrary(event)" title="مكتبة الأحاديث الكاملة" style="vertical-align:middle;">📖</button>
         <button class="icon-btn" id="infoToggleBtn" onclick="toggleOnlineInfo()" title="معلومات وأحاديث" style="vertical-align:middle;">📚</button>
         <button class="icon-btn" id="translatorBtn" onclick="openTranslator(event)" title="المترجم عربي-إنكليزي مع ناطق" style="vertical-align:middle;">🌐</button>
-        <button class="icon-btn" id="qiblaBtn" onclick="openQibla()" title="اتجاه القبلة — البوصلة" style="vertical-align:middle;">🕋</button>
+        <button class="icon-btn" id="qiblaBtn" onclick="openQibla()" title="اتجاه القبلة — البوصلة" style="vertical-align:middle;font-size:12px;font-weight:700;padding:4px 8px;">🕋 القبلة</button>
         <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="الوضع الليلي/النهاري" style="vertical-align:middle;">🌙</button>
         <button class="icon-btn" onclick="openSettings()" title="الإعدادات" style="vertical-align:middle;">⚙️</button>
       </div>
@@ -2055,7 +2055,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.26</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.27</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2389,7 +2389,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
   <button class="tr-chipbtn" onclick="trUserOpen()" title="قاموسي ⭐ — كلماتك المحفوظة على جهازك" aria-label="قاموسي">⭐ قاموسي</button>
   <button class="tr-chipbtn" onclick="trWriterOpen()">✍️ كتابة مواضيع</button>
   <button class="tr-chipbtn" onclick="trSpToggle()">⚙ خيارات الناطق</button>
-  <button class="tr-chipbtn" id="trDefBtn" onclick="trDefToggle()" title="القاموس الكامل — وضع المعاجم (يعمل بلا إنترنت)">D</button>
+  <button class="tr-chipbtn" id="trDefBtn" onclick="trDefToggle()" title="D = وضع المعاجم: يعرض القاموس الكامل للكلمة (معاني وأصناف وأمثلة) بدل الترجمة المختصرة — يعمل بلا إنترنت">D قاموس</button>
 </div>
 <div class="tr-opts" id="trSpOpts" style="display:none;">
   <div class="tr-opt-row"><span>مصدر الصوت:</span>
@@ -7298,7 +7298,7 @@ setInterval(function() {
     if (window.AndroidPrayer && hasTimings() && (Date.now() - _lastNativeSyncAt) > NATIVE_SYNC_INTERVAL_MS) syncAlarmsToNative();
   } catch(eS) {}
   checkReminders(nowMs);
-  try { el("onlineIcon").textContent = navigator.onLine ? "🟢" : "🔴"; } catch(e) {}
+  try { el("onlineIcon").textContent = navigator.onLine ? "🟢 متصل" : "🔴 غير متصل"; } catch(e) {} // v26.27: نص حالة واضح بدل نقطة صامتة
 }, 1000);
 
 // Clear played sets daily
@@ -10903,64 +10903,38 @@ function trMicBridge(json) { // كولباك جسر الأندرويد
   } catch (e) {}
 }
 
-// ===== v26.26: بطاقة الإنقاذ — لكل حالة مستعصية لا تُحل داخل الصفحة =====
-// (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — زر تنزيل APK مباشر + نسخ الرابط
+// ===== v26.27: بطاقة الإنقاذ — لكل حالة مستعصية لا تُحل داخل الصفحة =====
+// (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
+// + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_FALLBACK = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.26.apk";
-function rescueApkGet(cb) { // رابط APK الطازج من version.json (raw ثم jsDelivr) مع fallback ثابت
-  var urls = [
-    "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/version.json",
-    "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/version.json"
-  ];
-  var tried = 0;
-  var next = function () {
-    if (tried >= urls.length) { try { cb(RESCUE_APK_FALLBACK); } catch (eF) {} return; }
-    var base = urls[tried]; tried++;
-    var u = base + (base.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now();
-    try {
-      var x = new XMLHttpRequest();
-      x.open("GET", u, true); x.timeout = 8000;
-      x.onreadystatechange = function () {
-        if (x.readyState !== 4) return;
-        if (x.status === 200) {
-          try {
-            var j = JSON.parse(x.responseText);
-            if (j && j.apkUrl) { try { cb(j.apkUrl); } catch (eC2) {} return; }
-          } catch (eP) {}
-        }
-        next();
-      };
-      x.onerror = next; x.ontimeout = next;
-      x.send();
-    } catch (eX) { next(); }
-  };
-  next();
+var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.27.apk";
+function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
+function rescueOpenUrl(u) {
+  // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
+  try { if (window.AndroidPrayer && AndroidPrayer.openUrl) { AndroidPrayer.openUrl(u); return true; } } catch (eB) {} // جسر أصلي (APK ≥ 26.27): يفتح متصفح الجهاز فيبدأ التنزيل
+  try { location.href = u; return true; } catch (eL) {} // كروم: يبدأ التنزيل دون مغادرة الصفحة — APK الجديد: DownloadListener يستقبله بمدير التنزيلات
+  return false;
 }
-function rescueDoDownload() {
-  rescueApkGet(function (u) {
-    var w = null;
-    try { w = window.open(u, "_blank"); } catch (eO) {}
-    if (!w) { try { location.href = u; } catch (eL) {} } // ويبفيو بلا نوافذ خارجية: تنقل مباشر
-  });
+function rescueCopy(u) {
+  try { if (window.AndroidPrayer && AndroidPrayer.copyText) { AndroidPrayer.copyText(u); return true; } } catch (eB) {} // جسر أصلي (APK ≥ 26.27) — بلا قيود لمسة
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = u; ta.setAttribute("readonly", "readonly");
+    ta.style.position = "fixed"; ta.style.left = "-9999px"; ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    var ok = document.execCommand("copy"); // متزامن داخل اللمسة — يعمل في كروم والويبفيو القديم
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch (eC) { return false; }
 }
-function rescueCopyLink(btn) {
-  rescueApkGet(function (u) {
-    var ok = false;
-    try {
-      var ta = document.createElement("textarea");
-      ta.value = u; ta.setAttribute("readonly", "readonly");
-      ta.style.position = "fixed"; ta.style.left = "-9999px"; ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.focus(); ta.select();
-      ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-    } catch (eC) { ok = false; }
-    if (btn) {
-      var o = btn.textContent;
-      btn.textContent = ok ? "✓ نُسخ الرابط — افتحه في كروم على هاتفك" : "تعذر النسخ — الرابط: " + u;
-      setTimeout(function () { try { btn.textContent = o; } catch (eB) {} }, 3000);
-    }
-  });
+function rescueDoDownload(opts) { rescueOpenUrl(rescueUrlOf(opts)); }
+function rescueCopyLink(btn, opts) {
+  var ok = rescueCopy(rescueUrlOf(opts));
+  if (btn) {
+    btn.textContent = ok ? "✓ نُسخ — افتح كروم والصق الرابط" : "تعذر النسخ — انسخ الرابط من أسفل البطاقة";
+    setTimeout(function () { try { btn.textContent = "📋 نسخ رابط التحديث"; } catch (eB) {} }, 3200);
+  }
 }
 function showRescueModal(opts) {
   try {
@@ -10969,7 +10943,7 @@ function showRescueModal(opts) {
     try { dark = (" " + document.body.className + " ").indexOf(" dark-mode ") !== -1; } catch (eD) {}
     var oldOv = document.getElementById("rescueOv");
     if (oldOv && oldOv.parentNode) { try { oldOv.parentNode.removeChild(oldOv); } catch (eRm) {} } // بلا تكدّس
-    var url0 = opts.url || "";
+    var url0 = rescueUrlOf(opts);
     var ov = document.createElement("div");
     ov.setAttribute("id", "rescueOv");
     ov.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.62);z-index:99998;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;padding:16px;";
@@ -10982,22 +10956,18 @@ function showRescueModal(opts) {
     var h = '<div style="font-size:34px;line-height:1.2;">' + (opts.icon || "⬇") + "</div>"
       + '<div style="font-size:15px;font-weight:700;margin:6px 0 6px;">' + (opts.title || "تحديث التطبيق مطلوب") + "</div>"
       + '<div style="font-size:12px;line-height:1.9;color:' + subFg + ';text-align:right;">' + (opts.body || RESCUE_VOICE_MSG) + "</div>";
+    h += '<div style="font-size:10.5px;font-weight:700;color:' + subFg + ';margin:9px 0 0;text-align:right;line-height:1.8;">إن لم يبدأ التنزيل تلقائياً: انسخ الرابط ثم افتح كروم على هاتفك والصقه وانتقل — سيُنزّل ملف APK، افتحه وثبّته فوق النسخة الحالية مباشرة (بلا حذف بياناتك).</div>'
+      + '<div style="margin-top:8px;border-top:1px dashed rgba(6,95,70,0.30);padding-top:7px;font-size:10.5px;direction:ltr;text-align:left;word-break:break-all;"><a id="rescueLinkA" href="' + url0 + '" target="_blank" rel="noopener" style="color:#059669;text-decoration:underline;">' + url0 + "</a></div>"; // v26.27: الرابط ظاهر دائماً — منقذ الأجهزة القديمة (اضغط مطوّلاً لنسخه)
     c.innerHTML = h;
     var b1 = document.createElement("button");
     b1.style.cssText = "display:block;width:100%;margin:12px 0 8px;padding:11px 10px;border:none;border-radius:12px;background:#059669;color:#ffffff;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer;";
     b1.textContent = "⬇ تنزيل التطبيق المحدّث (APK)";
-    b1.onclick = function () {
-      if (url0) {
-        var w = null;
-        try { w = window.open(url0, "_blank"); } catch (eO3) {}
-        if (!w) { try { location.href = url0; } catch (eL3) {} }
-      } else { rescueDoDownload(); }
-    };
+    b1.onclick = function () { rescueDoDownload(opts); }; // v26.27: متزامن داخل اللمسة
     c.appendChild(b1);
     var b2 = document.createElement("button");
     b2.style.cssText = "display:block;width:100%;margin:0 0 6px;padding:9px 10px;border:none;border-radius:12px;background:" + btn2Bg + ";color:" + cardFg + ";font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer;";
     b2.textContent = "📋 نسخ رابط التحديث (افتحه في كروم)";
-    b2.onclick = function () { rescueCopyLink(b2); };
+    b2.onclick = function () { rescueCopyLink(b2, opts); }; // v26.27: متزامن داخل اللمسة
     c.appendChild(b2);
     var b3 = document.createElement("button");
     b3.style.cssText = "display:block;width:100%;margin:0;padding:8px 10px;border:none;background:transparent;color:" + subFg + ";font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:underline;";
@@ -11267,7 +11237,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.26"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.26: قناة الإنقاذ — بطاقة إنقاذ بزر تنزيل APK مباشر ونسخ الرابط لكل حالة مستعصية لا تُحل داخل الصفحة، تصل موجّهة عبر أمر show_rescue في content.json لمن لا يعمل فيه الصوت فقط (APK قديم بلا جسر) مرة كل 20 ساعة + تغطية service-not-allowed الصامتة في الويبفيو القديم)
+var CURRENT_APP_VERSION = "26.27"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.27: إصلاح جذري لأزرار بطاقة الإنقاذ — تنفيذ متزامن داخل لمسة المستخدم بدل XHR يفقد اللمسة + جسر أصلي openUrl/copyText وDownloadListener في APK 26.27 + الرابط ظاهر دائماً قابلاً للنسخ اليدوي + وضوح الترويسة: «🟢 متصل/🔴 غير متصل» و«🕋 القبلة» و«D قاموس»)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
