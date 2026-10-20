@@ -1,8 +1,15 @@
 {
- "appVersion": "26.27",
- "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
- "apkUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.27.apk",
- "apkSizeMB": "3.2",
- "releasedAt": "2026-10-20",
- "changelog": "إصلاح بطاقة الإنقاذ: زرا التنزيل والنسخ يعملان الآن فعلاً (تنفيذ متزامن داخل اللمسة + جسر أصلي لفتح الرابط والنسخ + الرابط ظاهر في البطاقة قابل للنسخ اليدوي). وضوح أكبر: زر الإنترنت يعرض «متصل/غير متصل»، زر البوصلة أصبح «القبلة»، وزر D أصبح «D قاموس»."
+  "appVersion": "26.27",
+  "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
+  "apkUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.28.apk",
+  "apkSizeMB": "3.2",
+  "releasedAt": "2026-10-20",
+  "changelog": [
+    "زر القبلة 🕋 رمز فقط دون كلمة — أنحف كما طُلب",
+    "الإدخال الصوتي: مراقب صمت 9 ثوانٍ برسالة واضحة بدل الانتظار الأبدي (JS + جسر أندرويد مع قياس مستوى الصوت ولغة احتياطية)",
+    "بطاقة إنقاذ مشكلة تثبيت التحديث «التطبيق ليس مثبتا» (تعارض توقيع النسخ الأقدم من 26.19) — تظهر لأصحاب APK القديم فقط",
+    "الخانات المخصصة: أسماء وأيقونات عربية من المحرر تظهر في شريط الأقسام + عنصر بنص فارغ لا يُعرض",
+    "APK: إصلاح رقم الإصدار الظاهر في أندرويد (كان 26.19 منذ 26.19)"
+  ],
+  "version": "26.28"
 }

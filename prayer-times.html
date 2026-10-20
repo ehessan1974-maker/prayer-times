@@ -2046,7 +2046,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
         <button class="icon-btn" id="hadithBtn" onclick="openHadithLibrary(event)" title="مكتبة الأحاديث الكاملة" style="vertical-align:middle;">📖</button>
         <button class="icon-btn" id="infoToggleBtn" onclick="toggleOnlineInfo()" title="معلومات وأحاديث" style="vertical-align:middle;">📚</button>
         <button class="icon-btn" id="translatorBtn" onclick="openTranslator(event)" title="المترجم عربي-إنكليزي مع ناطق" style="vertical-align:middle;">🌐</button>
-        <button class="icon-btn" id="qiblaBtn" onclick="openQibla()" title="اتجاه القبلة — البوصلة" style="vertical-align:middle;font-size:12px;font-weight:700;padding:4px 8px;">🕋 القبلة</button>
+        <button class="icon-btn" id="qiblaBtn" onclick="openQibla()" title="القبلة — البوصلة" style="vertical-align:middle;font-size:13px;font-weight:700;padding:4px 8px;">🕋</button>
         <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="الوضع الليلي/النهاري" style="vertical-align:middle;">🌙</button>
         <button class="icon-btn" onclick="openSettings()" title="الإعدادات" style="vertical-align:middle;">⚙️</button>
       </div>
@@ -2055,7 +2055,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.27</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.28</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2978,6 +2978,34 @@ var INFO_CAT_LABELS = {
   "stars": "🌟 نجوم"
 };
 
+// ===== v26.28: الخانات المخصصة — أسماء وأيقونات عربية من المحرر عبر عنصر _catmeta في content.json =====
+// العنصر {cat:"_catmeta", cats:[{id,name,icon}…]} يُصفّى من العرض تلقائياً (يبدأ بـ_) ويُقرأ هنا.
+// الأولوية: اسم _catmeta ثم اسم INFO_CAT_LABELS ثم المعرّف التقني.
+var CAT_META = {};
+function catLabelOf(c) {
+  var m = CAT_META[c];
+  if (m && m.name) return (m.icon ? m.icon + " " : "") + m.name;
+  return INFO_CAT_LABELS[c] || c;
+}
+function extractCatMeta(items) {
+  CAT_META = {};
+  if (!items || !items.length) return;
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    if (it && it.cat === "_catmeta" && it.cats && it.cats.length) {
+      for (var j = 0; j < it.cats.length; j++) {
+        var e = it.cats[j];
+        if (e && e.id) CAT_META[String(e.id)] = { name: String(e.name || ""), icon: String(e.icon || "") };
+      }
+    }
+  }
+}
+function customCatsKnown() {
+  var out = [], k;
+  for (k in CAT_META) if (Object.prototype.hasOwnProperty.call(CAT_META, k)) out.push(k);
+  return out;
+}
+
 // مفتاح ثابت للعنصر: هاش djb2 من (القسم + النص + المصدر) — يبقى صالحاً بعد إعادة تحميل content.json
 function infoItemKey(item) {
   var s = (item && item.cat ? item.cat : "") + "\u0001" + (item && item.text ? String(item.text) : "") + "\u0001" + (item && item.src ? String(item.src) : "");
@@ -2989,6 +3017,9 @@ function infoItemKey(item) {
 // ترتيب الأقسام المحفوظ (مع دمج أي أقسام جديدة غير معروفة سابقاً في نهاية الترتيب)
 function getInfoCatOrder() {
   var base = INFO_CATEGORIES.slice();
+  // v26.28: الخانات المخصصة من المحرر تُدمج نهاية الترتيب (بلا عناصر = لا تظهر في الشريط)
+  var _ck = customCatsKnown(), _ci;
+  for (_ci = 0; _ci < _ck.length; _ci++) if (base.indexOf(_ck[_ci]) === -1) base.push(_ck[_ci]);
   try {
     var saved = JSON.parse(localStorage.getItem(INFO_CAT_ORDER_KEY) || "null");
     if (saved && saved.length) {
@@ -3047,7 +3078,13 @@ function renderInfoCatBar() {
   var html = "";
   for (var i = 0; i < cats.length; i++) {
     var c = cats[i];
-    var label = INFO_CAT_LABELS[c] || c;
+    var label = catLabelOf(c); // v26.28: اسم مخصص من المحرر إن وُجد
+    // v26.28: الخانة المخصصة الفارغة (بلا عناصر) لا تظهر في شريط التطبيق
+    if (c !== "all" && !INFO_CAT_LABELS[c]) {
+      var _cc = 0, _ca;
+      for (_ca = 0; _ca < cachedInfoItems.length; _ca++) if (cachedInfoItems[_ca].cat === c) _cc++;
+      if (!_cc) continue;
+    }
     if (c === "all") {
       html += '<span onclick="toggleCatFilter(\'all\')" id="catBtn_all" style="display:inline-block;padding:3px 8px;border-radius:12px;border:1px solid #a7f3d0;background:#059669;color:white;font-size:9px;cursor:pointer;margin:0 2px;">الكل</span>';
     } else if (c === "ehemessages") {
@@ -3157,7 +3194,7 @@ function ioRenderCats() {
   var html = "";
   for (var i = 0; i < order.length; i++) {
     var c = order[i];
-    var label = INFO_CAT_LABELS[c] || c;
+    var label = catLabelOf(c); // v26.28
     var cnt = ioCatCount(c);
     var upStyle = (i === 0) ? "opacity:.35;pointer-events:none;" : "";
     var dnStyle = (i === order.length - 1) ? "opacity:.35;pointer-events:none;" : "";
@@ -3196,7 +3233,7 @@ function ioPopulateCatSelect() {
   var html = "";
   for (var i = 0; i < order.length; i++) {
     var c = order[i];
-    var label = INFO_CAT_LABELS[c] || c;
+    var label = catLabelOf(c); // v26.28
     var cnt = ioCatCount(c);
     html += '<option value="' + c + '">' + label + ' (' + cnt + ')</option>';
   }
@@ -4207,6 +4244,7 @@ function applyFetchedContent(items) {
   // v20.3: فحص أوامر التحديث من المدير (للمستخدمين الذين لديهم نسخ قديمة بدون دوال التحديث)
   // — يُنفَّذ على القائمة الخام قبل التصفية حتى يرى أوامر النظام
   try { checkUpdateCommand(items); } catch(e) {}
+  try { extractCatMeta(items); } catch (eCM) {} // v26.28: أسماء/أيقونات الخانات المخصصة
   // v26.17: فصل أوامر النظام (cat يبدأ بـ _) عن المحتوى المعروض —
   // أداة وقائية: عرض البطاقات مفهرس بـ INFO_CATEGORIES ولا يُظهرها أصلاً، وهذه طبقة حماية إضافية مستقبلاً
   var visibleItems = [];
@@ -4214,11 +4252,13 @@ function applyFetchedContent(items) {
     for (var fi = 0; fi < items.length; fi++) {
       var fIt = items[fi];
       if (fIt && fIt.cat && String(fIt.cat).charAt(0) === "_") continue;
+      if (!fIt || !String(fIt.text || "").replace(/\s+/g, "")) continue; // v26.28: عنصر بنص فارغ (خانة مفرَّغة) لا يُعرض
       visibleItems.push(fIt);
     }
   }
   cachedInfoItems = visibleItems;
   currentInfoIdx = 0;
+  try { renderInfoCatBar(); } catch (eRB) {} // v26.28: الشريط يلتقط الخانات المخصصة الجديدة فور وصول المحتوى
   // اكتشاف الرسائل الجديدة/المعدلة القادمة من GitHub + تهيئة أول تشغيل
   try {
     var unseen = msgFindUnseen(msgsFromItems(items));
@@ -4271,6 +4311,9 @@ function checkUpdateCommand(items) {
           var _isNative = !!window.AndroidPrayer;
           var _hasBridge = _isNative && !!(AndroidPrayer && AndroidPrayer.startSpeechInput);
           _showIt = (_isNative && !_hasBridge);
+        } else if (_topic === "install") {
+          // v26.28: إرشادات «التطبيق ليس مثبتا» (تعارض توقيع النسخ الأقدم من 26.19) — لأصحاب APK القديم فقط، والمتصفح وAPK 26.27+ يتجاهلان بصمت
+          _showIt = (!!window.AndroidPrayer) && !(AndroidPrayer && AndroidPrayer.openUrl);
         }
         if (_showIt) {
           var _seenKey = "pt-rescue-seen-" + (item.id || _topic);
@@ -10854,8 +10897,16 @@ function trMicWebStart(SR) {
     trMicRec = r; trMicOn = true; trMicSetUi(true);
     trMicBase = trClean(el("trInput").value || "");
     r.lang = trMicLang(); r.continuous = true; r.interimResults = true; r.maxAlternatives = 1;
-    var fin = "", live = "";
+    var fin = "", live = "", _wd = null;
+    var _wdArm = function () { // v26.28: مراقب الصمت — لا نتيجة خلال 9 ثوانٍ = رسالة واضحة بدل انتظار أبدي بلا صوت
+      if (_wd) clearTimeout(_wd);
+      _wd = setTimeout(function () {
+        _wd = null;
+        try { trMicOn = false; trMicSetUi(false); try { r.stop(); } catch (eW1) {} trToast("🎤 لم أسمع أي صوت — اقترب من المايك وتأكد أنه غير مكتوم ثم أعد المحاولة"); } catch (eW2) {}
+      }, 9000);
+    };
     r.onresult = function (ev) {
+      if (_wd) { clearTimeout(_wd); _wd = null; }
       var ft = "", it = "", i;
       for (i = ev.resultIndex; i < ev.results.length; i++) {
         if (ev.results[i].isFinal) ft += ev.results[i][0].transcript;
@@ -10866,6 +10917,7 @@ function trMicWebStart(SR) {
       trMicApply((fin ? fin + " " : "") + live);
     };
     r.onerror = function (ev) {
+      if (_wd) { clearTimeout(_wd); _wd = null; }
       trMicOn = false; trMicSetUi(false);
       var m = { "not-allowed": "🎤 اسمح بالوصول للمايكروفون من إعدادات المتصفح", "no-speech": "🎤 لم ألتقط كلاماً — حاول مجدداً", "network": "🎤 الإدخال الصوتي يحتاج اتصالاً بالإنترنت", "audio-capture": "🎤 لم أجد مايكروفوناً على هذا الجهاز", "service-not-allowed": "__RESCUE__", "aborted": null }[ev.error];
       if (m === "__RESCUE__") { // v26.26: حالة مستعصية — محرك التعرف محظور/غائب في هذا الويبفيو القديم
@@ -10875,11 +10927,12 @@ function trMicWebStart(SR) {
       if (m) trToast(m);
     };
     r.onend = function () {
+      if (_wd) { clearTimeout(_wd); _wd = null; }
       var was = trMicOn;
       trMicOn = false; trMicSetUi(false);
       if (was && trClean(el("trInput").value)) trOnInput(); // ترجمة تلقائية لما أُدخل صوتياً
     };
-    r.start();
+    r.start(); _wdArm(); // v26.28: بدء مراقب الصمت مع أول بدء
   } catch (e) { trMicOn = false; trMicSetUi(false); trToast("تعذر بدء الإدخال الصوتي"); }
 }
 function trMicStop() {
@@ -10907,7 +10960,7 @@ function trMicBridge(json) { // كولباك جسر الأندرويد
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.27.apk";
+var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.28.apk";
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -11237,7 +11290,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.27"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.27: إصلاح جذري لأزرار بطاقة الإنقاذ — تنفيذ متزامن داخل لمسة المستخدم بدل XHR يفقد اللمسة + جسر أصلي openUrl/copyText وDownloadListener في APK 26.27 + الرابط ظاهر دائماً قابلاً للنسخ اليدوي + وضوح الترويسة: «🟢 متصل/🔴 غير متصل» و«🕋 القبلة» و«D قاموس»)
+var CURRENT_APP_VERSION = "26.28"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.28: زر القبلة رمز فقط دون كلمة + مراقب صمت للمايك (9 ثوانٍ بلا صوت = رسالة واضحة) في JS وفي جسر أندرويد مع قياس مستوى الصوت ولغة احتياطية + بطاقة إنقاذ مشكلة التثبيت «التطبيق ليس مثبتا» (تعارض التوقيع مع النسخ الأقدم من 26.19) + بنية الخانات المخصصة: أسماء وأيقونات عربية من المحرر عبر عنصر _catmeta وظهور الخانات المخصصة في شريط الأقسام + عنصر بنص فارغ لا يُعرض)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;

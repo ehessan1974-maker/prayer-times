@@ -408,7 +408,10 @@ kbd{background:#eef2f1; border:1px solid var(--line); border-radius:5px; padding
     <label class="fl">معرّف الخانة (بالإنجليزية، حروف صغيرة وأرقام وشرطة فقط)</label>
     <input type="text" id="catIdInput" placeholder="مثال: azkar-sleep" dir="ltr" style="text-align:left" spellcheck="false">
     <div class="hint">المعرّف هو الاسم التقني الذي يربط العناصر ببعضها. لا يظهر للمستخدم إن لم يكن من خانات التطبيق المعروفة.</div>
-    <label class="fl">أيقونة العنصر الأول</label>
+    <label class="fl">اسم الخانة الظاهر (بالعربية — يظهر في التطبيق بعد نشر v26.28)</label>
+    <input type="text" id="catNameInput" maxlength="40" placeholder="مثال: بطولاتي">
+    <div class="hint">اتركه فارغاً للخانات المعروفة ليبقى اسمها الافتراضي. الأيقونة بجانب الحقل أدناه تظهر مع الاسم في التطبيق.</div>
+    <label class="fl">أيقونة الخانة (وأول عنصر)</label>
     <input type="text" id="catIconInput" value="📖" style="width:70px;text-align:center;font-size:17px">
     <label class="fl">نص العنصر الأول <span style="font-weight:400;color:var(--muted)">(لا يمكن إنشاء خانة فارغة — أنشئ عنصراً واحداً الآن وعدِّله لاحقاً)</span></label>
     <textarea id="catTextInput" style="width:100%;min-height:90px;border:1px solid var(--line);border-radius:9px;padding:8px" placeholder="اكتب هنا محتوى العنصر الأول…"></textarea>
@@ -595,7 +598,7 @@ var MEDIA_PATH = "media";            /* مجلد الصور المرفوعة ف�
 var ICONS_FILE = "editor-icons.json"; /* قائمة «أيقوناتي» المشتركة بين الأجهزة */
 var EMOJI_SRC_EN = "https://cdn.jsdelivr.net/npm/emojibase-data@17/en/compact.json";
 var EMOJI_SRC_AR = "https://cdn.jsdelivr.net/npm/cldr-annotations-modern@45.0.0/annotations/ar/annotations.json";
-var EDITOR_VERSION = "1.9.0"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub (v1.9.0: معاينة حية للصور داخل خانة النص — مصغرات تحت الخانة تتحدث أثناء الكتابة، ونقر المصغرة يفتح الصورة كاملة) */
+var EDITOR_VERSION = "1.10.0"; /* يُرفع مع كل إصدار جديد من المحرر — فحص التحديث يقارنه بالنسخة المنشورة على GitHub (v1.10.0: الخانة لا تُحذف إلا بزر 🗑️ بجانب اسمها — تفريغ المحتوى 🧹 أو حذف آخر عنصر يبقي الخانة فارغة عبر سجل _catmeta داخل content.json + تعديل اسم وأيقونة كل خانة بالعربية يظهر في التطبيق بعد نشر v26.28) */
 /* v1.6.0: العنوان والشارات تُبنى دائماً من EDITOR_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 /* v1.7.0: insertImageMarker() مشتركة بين رفع الجهاز وإدراج رابط الشبكة — منطق إدراج واحد لا يتكرر */
 /* v1.8.0: imgRecentUrls() تستخرج روابط [img:] فريدة من state.items (الأحدث أولاً) — بلا قراءات شبكة إضافية */
@@ -629,6 +632,73 @@ var KNOWN_CATS = {
   "stars":             { name: "نجوم",        icon: "🌟" }
 };
 
+/* ===== v1.10.0: سجل الخانات المخصصة (بيانات _catmeta) =====
+   يُخزَّن داخل content.json كعنصر نظام {cat:"_catmeta", cats:[{id,name,icon}…]} حتى يبقى
+   عبر الأجهزة والجلسات: الخانة الفارغة تبقى ظاهرة، والاسم/الأيقونة العربية تظهر في التطبيق. */
+var META_CAT = "_catmeta";
+function metaItemOf(){
+  var cats = [], k;
+  for (k in state.catMeta){
+    if (Object.prototype.hasOwnProperty.call(state.catMeta, k)) cats.push(state.catMeta[k]);
+  }
+  return { icon: "⚙️", text: "بيانات الخانات المخصصة — عنصر نظام لا يظهر للمستخدمين، لا تعدِّله ولا تحذفه", cat: META_CAT, cats: cats };
+}
+function extractMetaFrom(arr){
+  /* يفصل عناصر _catmeta من المصفوفة (في مكانها) ويملأ state.catMeta */
+  state.catMeta = {};
+  if (!Array.isArray(arr)) return;
+  for (var i = arr.length - 1; i >= 0; i--){
+    var it = arr[i];
+    if (it && String(it.cat || "") === META_CAT){
+      arr.splice(i, 1);
+      if (it.cats && it.cats.length){
+        for (var j = 0; j < it.cats.length; j++){
+          var e = it.cats[j];
+          if (e && e.id) state.catMeta[String(e.id)] = { id: String(e.id), name: String(e.name || ""), icon: String(e.icon || "") };
+        }
+      }
+    }
+  }
+}
+function ensureCatMeta(id, name, icon){
+  /* يضمن وجود الخانة في السجل (حتى الفارغة) — الخانة تُحذف فقط عبر removeCatMeta */
+  if (!id || String(id).charAt(0) === "_") return;
+  if (!state.catMeta[id]) state.catMeta[id] = { id: String(id), name: "", icon: "" };
+  if (typeof name === "string") state.catMeta[id].name = name;
+  if (typeof icon === "string") state.catMeta[id].icon = icon;
+  markDirty();
+}
+function removeCatMeta(id){
+  if (state.catMeta[id]){ delete state.catMeta[id]; markDirty(); }
+}
+function catMetaName(id){
+  var m = state.catMeta[id];
+  if (m && m.name) return m.name;
+  var kn = KNOWN_CATS[id];
+  return kn ? kn.name : id;
+}
+function catMetaIcon(id){
+  var m = state.catMeta[id];
+  if (m && m.icon) return m.icon;
+  var kn = KNOWN_CATS[id];
+  return kn ? kn.icon : "📁";
+}
+function allCatsForPicker(){
+  /* الخانات المشتقة من العناصر + المحفوظة في السجل ولو صارت فارغة */
+  var cats = catsOf(state.items), k, i, found, inf;
+  for (k in state.catMeta){
+    if (!Object.prototype.hasOwnProperty.call(state.catMeta, k)) continue;
+    found = false;
+    for (i = 0; i < cats.length; i++) if (cats[i].id === k){ found = true; break; }
+    if (!found){ inf = catInfo(k); inf.count = 0; inf.empty = true; cats.push(inf); }
+  }
+  for (i = 0; i < cats.length; i++){
+    cats[i].name = catMetaName(cats[i].id);
+    cats[i].icon = catMetaIcon(cats[i].id);
+  }
+  return cats;
+}
+
 /* الحقول الاختيارية المعروفة (تُعرض عند وجودها ويمكن إضافتها) */
 var OPTIONAL_FIELDS = [
   { k: "id",             label: "المعرّف (id)",              type: "number" },
@@ -645,6 +715,7 @@ var EMOJI_PICKS = ["🕌","🤲","📖","📜","🌙","😴","💬","🍽️","�
 
 var state = {
   items: null,          // مصفوفة العناصر الحالية
+  catMeta: {},          // v1.10.0: سجل الخانات المخصصة (من عنصر _catmeta)
   snapshot: null,       // نص JSON كما كان عند آخر تحميل/نشر (للتراجع)
   sourceLabel: "",      // وصف المصدر (ملف محلي / إنترنت)
   dirty: false,
@@ -689,6 +760,7 @@ function catsOf(items){
   var order = [], counts = {}, i, c;
   for (i = 0; i < items.length; i++){
     c = String(items[i].cat || "");
+    if (c.charAt(0) === "_") continue; /* v1.10.0: أوامر النظام ليست خانة */
     if (!(c in counts)){ counts[c] = 0; order.push(c); }
     counts[c]++;
   }
@@ -709,11 +781,11 @@ function refreshStatus(){
   $("appMain").classList.toggle("hidden", !has);
   $("welcome").classList.toggle("hidden", has);
   if (!has) return;
-  var nCats = catsOf(state.items).length;
+  var nCats = allCatsForPicker().length; /* v1.10.0 */
   $("topStats").innerHTML = esc(state.items.length) + " عنصر • " + nCats + " خانة" +
     (state.dirty ? ' <span class="dot" title="تغييرات غير منشورة"></span>' : "");
   $("stSource").textContent = "المصدر: " + state.sourceLabel;
-  $("stCounts").textContent = state.items.length + " عنصر / " + nCats + " خانة";
+  $("stCounts").textContent = state.items.length + " عنصر / " + allCatsForPicker().length + " خانة"; /* v1.10.0 */
   $("stDirty").classList.toggle("hidden", !state.dirty);
 }
 
@@ -741,6 +813,7 @@ function adoptItems(arr, sourceLabel, keepMsg){
     if (!confirm("⚠️ الملف يحتوي مشاكل:\n\n• " + errs.slice(0,8).join("\n• ") +
       "\n\nقد تعرض بعض العناصر بشكل ناقص. هل تريد الفتح رغم ذلك؟")) return false;
   }
+  extractMetaFrom(arr); /* v1.10.0: فصل سجل الخانات (_catmeta) عن العناصر */
   state.items = arr;
   state.sourceLabel = sourceLabel;
   state.dirty = false;
@@ -803,7 +876,12 @@ function loadFromWeb(){
 
 /* ================= الحفظ المحلي ================= */
 function buildSaveText(){
-  return JSON.stringify(state.items, null, 2) + "\n";
+  /* v1.10.0: إعادة إلحاق سجل الخانات المخصصة عند الحفظ/النشر */
+  var out = state.items;
+  var _k, _has = false;
+  for (_k in state.catMeta){ if (Object.prototype.hasOwnProperty.call(state.catMeta, _k)){ _has = true; break; } }
+  if (_has) out = state.items.concat([metaItemOf()]);
+  return JSON.stringify(out, null, 2) + "\n";
 }
 function downloadJson(filename, text){
   var blob = new Blob([text], { type: "application/json;charset=utf-8" });
@@ -835,7 +913,7 @@ function renderAll(){
 }
 function renderCats(){
   var items = state.items, list = $("catsList");
-  var cats = catsOf(items);
+  var cats = allCatsForPicker(); /* v1.10.0: يشمل الخانات الفارغة المحفوظة */
   $("catsCount").textContent = cats.length;
   var html = "";
   for (var i = 0; i < cats.length; i++){
@@ -843,10 +921,11 @@ function renderCats(){
     html += '<div class="cat-row' + (state.selCat === c.id ? " active" : "") +
       '" data-cat="' + esc(c.id) + '" onclick="pickCat(this)">' +
       '<span class="c-ico">' + esc(c.icon) + '</span>' +
-      '<span class="c-name">' + esc(c.name) + (c.known ? "" : ' <span class="badge-new">جديدة</span>') + '</span>' +
+      '<span class="c-name">' + esc(c.name) + (c.empty ? ' <span class="badge-new">فارغة</span>' : (c.known ? "" : ' <span class="badge-new">جديدة</span>')) + '</span>' +
       '<span class="c-count">' + c.count + '</span>' +
-      '<button class="op" title="إعادة تسمية الخانة" onclick="event.stopPropagation();openRenameCat(\'' + esc(encodeURIComponent(c.id)) + '\')">✏️</button>' +
-      '<button class="op del" title="حذف الخانة" onclick="event.stopPropagation();openDeleteCat(\'' + esc(encodeURIComponent(c.id)) + '\')">🗑️</button>' +
+      '<button class="op" title="تعديل الاسم والأيقونة" onclick="event.stopPropagation();openRenameCat(\'' + esc(encodeURIComponent(c.id)) + '\')">✏️</button>' +
+      '<button class="op" title="تفريغ المحتوى — الخانة تبقى موجودة" onclick="event.stopPropagation();clearCatItems(\'' + esc(encodeURIComponent(c.id)) + '\')">🧹</button>' +
+      '<button class="op del" title="حذف الخانة نهائياً" onclick="event.stopPropagation();openDeleteCat(\'' + esc(encodeURIComponent(c.id)) + '\')">🗑️</button>' +
       '</div>';
   }
   /* أوامر النظام */
@@ -892,8 +971,7 @@ function renderItems(){
     }
     countEl.textContent = rows.length;
   } else {
-    var ci = catInfo(state.selCat || "");
-    titleEl.textContent = (ci.icon || "📁") + " " + (ci.name || "اختر خانة");
+    titleEl.textContent = catMetaIcon(state.selCat || "") + " " + (catMetaName(state.selCat || "") || "اختر خانة");
     for (var k = 0; k < items.length; k++){
       if (String(items[k].cat || "") === state.selCat) rows.push(k);
     }
@@ -904,8 +982,7 @@ function renderItems(){
     var idx = rows[r], m = items[idx];
     var badges = "";
     if (searching){
-      var ci2 = catInfo(String(m.cat || ""));
-      badges += '<span class="i-badge">' + esc(ci2.icon + " " + ci2.name) + '</span>';
+      badges += '<span class="i-badge">' + esc(catMetaIcon(String(m.cat || "")) + " " + catMetaName(String(m.cat || ""))) + '</span>';
     }
     if (m.narrator) badges += '<span class="i-badge">راوي</span>';
     if (m.ts) badges += '<span class="i-badge">🕐 رسالة</span>';
@@ -956,6 +1033,7 @@ function openAddCat(){
   $("dlgCatTitle").textContent = "➕ خانة جديدة";
   $("dlgCatWarn").innerHTML = "";
   $("catIdInput").value = "";
+  $("catNameInput").value = "";
   $("catIconInput").value = "📖";
   $("catTextInput").value = "";
   $("catSrcInput").value = "";
@@ -967,18 +1045,20 @@ function openRenameCat(encId){
   var id = decodeURIComponent(encId);
   dlgCatMode = "rename"; dlgCatOld = id;
   var inf = catInfo(id);
-  $("dlgCatTitle").textContent = "✏️ إعادة تسمية الخانة: " + inf.name;
+  $("dlgCatTitle").textContent = "✏️ تعديل اسم الخانة: " + catMetaName(id);
   var warn = "";
   if (inf.known){
     warn += '<div class="dangerbox">⚠️ <b>«' + esc(inf.name) + '» خانة أساسية في التطبيق</b> ولها زر تصفية خاص باسمها الحالي. بعد إعادة التسمية سينتقل محتواها لمعرّف جديد (يظهر في قسم «الكل») وسيبقى زرها القديم فارغاً حتى صدور تحديث للتطبيق. تأكد أن هذا ما تريده.</div>';
   }
   warn += '<div class="warnbox">ستُغيَّر الخانة على <b>جميع</b> عناصرها (' + catCountOf(id) + ' عنصر) دفعة واحدة.</div>';
+  warn += '<div class="hint">لا تغيّر المعرّف إلا إن كنت تعرف ما تفعل — لتغيير الاسم الظاهر فقط استخدم حقل «اسم الخانة الظاهر».</div>';
   $("dlgCatWarn").innerHTML = warn;
   $("catIdInput").value = id;
-  $("catIconInput").value = inf.icon;
+  $("catNameInput").value = (state.catMeta[id] && state.catMeta[id].name) ? state.catMeta[id].name : (KNOWN_CATS[id] ? KNOWN_CATS[id].name : "");
+  $("catIconInput").value = catMetaIcon(id);
   $("catTextInput").value = "";
   $("catSrcInput").value = "";
-  $("btnDoCat").textContent = "تطبيق التسمية";
+  $("btnDoCat").textContent = "تطبيق الاسم";
   openDlg("dlgCat");
   setTimeout(function(){ $("catIdInput").focus(); $("catIdInput").select(); }, 120);
 }
@@ -1001,8 +1081,11 @@ function doCatDialog(){
   if (dlgCatMode === "add"){
     var txt = $("catTextInput").value.trim();
     if (!txt){ alert("أدخل نص العنصر الأول (لا يمكن إنشاء خانة فارغة)."); return; }
-    var item = { icon: $("catIconInput").value.trim() || "📖", text: txt, src: $("catSrcInput").value.trim(), cat: id };
+    var _nm = $("catNameInput").value.trim();
+    var _ic = $("catIconInput").value.trim() || "📖";
+    var item = { icon: _ic, text: txt, src: $("catSrcInput").value.trim(), cat: id };
     state.items.push(item);
+    ensureCatMeta(id, _nm, _ic); /* v1.10.0: اسم/أيقونة الخانة في السجل */
     closeDlg("dlgCat");
     state.selCat = id; state.selIdx = state.items.length - 1;
     markDirty(); renderAll();
@@ -1012,11 +1095,15 @@ function doCatDialog(){
     for (var i = 0; i < state.items.length; i++){
       if (String(state.items[i].cat || "") === dlgCatOld){ state.items[i].cat = id; n++; }
     }
+    /* v1.10.0: ترحيل سجل الخانة القديمة إلى المعرّف الجديد + تحديث الاسم/الأيقونة من الحوار */
+    var _oldEntry = state.catMeta[dlgCatOld];
+    if (_oldEntry) delete state.catMeta[dlgCatOld];
+    ensureCatMeta(id, $("catNameInput").value.trim(), $("catIconInput").value.trim());
     closeDlg("dlgCat");
     state.selCat = id;
     if (state.selIdx !== null && String(state.items[state.selIdx].cat) !== id) state.selIdx = null;
     markDirty(); renderAll();
-    toast("✅ أعيدت تسمية الخانة (" + n + " عنصر) إلى " + id);
+    toast("✅ حُدِّث اسم الخانة إلى «" + catMetaName(id) + "» (" + n + " عنصر)");
   }
 }
 /* حذف خانة */
@@ -1025,7 +1112,7 @@ function openDeleteCat(encId){
   var id = decodeURIComponent(encId);
   delCatTarget = id;
   var inf = catInfo(id), n = catCountOf(id);
-  $("delCatInfo").innerHTML = 'سيتم التعامل مع خانة <b>' + esc(inf.name) + '</b> التي تحتوي <b>' + n + '</b> عنصر.' +
+  $("delCatInfo").innerHTML = 'سيتم التعامل مع خانة <b>' + esc(catMetaName(id)) + '</b> التي تحتوي <b>' + n + '</b> عنصر.' +
     (n === 0 ? '<br>الخانة فارغة — حذفها مجرد إزالة من القائمة (لن تتأثر أي بيانات).' : '');
   var others = catsOf(state.items).filter(function(c){ return c.id !== id; });
   var sel = $("moveTarget");
@@ -1063,19 +1150,34 @@ function doDeleteCat(){
     for (var i = 0; i < state.items.length; i++){
       if (String(state.items[i].cat || "") === delCatTarget) state.items[i].cat = target;
     }
+    ensureCatMeta(delCatTarget); /* v1.10.0: نقل المحتوى لا يحذف الخانة — تبقى فارغة */
     closeDlg("dlgDelCat");
     if (state.selCat === delCatTarget) state.selCat = target;
     markDirty(); renderAll();
-    toast("✅ نُقلت " + n + " عنصراً إلى " + catInfo(target).name);
+    toast("✅ نُقلت " + n + " عنصراً إلى " + catMetaName(target));
   } else {
     closeDlg("dlgDelCat");
     confirmDlg("تأكيد الحذف النهائي", 'سيتم حذف <b>' + n + '</b> عنصر من خانة <b>' + esc(catInfo(delCatTarget).name) + '</b> نهائياً.<br>يمكنك التراجع قبل الحفظ/النشر عبر زر «↩️ إلغاء التغييرات».<br><br>متابعة؟', function(){
       state.items = state.items.filter(function(it){ return String(it.cat || "") !== delCatTarget; });
+      removeCatMeta(delCatTarget); /* v1.10.0: حذف الخانة الوحيد الحقيقي */
       if (state.selCat === delCatTarget){ state.selCat = null; state.selIdx = null; }
       markDirty(); renderAll();
-      toast("🗑️ حُذفت خانة " + delCatTarget + " (" + n + " عنصر)");
+      toast("🗑️ حُذفت خانة " + catMetaName(delCatTarget) + " (" + n + " عنصر)");
     });
   }
+}
+/* v1.10.0: تفريغ محتويات الخانة دون حذفها — الحذف فقط بزر 🗑️ بجانب اسم الخانة */
+function clearCatItems(encId){
+  var id = decodeURIComponent(encId);
+  var n = catCountOf(id);
+  if (!n){ toast("الخانة فارغة أصلاً"); return; }
+  confirmDlg("تفريغ الخانة", 'حذف <b>' + n + '</b> عنصر من داخل خانة <b>' + esc(catMetaName(id)) + '</b>؟<br><br>الخانة نفسها <b>تبقى</b> موجودة وفارغة ويمكن إعادة ملئها — تُحذف فقط بزر 🗑️ بجانب اسمها.<br>يمكن التراجع قبل النشر عبر «↩️ إلغاء التغييرات».', function(){
+    state.items = state.items.filter(function(it){ return String(it.cat || "") !== id; });
+    ensureCatMeta(id);
+    if (state.selCat === id) state.selIdx = null;
+    markDirty(); renderAll();
+    toast("🧹 فُرِّغت الخانة (" + n + " عنصر) — الخانة باقية");
+  });
 }
 </script>
 <script>
@@ -1084,7 +1186,7 @@ function doDeleteCat(){
 function addItem(){
   if (!state.items) return;
   if (!state.selCat){
-    var cats = catsOf(state.items);
+    var cats = allCatsForPicker(); /* v1.10.0: يشمل الخانات الفارغة المحفوظة */
     if (!cats.length){ alert("أنشئ خانة أولاً."); return; }
     state.selCat = cats[0].id;
   }
@@ -1115,7 +1217,11 @@ function deleteItem(idx){
   var it = state.items[idx];
   var prev = String(it.text || "").slice(0, 60);
   confirmDlg("حذف عنصر", 'حذف هذا العنصر نهائياً؟<br><small style="color:var(--muted)">' + esc(prev) + (String(it.text || "").length > 60 ? "…" : "") + '</small><br><br>يمكن التراجع قبل الحفظ/النشر عبر «↩️ إلغاء التغييرات».', function(){
+    var wasCat = String(it.cat || "");
     state.items.splice(idx, 1);
+    var _still = false, _si;
+    for (_si = 0; _si < state.items.length; _si++){ if (String(state.items[_si].cat || "") === wasCat){ _still = true; break; } }
+    if (!_still) ensureCatMeta(wasCat); /* v1.10.0: الخانة تبقى موجودة حتى لو صارت فارغة */
     if (state.selIdx === idx) state.selIdx = null;
     else if (state.selIdx !== null && state.selIdx > idx) state.selIdx--;
     markDirty(); renderAll();
@@ -1163,7 +1269,7 @@ function renderEditor(){
   var ci = catInfo(String(it.cat || ""));
   empty.classList.add("hidden");
   box.classList.remove("hidden");
-  $("editorTitle").innerHTML = esc(ci.icon) + " " + esc(ci.name);
+  $("editorTitle").innerHTML = esc(catMetaIcon(String(it.cat || ""))) + " " + esc(catMetaName(String(it.cat || "")));
   var sameIdx = [];
   for (var i = 0; i < state.items.length; i++) if (String(state.items[i].cat || "") === String(it.cat || "")) sameIdx.push(i);
   $("editorPos").textContent = "عنصر " + (sameIdx.indexOf(state.selIdx) + 1) + " من " + sameIdx.length;
@@ -1192,7 +1298,7 @@ function renderEditor(){
   html += '<div class="field"><label>المصدر <span class="en">src</span> — اختياري</label>' +
     '<input type="text" id="edSrc" value="' + esc(String(it.src || "")) + '" placeholder="مثال: صحيح البخاري"></div>';
   /* الخانة */
-  var catOpts = catsOf(state.items).map(function(c){
+  var catOpts = allCatsForPicker().map(function(c){
     return '<option value="' + esc(c.id) + '"' + (c.id === String(it.cat || "") ? " selected" : "") + '>' + esc(c.icon + " " + c.name) + '</option>';
   }).join("");
   html += '<div class="field"><label>الخانة <span class="en">cat</span></label>' +
@@ -1288,10 +1394,14 @@ function bindEditor(it, isCmd){
       return;
     }
     var item = state.items[idx];
+    var oldCat = item ? String(item.cat || "") : "";
     if (item) item.cat = this.value;
+    var _n2 = 0, _i2;
+    for (_i2 = 0; _i2 < state.items.length; _i2++){ if (String(state.items[_i2].cat || "") === oldCat) _n2++; }
+    if (oldCat && !_n2) ensureCatMeta(oldCat); /* v1.10.0 */
     state.selCat = this.value;
     markDirty(); renderAll();
-    toast("↗️ نُقل العنصر إلى " + catInfo(this.value).name);
+    toast("↗️ نُقل العنصر إلى " + catMetaName(this.value));
   });
   /* حقول إضافية */
   var extraKeys = extraKeysOf(it);
@@ -1453,6 +1563,7 @@ function undoChanges(){
   confirmDlg("إلغاء التغييرات", "الرجوع إلى النسخة كما كانت عند آخر تحميل/نشر؟<br><br>ستُفقد كل التعديلات غير المنشورة.", function(){
     if (state.snapshot){
       var arr = JSON.parse(state.snapshot);
+      extractMetaFrom(arr); /* v1.10.0 */
       state.items = arr;
       state.dirty = false;
       state.selIdx = null;
