@@ -1742,6 +1742,20 @@ body.dark-mode .tr-act.rec { color:#fca5a5;border-color:#7f1d1d;background:#2a12
 .tr-def-say { background:#065f46;color:#fff;border:0;border-radius:8px;padding:1px 7px;margin:0 6px;font-size:11px;font-family:inherit;cursor:pointer; }
 .tr-def-empty { color:#6b7280;font-size:12px; }
 .tr-def-badge { font-size:10px;color:#64748b; }
+/* v26.29: شارات نوع الكلمة — فعل/اسم/صفة/حال/فاعل/مفعول به */
+.tr-wt { display:inline-block;font-size:9.5px;font-weight:700;border-radius:6px;padding:1px 6px;margin:0 5px;vertical-align:middle;white-space:nowrap; }
+.tr-wt.wt-v { color:#1d4ed8;background:#dbeafe;border:1px solid #bfdbfe; }
+.tr-wt.wt-n { color:#047857;background:#d1fae5;border:1px solid #a7f3d0; }
+.tr-wt.wt-a { color:#7c3aed;background:#ede9fe;border:1px solid #ddd6fe; }
+.tr-wt.wt-h { color:#b45309;background:#fef3c7;border:1px solid #fde68a; }
+.tr-wt.wt-r { color:#be185d;background:#fce7f3;border:1px solid #fbcfe8; }
+.tr-wt.wt-p { color:#475569;background:#f1f5f9;border:1px solid #e2e8f0; }
+body.dark-mode .tr-wt.wt-v { color:#93c5fd;background:#172554;border-color:#1e3a8a; }
+body.dark-mode .tr-wt.wt-n { color:#6ee7b7;background:#022c22;border-color:#064e3b; }
+body.dark-mode .tr-wt.wt-a { color:#c4b5fd;background:#2e1065;border-color:#4c1d95; }
+body.dark-mode .tr-wt.wt-h { color:#fcd34d;background:#451a03;border-color:#78350f; }
+body.dark-mode .tr-wt.wt-r { color:#f9a8d4;background:#500724;border-color:#831843; }
+body.dark-mode .tr-wt.wt-p { color:#cbd5e1;background:#1e293b;border-color:#334155; }
 #trHistWin,#trWriterWin { display:none;position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:100001;background:#f4fbf7;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain; }
 #trHistWin.open,#trWriterWin.open { display:block; }
 #trHistWin *,#trWriterWin * { box-sizing:border-box; }
@@ -2055,7 +2069,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.28</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.29</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2389,7 +2403,6 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
   <button class="tr-chipbtn" onclick="trUserOpen()" title="قاموسي ⭐ — كلماتك المحفوظة على جهازك" aria-label="قاموسي">⭐ قاموسي</button>
   <button class="tr-chipbtn" onclick="trWriterOpen()">✍️ كتابة مواضيع</button>
   <button class="tr-chipbtn" onclick="trSpToggle()">⚙ خيارات الناطق</button>
-  <button class="tr-chipbtn" id="trDefBtn" onclick="trDefToggle()" title="D = وضع المعاجم: يعرض القاموس الكامل للكلمة (معاني وأصناف وأمثلة) بدل الترجمة المختصرة — يعمل بلا إنترنت">D قاموس</button>
 </div>
 <div class="tr-opts" id="trSpOpts" style="display:none;">
   <div class="tr-opt-row"><span>مصدر الصوت:</span>
@@ -10417,16 +10430,108 @@ function trPhoneticsRefresh() {
   } catch (e) {}
 }
 
-// ===== وضع القاموس 📖 — كل معاني الكلمة — v26.20 =====
-var trDefOn = false, trDefData = [], trDefLang = "ar";
-try { trDefOn = localStorage.getItem("trDefOn") === "1"; } catch (e) {}
-function trDefToggle() {
-  trDefOn = !trDefOn;
-  try { localStorage.setItem("trDefOn", trDefOn ? "1" : "0"); } catch (e) {}
-  var b = el("trDefBtn");
-  if (b) b.className = "tr-chipbtn" + (trDefOn ? " tr-chipbtn-on" : "");
-  if (trDefOn) trDefLookup(); else trDefHide();
+// ===== v26.29: نوع الكلمة — تصنيف نحوي مدمج يعمل بلا إنترنت (فعل/اسم/صفة/حال/فاعل/مفعول به…) =====
+function trWtSet(s) { var m = {}, a = String(s).split(" "), i, k; for (i = 0; i < a.length; i++) { k = trNormAr(a[i]); if (k) m[k] = 1; } return m; }
+function trWtSetEn(s) { var m = {}, a = String(s).split(" "), i, k; for (i = 0; i < a.length; i++) { k = trNormEn(a[i]); if (k) m[k] = 1; } return m; }
+var TR_WT_VPAST = trWtSet("ذهب جاء أتى كتب قرأ درس لعب أكل شرب نام قعد وقف مشى جلس أخذ أعطى صنع قال صار رأى نظر سمع عرف فهم حفظ نسي وجد دخل خرج عاد سافر وصل فتح غلق لبس غسل ساعد سحب اشترى باع ربح خسر صلى صام سجد دعا طلب بحث عمل بدأ انتهى قدر استطاع أراد أحب كره ضحك بكى صرخ غنى سبح طار ساب سكن عاش مات كان أصبح ظل أقام ركب نزل كلم قابل زار شكر سمى شاهد تكلم انتظر استيقظ استخدم زرع حصد طهى جر ركض غلب هزم فاز سجد شارك ساعد استلم أدرك رتب حجز ظن شاء رجع حاول قرر شاف راح ذبح طبخ رسم رقد عانى نال هرب لحق سبق");
+var TR_WT_VPRES = trWtSet("يقول يكون يريد يحب يدعو يعطي ينتظر يستيقظ يستلم يستطيع يشعر يموت");
+var TR_WT_PRON = trWtSet("هو هي هم هن أنا أنت أنتم أنتن نحن إياك إياها إياهم");
+var TR_WT_DEM = trWtSet("هذا هذه هذان هاتان ذلك تلك أولئك هؤلاء هنا هناك");
+var TR_WT_Q = trWtSet("ماذا كيف متى أين لماذا كم أي");
+var TR_WT_PREP = trWtSet("في من إلى على عن مع عند بين");
+var TR_WT_CONJ = trWtSet("ثم أو أم لكن بل حتى إن أن كي لكي إذا لو");
+var TR_WT_NEG = trWtSet("لا لم لن لما ما ليس ليست");
+var TR_WT_NUM = trWtSet("واحد اثنان ثلاثة أربع خمس ست سبع ثماني تسع عشر عشرة مئة الف مليون أول ثاني ثالث رابع خامس سادس سابع ثامن تاسع عاشر كلا كلتا");
+var TR_WT_ADV = trWtSet("الآن دائما أبدا غدا أمس سريعا ببطء جدا أيضا قريبا أحيانا غالبا ربما فوق تحت أمام خلف وراء بعد قبل أولا ثانيا أخيرا كثيرا قليلا تماما تقريبا ساعتها");
+var TR_WT_ADJ = trWtSet("كبير صغير طويل قصير جديد قديم جميل وسيم جيد سيئ سعيد حزين سريع بطيء قوي ضعيف نظيف قذر ساخن بارد حلو مالح غني فقير ذكي غبي سهل صعب خطير آمن قريب بعيد كثير قليل مليان خالي شاغر مفتوح مغلق مكسور صحيح خطا غلط حقيقي كاذب عظيم ضخم شجاع جبان كريم بخيل صبور طيب شرير مشغول فرحان زعلان جوعان عطشان نعسان متعب واعي صامت هادئ فضولي طموح ساذج لطيف وحشي مؤدب ممتاز رخيص نضيف");
+var TR_WT_NOUN = trWtSet("بيت مدرسه عمل مدينه يوم ليل نهار صباح مساء عين يد راس قلب وجه اسم اخ اخت اب ام ابن بنت ولد باب نافذه طاوله كرسي سرير مطبخ حمام قريه شارع سياره حافله قطار طائره دراجه ماء خبز لحم تفاح برتقال شاي قهوه حليب ملح سكر زيت شمس قمر سماء ارض بحر نهر جبل شجره زهره حديقه طير قطه كلب حصان كتاب قلم ورقه واجب امتحان سؤال جواب طالب معلم مدرس فصل ساعه وقت سنه شهر اسبوع صحه مرض دواء طبيب مستشفى لغه كلمه جمله حرف رقم حاسوب تلفون هاتف انترنت صوره فيديو اغنيه فيلم مسرح ملعب هدف مباراه فريق لاعب شغل وظيفه راتب مصنع شركه محل سوق تاجر بضاعه سعر نقود مال درهم ليره جنيه سفر حقيبه جواز تذكره فندق غرفه مفاتيح نجار حداد خياط حلاق دهان مهندس كتابه قراءه حساب علوم رياضيات فيزياء كيمياء تاريخ جغرافيا عربي انكليزي انجليزي دراسه تلميذ صف نوم كره سله تنس سباحه شاطي رمل صحراء غابه وادي سهل حقل مزرعه بقره حمار دجاجه ديك بطه سمك نجوم نجم هلال موج ريح رياح مطر ثلج برق رعد ضباب حراره برد ضوء ظلام نار نور هواء تلميذ تاريخ تراب توت ياقوت ياسمين يتيم نيسان توأم اناناس ارز ارنب اسد اسره اسنان اذن ابريق اناء عراق سوريا لبنان فلسطين مصر السعودية تركيا اوروبا العالم كوكب");
+var TR_WT_EV = trWtSetEn("be am is are was were been being have has had do does did go goes went gone come comes came eat eats ate eaten drink drinks drank drunk read reads write writes wrote written study studies studied play plays played sleep sleeps slept sit sits sat stand stands stood walk walks walked run runs ran take takes took taken give gives gave given make makes made say says said see sees saw seen look looks looked hear hears heard know knows knew known think thinks thought understand understands understood remember remembers forget forgets forgot find finds found lose loses lost leave leaves left return returns travel travels arrive arrives open opens opened close closes closed wear wears wore wash washes washed help helps helped push pushes pulled pull buy buys bought sell sells sold win wins won pray prays ask asks asked search searches searched work works worked start starts started begin begins began finish finished end ends want wants wanted need needs needed like likes loved love hate hates hated laugh laughs cried cry sing sings sang listen listens listened try tries tried use uses used live lives lived die dies died stay stays stayed stop stops stopped wait waits waited meet meets met send sends sent send get gets got put puts put let lets let feel feels felt become becomes became bring brings brought tell tells told call calls called answer answers answered learn learns learned teach teaches taught show shows showed pay pays paid build builds built break breaks broke choose chooses chose cost costs cut cuts drive drives drove fly flies flew grow grows grew hold holds held keep keeps kept hit hits hurt hurts lead leads led mean means meant set sets shake shook shut swims swam swim wake woke watch watches watched talk talks spoke speak");
+var TR_WT_EA = trWtSetEn("good bad big small beautiful nice pretty handsome happy sad angry new old great easy hard hot cold warm cool fast slow high low long short right left young strong weak rich poor clean dirty sweet sour salty delicious tasty smart clever kind funny boring exciting amazing wonderful terrible horrible excellent perfect correct wrong true false real fake busy free safe dangerous early late first last next favorite favourite cheap expensive narrow wide deep shallow light dark heavy thin thick soft loud quiet holy full empty different important brilliant significant elegant convenient");
+var TR_WT_ELY = trWtSetEn("family ally reply supply apply july belly jelly lily bully italy rally tally");
+function trWtAr(w) {
+  var raw = String(w || ""), n = trNormAr(raw), f, r2, i, sufs, b;
+  if (!n) return "";
+  if (/[\u064B]/.test(raw)) return "حال"; // تنوين الفتح = حال
+  if (TR_WT_PRON[n]) return "ضمير";
+  if (TR_WT_DEM[n]) return "اسم إشارة";
+  if (TR_WT_Q[n]) return "اسم استفهام";
+  if (TR_WT_PREP[n]) return "حرف جر";
+  if (TR_WT_CONJ[n]) return "حرف عطف";
+  if (TR_WT_NEG[n]) return "حرف نفي";
+  if (TR_WT_NUM[n]) return "عدد";
+  if (TR_WT_ADV[n]) return "حال";
+  f = n.charAt(0);
+  if (TR_WT_VPAST[n]) return ("يتأن".indexOf(f) !== -1 && n.length >= 4) ? "فعل مضارع" : "فعل ماضٍ";
+  sufs = ["وا", "تم", "تما", "تا", "نا", "ات", "ت"];
+  for (i = 0; i < sufs.length; i++) {
+    if (n.length > sufs[i].length + 2 && n.substring(n.length - sufs[i].length) === sufs[i]) { b = n.substring(0, n.length - sufs[i].length); if (TR_WT_VPAST[b]) return "فعل ماضٍ"; }
+  }
+  if (f === "ا" && n.length > 3 && TR_WT_VPAST[n.substring(1)]) return "فعل أمر";
+  if ("يتأن".indexOf(f) !== -1 && n.length >= 4) {
+    r2 = n.substring(1);
+    if (TR_WT_VPAST[r2]) return "فعل مضارع";
+    if (TR_WT_VPRES[n]) return "فعل مضارع";
+    if (r2.length > 3 && (r2.substring(r2.length - 2) === "ون" || r2.substring(r2.length - 2) === "ين" || r2.substring(r2.length - 2) === "ان")) {
+      if (TR_WT_VPAST[r2.substring(0, r2.length - 2)]) return "فعل مضارع";
+    }
+  }
+  if (TR_WT_ADJ[n]) return "صفة";
+  if (n.length > 2 && n.charAt(n.length - 1) === "ه" && TR_WT_ADJ[n.substring(0, n.length - 1)]) return "صفة"; // v26.29b: صفة مؤنثة (جميلة/طويلة)
+  if (TR_WT_NOUN[n]) return "اسم";
+  if (n.length > 3 && n.substring(0, 2) === "ال" && TR_WT_ADJ[n.substring(2)]) return "صفة";
+  if (n.length > 4 && (n.substring(n.length - 2) === "ون" || n.substring(n.length - 2) === "ين" || n.substring(n.length - 2) === "ات")) return "اسم";
+  return "اسم";
 }
+function trWtEn(w) {
+  var n = trNormEn(w), i, s;
+  if (!n || n.indexOf(" ") !== -1) return "";
+  if (TR_WT_EV[n]) return "فعل";
+  if (TR_WT_EA[n]) return "صفة";
+  var NS = ["tion", "sion", "ment", "ness", "ity", "ship", "hood", "ance", "ence", "ism", "ist", "ure", "age", "ee", "er", "or"];
+  for (i = 0; i < NS.length; i++) { s = NS[i]; if (n.length > s.length + 2 && n.substring(n.length - s.length) === s) return "اسم"; }
+  var AS = ["ous", "ful", "less", "ive", "able", "ible", "ish", "ial"];
+  for (i = 0; i < AS.length; i++) { s = AS[i]; if (n.length > s.length + 2 && n.substring(n.length - s.length) === s) return "صفة"; }
+  if (n.length > 3 && n.substring(n.length - 2) === "ly" && !TR_WT_ELY[n]) return "حال";
+  if (n.length > 4 && n.substring(n.length - 3) === "ing") return "فعل";
+  if (n.length > 3 && n.substring(n.length - 2) === "ed") return "فعل";
+  return "اسم";
+}
+function trWtArOf(w) { var s = trClean(w); if (!s || s.split(" ").length > 1) return ""; return trWtAr(s); }
+function trWtEnOf(w) { var s = trClean(w); if (!s || s.split(" ").length > 1) return ""; return trWtEn(s); }
+function trWtBadge(lb) {
+  if (!lb) return "";
+  var c = "tr-wt wt-p";
+  if (lb.indexOf("فعل") === 0) c = "tr-wt wt-v";
+  else if (lb === "فاعل" || lb === "مفعول به") c = "tr-wt wt-r";
+  else if (lb === "صفة") c = "tr-wt wt-a";
+  else if (lb === "حال") c = "tr-wt wt-h";
+  else if (lb.indexOf("اسم") === 0 || lb === "عدد" || lb === "ضمير") c = "tr-wt wt-n";
+  return " <span class='" + c + "'>" + trEsc(lb) + "</span>";
+}
+function trWtAnalyze(q) {
+  var ws = String(q || "").split(" "), out = [], n = ws.length, i, w2, t, vi = -1, prep = false, subj = false;
+  if (n < 2 || n > 4) return null;
+  for (i = 0; i < n; i++) {
+    w2 = trNormAr(ws[i]);
+    if (!w2) continue;
+    if (TR_WT_PREP[w2]) { out.push({ w: ws[i], t: "حرف جر" }); prep = true; subj = false; continue; }
+    if (TR_WT_CONJ[w2]) { out.push({ w: ws[i], t: "حرف عطف" }); prep = false; subj = false; continue; }
+    t = trWtAr(ws[i]);
+    if (t.indexOf("فعل") === 0) { out.push({ w: ws[i], t: t }); if (vi === -1) vi = i; prep = false; subj = false; continue; }
+    if (prep) { out.push({ w: ws[i], t: "اسم مجرور" }); prep = false; subj = false; continue; }
+    if (vi !== -1 && i > vi && t === "اسم") {
+      if (!subj) { out.push({ w: ws[i], t: "فاعل" }); subj = true; continue; }
+      out.push({ w: ws[i], t: "مفعول به" });
+      continue;
+    }
+    out.push({ w: ws[i], t: t });
+  }
+  return out.length ? out : null;
+}
+
+// ===== وضع القاموس 📖 — كل معاني الكلمة — v26.20 =====
+var trDefOn = true, trDefData = [], trDefLang = "ar"; // v26.29: وضع المعاجم دائماً فعّال — زر D أُلغي بطلب المستخدم
+function trDefToggle() { trDefOn = true; trDefLookup(); } // v26.29: بقيت للتوافق — بلا زر
 function trDefAuto() { if (trDefOn) trDefLookup(); }
 function trDefHide() { try { var b = el("trDefBox"); b.style.display = "none"; b.innerHTML = ""; } catch (e) {} }
 function trDefPush(arr, seen, val, src) {
@@ -10444,6 +10549,8 @@ function trDefLookup() {
   if (!q || q.split(" ").length > 4) { box.style.display = "none"; return; }
   var isAr = /[\u0600-\u06FF]/.test(q);
   trDefLang = isAr ? "ar" : "en";
+  var wtMain = isAr ? trWtArOf(q) : trWtEnOf(q); // v26.29: نوع الكلمة المدخلة
+  var an = (isAr && q.split(" ").length > 1) ? trWtAnalyze(q) : null; // v26.29: تحليل نحوي للعبارة القصيرة
   var senses = [], seen = {}, i;
   var lq = isAr ? trLightAr(q) : trNormEn(q);
   var nq = isAr ? trNormAr(q) : lq;
@@ -10490,20 +10597,32 @@ function trDefLookup() {
   else { if (trPhrasesR[lq]) trDefPush(senses, seen, trPhrasesR[lq], "phrase"); }
   trDefData = senses;
   if (!senses.length) {
+    if (an && an.length) { // v26.29: بلا معاني محلية — نعرض التحليل النحوي بدل الفراغ
+      var ah = "<div class='tr-def-title'>🔎 التحليل النحوي — «" + trEsc(q) + "»</div>", k2;
+      for (k2 = 0; k2 < an.length; k2++) ah += "<div class='tr-def-item'><span class='tr-def-num'>" + (k2 + 1) + ".</span> <b>" + trEsc(an[k2].w) + "</b>" + trWtBadge(an[k2].t) + "</div>";
+      box.innerHTML = ah;
+      box.style.display = "block";
+      return;
+    }
     box.innerHTML = "<div class='tr-def-title'>📖 القاموس — «" + trEsc(q) + "»</div><div class='tr-def-empty'>لا يوجد تعريف محلي لهذه الكلمة — جرّب الترجمة العادية أو تدقيق الإملاء ✍️</div>";
     box.style.display = "block";
     return;
   }
   var ph = "";
   try { ph = trPhonetics(q, isAr ? "ar" : "en"); } catch (e2) {}
-  var html = "<div class='tr-def-title'>📖 " + (isAr ? "معاني" : "Meanings of") + " «" + trEsc(q) + "»" + (ph ? " <span class='tr-def-ph'>" + trEsc(ph) + "</span>" : "") + "</div>";
+  var html = "<div class='tr-def-title'>📖 " + (isAr ? "معاني" : "Meanings of") + " «" + trEsc(q) + "»" + (ph ? " <span class='tr-def-ph'>" + trEsc(ph) + "</span>" : "") + trWtBadge(wtMain) + "</div>";
   var shown = Math.min(senses.length, 14);
   for (i = 0; i < shown; i++) {
     html += "<div class='tr-def-item'><span class='tr-def-num'>" + (i + 1) + ".</span> " + trEsc(senses[i].t) +
       (senses[i].src === "user" ? " <span class='tr-def-badge' style='color:#b45309;font-weight:700;'>⭐ قاموسي</span>" : (senses[i].src === "open" ? " <span class='tr-def-badge'>🌐 موسّع</span>" : "")) +
+      trWtBadge(isAr ? trWtEnOf(senses[i].t) : trWtArOf(senses[i].t)) + // v26.29: نوع كل معنى
       " <button class='tr-def-say' onclick='trDefSay(" + i + ")'>🔊</button></div>";
   }
   if (senses.length > shown) html += "<div class='tr-def-badge'>+" + (senses.length - shown) + "</div>";
+  if (an && an.length) { // v26.29: التحليل النحوي أسفل المعاني
+    html += "<div class='tr-def-title' style='margin-top:8px;'>🔎 التحليل النحوي</div>";
+    for (i = 0; i < an.length; i++) html += "<div class='tr-def-item'><span class='tr-def-num'>" + (i + 1) + ".</span> <b>" + trEsc(an[i].w) + "</b>" + trWtBadge(an[i].t) + "</div>";
+  }
   box.innerHTML = html;
   box.style.display = "block";
   try { trHistSave(q, senses.slice(0, 6).map(function (x) { return x.t; }).join(", "), trState.src + ">" + trState.dst, "book"); } catch (e3) {}
@@ -10512,7 +10631,7 @@ function trDefSay(i) {
   var it = trDefData[i];
   if (it) trSpeakText(it.t, trDefLang === "ar" ? "en" : "ar");
 }
-try { if (trDefOn && el("trDefBtn")) { el("trDefBtn").className = "tr-chipbtn tr-chipbtn-on"; } } catch (e) {}
+// v26.29: زر D أُلغي — وضع المعاجم يعمل دائماً تلقائياً
 
 // ===== السجل =====
 function trHistLoad() {
@@ -10807,8 +10926,8 @@ function trBdFetch(q, ok) {
     ok(d);
   }, function () { ok(null); });
 }
-function trSynRender(main, groups) {
-  var html = "<div class='tr-syn main'><b>" + trEsc(main) + "</b><span class='tr-syn-pos best'>الترجمة</span></div>", i, j, shown = {}, w, wl;
+function trSynRender(main, groups, wt) {
+  var html = "<div class='tr-syn main'><b>" + trEsc(main) + "</b><span class='tr-syn-pos best'>الترجمة</span>" + trWtBadge(wt || "") + "</div>", i, j, shown = {}, w, wl;
   if (main) shown[main.toLowerCase()] = 1;
   for (i = 0; i < groups.length; i++) {
     for (j = 0; j < groups[i].terms.length; j++) {
@@ -10828,7 +10947,7 @@ function trMaybeShowSyn(q, result, genAtStart) {
     if (!d || !d.groups || !d.groups.length) return;
     var out = el("trOutput");
     if (!out) return;
-    out.innerHTML = trSynRender(trClean(result) || d.main || w, d.groups);
+    out.innerHTML = trSynRender(trClean(result) || d.main || w, d.groups, (/[\u0600-\u06FF]/.test(w) ? trWtArOf(w) : trWtEnOf(w))); // v26.29: نوع الكلمة في صف الترجمة
     out.className = "tr-out";
   });
 }
@@ -10960,7 +11079,7 @@ function trMicBridge(json) { // كولباك جسر الأندرويد
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.28.apk";
+var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.29.apk";
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -11290,7 +11409,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.28"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.28: زر القبلة رمز فقط دون كلمة + مراقب صمت للمايك (9 ثوانٍ بلا صوت = رسالة واضحة) في JS وفي جسر أندرويد مع قياس مستوى الصوت ولغة احتياطية + بطاقة إنقاذ مشكلة التثبيت «التطبيق ليس مثبتا» (تعارض التوقيع مع النسخ الأقدم من 26.19) + بنية الخانات المخصصة: أسماء وأيقونات عربية من المحرر عبر عنصر _catmeta وظهور الخانات المخصصة في شريط الأقسام + عنصر بنص فارغ لا يُعرض)
+var CURRENT_APP_VERSION = "26.29"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.29: إلغاء زر D من المترجم وجعل وضع المعاجم فعّالاً دائماً تلقائياً + شارات نوع الكلمة المدمجة بلا إنترنت: فعل ماضٍ/مضارع/أمر، اسم، صفة، حال، ضمير، حرف جر/عطف/نفي، عدد، اسم إشارة، اسم استفهام + تحليل نحوي تلقائي للعبارات العربية القصيرة: فاعل، مفعول به، اسم مجرور + نوع كل معنى يظهر بجواره في صندوق المعاني وصف المورد)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
