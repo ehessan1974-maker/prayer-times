@@ -2038,21 +2038,24 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
 <!-- Header -->
 <div class="header">
   <div class="header-inner">
-    <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.15</span></h1>
-    </div>
-    <div class="ramadan-cell">
-      <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
-    </div>
+    <!-- v26.24: ترتيب الترويسة الجديد بطلب المستخدم — الأزرار أولاً (يمين) ثم باقي لرمضان ثم اسم البرنامج -->
     <div class="btns-cell">
       <div class="header-btns" style="display:inline-block;">
         <span id="onlineIcon" style="font-size:14px;vertical-align:middle;">🟢</span>
+        <button class="icon-btn" id="quranBtn" onclick="openQuran(event)" title="القرآن الكريم — قريباً بإذن الله" style="vertical-align:middle;">📗</button>
+        <button class="icon-btn" id="hadithBtn" onclick="openHadithLibrary(event)" title="مكتبة الأحاديث الكاملة" style="vertical-align:middle;">📖</button>
         <button class="icon-btn" id="infoToggleBtn" onclick="toggleOnlineInfo()" title="معلومات وأحاديث" style="vertical-align:middle;">📚</button>
         <button class="icon-btn" id="translatorBtn" onclick="openTranslator(event)" title="المترجم عربي-إنكليزي مع ناطق" style="vertical-align:middle;">🌐</button>
         <button class="icon-btn" id="qiblaBtn" onclick="openQibla()" title="اتجاه القبلة" style="vertical-align:middle;">🧭</button>
         <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="الوضع الليلي/النهاري" style="vertical-align:middle;">🌙</button>
-        <button class="icon-btn" onclick="openSettings()" style="vertical-align:middle;">⚙️</button>
+        <button class="icon-btn" onclick="openSettings()" title="الإعدادات" style="vertical-align:middle;">⚙️</button>
       </div>
+    </div>
+    <div class="ramadan-cell">
+      <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
+    </div>
+    <div class="title-cell">
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.24</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -3054,7 +3057,18 @@ function renderInfoCatBar() {
     }
   }
   bar.innerHTML = html;
-  // إعادة تطبيق تظليل القسم النشط بعد إعادة البناء (بدون آثار جانبية toggleCatFilter)
+  infoCatRestyle();
+}
+
+// v26.24: فصل منطق تلوين أزرار الأقسام في دالة مستقلة — الإصلاح الجذري لمشكلة
+// «الأزرار لا تأخذ لون الوضع الليلي إلا بعد الضغط على أحد الأزرار»: الألوان مطبقة inline
+// على العناصر وقواعد CSS الداكنة (بلا !important عمداً كي لا تلغي ألوان JS) لا تتغلب عليها،
+// فكانت الألوان تتحدث فقط عند إعادة البناء — التي تحدث عند الضغط. الآن تُستدعى هذه الدالة
+// من applyTheme() فور كل تبديل ثيم (وإقلاع) فتتلوّن الأزرار فوراً بلا انتظار ضغطة.
+function infoCatRestyle() {
+  var bar = el("infoCatBar");
+  if (!bar) return;
+  // إعادة تطبيق تظليل القسم النشط (بدون آثار جانبية toggleCatFilter)
   var active = infoCatFilter || "all";
   var isDark = document.body.classList.contains("dark-mode");
   var allBtns = bar.querySelectorAll("span[id^='catBtn_']");
@@ -3497,6 +3511,12 @@ function hlUpdateEntry() {
 }
 
 // ---------- فتح وإغلاق القارئ ----------
+// v26.24: زر القرآن الكريم المبدئي في الترويسة — إشعار لطيف حتى جهّز قسم القرآن الكامل
+function openQuran(ev) {
+  if (ev) { try { ev.stopPropagation(); ev.preventDefault(); } catch (e) {} }
+  try { hlToast("📗 القرآن الكريم — القسم قيد الإعداد وسيُتاح قريباً بإذن الله"); } catch (e) {}
+}
+
 function openHadithLibrary(ev) {
   if (ev) { try { ev.stopPropagation(); ev.preventDefault(); } catch (e) {} }
   el("hadithReader").classList.add("open");
@@ -7994,6 +8014,8 @@ function applyTheme() {
   var tb = null;
   try { tb = el("themeBtn"); } catch(e2) {}
   if (tb) { tb.innerHTML = dark ? "☀️" : "🌙"; tb.title = dark ? "تبديل إلى الوضع النهاري" : "تبديل إلى الوضع الليلي"; }
+  // v26.24: تلون فوري لأزرار أقسام البيانات المتحركة بعد كل تطبيق ثيم (تبديل يدوي أو إقلاع)
+  try { if (typeof infoCatRestyle === "function") infoCatRestyle(); } catch (e3) {}
 }
 function toggleTheme() {
   try { localStorage.setItem(PT_THEME_KEY, themeIsDark() ? "light" : "dark"); } catch(e) {}
@@ -11107,7 +11129,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.23"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.23: عرض المورد — كل المعاني مرتبة مع صيغة كل كلمة + نقل الأزرار أسفل خانات الترجمة وزر الترجمة بجانب عربي/إنكليزي + تقليل ارتفاع الرأس + الإدخال الصوتي 🎤)
+var CURRENT_APP_VERSION = "26.24"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.24: ترتيب الترويسة — الأزرار يميناً ثم باقي لرمضان ثم اسم البرنامج + زر الأحاديث 📖 وزر القرآن الكريم المبدئي 📗 في الترويسة + إصلاح تلون أزرار البيانات المتحركة فور تبديل الوضع الليلي)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
