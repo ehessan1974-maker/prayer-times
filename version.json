@@ -1,13 +1,13 @@
 {
-  "appVersion": "26.29",
+  "appVersion": "26.30",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "apkUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.29.apk",
+  "apkUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.30.apk",
   "apkSizeMB": "3.2",
   "releasedAt": "2026-10-21",
   "changelog": [
-    "إلغاء زر D من المترجم — وضع المعاجم أصبح فعّالاً دائماً تلقائياً بلا زر",
-    "نوع الكلمة يظهر مع كل معنى بلا إنترنت: فعل (ماضٍ/مضارع/أمر)، اسم، صفة، حال، ضمير، حرف جر/عطف/نفي، عدد، اسم إشارة، اسم استفهام",
-    "تحليل نحوي تلقائي للعبارات العربية القصيرة: فاعل، مفعول به، اسم مجرور"
+    "المعاني تُعرض الآن داخل خانة الترجمة نفسها — أُلغيت القائمة المنفصلة، وانسخ المعاني يدوياً بالتحديد أو بزر 📋 بسهولة",
+    "نوع الكلمة يُكتب بالعربية والإنكليزية معاً: اسم · Noun، فعل ماضٍ · Past verb، فاعل · Subject، مفعول به · Object، صفة · Adjective، حال · Adverb…",
+    "زر 🔊 الناطق ينطق الترجمة فقط بلا المعاني، والفونيتيكس للترجمة فقط"
   ],
-  "version": "26.29"
+  "version": "26.30"
 }
