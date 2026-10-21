@@ -1850,6 +1850,32 @@ body.dark-mode .tr-user-fixbadge { background:#0c2018;color:#6ee7b7; }
 body.dark-mode .tr-brk-title { color:#b7e2d0; }
 body.dark-mode .tr-brk { background:#10231c;border-color:#1e4436;color:#b7e2d0; }
 body.dark-mode #trHistWin,body.dark-mode #trWriterWin { background:#0d1512; }
+/* v26.36: نافذة قاموس المورد الكامل — بحث فوري بأقسام تخصصية، بيانات تُجلب حسب أول حرف */
+#trMawridWin { display:none;position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:100001;background:#f4fbf7;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain; }
+#trMawridWin.open { display:block; }
+#trMawridWin * { box-sizing:border-box; }
+body.dark-mode #trMawridWin { background:#0d1512; }
+.m-chips { white-space:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 0 2px; }
+.m-chip { display:inline-block;background:#fff;border:1px solid #cfe7dc;border-radius:999px;padding:7px 12px;margin:0 0 0 6px;font-size:13px;font-weight:700;color:#0b3d2e;cursor:pointer;vertical-align:top; }
+.m-chip.on { background:#065f46;border-color:#065f46;color:#fff; }
+.m-in { display:block;width:100%;border:1px solid #cfe7db;border-radius:10px;padding:9px 12px;font-size:16px;color:#1f2937;background:#fbfefd;font-family:inherit;-webkit-appearance:none;appearance:none; }
+.m-in:focus { outline:none;border-color:#065f46; }
+.m-stat { font-size:12px;color:#4b7a68;margin:8px 2px;min-height:16px; }
+.m-res { padding-bottom:30px; }
+.m-row { background:#fff;border:1px solid #dcece4;border-radius:12px;padding:9px 12px;margin:7px 0; }
+.m-hw { font-size:15px;font-weight:800;color:#0b3d2e;word-wrap:break-word; }
+.m-row.en .m-hw { direction:ltr;text-align:left;font-family:Georgia,'Times New Roman',serif; }
+.m-tr { font-size:14px;color:#245c48;margin-top:3px;line-height:1.65;word-wrap:break-word;max-height:88px;overflow:hidden;position:relative;cursor:pointer; }
+.m-tr.open { max-height:none; }
+.m-tools { margin-top:6px; }
+.m-tools .tr-act { margin-left:6px; }
+body.dark-mode .m-row { background:#101d17;border-color:#244435; }
+body.dark-mode .m-hw { color:#9fe8cd; }
+body.dark-mode .m-tr { color:#7fcfb2; }
+body.dark-mode .m-chip { background:#101d17;border-color:#244435;color:#9fe8cd; }
+body.dark-mode .m-chip.on { background:#065f46;border-color:#0b8f68;color:#fff; }
+body.dark-mode .m-in { background:#0c1813;border-color:#2a4a3b;color:#e5f3ec; }
+body.dark-mode .m-stat { color:#5f9c85; }
 body.dark-mode .tr-hist-item,body.dark-mode .tr-tpl-row { background:#10231c;border-color:#1e4436; }
 body.dark-mode .tr-hist-q,body.dark-mode .tr-tpl-row { color:#b7e2d0; }
 body.dark-mode .tr-hist-r { color:#cde8dc; }
@@ -2122,7 +2148,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.35</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.36</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2452,6 +2478,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
   <label><input type="checkbox" id="trNetChk" checked onchange="try{localStorage.setItem('trUseOnline',this.checked?'1':'0')}catch(e){}"> استخدام الإنترنت</label>
   <button class="tr-chipbtn" onclick="trHistOpen()">🕘 السجل</button>
   <button class="tr-chipbtn" onclick="trUserOpen()" title="قاموسي ⭐ — كلماتك المحفوظة على جهازك" aria-label="قاموسي">⭐ قاموسي</button>
+  <button class="tr-chipbtn" onclick="trMawridOpen()" title="قاموس المورد الكامل — 434 ألف مدخل: المورد الحديث + تخصصات الطب والعلوم والهندسة والقانون والأدب" aria-label="قاموس المورد">📚 المورد</button>
   <button class="tr-chipbtn" onclick="trWriterOpen()">✍️ كتابة مواضيع</button>
   <button class="tr-chipbtn" onclick="trSpToggle()">⚙ خيارات الناطق</button>
 </div>
@@ -2508,6 +2535,24 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     </div>
     <button class="tr-main" id="trGenBtn" onclick="trWriterGenerate()">✨ توليد النص الإنكليزي</button>
     <div class="tr-opt-note">💡 مع تفعيل «استخدام الإنترنت» تُستشار ترجمة جوجل فوراً ومباشرة أولاً — وإن اختلفت ترجمة القاعدة المدمجة يُقترح استبدالها بضغطة واحدة فيُحفظ التصحيح في «⭐ قاموسي». بلا إنترنت يعمل القاموس المدمج بنص بسيط.</div>
+  </div>
+</div>
+
+<!-- v26.36: نافذة قاموس المورد الكامل + المصطلحات المتخصصة -->
+<div id="trMawridWin" role="dialog" aria-label="قاموس المورد">
+  <div class="tr-header">
+    <button class="tr-back" onclick="trMawridClose()" aria-label="رجوع">‹</button>
+    <div class="tr-title-wrap"><div class="tr-title">قاموس المورد 📚</div><div class="tr-subtitle">434 ألف مدخل — المورد الحديث + المصطلحات المتخصصة</div></div>
+  </div>
+  <div class="tr-body">
+    <div class="m-chips" id="mChips"></div>
+    <div class="tr-card" style="padding:8px 10px;margin-top:6px;">
+      <span class="tr-label">البحث <button type="button" class="tr-clear" id="mClearBtn" onclick="trMawridClear()" title="مسح البحث" aria-label="مسح البحث">✕</button></span>
+      <input type="text" id="mInput" class="m-in" oninput="trMawridOnInput()" onkeydown="trMawridKey(event)" placeholder="اكتب كلمة إنكليزية أو عربية…" autocomplete="off">
+    </div>
+    <div class="m-stat" id="mStat">اختر قسماً واكتب كلمة…</div>
+    <div class="m-res" id="mRes"></div>
+    <div class="tr-opt-note" id="mNote">💡 أول بحث في أي قسم يُنزّل ملفه (بحسب أول حرف) ثم يعمل فورياً بعدها خلال الجلسة نفسها. «المورد الحديث» إنكليزي←عربي، والبحث العربي←إنكليزي متاح في أقسام التخصصات. وإن ظهرت كلمة مقطوعة فاضغط المعنى ليتمدد.</div>
   </div>
 </div>
 
@@ -9102,6 +9147,7 @@ function closeTranslator() {
   try { trMicStop(); } catch (eM) {}
   try { el("trHistWin").classList.remove("open"); } catch (eH) {}
   try { el("trWriterWin").classList.remove("open"); } catch (eW) {}
+  try { el("trMawridWin").classList.remove("open"); } catch (eMw) {} // v26.36
   try { document.body.style.overflow = ""; } catch (e) {}
   trStopSpeak();
 }
@@ -11011,6 +11057,7 @@ function trDefBlockHtml() {
     }
     if (trDefData.length > shown) html += "<div class='tr-def-badge'>+" + (trDefData.length - shown) + "</div>";
   }
+  html += "<div style='margin-top:6px;'><button class='tr-act' onclick='trMawridOpenM()'>📚 قاموس المورد الكامل</button></div>"; // v26.36
   if (m.an && m.an.length) {
     html += "<div class='tr-def-title' style='margin-top:8px;'>🔎 " + (m.isAr ? "التحليل النحوي" : "Grammar") + " — «" + trEsc(m.anText || m.q) + "»</div>";
     for (i = 0; i < m.an.length; i++) html += "<div class='tr-def-item'><span class='tr-def-num'>" + (i + 1) + ".</span> <b>" + trEsc(m.an[i].w) + "</b>" + trWtBadge(m.an[i].t) + "</div>";
@@ -11676,6 +11723,187 @@ function trMicBridge(json) { // كولباك جسر الأندرويد
   } catch (e) {}
 }
 
+// ===== v26.36: قاموس المورد الكامل + المصطلحات المتخصصة — 434 ألف مدخل =====
+// البيانات في مستودع منفصل (prayer-times-data) لا يؤثر على حجم مستودعات التطبيق:
+// jsDelivr أساساً (CDN) ثم raw بديلاً — كل قسم يُنزّل بحسب أول حرف فقط ثم يعمل من الذاكرة
+var M_DATA_VER = "1"; // إصدار البيانات في المستودع — يُرفع عند تحديثها لكسر كاش jsDelivr
+var M_BASES = [
+  "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times-data@main/",
+  "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times-data/main/"
+];
+var M_GROUPS = [
+  { id: "gen", icon: "📗", name: "المورد الحديث", rev: false, n: 61836 },
+  { id: "med", icon: "🏥", name: "الطب والصيدلة", rev: true, n: 141257 },
+  { id: "sci", icon: "🔬", name: "العلوم والتقنية", rev: false, n: 120477 },
+  { id: "phy", icon: "⚛️", name: "الفيزياء", rev: true, n: 9970 },
+  { id: "che", icon: "⚗️", name: "الكيمياء", rev: true, n: 8462 },
+  { id: "eng", icon: "🏗️", name: "الهندسة", rev: false, n: 81209 },
+  { id: "law", icon: "⚖️", name: "القانون", rev: true, n: 6087 },
+  { id: "lit", icon: "📜", name: "الأدب والشعر", rev: true, n: 4605 }
+];
+var mCur = "gen", mCache = {}, mTimer = null, mReq = 0, mLast = [];
+function mGroupOf(id) { for (var i = 0; i < M_GROUPS.length; i++) { if (M_GROUPS[i].id === id) return M_GROUPS[i]; } return M_GROUPS[0]; }
+function mFmt(n) { try { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); } catch (e) { return String(n); } }
+function trMawridOpen(word) {
+  try { el("trMawridWin").classList.add("open"); } catch (e) {}
+  trMawridRenderChips();
+  var inp = el("mInput");
+  if (typeof word === "string" && trClean(word)) inp.value = trClean(word);
+  if (trClean(inp.value)) trMawridSearch();
+  else { try { el("mStat").textContent = "اختر قسماً واكتب كلمة…"; } catch (e2) {} try { inp.focus(); } catch (e3) {} }
+}
+function trMawridOpenM() { var q = (trDefMeta && trDefMeta.q) ? trDefMeta.q : ""; trMawridOpen(q); }
+function trMawridClose() { try { el("trMawridWin").classList.remove("open"); } catch (e) {} }
+function trMawridClear() { try { el("mInput").value = ""; } catch (e) {} trMawridSearch(); try { el("mInput").focus(); } catch (e2) {} }
+function trMawridOnInput() { if (mTimer) clearTimeout(mTimer); mTimer = setTimeout(function () { trMawridSearch(); }, 300); }
+function trMawridKey(ev) { try { if (ev.keyCode === 13) { ev.preventDefault(); if (mTimer) clearTimeout(mTimer); trMawridSearch(); } } catch (e) {} }
+function trMawridRenderChips() {
+  var box = el("mChips"); if (!box) return;
+  var h = "", i;
+  for (i = 0; i < M_GROUPS.length; i++) {
+    var g = M_GROUPS[i];
+    h += "<span class='m-chip" + (g.id === mCur ? " on" : "") + "' onclick='trMawridPick(&quot;" + g.id + "&quot;)'>" + g.icon + " " + g.name + "</span>";
+  }
+  box.innerHTML = h;
+}
+function trMawridPick(id) { mCur = id; trMawridRenderChips(); trMawridSearch(); try { el("mInput").focus(); } catch (e) {} }
+function mNormAr(s) {
+  s = String(s || "");
+  try { s = s.replace(/[\u064B-\u065F\u0670\u0640]/g, ""); } catch (e) {}
+  s = s.replace(/\u0623/g, "\u0627").replace(/\u0625/g, "\u0627").replace(/\u0622/g, "\u0627");
+  s = s.replace(/\u0629/g, "\u0647").replace(/\u0649/g, "\u064A");
+  return s;
+}
+function mEnLetter(q) { var c = q.charAt(0); return (c >= "a" && c <= "z") ? c : "0"; }
+function mArLetter(q) { var c = mNormAr(q).charAt(0), L = "ابتثجحخدذرزسشصضطظعغفقكلمنهوي"; return L.indexOf(c) >= 0 ? c : "0"; }
+function mXhr(url, cb) {
+  var done = false;
+  try {
+    var x = new XMLHttpRequest();
+    x.open("GET", url, true);
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4 || done) return;
+      done = true;
+      if (x.status === 200 && x.responseText) cb(null, x.responseText); else cb(x.status ? "HTTP " + x.status : "شبكة");
+    };
+    x.send();
+    setTimeout(function () { if (!done) { done = true; cb("مهلة"); try { x.abort(); } catch (e) {} } }, 25000);
+  } catch (e) { if (!done) { done = true; cb("شبكة"); } }
+}
+function mPrep(txt, isAr) { // أسطر نصية -> مصفوفات متوازية (كلمة/معنى) + مفاتيح مرتبة للبحث الثنائي
+  var lines = txt.split("\n"), ks = [], ws = [], ts = [], i;
+  for (i = 0; i < lines.length; i++) {
+    var ln = lines[i]; if (!ln) continue;
+    var p = ln.split("\t"); if (p.length < 2) continue;
+    var w = p[0]; p.shift(); var t = p.join(" ");
+    if (!w || !t) continue;
+    ks.push(isAr ? mNormAr(w) : w.toLowerCase());
+    ws.push(w); ts.push(t);
+  }
+  return { ks: ks, ws: ws, ts: ts };
+}
+function mLoad(grp, dir, letter, isAr, cb) {
+  var key = dir + "/" + grp + "/" + letter;
+  if (mCache[key]) { cb(null, mCache[key]); return; }
+  mXhr(M_BASES[0] + key + ".txt?v=" + M_DATA_VER, function (e1, t1) {
+    if (!e1) { mCache[key] = mPrep(t1, isAr); cb(null, mCache[key]); return; }
+    mXhr(M_BASES[1] + key + ".txt", function (e2, t2) {
+      if (!e2) { mCache[key] = mPrep(t2, isAr); cb(null, mCache[key]); return; }
+      cb(e2);
+    });
+  });
+}
+function mLowerBound(d, q) { var lo = 0, hi = d.ks.length; while (lo < hi) { var mid = (lo + hi) >> 1; if (d.ks[mid] < q) lo = mid + 1; else hi = mid; } return lo; }
+function trMawridSearch() {
+  var inp = el("mInput"), stat = el("mStat"), res = el("mRes");
+  if (!inp || !stat || !res) return;
+  var q = trClean(inp.value || "");
+  var g = mGroupOf(mCur);
+  if (!q) {
+    res.innerHTML = ""; mLast = [];
+    stat.textContent = "«" + g.name + "» — " + mFmt(g.n) + " مدخل. اكتب كلمة…";
+    return;
+  }
+  var isAr = /[\u0600-\u06FF]/.test(q);
+  var i;
+  if (isAr && !g.rev) { // وجّه تلقائياً إلى أول قسم يدعم العربي←إنكليزي
+    for (i = 0; i < M_GROUPS.length; i++) { if (M_GROUPS[i].rev) { mCur = M_GROUPS[i].id; g = M_GROUPS[i]; break; } }
+    trMawridRenderChips();
+  }
+  var dir;
+  if (isAr) {
+    if (!g.rev) { res.innerHTML = ""; mLast = []; stat.textContent = "قسم «" + g.name + "» إنكليزي←عربي فقط — البحث العربي متاح في أقسام التخصصات."; return; }
+    dir = "r";
+  } else dir = "d";
+  var cands = [q];
+  if (isAr) {
+    var nq = mNormAr(q), pres = ["وال", "بال", "كال", "فال", "ال", "لل"];
+    for (i = 0; i < pres.length; i++) {
+      if (nq.indexOf(pres[i]) === 0 && nq.length > pres[i].length + 1) { cands.push(q.substring(pres[i].length)); break; }
+    }
+  } else {
+    var lq = q.toLowerCase();
+    if (lq.length > 3 && lq.charAt(lq.length - 1) === "s") cands.push(lq.substring(0, lq.length - 1));
+    if (lq.length > 4 && lq.substring(lq.length - 2) === "es") cands.push(lq.substring(0, lq.length - 2));
+    if (lq.length > 5 && lq.substring(lq.length - 3) === "ies") cands.push(lq.substring(0, lq.length - 3) + "y");
+  }
+  var letter = isAr ? mArLetter(cands[0]) : mEnLetter(q.toLowerCase());
+  var myReq = ++mReq;
+  stat.textContent = mCache[dir + "/" + g.id + "/" + letter] ? "⏳ بحث…" : "⏳ تحميل قسم " + g.icon + " " + g.name + " (" + letter + ")…";
+  mLoad(g.id, dir, letter, isAr, function (err, d) {
+    if (myReq !== mReq) return; // وصل طلب أحدث — أهمل القديم
+    if (err) { stat.textContent = "⚠ تعذّر التحميل (" + err + ") — تأكد من الاتصال ثم أعد المحاولة"; return; }
+    trMawridRun(d, g, dir, cands, isAr, myReq);
+  });
+}
+function trMawridRun(d, g, dir, cands, isAr, myReq) {
+  if (myReq !== mReq) return;
+  var stat = el("mStat"), res = el("mRes");
+  var seen = {}, pre = [], cont = [], i, j;
+  var q2 = isAr ? mNormAr(cands[0]) : String(cands[0]).toLowerCase();
+  for (i = 0; i < cands.length; i++) {
+    var qi = isAr ? mNormAr(cands[i]) : String(cands[i]).toLowerCase();
+    if (!qi) continue;
+    var lo = mLowerBound(d, qi);
+    for (j = lo; j < d.ks.length && d.ks[j].indexOf(qi) === 0 && pre.length < 60; j++) {
+      if (!seen[j]) { seen[j] = 1; pre.push(j); }
+    }
+  }
+  if (q2.length >= 3) { // بحث احتوائي داخل القسم نفسه بعد مطابقات البداية
+    for (j = 0; j < d.ks.length && cont.length < 40; j++) {
+      if (!seen[j] && d.ks[j].indexOf(q2) > 0) { seen[j] = 1; cont.push(j); }
+    }
+  }
+  var hits = pre.concat(cont), h = "", shown = Math.min(hits.length, 80);
+  mLast = [];
+  for (i = 0; i < shown; i++) {
+    var idx = hits[i];
+    mLast.push({ w: d.ws[idx], t: d.ts[idx] });
+    h += "<div class='m-row" + (isAr ? "" : " en") + "'><div class='m-hw'>" + trEsc(d.ws[idx]) + "</div>" +
+      "<div class='m-tr' onclick='mToggleTr(this)' title='اضغط لتمديد المعنى أو طبعه'>" + trEsc(d.ts[idx]) + "</div>" +
+      "<div class='m-tools'><button class='tr-act' onclick='mCopyIdx(" + i + ",this)'>📋 نسخ</button> <button class='tr-act' onclick='mSendIdx(" + i + ")'>➤ إلى المترجم</button></div></div>";
+  }
+  res.innerHTML = h;
+  stat.textContent = hits.length
+    ? (mFmt(hits.length) + (hits.length > 80 ? "+ نتيجة (تُعرض أول 80)" : " نتيجة") + " — " + g.icon + " " + g.name)
+    : "لا نتائج لـ«" + cands[0] + "» في " + g.name + " — جرّب بداية الكلمة فقط";
+}
+function mToggleTr(node) { try { node.className = node.className.indexOf("open") >= 0 ? node.className.replace(/ ?open/g, "") : node.className + " open"; } catch (e) {} }
+function mCopyIdx(i, btn) {
+  var it = mLast[i]; if (!it) return;
+  var ok = rescueCopy(it.w + " — " + it.t);
+  if (btn) {
+    btn.textContent = ok ? "✓ نُسخ" : "⚠ تعذّر";
+    setTimeout(function () { try { btn.textContent = "📋 نسخ"; } catch (e) {} }, 1600);
+  }
+}
+function mSendIdx(i) {
+  var it = mLast[i]; if (!it) return;
+  try { el("trInput").value = it.w; } catch (e) {}
+  try { trOnInput(); } catch (e2) {}
+  trMawridClose();
+}
+
 // ===== v26.34: إحساس الضغط — تفاعل لمسي مرئي فوري لكل أزرار المترجم حتى في الويبفيو القديم =====
 (function () {
   var cur = null;
@@ -11707,7 +11935,7 @@ function trMicBridge(json) { // كولباك جسر الأندرويد
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.35.apk";
+var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.36/prayer-times-v26.36.apk"; // v26.36: قناة Releases — لا تُحسب في حجم المستودع
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -12037,7 +12265,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.35"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.35: زر ✕ جديد لمسح خانة النص الأصلي بلمسة واحدة — يفرّغ الخانة ويصفّر العدّاد ويفرغ خانة الترجمة معه بنفس سلوك التفريغ اليدوي، مع إحساس الضغط والتحويم)
+var CURRENT_APP_VERSION = "26.36"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.36: قاموس المورد الكامل + المصطلحات المتخصصة — 434 ألف مدخل ببحث فوري ثنائي الاتجاه من مستودع بيانات منفصل)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
