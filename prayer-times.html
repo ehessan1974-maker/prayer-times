@@ -1876,6 +1876,32 @@ body.dark-mode .m-chip { background:#101d17;border-color:#244435;color:#9fe8cd; 
 body.dark-mode .m-chip.on { background:#065f46;border-color:#0b8f68;color:#fff; }
 body.dark-mode .m-in { background:#0c1813;border-color:#2a4a3b;color:#e5f3ec; }
 body.dark-mode .m-stat { color:#5f9c85; }
+/* v26.37: القاموس الشامل المدمج في الواجهة الرئيسية — بطاقات موحدة + شرائح قابلة للسحب */
+#trDictCard { margin-bottom:12px; }
+.m-sub { font-size:10px;font-weight:400;color:#5b8a77; }
+.m-inwrap { position:relative;margin-top:8px; }
+.m-inwrap .m-in { padding-left:38px; }
+.m-clear { position:absolute;left:6px;top:50%;margin-top:-13px;width:26px;height:26px;line-height:23px;border-radius:50%;border:1px solid #cfe7dc;background:#f0faf5;color:#065f46;font-size:13px;font-weight:800;cursor:pointer;padding:0;text-align:center;font-family:inherit; }
+.m-chip { position:relative; }
+.m-chip.all { background:#0b8f68;border-color:#0b8f68;color:#fff; }
+.m-chip.drag { opacity:.8;box-shadow:0 4px 14px rgba(6,95,70,.4);-webkit-transform:scale(1.07);transform:scale(1.07);z-index:2; }
+.m-chip:active,.m-chip.pressed,.m-clear:active,.m-clear.pressed,.m-fav:active,.m-fav.pressed { -webkit-transform:scale(.92); transform:scale(.92); }
+.m-hw { min-height:30px; }
+.m-fav { float:left;width:28px;height:28px;border-radius:50%;border:1px solid #d8ece2;background:#fff;color:#94a3b8;font-size:15px;line-height:24px;cursor:pointer;padding:0;text-align:center;font-family:inherit;margin-right:6px; }
+.m-fav.on { color:#b45309;border-color:#fcd34d;background:#fffbeb; }
+.m-src { font-size:10.5px;color:#5b8a77;margin-top:5px; }
+.m-ex { font-size:12px;color:#365e4e;background:#f2faf6;border:1px dashed #bfe3d2;border-radius:9px;padding:6px 9px;margin-top:6px;line-height:1.95;word-wrap:break-word; }
+.m-ex b { color:#0b3d2e; }
+.m-empty .m-hw { color:#92400e; }
+body.dark-mode .m-sub,body.dark-mode .m-src { color:#6fa08c; }
+body.dark-mode .m-clear { background:#10231c;border-color:#2a4a3b;color:#9fe8cd; }
+body.dark-mode .m-chip.all,body.dark-mode .m-chip.all.on { background:#0b8f68;border-color:#0b8f68;color:#fff; }
+body.dark-mode .m-fav { background:#182b22;border-color:#3a5c4b;color:#8fa8b8; }
+body.dark-mode .m-fav.on { color:#e0b34d;border-color:#8a6d1a;background:#2a2410; }
+body.dark-mode .m-ex { background:#0e1d16;border-color:#2a4a3b;color:#9fd8bf; }
+body.dark-mode .m-ex b { color:#c9f0de; }
+body.dark-mode .m-empty .m-hw { color:#fcd34d; }
+
 body.dark-mode .tr-hist-item,body.dark-mode .tr-tpl-row { background:#10231c;border-color:#1e4436; }
 body.dark-mode .tr-hist-q,body.dark-mode .tr-tpl-row { color:#b7e2d0; }
 body.dark-mode .tr-hist-r { color:#cde8dc; }
@@ -2148,7 +2174,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.36</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.37</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2473,12 +2499,22 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="tr-break" id="trBreak" style="display:none;"></div>
       <div class="tr-addbox" id="trAddBox" style="display:none;"></div>
     </div>
+<div class="tr-card" id="trDictCard">
+  <span class="tr-label">القاموس الشامل 📚 <span class="m-sub">— يبحث في كل الأقسام افتراضياً</span></span>
+  <div class="m-chips" id="mChips"></div>
+  <div class="m-inwrap">
+    <input type="text" id="mInput" class="m-in" oninput="trMawridOnInput()" onkeydown="trMawridKey(event)" placeholder="كلمة إنكليزية أو عربية — نتائج من كل الأقسام…" autocomplete="off">
+    <button type="button" class="m-clear" id="mClearBtn" onclick="trMawridClear()" title="مسح البحث" aria-label="مسح البحث">✕</button>
+  </div>
+  <div class="m-stat" id="mStat">🌐 الافتراضي: البحث في كل الأقسام دفعة واحدة — أو حدّد قسماً من الشرائح لحصر البحث. اسحب شريحة أي قسم (بضغطة مطوّلة) يميناً أو يساراً لترتيب أقسامك المفضلة.</div>
+  <div class="m-res" id="mRes"></div>
+  <div class="tr-opt-note" id="mNote">💡 كل نتيجة بطاقة موحدة: الكلمة + النطق الصوتي + نوعها بالعربية والإنكليزية + مثال مترجم + مصدرها. أول بحث في أي قسم يُنزّل ملفه (بحسب أول حرف) ثم يعمل فورياً خلال الجلسة. ⭐ تثبّت أي نتيجة لتتصدر البحث دائماً، والنتائج من الأقسام التي تستخدمها أكثر تُقدَّم تلقائياً (تعلّم من استخدامك). البحوث بلا نتائج تُسجَّل على جهازك لسد نقصها في التحديثات القادمة.</div>
+</div>
 <div class="tr-modes">
   <label><input type="checkbox" id="trPhChk" checked onchange="try{localStorage.setItem('trPhOn',this.checked?'1':'0')}catch(e){}trPhoneticsRefresh()"> فونيتيكس</label>
   <label><input type="checkbox" id="trNetChk" checked onchange="try{localStorage.setItem('trUseOnline',this.checked?'1':'0')}catch(e){}"> استخدام الإنترنت</label>
   <button class="tr-chipbtn" onclick="trHistOpen()">🕘 السجل</button>
   <button class="tr-chipbtn" onclick="trUserOpen()" title="قاموسي ⭐ — كلماتك المحفوظة على جهازك" aria-label="قاموسي">⭐ قاموسي</button>
-  <button class="tr-chipbtn" onclick="trMawridOpen()" title="قاموس المورد الكامل — 434 ألف مدخل: المورد الحديث + تخصصات الطب والعلوم والهندسة والقانون والأدب" aria-label="قاموس المورد">📚 المورد</button>
   <button class="tr-chipbtn" onclick="trWriterOpen()">✍️ كتابة مواضيع</button>
   <button class="tr-chipbtn" onclick="trSpToggle()">⚙ خيارات الناطق</button>
 </div>
@@ -2535,24 +2571,6 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
     </div>
     <button class="tr-main" id="trGenBtn" onclick="trWriterGenerate()">✨ توليد النص الإنكليزي</button>
     <div class="tr-opt-note">💡 مع تفعيل «استخدام الإنترنت» تُستشار ترجمة جوجل فوراً ومباشرة أولاً — وإن اختلفت ترجمة القاعدة المدمجة يُقترح استبدالها بضغطة واحدة فيُحفظ التصحيح في «⭐ قاموسي». بلا إنترنت يعمل القاموس المدمج بنص بسيط.</div>
-  </div>
-</div>
-
-<!-- v26.36: نافذة قاموس المورد الكامل + المصطلحات المتخصصة -->
-<div id="trMawridWin" role="dialog" aria-label="قاموس المورد">
-  <div class="tr-header">
-    <button class="tr-back" onclick="trMawridClose()" aria-label="رجوع">‹</button>
-    <div class="tr-title-wrap"><div class="tr-title">قاموس المورد 📚</div><div class="tr-subtitle">434 ألف مدخل — المورد الحديث + المصطلحات المتخصصة</div></div>
-  </div>
-  <div class="tr-body">
-    <div class="m-chips" id="mChips"></div>
-    <div class="tr-card" style="padding:8px 10px;margin-top:6px;">
-      <span class="tr-label">البحث <button type="button" class="tr-clear" id="mClearBtn" onclick="trMawridClear()" title="مسح البحث" aria-label="مسح البحث">✕</button></span>
-      <input type="text" id="mInput" class="m-in" oninput="trMawridOnInput()" onkeydown="trMawridKey(event)" placeholder="اكتب كلمة إنكليزية أو عربية…" autocomplete="off">
-    </div>
-    <div class="m-stat" id="mStat">اختر قسماً واكتب كلمة…</div>
-    <div class="m-res" id="mRes"></div>
-    <div class="tr-opt-note" id="mNote">💡 أول بحث في أي قسم يُنزّل ملفه (بحسب أول حرف) ثم يعمل فورياً بعدها خلال الجلسة نفسها. «المورد الحديث» إنكليزي←عربي، والبحث العربي←إنكليزي متاح في أقسام التخصصات. وإن ظهرت كلمة مقطوعة فاضغط المعنى ليتمدد.</div>
   </div>
 </div>
 
@@ -10549,6 +10567,10 @@ function trShowResult(text) { // v26.30: عبر trRenderOut الموحد — ا�
       else if (!trDefMeta || trDefMeta.q !== iq) trDefMeta = { q: iq, wt: "", an: trWtAnalyzeAny(anT), anText: anT, ph: "", isAr: /[\u0600-\u06FF]/.test(iq || anT) };
     }
   } catch (eA1) {}
+  try { // v26.37: القاموس الشامل يعرض الكلمة المفردة تلقائياً في بطاقته الموحدة
+    var iqw = trClean((el("trInput") || {}).value || "");
+    if (iqw && iqw.split(" ").length === 1 && iqw.length <= 30) mAutoFill(iqw);
+  } catch (eMA) {}
   trRenderOut();
 }
 
@@ -11057,7 +11079,7 @@ function trDefBlockHtml() {
     }
     if (trDefData.length > shown) html += "<div class='tr-def-badge'>+" + (trDefData.length - shown) + "</div>";
   }
-  html += "<div style='margin-top:6px;'><button class='tr-act' onclick='trMawridOpenM()'>📚 قاموس المورد الكامل</button></div>"; // v26.36
+  html += "<div style='margin-top:6px;'><button class='tr-act' onclick='trMawridOpenM()'>📚 القاموس الشامل — النتائج في البطاقة أدناه</button></div>"; // v26.37: مدمج بالواجهة الرئيسية
   if (m.an && m.an.length) {
     html += "<div class='tr-def-title' style='margin-top:8px;'>🔎 " + (m.isAr ? "التحليل النحوي" : "Grammar") + " — «" + trEsc(m.anText || m.q) + "»</div>";
     for (i = 0; i < m.an.length; i++) html += "<div class='tr-def-item'><span class='tr-def-num'>" + (i + 1) + ".</span> <b>" + trEsc(m.an[i].w) + "</b>" + trWtBadge(m.an[i].t) + "</div>";
@@ -11723,50 +11745,96 @@ function trMicBridge(json) { // كولباك جسر الأندرويد
   } catch (e) {}
 }
 
-// ===== v26.36: قاموس المورد الكامل + المصطلحات المتخصصة — 434 ألف مدخل =====
+// ===== v26.37: القاموس الشامل المدمج — 18 قسماً + بحث افتراضي في الكل + بطاقة موحدة + سحب وترتيب + تعلم تفضيلات =====
 // البيانات في مستودع منفصل (prayer-times-data) لا يؤثر على حجم مستودعات التطبيق:
 // jsDelivr أساساً (CDN) ثم raw بديلاً — كل قسم يُنزّل بحسب أول حرف فقط ثم يعمل من الذاكرة
-var M_DATA_VER = "1"; // إصدار البيانات في المستودع — يُرفع عند تحديثها لكسر كاش jsDelivr
+// زر «المورد» أُلغي: القاموس أصبح بطاقة دائمة داخل الواجهة الرئيسية للمترجم
+var M_DATA_VER = "1"; // إصدار البيانات — الأقسام الجديدة مسارات جديدة لا تحتاج كسر كاش
 var M_BASES = [
   "https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times-data@main/",
   "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times-data/main/"
 ];
 var M_GROUPS = [
-  { id: "gen", icon: "📗", name: "المورد الحديث", rev: false, n: 61836 },
-  { id: "med", icon: "🏥", name: "الطب والصيدلة", rev: true, n: 141257 },
-  { id: "sci", icon: "🔬", name: "العلوم والتقنية", rev: false, n: 120477 },
-  { id: "phy", icon: "⚛️", name: "الفيزياء", rev: true, n: 9970 },
-  { id: "che", icon: "⚗️", name: "الكيمياء", rev: true, n: 8462 },
-  { id: "eng", icon: "🏗️", name: "الهندسة", rev: false, n: 81209 },
-  { id: "law", icon: "⚖️", name: "القانون", rev: true, n: 6087 },
-  { id: "lit", icon: "📜", name: "الأدب والشعر", rev: true, n: 4605 }
+  { id: "gen", icon: "📗", name: "المورد الحديث", rev: false, n: 61836, src: "قاموس المورد الحديث إنكليزي–عربي" },
+  { id: "med", icon: "🏥", name: "الطب والصيدلة", rev: true, n: 141257, src: "مصطلحات الطب والصيدلة" },
+  { id: "sci", icon: "🔬", name: "العلوم والتقنية", rev: false, n: 120477, src: "مصطلحات العلوم والتقنية" },
+  { id: "phy", icon: "⚛️", name: "الفيزياء", rev: true, n: 9970, src: "مصطلحات الفيزياء" },
+  { id: "che", icon: "⚗️", name: "الكيمياء", rev: true, n: 8462, src: "مصطلحات الكيمياء" },
+  { id: "eng", icon: "🏗️", name: "الهندسة", rev: false, n: 81209, src: "مصطلحات الهندسة" },
+  { id: "law", icon: "⚖️", name: "القانون", rev: true, n: 6087, src: "مصطلحات القانون" },
+  { id: "lit", icon: "📜", name: "الأدب والشعر", rev: true, n: 4795, src: "مصطلحات الأدب واللغة والشعر" },
+  { id: "agr", icon: "🌾", name: "الزراعة", rev: true, n: 5020, src: "مصطلحات الزراعة والبستنة" },
+  { id: "eco", icon: "💰", name: "الاقتصاد", rev: true, n: 6689, src: "مصطلحات الاقتصاد والتجارة" },
+  { id: "mil", icon: "⚔️", name: "العسكري", rev: true, n: 5348, src: "المصطلحات العسكرية" },
+  { id: "rel", icon: "☪️", name: "الديني", rev: true, n: 6470, src: "المصطلحات والعلوم الدينية" },
+  { id: "qur", icon: "📖", name: "القرآن", rev: true, n: 128, src: "مفردات القرآن الكريم" },
+  { id: "had", icon: "🕌", name: "الحديث النبوي", rev: true, n: 315, src: "مفردات الحديث النبوي" },
+  { id: "sha", icon: "📕", name: "الشريعة", rev: true, n: 219, src: "مصطلحات الشريعة" },
+  { id: "fiqh", icon: "📘", name: "الفقه الإسلامي", rev: true, n: 1995, src: "مصطلحات الفقه الإسلامي" },
+  { id: "medd", icon: "💊", name: "الأدوية", rev: true, n: 7106, src: "أسماء الأدوية والمستحضرات الصيدلانية" },
+  { id: "diss", icon: "🌡️", name: "الأمراض", rev: true, n: 22333, src: "أسماء الأمراض والحالات الطبية" },
 ];
-var mCur = "gen", mCache = {}, mTimer = null, mReq = 0, mLast = [];
-function mGroupOf(id) { for (var i = 0; i < M_GROUPS.length; i++) { if (M_GROUPS[i].id === id) return M_GROUPS[i]; } return M_GROUPS[0]; }
+var M_TOTAL_N = 0; (function () { for (var i = 0; i < M_GROUPS.length; i++) M_TOTAL_N += (M_GROUPS[i].n || 0); })();
+var mCur = "all", mCache = {}, mCacheT = {}, mTimer = null, mReq = 0, mLast = [], mHits = [], mAutoPrev = "", mManualAt = 0;
+var M_MAX_SHOW = 120, M_MAX_CACHE = 340;
+var M_PREF_KEY = "mChipOrderV1", M_USE_KEY = "mUseV1", M_FAV_KEY = "mFavV1", M_GAP_KEY = "mGapsV1";
 function mFmt(n) { try { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); } catch (e) { return String(n); } }
-function trMawridOpen(word) {
-  try { el("trMawridWin").classList.add("open"); } catch (e) {}
-  trMawridRenderChips();
-  var inp = el("mInput");
-  if (typeof word === "string" && trClean(word)) inp.value = trClean(word);
-  if (trClean(inp.value)) trMawridSearch();
-  else { try { el("mStat").textContent = "اختر قسماً واكتب كلمة…"; } catch (e2) {} try { inp.focus(); } catch (e3) {} }
-}
-function trMawridOpenM() { var q = (trDefMeta && trDefMeta.q) ? trDefMeta.q : ""; trMawridOpen(q); }
-function trMawridClose() { try { el("trMawridWin").classList.remove("open"); } catch (e) {} }
-function trMawridClear() { try { el("mInput").value = ""; } catch (e) {} trMawridSearch(); try { el("mInput").focus(); } catch (e2) {} }
-function trMawridOnInput() { if (mTimer) clearTimeout(mTimer); mTimer = setTimeout(function () { trMawridSearch(); }, 300); }
-function trMawridKey(ev) { try { if (ev.keyCode === 13) { ev.preventDefault(); if (mTimer) clearTimeout(mTimer); trMawridSearch(); } } catch (e) {} }
-function trMawridRenderChips() {
-  var box = el("mChips"); if (!box) return;
-  var h = "", i;
-  for (i = 0; i < M_GROUPS.length; i++) {
-    var g = M_GROUPS[i];
-    h += "<span class='m-chip" + (g.id === mCur ? " on" : "") + "' onclick='trMawridPick(&quot;" + g.id + "&quot;)'>" + g.icon + " " + g.name + "</span>";
+function mStoreGet(k, def) { try { var v = JSON.parse(localStorage.getItem(k) || "null"); return (v == null) ? def : v; } catch (e) { return def; } }
+function mStoreSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+// ترتيب الشرائح المحفوظ — المفضلة للأقسام تُرسم أولاً ويؤثر الترتيب على تقديم النتائج
+var mOrder = (function () {
+  var saved = mStoreGet(M_PREF_KEY, []), ids = [], i, j, ok;
+  if (Object.prototype.toString.call(saved) === "[object Array]") {
+    for (i = 0; i < saved.length; i++) {
+      ok = false;
+      for (j = 0; j < M_GROUPS.length; j++) { if (M_GROUPS[j].id === saved[i] && ids.indexOf(saved[i]) === -1) { ok = true; break; } }
+      if (ok) ids.push(saved[i]);
+    }
   }
-  box.innerHTML = h;
+  for (i = 0; i < M_GROUPS.length; i++) { if (ids.indexOf(M_GROUPS[i].id) === -1) ids.push(M_GROUPS[i].id); }
+  return ids;
+})();
+function mGOf(id) { for (var i = 0; i < M_GROUPS.length; i++) { if (M_GROUPS[i].id === id) return M_GROUPS[i]; } return null; }
+function mSaveOrder() { mStoreSet(M_PREF_KEY, mOrder); }
+// عدادات الاستخدام لكل قسم — تعلّم تفضيلات المستخدم (الأكثر استخداماً يتصدر نتائج «كل الأقسام»)
+function mUseAll() { var v = mStoreGet(M_USE_KEY, {}); return (v && typeof v === "object") ? v : {}; }
+function mUseOf(id) { var v = mUseAll(); return (parseInt(v[id], 10) || 0); }
+function mUseBump(id) { var v = mUseAll(); v[id] = (parseInt(v[id], 10) || 0) + 1; mStoreSet(M_USE_KEY, v); }
+// المفضلة ⭐ — نتيجة مثبتة تتصدر البحث دائماً (حفظ دائم على الجهاز)
+function mFavAll() { var v = mStoreGet(M_FAV_KEY, {}); return (v && typeof v === "object") ? v : {}; }
+function mFavKey(w, t, g) { return g + "|" + String(w || "").toLowerCase() + "|" + String(t || ""); }
+function mIsFav(w, t, g) { return !!mFavAll()[mFavKey(w, t, g)]; }
+function mFavToggle(i, btn) {
+  var it = mLast[i]; if (!it || it.u) return;
+  var f = mFavAll(), k = mFavKey(it.w, it.t, it.g.id);
+  if (f[k]) { delete f[k]; } else { f[k] = 1; trToast("⭐ ستتصدر هذه النتيجة البحث دائماً"); }
+  var kk, n = 0; for (kk in f) { if (f.hasOwnProperty(kk)) n++; }
+  if (n > 300) { var ks = [], j; for (kk in f) { if (f.hasOwnProperty(kk)) ks.push(kk); } for (j = 0; j < ks.length - 300; j++) { delete f[ks[j]]; } }
+  mStoreSet(M_FAV_KEY, f);
+  trMawridRun2(); // إعادة ترتيب فورية بالتفضيل الجديد
+  if (btn) { try { btn.textContent = f[k] ? "⭐" : "☆"; btn.className = "m-fav" + (f[k] ? " on" : ""); } catch (e) {} }
 }
-function trMawridPick(id) { mCur = id; trMawridRenderChips(); trMawridSearch(); try { el("mInput").focus(); } catch (e) {} }
+// سجل النواقص — كل بحث بلا نتائج يُسجَّل (مصدر بيانات مستقبلي لتوسيع الأقسام)
+function mGapLog(q, isAr) {
+  var v = mStoreGet(M_GAP_KEY, []);
+  if (Object.prototype.toString.call(v) !== "[object Array]") v = [];
+  var i, s = String(q || "").toLowerCase();
+  for (i = 0; i < v.length; i++) { if (v[i] && v[i].q === s && v[i].ar === !!isAr) { v[i].n = (v[i].n || 1) + 1; v[i].t = Date.now(); mStoreSet(M_GAP_KEY, v); return; } }
+  v.push({ q: s, ar: !!isAr, n: 1, t: Date.now() });
+  while (v.length > 60) v.shift();
+  mStoreSet(M_GAP_KEY, v);
+}
+function mGapCount(q, isAr) { var v = mStoreGet(M_GAP_KEY, []), s = String(q || "").toLowerCase(), i; for (i = 0; i < v.length; i++) { if (v[i] && v[i].q === s && v[i].ar === !!isAr) return (v[i].n || 1); } return 0; }
+// كاش محدود الحجم — إخلاء الأقدم من 60 ثانية عند التجاوز
+function mCachePut(key, d) {
+  mCache[key] = d; mCacheT[key] = Date.now();
+  var ks = [], k; for (k in mCacheT) { if (mCacheT.hasOwnProperty(k)) ks.push(k); }
+  if (ks.length > M_MAX_CACHE) {
+    ks.sort(function (a, b) { return mCacheT[a] - mCacheT[b]; });
+    var i, lim = ks.length - M_MAX_CACHE + 40;
+    for (i = 0; i < lim; i++) { if (mCacheT[ks[i]] < Date.now() - 60000) { delete mCache[ks[i]]; delete mCacheT[ks[i]]; } }
+  }
+}
 function mNormAr(s) {
   s = String(s || "");
   try { s = s.replace(/[\u064B-\u065F\u0670\u0640]/g, ""); } catch (e) {}
@@ -11806,41 +11874,120 @@ function mLoad(grp, dir, letter, isAr, cb) {
   var key = dir + "/" + grp + "/" + letter;
   if (mCache[key]) { cb(null, mCache[key]); return; }
   mXhr(M_BASES[0] + key + ".txt?v=" + M_DATA_VER, function (e1, t1) {
-    if (!e1) { mCache[key] = mPrep(t1, isAr); cb(null, mCache[key]); return; }
+    if (!e1) { var d = mPrep(t1, isAr); mCachePut(key, d); cb(null, d); return; }
     mXhr(M_BASES[1] + key + ".txt", function (e2, t2) {
-      if (!e2) { mCache[key] = mPrep(t2, isAr); cb(null, mCache[key]); return; }
+      if (!e2) { var d2 = mPrep(t2, isAr); mCachePut(key, d2); cb(null, d2); return; }
       cb(e2);
     });
   });
 }
 function mLowerBound(d, q) { var lo = 0, hi = d.ks.length; while (lo < hi) { var mid = (lo + hi) >> 1; if (d.ks[mid] < q) lo = mid + 1; else hi = mid; } return lo; }
+function mScan(d, g, cands, isAr) { // بحث قسم واحد: مطابقات البداية ثم احتوائية — يرجع نتائج موسومة بدرجة المطابقة
+  var seen = {}, out = [], i, j;
+  var q2 = isAr ? mNormAr(cands[0]) : String(cands[0]).toLowerCase();
+  for (i = 0; i < cands.length; i++) {
+    var qi = isAr ? mNormAr(cands[i]) : String(cands[i]).toLowerCase();
+    if (!qi) continue;
+    var lo = mLowerBound(d, qi);
+    for (j = lo; j < d.ks.length && d.ks[j].indexOf(qi) === 0 && out.length < 80; j++) {
+      if (!seen[j]) { seen[j] = 1; out.push({ k: d.ks[j], w: d.ws[j], t: d.ts[j], g: g, m: 2 }); }
+    }
+  }
+  if (q2.length >= 3) {
+    for (j = 0; j < d.ks.length && out.length < 120; j++) {
+      if (!seen[j] && d.ks[j].indexOf(q2) > 0) { seen[j] = 1; out.push({ k: d.ks[j], w: d.ws[j], t: d.ts[j], g: g, m: 0 }); }
+    }
+  }
+  return out;
+}
+// نتائج قاموسي ⭐ تُدمج أولاً — بيانات المستخدم نفسه أعلى أولوية
+function mUserHits(cands, isAr) {
+  try {
+    if (!trUserData || !trUserData.length) return;
+    trUserLoad();
+    var qi = isAr ? mNormAr(cands[0]) : String(cands[0]).toLowerCase(), i, it, x;
+    for (i = 0; i < trUserData.length && mHits.length < 400; i++) {
+      it = trUserData[i]; if (!it || !it.x || !it.y) continue;
+      if ((/[\u0600-\u06FF]/.test(it.x)) !== isAr) continue;
+      x = isAr ? mNormAr(it.x) : String(it.x).toLowerCase();
+      if (x.indexOf(qi) !== 0 && (qi.length < 3 || x.indexOf(qi) < 0)) continue;
+      mHits.push({ k: x, w: it.x, t: it.y, g: { id: "user", icon: "⭐", name: "قاموسي", src: "كلماتك المحفوظة على جهازك" }, m: (x === qi) ? 2 : 0, u: 1 });
+    }
+  } catch (e) {}
+}
+function mChipIdx(id) { return mOrder.indexOf(id); }
+function mRankOf(it, qi) { // المفضلة أولاً ثم دقة المطابقة ثم الاستخدام ثم ترتيب الشرائح
+  var r = 0;
+  if (it.u) r += 60;
+  else if (mIsFav(it.w, it.t, it.g.id)) r += 40;
+  if (it.k === qi) r += 24; else if (it.m === 2) r += 12; else r += 2;
+  r += Math.min(mUseOf(it.g.id), 8);
+  r += Math.max(0, 6 - Math.min(mChipIdx(it.g.id), 6));
+  return r;
+}
+function trMawridRenderChips() {
+  var box = el("mChips"); if (!box) return;
+  var h = "<span class='m-chip all" + (mCur === "all" ? " on" : "") + "' data-fixed='1' onclick='trMawridPick(&quot;all&quot;)' title='البحث في كل الأقسام دفعة واحدة — الافتراضي'>🌐 كل الأقسام</span>", i, j;
+  for (j = 0; j < mOrder.length; j++) {
+    var g = mGOf(mOrder[j]); if (!g) continue;
+    h += "<span class='m-chip" + (g.id === mCur ? " on" : "") + "' data-g='" + g.id + "' onclick='trMawridPick(&quot;" + g.id + "&quot;)' title='اسحب مطوّلاً لإعادة الترتيب'>" + g.icon + " " + g.name + "</span>";
+  }
+  box.innerHTML = h;
+}
+function trMawridPick(id) { mCur = (id === "all") ? "all" : id; trMawridRenderChips(); trMawridSearch(); try { el("mInput").focus(); } catch (e) {} }
+function trMawridOpen(word) {
+  var inp = el("mInput");
+  if (inp && typeof word === "string" && trClean(word)) inp.value = trClean(word);
+  trMawridScroll();
+  if (inp && trClean(inp.value)) trMawridSearch();
+}
+function trMawridScroll() {
+  var box = el("trDictCard"); if (!box) return;
+  try { box.scrollIntoView(true); } catch (e) { try { window.scrollTo(0, 0); } catch (e2) {} }
+}
+function trMawridOpenM() { var q = (trDefMeta && trDefMeta.q) ? trDefMeta.q : ""; trMawridOpen(q); }
+function trMawridClose() {} // v26.37: لا نافذة بعد اليوم — القاموس مدمج بالواجهة الرئيسية
+function trMawridClear() { try { el("mInput").value = ""; } catch (e) {} mAutoPrev = ""; trMawridSearch(); try { el("mInput").focus(); } catch (e2) {} }
+function trMawridOnInput() { mManualAt = Date.now(); if (mTimer) clearTimeout(mTimer); mTimer = setTimeout(function () { trMawridSearch(); }, 300); }
+function trMawridKey(ev) { try { if (ev.keyCode === 13) { ev.preventDefault(); if (mTimer) clearTimeout(mTimer); trMawridSearch(); } } catch (e) {} }
+// v26.37: متابعة تلقائية — كل ترجمة كلمة مفردة تفتح نتائجها في البطاقة الموحدة
+// حماية البحث اليدوي 20 ثانية فقط — بعدها تتابع الكلمة المترجمة الأحدث
+function mAutoFill(w) {
+  var inp = el("mInput"); if (!inp) return;
+  w = trClean(w); if (!w) return;
+  var cur = trClean(inp.value);
+  if (cur === w) return;
+  try { if (document.activeElement === inp) return; } catch (ea) {}
+  if (cur && cur !== mAutoPrev && (Date.now() - mManualAt) < 20000) return; // بحث يدوي حديث — لا نطمسه
+  inp.value = w; mAutoPrev = w;
+  trMawridOnInput();
+}
 function trMawridSearch() {
   var inp = el("mInput"), stat = el("mStat"), res = el("mRes");
   if (!inp || !stat || !res) return;
   var q = trClean(inp.value || "");
-  var g = mGroupOf(mCur);
+  var isAr = /[\u0600-\u06FF]/.test(q);
   if (!q) {
-    res.innerHTML = ""; mLast = [];
-    stat.textContent = "«" + g.name + "» — " + mFmt(g.n) + " مدخل. اكتب كلمة…";
+    res.innerHTML = ""; mLast = []; mHits = [];
+    stat.textContent = "🌐 البحث الافتراضي في كل الأقسام معاً (" + M_GROUPS.length + " قسماً — " + mFmt(M_TOTAL_N) + "+ مدخل). اكتب كلمة أو حدّد قسماً.";
     return;
   }
-  var isAr = /[\u0600-\u06FF]/.test(q);
-  var i;
-  if (isAr && !g.rev) { // وجّه تلقائياً إلى أول قسم يدعم العربي←إنكليزي
-    for (i = 0; i < M_GROUPS.length; i++) { if (M_GROUPS[i].rev) { mCur = M_GROUPS[i].id; g = M_GROUPS[i]; break; } }
-    trMawridRenderChips();
+  var jobs = [], i, g;
+  if (mCur === "all") { // الافتراضي: كل الأقسام التي تدعم الاتجاه دفعة واحدة
+    for (i = 0; i < M_GROUPS.length; i++) { g = M_GROUPS[i]; if (isAr && !g.rev) continue; jobs.push({ g: g, dir: isAr ? "r" : "d" }); }
+  } else {
+    g = mGOf(mCur) || M_GROUPS[0];
+    if (isAr && !g.rev) { // توجيه تلقائي لأول قسم يدعم العربي←إنكليزي
+      for (i = 0; i < M_GROUPS.length; i++) { if (M_GROUPS[i].rev) { mCur = M_GROUPS[i].id; g = M_GROUPS[i]; break; } }
+      trMawridRenderChips();
+    }
+    jobs.push({ g: g, dir: isAr ? "r" : "d" });
   }
-  var dir;
-  if (isAr) {
-    if (!g.rev) { res.innerHTML = ""; mLast = []; stat.textContent = "قسم «" + g.name + "» إنكليزي←عربي فقط — البحث العربي متاح في أقسام التخصصات."; return; }
-    dir = "r";
-  } else dir = "d";
+  if (!jobs.length) { res.innerHTML = ""; mLast = []; mHits = []; stat.textContent = "لا أقسام تدعم هذا الاتجاه"; return; }
   var cands = [q];
   if (isAr) {
     var nq = mNormAr(q), pres = ["وال", "بال", "كال", "فال", "ال", "لل"];
-    for (i = 0; i < pres.length; i++) {
-      if (nq.indexOf(pres[i]) === 0 && nq.length > pres[i].length + 1) { cands.push(q.substring(pres[i].length)); break; }
-    }
+    for (i = 0; i < pres.length; i++) { if (nq.indexOf(pres[i]) === 0 && nq.length > pres[i].length + 1) { cands.push(q.substring(pres[i].length)); break; } }
   } else {
     var lq = q.toLowerCase();
     if (lq.length > 3 && lq.charAt(lq.length - 1) === "s") cands.push(lq.substring(0, lq.length - 1));
@@ -11848,66 +11995,227 @@ function trMawridSearch() {
     if (lq.length > 5 && lq.substring(lq.length - 3) === "ies") cands.push(lq.substring(0, lq.length - 3) + "y");
   }
   var letter = isAr ? mArLetter(cands[0]) : mEnLetter(q.toLowerCase());
-  var myReq = ++mReq;
-  stat.textContent = mCache[dir + "/" + g.id + "/" + letter] ? "⏳ بحث…" : "⏳ تحميل قسم " + g.icon + " " + g.name + " (" + letter + ")…";
-  mLoad(g.id, dir, letter, isAr, function (err, d) {
-    if (myReq !== mReq) return; // وصل طلب أحدث — أهمل القديم
-    if (err) { stat.textContent = "⚠ تعذّر التحميل (" + err + ") — تأكد من الاتصال ثم أعد المحاولة"; return; }
-    trMawridRun(d, g, dir, cands, isAr, myReq);
-  });
+  var myReq = ++mReq, allMode = (mCur === "all");
+  var pending = jobs.length, buckets = new Array(jobs.length), fails = 0;
+  stat.textContent = allMode
+    ? "⏳ بحث في كل الأقسام (" + jobs.length + " قسماً)…"
+    : "⏳ " + (mCache[jobs[0].dir + "/" + jobs[0].g.id + "/" + letter] ? "بحث" : "تحميل " + jobs[0].g.icon + " " + jobs[0].g.name + " (" + letter + ")…");
+  res.innerHTML = "";
+  for (i = 0; i < jobs.length; i++) {
+    (function (ji) { // تحميل متوازٍ لكل الأقسام — النتيجة تُدمج عند اكتمالها
+      var job = jobs[ji];
+      mLoad(job.g.id, job.dir, letter, isAr, function (err, d) {
+        if (myReq !== mReq) return; // وصل طلب أحدث — أهمل القديم
+        if (err) fails++; else buckets[ji] = mScan(d, job.g, cands, isAr);
+        pending--;
+        if (allMode && pending > 0) stat.textContent = "⏳ بحث في كل الأقسام… (" + (jobs.length - pending) + "/" + jobs.length + ")";
+        if (pending === 0) trMawridMerge(buckets, cands, isAr, myReq, fails, allMode);
+      });
+    })(i);
+  }
 }
-function trMawridRun(d, g, dir, cands, isAr, myReq) {
+function trMawridMerge(buckets, cands, isAr, myReq, fails, allMode) {
   if (myReq !== mReq) return;
   var stat = el("mStat"), res = el("mRes");
-  var seen = {}, pre = [], cont = [], i, j;
-  var q2 = isAr ? mNormAr(cands[0]) : String(cands[0]).toLowerCase();
-  for (i = 0; i < cands.length; i++) {
-    var qi = isAr ? mNormAr(cands[i]) : String(cands[i]).toLowerCase();
-    if (!qi) continue;
-    var lo = mLowerBound(d, qi);
-    for (j = lo; j < d.ks.length && d.ks[j].indexOf(qi) === 0 && pre.length < 60; j++) {
-      if (!seen[j]) { seen[j] = 1; pre.push(j); }
-    }
+  mHits = [];
+  var i, j, bump = {};
+  for (i = 0; i < buckets.length; i++) {
+    var arr = buckets[i]; if (!arr) continue;
+    for (j = 0; j < arr.length; j++) mHits.push(arr[j]);
   }
-  if (q2.length >= 3) { // بحث احتوائي داخل القسم نفسه بعد مطابقات البداية
-    for (j = 0; j < d.ks.length && cont.length < 40; j++) {
-      if (!seen[j] && d.ks[j].indexOf(q2) > 0) { seen[j] = 1; cont.push(j); }
-    }
+  mUserHits(cands, isAr);
+  var qi = isAr ? mNormAr(cands[0]) : String(cands[0]).toLowerCase();
+  mHits.sort(function (a, b) { return mRankOf(b, qi) - mRankOf(a, qi); });
+  for (i = 0; i < mHits.length && i < 30; i++) { if (!bump[mHits[i].g.id]) { bump[mHits[i].g.id] = 1; mUseBump(mHits[i].g.id); } }
+  if (!mHits.length && fails) {
+    stat.textContent = "⚠ تعذّر التحميل — تأكد من الاتصال ثم أعد المحاولة";
+    return;
   }
-  var hits = pre.concat(cont), h = "", shown = Math.min(hits.length, 80);
+  if (!mHits.length) { // لا نتائج: تسجيل النقص + مسارات فورية للمستخدم
+    mGapLog(cands[0], isAr);
+    mGapQ = cands[0]; mGapAr = isAr;
+    var gc = mGapCount(cands[0], isAr);
+    res.innerHTML = mEmptyHtml();
+    stat.textContent = "لا نتائج لـ«" + cands[0] + "»" + (allMode ? " في كل الأقسام" : "") + " — سُجّل النقص" + (gc > 1 ? " (" + gc + " مرات)" : "") + " لتوسيع القاموس لاحقاً";
+    return;
+  }
+  trMawridRun2();
+  stat.textContent = mFmt(mHits.length) + (mHits.length > M_MAX_SHOW ? "+ نتيجة (تُعرض أول " + M_MAX_SHOW + ")" : " نتيجة") + (fails ? " ⚠ تعذر تحميل " + fails + " قسماً" : "") + (allMode ? " — أقسامك الأقرب لاهتماماتك أولاً" : "");
+}
+var mGapQ = null, mGapAr = false;
+function mEmptyHtml() {
+  var h = "<div class='m-row m-empty'><div class='m-hw'>لا نتائج لـ«" + trEsc(mGapQ || "") + "»</div>";
+  h += "<div class='m-tr'>سُجّل النقص تلقائياً لسده في التحديثات القادمة. أضف الترجمة بنفسك لتعمل فوراً من جهازك دون إنترنت، أو ابحث في الإنترنت الآن.</div>";
+  h += "<div class='m-tools'><button class='tr-act' onclick='mGapAdd()'>⭐ أضف الترجمة</button> <button class='tr-act' onclick='mGapWeb()'>🔎 بحث موسع الآن</button></div></div>";
+  return h;
+}
+function mGapAdd() {
+  if (!mGapQ) return;
+  trAddData = { x: mGapQ, y: "", d: mGapAr ? "ar>en" : "en>ar" };
+  trAddOpen();
+}
+function mGapWeb() {
+  if (!mGapQ) return;
+  var q = mGapAr ? (mGapQ + " معنى وترجمة") : (mGapQ + " meaning definition dictionary");
+  rescueOpenUrl("https://www.google.com/search?q=" + encodeURIComponent(q));
+}
+function trMawridRun2() { // الرسم من mHits — يعاد استدعاؤه عند تغيّر المفضلة دون بحث جديد
+  var res = el("mRes"); if (!res) return;
+  var h = "", shown = Math.min(mHits.length, M_MAX_SHOW), i;
   mLast = [];
   for (i = 0; i < shown; i++) {
-    var idx = hits[i];
-    mLast.push({ w: d.ws[idx], t: d.ts[idx] });
-    h += "<div class='m-row" + (isAr ? "" : " en") + "'><div class='m-hw'>" + trEsc(d.ws[idx]) + "</div>" +
-      "<div class='m-tr' onclick='mToggleTr(this)' title='اضغط لتمديد المعنى أو طبعه'>" + trEsc(d.ts[idx]) + "</div>" +
-      "<div class='m-tools'><button class='tr-act' onclick='mCopyIdx(" + i + ",this)'>📋 نسخ</button> <button class='tr-act' onclick='mSendIdx(" + i + ")'>➤ إلى المترجم</button></div></div>";
+    mLast.push({ w: mHits[i].w, t: mHits[i].t, g: mHits[i].g, u: mHits[i].u });
+    h += mRowHtml(mHits[i], i);
   }
   res.innerHTML = h;
-  stat.textContent = hits.length
-    ? (mFmt(hits.length) + (hits.length > 80 ? "+ نتيجة (تُعرض أول 80)" : " نتيجة") + " — " + g.icon + " " + g.name)
-    : "لا نتائج لـ«" + cands[0] + "» في " + g.name + " — جرّب بداية الكلمة فقط";
+}
+// ===== بطاقة النتيجة الموحدة: الكلمة + الفونيتيكس + النوع (عربي/إنكليزي) + مثال مترجم + المصدر + أزرار =====
+function mShortMeaning(t) { // معنى مقتطع نظيف للأمثلة — أول مقطع غير فارغ قبل الفواصل/الأقواس
+  var s = trClean(t), parts = s.split(/[\u060C\u061B()\/:\n]/), i;
+  for (i = 0; i < parts.length; i++) { var pp = trClean(parts[i]); if (pp && !/^\d+$/.test(pp)) { s = pp; break; } }
+  if (s.length > 38) { var sp = s.substring(0, 38).split(" "); sp.pop(); s = (sp.join(" ") || s.substring(0, 38)).trim(); }
+  return s;
+}
+function mExampleOf(w, t, isAr) {
+  var wt = isAr ? trWtArOf(w) : trWtEnOf(w);
+  var ts = mShortMeaning(t);
+  var a, b;
+  if (isAr) { a = "ما معنى «" + w + "»؟"; b = "What is the meaning of \u201C" + ts + "\u201D?"; }
+  else { a = "What does \u201C" + w + "\u201D mean?"; b = "ماذا يعني «" + ts + "»؟"; }
+  var ex = "<b><span dir='" + (isAr ? "rtl" : "ltr") + "'>" + trEsc(a) + "</span> — <span dir='" + (isAr ? "ltr" : "rtl") + "'>" + trEsc(b) + "</span></b>";
+  var one = /^[\u0600-\u06FFA-Za-z]+$/.test(String(ts || "").replace(/\s+/g, "")) && (ts.split(" ").length === 1);
+  var x = "";
+  if (one) {
+    if (!isAr && wt === "اسم") x = "This is " + (/^[aeiou]/i.test(w) ? "an " : "a ") + w + ". — هذا «" + ts + "».";
+    else if (!isAr && wt === "صفة") x = "It is very " + w + ". — إنه «" + ts + "» جداً.";
+    else if (!isAr && wt === "حال") x = "He did it " + w + ". — فعلها «" + ts + "».";
+    else if (isAr && wt === "اسم") x = "هذا " + w + ". — This is " + (/^[aeiou]/i.test(ts) ? "an " : "a ") + ts + ".";
+    else if (isAr && wt === "صفة") x = "إنه " + w + " جداً. — It is very " + ts + ".";
+  }
+  if (x) ex += "<br><span dir='" + (isAr ? "rtl" : "ltr") + "'>" + trEsc(x) + "</span>";
+  return ex;
+}
+function mRowHtml(it, i) {
+  var g = it.g, isAr = /[\u0600-\u06FF]/.test(it.w);
+  var fav = it.u ? true : mIsFav(it.w, it.t, g.id);
+  var wt = isAr ? trWtArOf(it.w) : trWtEnOf(it.w);
+  var ipa = (!isAr) ? trIpaSpan(it.w) : "";
+  var h = "<div class='m-row" + (!isAr ? " en" : "") + "'>";
+  h += "<div class='m-hw'>" + trEsc(it.w) + ipa + trWtBadge(wt);
+  h += "<button class='m-fav" + (fav ? " on" : "") + "' onclick='mFavToggle(" + i + ",this)' title='تثبيت في الأعلى — يُحفظ على جهازك'>" + (fav ? "⭐" : "☆") + "</button></div>";
+  h += "<div class='m-tr' onclick='mToggleTr(this)' title='اضغط لتمديد المعنى أو طبعه'>" + trEsc(it.t) + "</div>";
+  h += "<div class='m-ex'>✍️ " + mExampleOf(it.w, it.t, isAr) + "</div>";
+  h += "<div class='m-src'>📚 المصدر: " + trEsc(g.name) + (g.src ? " — " + trEsc(g.src) : "") + (it.u ? " ⭐" : "") + "</div>";
+  h += "<div class='m-tools'>";
+  h += "<button class='tr-act' onclick='mCopyIdx(" + i + ",this)'>📋 نسخ الكل</button> <button class='tr-act' onclick='mSayIdx(" + i + ")'>🔊 نطق</button> <button class='tr-act' onclick='mDeepIdx(" + i + ")'>🔎 بحث موسع</button> <button class='tr-act' onclick='mSendIdx(" + i + ")'>➤ إلى المترجم</button>";
+  h += "</div></div>";
+  return h;
 }
 function mToggleTr(node) { try { node.className = node.className.indexOf("open") >= 0 ? node.className.replace(/ ?open/g, "") : node.className + " open"; } catch (e) {} }
-function mCopyIdx(i, btn) {
+function mCopyIdx(i, btn) { // نسخ الكلمة وكل معلوماتها (كلمة/نطق/نوع/معنى/مثال/مصدر)
   var it = mLast[i]; if (!it) return;
-  var ok = rescueCopy(it.w + " — " + it.t);
+  var isAr = /[\u0600-\u06FF]/.test(it.w);
+  var wt = isAr ? trWtArOf(it.w) : trWtEnOf(it.w);
+  var ipa = "";
+  if (!isAr) { try { ipa = trIpaWord(it.w) || ""; } catch (e) {} }
+  var s = it.w + (ipa ? " /" + ipa + "/" : "") + (wt ? " (" + wt + ")" : "") + " — " + it.t;
+  s += "\n" + (isAr ? ("What is the meaning of \u201C" + it.t + "\u201D? — " + it.w) : ("What does \u201C" + it.w + "\u201D mean? — " + it.t));
+  s += "\nالمصدر: " + it.g.name + (it.g.src ? " — " + it.g.src : "");
+  var ok = rescueCopy(s);
   if (btn) {
     btn.textContent = ok ? "✓ نُسخ" : "⚠ تعذّر";
-    setTimeout(function () { try { btn.textContent = "📋 نسخ"; } catch (e) {} }, 1600);
+    setTimeout(function () { try { btn.textContent = "📋 نسخ الكل"; } catch (e) {} }, 1600);
   }
+}
+function mSayIdx(i) { var it = mLast[i]; if (!it) return; trSpeakText(it.w, (/[\u0600-\u06FF]/.test(it.w) ? "ar" : "en")); }
+function mDeepIdx(i) { // بحث موسع في الإنترنت — عبر المتصفح الأصلي في APK
+  var it = mLast[i]; if (!it) return;
+  var isAr = /[\u0600-\u06FF]/.test(it.w);
+  var q = isAr ? (it.w + " معنى وترجمة وأمثلة") : (it.w + " meaning definition examples dictionary");
+  var ok = rescueOpenUrl("https://www.google.com/search?q=" + encodeURIComponent(q));
+  if (!ok) trToast("افتح المتصفح وابحث عن: " + it.w);
 }
 function mSendIdx(i) {
   var it = mLast[i]; if (!it) return;
   try { el("trInput").value = it.w; } catch (e) {}
   try { trOnInput(); } catch (e2) {}
-  trMawridClose();
 }
+// ===== v26.37: السحب والإفلات لشرائح الأقسام — ضغطة مطوّلة ثم سحب يميناً/يساراً (لمس + فأرة) =====
+var mDrag = { on: false, armed: false, el: null, x0: 0, y0: 0, timer: null };
+function mDragChipOf(t) {
+  while (t && t !== document && t.nodeType === 1) {
+    var c = String(t.className || "");
+    if (c.indexOf("m-chip") >= 0) return (c.indexOf("all") >= 0) ? null : t; // شريحة «كل الأقسام» ثابتة
+    t = t.parentNode;
+  }
+  return null;
+}
+function mDragDown(e) {
+  var chip = mDragChipOf(e.target); if (!chip) return;
+  var pt = e.touches ? e.touches[0] : e;
+  mDrag.el = chip; mDrag.x0 = pt.clientX; mDrag.y0 = pt.clientY; mDrag.armed = false; mDrag.on = false;
+  if (mDrag.timer) clearTimeout(mDrag.timer);
+  mDrag.timer = setTimeout(function () { // ضغطة مطوّلة = وضع السحب (لا تتعارض مع تمرير الشريط)
+    mDrag.armed = true;
+    try { mDrag.el.className += " drag"; } catch (er) {}
+    try { if (navigator.vibrate) navigator.vibrate(30); } catch (ev2) {}
+  }, 420);
+}
+function mDragMove(e) {
+  if (!mDrag.el) return;
+  var pt = e.touches ? e.touches[0] : e;
+  if (!mDrag.armed) {
+    if (Math.abs(pt.clientX - mDrag.x0) > 12 || Math.abs(pt.clientY - mDrag.y0) > 12) { clearTimeout(mDrag.timer); mDrag.el = null; } // حركة عادية = تمرير
+    return;
+  }
+  if (e.cancelable) e.preventDefault();
+  mDrag.on = true;
+  var under = null;
+  try { under = document.elementFromPoint(pt.clientX, pt.clientY); } catch (ee) {}
+  var tgt = under ? mDragChipOf(under) : null; // الشريحة تحت المؤشر فعلياً — بلا تذبذب تبديل
+  if (!tgt || tgt === mDrag.el) return;
+  var a = mDrag.el.getAttribute("data-g"), b = tgt.getAttribute("data-g");
+  if (!a || !b || a === b) return;
+  var ia = mOrder.indexOf(a), ib = mOrder.indexOf(b);
+  if (ia < 0 || ib < 0) return;
+  mOrder.splice(ia, 1); mOrder.splice(ib, 0, a);
+  trMawridRenderChips();
+  mDrag.el = el("mChips").querySelector(".m-chip[data-g='" + a + "']");
+  if (mDrag.el) { try { mDrag.el.className += " drag"; } catch (er2) {} }
+}
+function mDragUp() {
+  if (mDrag.timer) { clearTimeout(mDrag.timer); mDrag.timer = null; }
+  if (mDrag.on && mDrag.el) {
+    mSaveOrder();
+    trMawridRenderChips();
+    try { el("mStat").textContent = "✓ حُفظ ترتيب أقسامك — يؤثر على تقديم نتائج بحث «كل الأقسام» دائماً"; } catch (es) {}
+  }
+  if (mDrag.el) { try { mDrag.el.className = String(mDrag.el.className).replace(/ ?drag/g, ""); } catch (ex) {} }
+  mDrag.on = false; mDrag.armed = false; mDrag.el = null;
+}
+(function () { // ربط معالجات السحب مرة واحدة — الشرائح تُرسم أول مرة هنا أيضاً
+  function bind() {
+    var box = el("mChips"); if (!box || box.__mdrag) return;
+    box.__mdrag = 1;
+    try {
+      box.addEventListener("touchstart", mDragDown, false);
+      box.addEventListener("touchmove", mDragMove, false);
+      box.addEventListener("touchend", mDragUp, false);
+      box.addEventListener("touchcancel", mDragUp, false);
+      box.addEventListener("mousedown", mDragDown, false);
+      document.addEventListener("mousemove", mDragMove, false);
+      document.addEventListener("mouseup", mDragUp, false);
+    } catch (e) {}
+    trMawridRenderChips();
+  }
+  if (el("mChips")) bind();
+  else { try { window.addEventListener("load", bind, false); } catch (e2) {} }
+})();
 
 // ===== v26.34: إحساس الضغط — تفاعل لمسي مرئي فوري لكل أزرار المترجم حتى في الويبفيو القديم =====
 (function () {
   var cur = null;
-  var RX = / (tr-(?:act|chipbtn|go-sm|swap|back|add-btn|fix-btn2|fix-btn|dbfix-btn|def-say|hist-del|user-act|clear)) /;
+  var RX = / (tr-(?:act|chipbtn|go-sm|swap|back|add-btn|fix-btn2|fix-btn|dbfix-btn|def-say|hist-del|user-act|clear)|m-(?:chip|clear|fav)) /;
   function dn(e) {
     var t = e.target, n = 0;
     while (t && t !== document && n < 5) {
@@ -11935,7 +12243,7 @@ function mSendIdx(i) {
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.36/prayer-times-v26.36.apk"; // v26.36: قناة Releases — لا تُحسب في حجم المستودع
+var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.37/prayer-times-v26.37.apk"; // v26.37: قناة Releases — لا تُحسب في حجم المستودع
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -12265,7 +12573,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.36"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.36: قاموس المورد الكامل + المصطلحات المتخصصة — 434 ألف مدخل ببحث فوري ثنائي الاتجاه من مستودع بيانات منفصل)
+var CURRENT_APP_VERSION = "26.37"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.37: القاموس الشامل المدمج — 18 قسماً ببحث افتراضي في الكل + بطاقة موحدة + سحب وترتيب + تعلم تفضيلات، وإلغاء زر المورد)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
