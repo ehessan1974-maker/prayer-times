@@ -1789,6 +1789,16 @@ body.dark-mode .tr-wt.wt-a { color:#c4b5fd;background:#2e1065;border-color:#4c1d
 body.dark-mode .tr-wt.wt-h { color:#fcd34d;background:#451a03;border-color:#78350f; }
 body.dark-mode .tr-wt.wt-r { color:#f9a8d4;background:#500724;border-color:#831843; }
 body.dark-mode .tr-wt.wt-p { color:#cbd5e1;background:#1e293b;border-color:#334155; }
+/* v26.34: الفونيتيكس داخل خانة الترجمة بجانب كل كلمة */
+.tr-ipa-in { color:#0369a1;font-size:10.5px;font-weight:600;direction:ltr;unicode-bidi:embed;margin:0 1px;white-space:nowrap; }
+body.dark-mode .tr-ipa-in { color:#7dd3fc; }
+/* v26.34: إحساس الضغط والتحويم لكل أزرار المترجم — لمسة مرئية واضحة حتى على الويبفيو القديم */
+.tr-act,.tr-chipbtn,.tr-go-sm,.tr-swap,.tr-back,.tr-add-btn,.tr-fix-btn,.tr-fix-btn2,.tr-dbfix-btn,.tr-def-say,.tr-hist-del,.tr-user-act { -webkit-tap-highlight-color:rgba(16,185,129,.22); touch-action:manipulation; -webkit-transition:-webkit-transform .08s ease,filter .08s ease,box-shadow .08s ease; transition:transform .08s ease,filter .08s ease,box-shadow .08s ease; }
+.tr-act:active,.tr-chipbtn:active,.tr-go-sm:active,.tr-swap:active,.tr-back:active,.tr-add-btn:active,.tr-fix-btn:active,.tr-fix-btn2:active,.tr-dbfix-btn:active,.tr-def-say:active,.tr-hist-del:active,.tr-user-act:active,.tr-act.pressed,.tr-chipbtn.pressed,.tr-go-sm.pressed,.tr-swap.pressed,.tr-back.pressed,.tr-add-btn.pressed,.tr-fix-btn.pressed,.tr-fix-btn2.pressed,.tr-dbfix-btn.pressed,.tr-def-say.pressed,.tr-hist-del.pressed,.tr-user-act.pressed { -webkit-transform:scale(.92); transform:scale(.92); filter:brightness(.78); box-shadow:0 0 0 3px rgba(16,185,129,.4); }
+@media (hover:hover) {
+  .tr-act:hover,.tr-chipbtn:hover,.tr-go-sm:hover,.tr-swap:hover,.tr-back:hover,.tr-add-btn:hover,.tr-fix-btn:hover,.tr-fix-btn2:hover,.tr-dbfix-btn:hover,.tr-user-act:hover { filter:brightness(1.12); box-shadow:0 3px 10px rgba(2,44,34,.22); -webkit-transform:translateY(-1px); transform:translateY(-1px); }
+  .tr-def-say:hover,.tr-hist-del:hover { filter:brightness(1.25); }
+}
 #trHistWin,#trWriterWin { display:none;position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:100001;background:#f4fbf7;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain; }
 #trHistWin.open,#trWriterWin.open { display:block; }
 #trHistWin *,#trWriterWin * { box-sizing:border-box; }
@@ -2109,7 +2119,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.33</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.34</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2416,7 +2426,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       </div>
       <div class="tr-wave" id="trWave">
         <div class="tr-wave-bars" id="trWaveBars"></div>
-        <div class="tr-wave-txt" id="trWaveTxt">🎤 يستمع… تحدث الآن — الذبذابات المتحركة تعني أن المايك يعمل</div>
+        <div class="tr-wave-txt" id="trWaveTxt">🎤 يستمع… تحدث الآن — الذبذبات المتحركة تعني أن المايك يعمل</div>
       </div>
       <div class="tr-ph" id="trPhSrc" style="display:none;"></div>
       <div class="tr-fix" id="trFix" style="display:none;"></div>
@@ -10471,6 +10481,14 @@ function trUseOnline() {
 function trShowResult(text) { // v26.30: عبر trRenderOut الموحد — الترجمة والمعاني في الخانة نفسها
   trState.result = text;
   trState.synHtml = ""; // نص جديد = لا عرض مورد قديم
+  try { // v26.34: التحليل النحوي للنص الظاهر في خانة الترجمة نفسها — لا للنص الأصلي (ملاحظة المستخدم)
+    var anT = trClean(text || "");
+    if (anT) {
+      var iq = trClean((el("trInput") || {}).value || "");
+      if (trDefMeta && trDefMeta.q === iq && trDefMeta.anText !== anT) { trDefMeta.an = trWtAnalyzeAny(anT); trDefMeta.anText = anT; }
+      else if (!trDefMeta || trDefMeta.q !== iq) trDefMeta = { q: iq, wt: "", an: trWtAnalyzeAny(anT), anText: anT, ph: "", isAr: /[\u0600-\u06FF]/.test(iq || anT) };
+    }
+  } catch (eA1) {}
   trRenderOut();
 }
 
@@ -10734,8 +10752,9 @@ function trPhShow(id, text, lang) {
 function trPhoneticsRefresh() {
   try {
     trPhShow("trPhSrc", el("trInput").value || "", trState.src);
-    var has = !!trState.result; // v26.30: فونيتيكس الترجمة فقط — لا المعاني
-    trPhShow("trPhDst", has ? trState.result : "", trState.dst);
+    var pd = el("trPhDst"); // v26.34: لا سطر منفصل لفونيتيكس الترجمة — يظهر داخل الخانة بجانب كل كلمة
+    if (pd) { pd.style.display = "none"; pd.textContent = ""; }
+    if (trState.result) trRenderOut(); // إعادة رسم الخانة لتطبيق حالة الفونيتيكس الجديدة
   } catch (e) {}
 }
 
@@ -10757,6 +10776,12 @@ var TR_WT_NOUN = trWtSet("بيت مدرسه عمل مدينه يوم ليل نه
 var TR_WT_EV = trWtSetEn("be am is are was were been being have has had do does did go goes went gone come comes came eat eats ate eaten drink drinks drank drunk read reads write writes wrote written study studies studied play plays played sleep sleeps slept sit sits sat stand stands stood walk walks walked run runs ran take takes took taken give gives gave given make makes made say says said see sees saw seen look looks looked hear hears heard know knows knew known think thinks thought understand understands understood remember remembers forget forgets forgot find finds found lose loses lost leave leaves left return returns travel travels arrive arrives open opens opened close closes closed wear wears wore wash washes washed help helps helped push pushes pulled pull buy buys bought sell sells sold win wins won pray prays ask asks asked search searches searched work works worked start starts started begin begins began finish finished end ends want wants wanted need needs needed like likes loved love hate hates hated laugh laughs cried cry sing sings sang listen listens listened try tries tried use uses used live lives lived die dies died stay stays stayed stop stops stopped wait waits waited meet meets met send sends sent send get gets got put puts put let lets let feel feels felt become becomes became bring brings brought tell tells told call calls called answer answers answered learn learns learned teach teaches taught show shows showed pay pays paid build builds built break breaks broke choose chooses chose cost costs cut cuts drive drives drove fly flies flew grow grows grew hold holds held keep keeps kept hit hits hurt hurts lead leads led mean means meant set sets shake shook shut swims swam swim wake woke watch watches watched talk talks spoke speak");
 var TR_WT_EA = trWtSetEn("good bad big small beautiful nice pretty handsome happy sad angry new old great easy hard hot cold warm cool fast slow high low long short right left young strong weak rich poor clean dirty sweet sour salty delicious tasty smart clever kind funny boring exciting amazing wonderful terrible horrible excellent perfect correct wrong true false real fake busy free safe dangerous early late first last next favorite favourite cheap expensive narrow wide deep shallow light dark heavy thin thick soft loud quiet holy full empty different important brilliant significant elegant convenient");
 var TR_WT_ELY = trWtSetEn("family ally reply supply apply july belly jelly lily bully italy rally tally");
+var TR_WT_EVPAST = trWtSetEn("was were had did went made got said took came saw knew told found gave became left felt put brought began kept held wrote stood heard meant met ran ate drank flew grew threw drew drove rode fell broke chose spoke woke rose sat lost sent built bought taught caught thought fought sold won paid led shut hit cost cut hurt hid fed bled sped clung stung swung hung dug stuck struck spread split quit knelt crept swept wept bent lent spent burnt learnt dreamt"); // v26.34: أفعال شاذة — ماضٍ
+var TR_WT_EPRON = trWtSetEn("i you he she it we they me him her us them my your his its our their mine yours hers ours theirs myself yourself himself herself itself ourselves themselves who whom whose which what where when why how whoever whatever"); // v26.34: ضمائر وأدوات استفهام
+var TR_WT_EPREP = trWtSetEn("in on at to from with by for about of into onto over under between behind near after before during without inside outside above below around through against among across along toward towards upon per via off out"); // v26.34: حروف الجر
+var TR_WT_EDET = trWtSetEn("a an the some any every each another both few many much more most other several all half such"); // v26.34: أدوات تعريف وكمية
+var TR_WT_ECONJ = trWtSetEn("and or but so because if although though while until unless than whether as nor yet"); // v26.34: حروف عطف
+var TR_WT_ENEG = trWtSetEn("not never no none nobody nothing neither nowhere don't doesn't didn't isn't aren't wasn't weren't won't can't cannot couldn't shouldn't wouldn't mustn't hasn't haven't"); // v26.34: نفي
 function trWtAr(w) {
   var raw = String(w || ""), n = trNormAr(raw), f, r2, i, sufs, b;
   if (!n) return "";
@@ -10794,15 +10819,21 @@ function trWtAr(w) {
 function trWtEn(w) {
   var n = trNormEn(w), i, s;
   if (!n || n.indexOf(" ") !== -1) return "";
-  if (TR_WT_EV[n]) return "فعل";
+  if (TR_WT_ENEG[n]) return "حرف نفي"; // v26.34
+  if (TR_WT_EPRON[n]) return "ضمير"; // v26.34
+  if (TR_WT_EDET[n]) return "أداة"; // v26.34
+  if (TR_WT_EPREP[n]) return "حرف جر"; // v26.34
+  if (TR_WT_ECONJ[n]) return "حرف عطف"; // v26.34
+  if (TR_WT_EVPAST[n]) return "فعل ماضٍ"; // v26.34: زمن الفعل
+  if (TR_WT_EV[n]) return "فعل مضارع"; // v26.34
   if (TR_WT_EA[n]) return "صفة";
   var NS = ["tion", "sion", "ment", "ness", "ity", "ship", "hood", "ance", "ence", "ism", "ist", "ure", "age", "ee", "er", "or"];
   for (i = 0; i < NS.length; i++) { s = NS[i]; if (n.length > s.length + 2 && n.substring(n.length - s.length) === s) return "اسم"; }
   var AS = ["ous", "ful", "less", "ive", "able", "ible", "ish", "ial"];
   for (i = 0; i < AS.length; i++) { s = AS[i]; if (n.length > s.length + 2 && n.substring(n.length - s.length) === s) return "صفة"; }
   if (n.length > 3 && n.substring(n.length - 2) === "ly" && !TR_WT_ELY[n]) return "حال";
-  if (n.length > 4 && n.substring(n.length - 3) === "ing") return "فعل";
-  if (n.length > 3 && n.substring(n.length - 2) === "ed") return "فعل";
+  if (n.length > 4 && n.substring(n.length - 3) === "ing") return "فعل مضارع"; // v26.34
+  if (n.length > 3 && n.substring(n.length - 2) === "ed") return "فعل ماضٍ"; // v26.34
   return "اسم";
 }
 function trWtArOf(w) { var s = trClean(w); if (!s || s.split(" ").length > 1) return ""; return trWtAr(s); }
@@ -10824,6 +10855,7 @@ function trWtBadge(lb) { // v26.30: نوع الكلمة يُكتب بالعرب�
   else if (lb === "حال") { c = "tr-wt wt-h"; en = "Adverb"; }
   else if (lb === "ضمير") { c = "tr-wt wt-n"; en = "Pronoun"; }
   else if (lb === "عدد") { c = "tr-wt wt-n"; en = "Number"; }
+  else if (lb === "أداة") { c = "tr-wt wt-p"; en = "Article"; }
   else if (lb.indexOf("جر") !== -1) { c = "tr-wt wt-p"; en = "Preposition"; }
   else if (lb.indexOf("عطف") !== -1) { c = "tr-wt wt-p"; en = "Conjunction"; }
   else if (lb.indexOf("نفي") !== -1) { c = "tr-wt wt-p"; en = "Negation"; }
@@ -10850,6 +10882,34 @@ function trWtAnalyze(q) {
   return out.length ? out : null;
 }
 
+// v26.34: تحليل نحوي للنص الإنكليزي الظاهر في خانة الترجمة — فعل/فاعل/مفعول به/صفة/حال
+// (المستخدم: «التحليل النحوي لنوع الكلمات يكون للنص الأصلي وليس للنص الظاهر في خانة الترجمة وهذا خطأ»)
+function trWtAnalyzeEn(q) {
+  var toks = String(q || "").replace(/[.,!?;:"()\u060C\u061B]+/g, " ").split(/\s+/), ws = [], i, w2;
+  for (i = 0; i < toks.length && ws.length < 14; i++) { w2 = trClean(toks[i]); if (w2) ws.push(w2); }
+  if (ws.length < 2) return null;
+  var out = [], vi = -1, subj = false, obj = false, prep = false, t;
+  for (i = 0; i < ws.length; i++) {
+    t = trWtEn(ws[i]);
+    if (t === "حرف جر") { out.push({ w: ws[i], t: t }); prep = true; continue; }
+    if (t === "حرف عطف" || t === "حرف نفي" || t === "أداة") { out.push({ w: ws[i], t: t }); prep = false; continue; }
+    if (t.indexOf("فعل") === 0) { out.push({ w: ws[i], t: t }); if (vi === -1) vi = i; prep = false; continue; }
+    if (t === "ضمير" && vi === -1 && !subj) { out.push({ w: ws[i], t: "فاعل" }); subj = true; continue; }
+    if (t === "صفة" || t === "حال" || t === "ضمير") { out.push({ w: ws[i], t: t }); continue; }
+    if (prep) { out.push({ w: ws[i], t: "اسم مجرور" }); prep = false; continue; }
+    if (vi === -1 && !subj) { out.push({ w: ws[i], t: "فاعل" }); subj = true; continue; }
+    if (vi !== -1 && !obj) { out.push({ w: ws[i], t: "مفعول به" }); obj = true; continue; }
+    out.push({ w: ws[i], t: t });
+  }
+  return out.length >= 2 ? out : null;
+}
+function trWtAnalyzeAny(q) { // v26.34: يوزع حسب لغة نص خانة الترجمة
+  var s = trClean(q);
+  if (!s || s.split(" ").length < 2) return null;
+  if (/[\u0600-\u06FF]/.test(s)) { if (s.split(" ").length > 4) return null; return trWtAnalyze(s); }
+  return trWtAnalyzeEn(s);
+}
+
 // ===== وضع القاموس 📖 — كل معاني الكلمة — v26.20 =====
 var trDefOn = true, trDefData = [], trDefLang = "ar", trDefMeta = null; // v26.29: وضع المعاجم دائماً فعّال بلا زر — v26.30: بيانات كتلة المعاني داخل خانة الترجمة
 function trDefToggle() { trDefOn = true; trDefLookup(); } // v26.29: بقيت للتوافق — بلا زر
@@ -10869,7 +10929,7 @@ function trDefLookup() { // v26.30: المعاني تُعرض داخل خانة 
   var isAr = /[\u0600-\u06FF]/.test(q);
   trDefLang = isAr ? "ar" : "en";
   var wtMain = isAr ? trWtArOf(q) : trWtEnOf(q); // v26.29: نوع الكلمة المدخلة
-  var an = (isAr && q.split(" ").length > 1) ? trWtAnalyze(q) : null; // v26.29: تحليل نحوي للعبارة القصيرة
+  var an = null; // v26.34: التحليل النحوي للنص الظاهر في خانة الترجمة (يُبنى في trShowResult من ناتج الترجمة) — لا للنص الأصلي
   var senses = [], seen = {}, i;
   var lq = isAr ? trLightAr(q) : trNormEn(q);
   var nq = isAr ? trNormAr(q) : lq;
@@ -10938,10 +10998,30 @@ function trDefBlockHtml() {
     if (trDefData.length > shown) html += "<div class='tr-def-badge'>+" + (trDefData.length - shown) + "</div>";
   }
   if (m.an && m.an.length) {
-    html += "<div class='tr-def-title' style='margin-top:8px;'>🔎 " + (m.isAr ? "التحليل النحوي" : "Grammar") + " — «" + trEsc(m.q) + "»</div>";
+    html += "<div class='tr-def-title' style='margin-top:8px;'>🔎 " + (m.isAr ? "التحليل النحوي" : "Grammar") + " — «" + trEsc(m.anText || m.q) + "»</div>";
     for (i = 0; i < m.an.length; i++) html += "<div class='tr-def-item'><span class='tr-def-num'>" + (i + 1) + ".</span> <b>" + trEsc(m.an[i].w) + "</b>" + trWtBadge(m.an[i].t) + "</div>";
   }
   return html;
+}
+// v26.34: الفونيتيكس داخل خانة الترجمة — بعد كل كلمة إنكليزية يظهر نطقها بأحرف لاتينية (لونغمان IPA)
+// (المستخدم: «ضع الفونيتيكس في خانة الترجمة بجانب كل كلمة»)
+function trIpaInlineHtml(text) {
+  var chk = el("trPhChk");
+  if (chk && !chk.checked) return null;
+  var toks = String(text || "").split(/(\s+)/), out = [], i, done = 0;
+  for (i = 0; i < toks.length; i++) {
+    var tk = toks[i];
+    if (!tk) continue;
+    if (/^\s+$/.test(tk)) { out.push(tk); continue; }
+    var m = tk.match(/^([^A-Za-z]*)([A-Za-z][A-Za-z']*)([\s\S]*)$/);
+    if (!m) { out.push(trEsc(tk)); continue; }
+    var ipa = "";
+    try { ipa = trIpaWord(m[2]); } catch (eI1) {}
+    if (!ipa) { out.push(trEsc(tk)); continue; }
+    out.push(trEsc(m[1]) + trEsc(m[2]) + "<span class='tr-ipa-in'>/" + trEsc(ipa) + "/</span>" + trEsc(m[3]));
+    done++;
+  }
+  return done ? out.join("") : null;
 }
 // v26.30: العرض الموحد لخانة الترجمة — الترجمة (أو عرض المورد) والمعاني في الخانة نفسها ليسهل النسخ يدوياً
 function trRenderOut() {
@@ -10952,7 +11032,11 @@ function trRenderOut() {
   var fresh = !!(m && m.q === q && (trDefData.length || (m.an && m.an.length)));
   var html = "";
   if (trState.synHtml) html = trState.synHtml;
-  else if (trState.result) html = trEsc(trState.result);
+  else if (trState.result) {
+    var iph = null;
+    try { if (trState.dst === "en") iph = trIpaInlineHtml(trState.result); } catch (eP1) {}
+    html = iph ? iph : trEsc(trState.result); // v26.34: الفونيتيكس داخل الخانة بجانب كل كلمة
+  }
   if (fresh && !trState.synHtml) {
     var blk = trDefBlockHtml();
     if (blk) html = html ? (html + blk) : blk;
@@ -10960,7 +11044,7 @@ function trRenderOut() {
   if (!html) return; // لا شيء جديد — يبقى العرض الحالي (فراغ أو «جارٍ الترجمة»)
   out.innerHTML = html;
   out.className = "tr-out";
-  try { trPhShow("trPhDst", trState.result || "", trState.dst); } catch (e) {}
+  try { var pd2 = el("trPhDst"); if (pd2) { pd2.style.display = "none"; pd2.textContent = ""; } } catch (ePD2) {} // v26.34: لا سطر منفصل — الفونيتيكس داخل الخانة بجانب كل كلمة
 }
 function trDefSay(i) {
   var it = trDefData[i];
@@ -11292,15 +11376,23 @@ function trBdFetch(q, ok) {
     ok(d);
   }, function () { ok(null); });
 }
+// v26.34b: فونيتيكس داخل الخانة — يخدم عرض المورد أيضاً (الترجمة الرئيسية + كل مرادف)
+function trIpaSpan(w) {
+  var chk = el("trPhChk");
+  if (chk && !chk.checked) return "";
+  var ipa = "";
+  try { ipa = trIpaWord(String(w || "")); } catch (e) {}
+  return ipa ? "<span class='tr-ipa-in'>/" + trEsc(ipa) + "/</span>" : "";
+}
 function trSynRender(main, groups, wt) {
-  var html = "<div class='tr-syn main'><b>" + trEsc(main) + "</b><span class='tr-syn-pos best'>الترجمة</span>" + trWtBadge(wt || "") + "</div>", i, j, shown = {}, w, wl;
+  var html = "<div class='tr-syn main'><b>" + trEsc(main) + trIpaSpan(main) + "</b><span class='tr-syn-pos best'>الترجمة</span>" + trWtBadge(wt || "") + "</div>", i, j, shown = {}, w, wl;
   if (main) shown[main.toLowerCase()] = 1;
   for (i = 0; i < groups.length; i++) {
     for (j = 0; j < groups[i].terms.length; j++) {
       w = groups[i].terms[j]; wl = w.toLowerCase();
       if (shown[wl]) continue;
       shown[wl] = 1;
-      html += "<div class='tr-syn'><b>" + trEsc(w) + "</b><span class='tr-syn-pos'>" + trEsc(groups[i].pos) + "</span></div>";
+      html += "<div class='tr-syn'><b>" + trEsc(w) + trIpaSpan(w) + "</b><span class='tr-syn-pos'>" + trEsc(groups[i].pos) + "</span></div>";
     }
   }
   return html;
@@ -11346,7 +11438,7 @@ function trOutPlain() { // v26.30: النسخ يشمل الترجمة + المع
 // ===== v26.23: الإدخال الصوتي 🎤 — Web Speech في المتصفح + جسر AndroidPrayer في APK =====
 
 // ===== v26.33: ذبذبات المايك الحية — للتأكد من عمل الميكروفون عند الضغط على زر الصوت =====
-var TR_WAVE_N = 26, trWaveHist = [], trWaveTimer = null, trWaveLvl = 0, trWavePeakSeen = false, trWaveFake = false, trWaveFakeT = 0;
+var TR_WAVE_N = 26, trWaveHist = [], trWaveTimer = null, trWaveLvl = 0, trWavePeakSeen = false, trWaveFake = false, trWaveFakeT = 0, trWaveDataSeen = false, trWaveShownAt = 0; // v26.34: تتبع وصول مستويات حية + زمن بدء العرض
 var trWaveStream = null, trWaveCtx = null, trWaveProc = null, trWaveSrcNode = null, trWaveGain = null;
 function trWaveBuild() {
   var b = el("trWaveBars");
@@ -11357,11 +11449,11 @@ function trWaveShow(on) {
   var w = el("trWave");
   if (!w) return;
   if (on) {
-    trWaveBuild(); trWaveHist = []; trWaveLvl = 0; trWavePeakSeen = false; trWaveFake = false;
+    trWaveBuild(); trWaveHist = []; trWaveLvl = 0; trWavePeakSeen = false; trWaveFake = false; trWaveDataSeen = false; trWaveShownAt = Date.now(); // v26.34
     for (var i2 = 0; i2 < TR_WAVE_N; i2++) trWaveHist.push(0);
     w.className = "tr-wave on";
     var t = el("trWaveTxt");
-    if (t) t.textContent = "🎤 يستمع… تحدث الآن — الذبذابات المتحركة تعني أن المايك يعمل";
+    if (t) t.textContent = "🎤 يستمع… تحدث الآن — الذبذبات المتحركة تعني أن المايك يعمل";
     if (trWaveTimer) clearInterval(trWaveTimer);
     trWaveTimer = setInterval(trWaveTick, 110);
   } else {
@@ -11388,7 +11480,11 @@ function trWaveTick() {
   if (trWaveLvl > 0.13) trWavePeakSeen = true;
   var w2 = el("trWave"), t = el("trWaveTxt");
   if (trWavePeakSeen && w2) w2.className = "tr-wave on peak";
-  if (t) t.textContent = trWavePeakSeen ? "✓ المايك يعمل — أسمع صوتك بوضوح" : "🎤 يستمع… تحدث الآن — الذبذابات المتحركة تعني أن المايك يعمل";
+  if (t) {
+    if (trWavePeakSeen) t.textContent = "✓ المايك يعمل — أسمع صوتك بوضوح";
+    else if (!trWaveDataSeen && !trWaveFake && trWaveShownAt && (Date.now() - trWaveShownAt) > 6000) t.textContent = "🎤 يستمع… لم تصل مستويات صوت من هذا الجهاز — ثبّت آخر APK (v26.34 أو أحدث) لعرض الذبذبات الحية";
+    else t.textContent = "🎤 يستمع… تحدث الآن — الذبذبات المتحركة تعني أن المايك يعمل";
+  }
 }
 function trWavePush(l) {
   var v = parseFloat(l);
@@ -11396,6 +11492,7 @@ function trWavePush(l) {
   if (v < 0) v = 0;
   if (v > 1) v = 1;
   trWaveFake = false;
+  if (v > 0.03) trWaveDataSeen = true; // v26.34: وصلت مستويات حية (جسر/تحليل مباشر)
   if (v > trWaveLvl) trWaveLvl = v;
 }
 function trWaveFakeOn() { trWaveFake = true; } // بدأ كلام فعلاً (حدث/جسر) حتى تصل مستويات حقيقية
@@ -11565,11 +11662,38 @@ function trMicBridge(json) { // كولباك جسر الأندرويد
   } catch (e) {}
 }
 
+// ===== v26.34: إحساس الضغط — تفاعل لمسي مرئي فوري لكل أزرار المترجم حتى في الويبفيو القديم =====
+(function () {
+  var cur = null;
+  var RX = / (tr-(?:act|chipbtn|go-sm|swap|back|add-btn|fix-btn2|fix-btn|dbfix-btn|def-say|hist-del|user-act)) /;
+  function dn(e) {
+    var t = e.target, n = 0;
+    while (t && t !== document && n < 5) {
+      if (t.nodeType === 1 && t.className && RX.test(" " + t.className + " ")) {
+        cur = t;
+        try { t.className += " pressed"; } catch (e2) {}
+        return;
+      }
+      t = t.parentNode; n++;
+    }
+  }
+  function up() {
+    if (cur) { try { cur.className = String(cur.className).replace(/ ?pressed/g, ""); } catch (e3) {} cur = null; }
+  }
+  try {
+    document.addEventListener("touchstart", dn, false);
+    document.addEventListener("touchend", up, false);
+    document.addEventListener("touchcancel", up, false);
+    document.addEventListener("mousedown", dn, false);
+    document.addEventListener("mouseup", up, false);
+  } catch (e4) {}
+})();
+
 // ===== v26.27: بطاقة الإنقاذ — لكل حالة مستعصية لا تُحل داخل الصفحة =====
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.33.apk";
+var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.34.apk";
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -11899,7 +12023,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.33"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.33: الفونيتيكس بنمط قاموس لونغمان — أحرف لاتينية IPA للنطق الصحيح /ˈɡəʊld/ بقاعدة ~14.5 ألف كلمة مدمجة بلا إنترنت + اشتقاق تلقائي وقواعد احتياطية — وذبذبات المايك الحية عند زر 🎤 صوت للتأكد من عمل الميكروفون: تحليل مباشر في المتصفح ومستويات RMS حية من الجسر الأصلي)
+var CURRENT_APP_VERSION = "26.34"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.34: التحليل النحوي للنص الظاهر في خانة الترجمة (فاعل/مفعول به/فعل ماضٍ-مضارع بالعربي والإنكليزي) بدل النص الأصلي + الفونيتيكس داخل خانة الترجمة بجانب كل كلمة (لونغمان IPA) بدل السطر المنفصل + إصلاح الإملاء «الذبذبات» + إحساس ضغط وتحويم لكل أزرار المترجم بتفاعل لمسي فوري + رسالة تفسيرية عندما لا تصل مستويات صوت حية إلى شريط الذبذبات)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
