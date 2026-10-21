@@ -1859,21 +1859,32 @@ body.dark-mode #trMawridWin { background:#0d1512; }
 .m-in:focus { outline:none;border-color:#065f46; }
 .m-stat { font-size:12px;color:#4b7a68;margin:8px 2px;min-height:16px; }
 .m-res { padding-bottom:30px; }
-.m-row { background:#fff;border:1px solid #dcece4;border-radius:12px;padding:9px 12px;margin:7px 0; }
+/* v26.41: أسطر فوق بعضها بدل خانات — كل معنى إنجليزي سطر مستقل يضم الفونيتيكس والنوع والنجوم والأزرار */
+.m-row { background:none;border:none;border-radius:0;padding:8px 2px;margin:0;border-bottom:1px dashed #cfe3d8; }
+.m-row:last-child { border-bottom:none; }
+.m-line { display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;-webkit-align-items:center;align-items:center; }
+.m-w { font-weight:800;color:#0b3d2e;word-wrap:break-word;font-family:Georgia,'Times New Roman',serif;font-size:16px;direction:ltr;unicode-bidi:embed; }
+.m-wt { font-size:10.5px;font-weight:700; }
+.m-acts { margin-top:5px; }
+.m-acts .tr-act { margin-left:6px; }
+.m-userbadge { font-size:10px;font-weight:700;color:#92400e;background:#fef3c7;border-radius:8px;padding:1px 7px;margin-right:6px; }
+.m-row.flipping { -webkit-transition:transform 300ms ease-out;transition:transform 300ms ease-out; }
 .m-hw { font-size:15px;font-weight:800;color:#0b3d2e;word-wrap:break-word; }
 .m-row.en .m-hw { direction:ltr;text-align:left;font-family:Georgia,'Times New Roman',serif; }
 .m-tr { font-size:14px;color:#245c48;margin-top:3px;line-height:1.65;word-wrap:break-word;max-height:88px;overflow:hidden;position:relative;cursor:pointer; }
 .m-tr.open { max-height:none; }
 .m-tools { margin-top:6px; }
 .m-tools .tr-act { margin-left:6px; }
-body.dark-mode .m-row { background:#101d17;border-color:#244435; }
+body.dark-mode .m-row { border-bottom-color:#2a4a3b; }
+body.dark-mode .m-w { color:#cde8dc; }
+body.dark-mode .m-userbadge { color:#e0b34d;background:#2a2410; }
 body.dark-mode .m-hw { color:#9fe8cd; }
 body.dark-mode .m-tr { color:#7fcfb2; }
 body.dark-mode .m-in { background:#0c1813;border-color:#2a4a3b;color:#e5f3ec; }
 body.dark-mode .m-stat { color:#5f9c85; }
 /* v26.37: القاموس الشامل المدمج في الواجهة الرئيسية — بطاقات موحدة + شرائح قابلة للسحب */
 /* v26.38: نتائج القواميس مدمجة داخل خانة الترجمة (بلا بطاقة مستقلة) + نافذة المخزون */
-.tr-out .m-row { margin:8px 0; }
+/* v26.41: أسطر متراصة فوق بعضها — بلا هوامش خانات */
 .tr-out .m-stat { margin:6px 2px 2px; }
 .tr-out .m-res { padding-bottom:2px; }
 .tr-dl-bar { height:8px;background:#d1fae5;border-radius:4px;overflow:hidden;margin-top:10px;border:1px solid #a7f3d0; }
@@ -1888,7 +1899,7 @@ body.dark-mode #trDlWin { background:#0d1512; }
 .m-clear { position:absolute;left:6px;top:50%;margin-top:-13px;width:26px;height:26px;line-height:23px;border-radius:50%;border:1px solid #cfe7dc;background:#f0faf5;color:#065f46;font-size:13px;font-weight:800;cursor:pointer;padding:0;text-align:center;font-family:inherit; }
 .m-clear:active,.m-clear.pressed,.m-fav:active,.m-fav.pressed,.m-star:active,.m-star.pressed { -webkit-transform:scale(.92); transform:scale(.92); }
 /* v26.40: نجوم التفضيل 1-5 لكل معنى — تُحفظ دائماً وتتحكم بترتيب النتائج */
-.m-stars { margin:5px 0 1px;line-height:1; }
+.m-stars { margin:0 0 0 8px;line-height:1;display:inline-block; }
 .m-star { background:none;border:none;padding:0 2px;font-size:20px;color:#cbd5e1;cursor:pointer;line-height:1;font-family:inherit;vertical-align:middle;-webkit-appearance:none;appearance:none; }
 .m-star.on { color:#f59e0b; }
 .m-star-n { font-size:11px;color:#94a3b8;margin-right:5px;vertical-align:middle;font-weight:700; }
@@ -11952,8 +11963,46 @@ function mStarSet(i, n, btn) {
   if (ks.length > 400) { for (j = 0; j < ks.length - 400; j++) delete f[ks[j]]; }
   mStarSave(f);
   if (btn && btn.parentNode) btn.parentNode.innerHTML = mStarsHtml(i, nv);
-  trMawridRun2(); // إعادة الترتيب فوراً — النتائج الأعلى تقييماً تتصدر
-  try { trToast(nv ? ("⭐ تقييمك " + nv + "/5 — صارت هذه الترجمة من خياراتك المفضلة وتتصدر نتائجها دائماً") : "أُلغي التقييم — رجعت النتائج لترتيبها الأصلي"); } catch (e) {}
+  mStarsReflow(); // v26.41: انزلاق سلس فوري — السطر ينتقل مباشرة لمكانه الجديد بحسب النجوم
+  try { trToast(nv ? ("⭐ " + nv + "/5 — السطر ينزلق فوراً إلى مكانه بين خياراتك المفضلة") : "أُلغي التقييم — رجع السطر لترتيبه الأصلي"); } catch (e) {}
+}
+// v26.41: قيمة الترتيب — قاموسي مثبت فوق الكل (6) ثم النجوم 5..0
+function mStarValOf(it) { return it.u ? 6 : mStarOf(it.w, it.t, it.g.id); }
+// v26.41: الانزلاق السلس (FLIP) — يعيد ترتيب أسطر النتائج فوراً بحسب النجوم بحركة انزلاق تعمل على ES5/Chromium 37
+function mStarsReflow() {
+  try {
+    var box = el("trOutput"); if (!box || !box.querySelector) return;
+    var wrap = box.querySelector(".m-res"); if (!wrap || !wrap.querySelectorAll) return;
+    var rows = wrap.querySelectorAll(".m-row"); if (!rows || rows.length < 2) return;
+    var first = {}, i;
+    for (i = 0; i < rows.length; i++) first[rows[i].getAttribute("data-i")] = rows[i].getBoundingClientRect().top;
+    var arr = [];
+    for (i = 0; i < rows.length; i++) arr.push({ di: parseInt(rows[i].getAttribute("data-i"), 10) || 0, node: rows[i] });
+    arr.sort(function (a, b) {
+      var sa = mLast[a.di] ? mStarValOf(mLast[a.di]) : 0;
+      var sb = mLast[b.di] ? mStarValOf(mLast[b.di]) : 0;
+      if (sa !== sb) return sb - sa;
+      return a.di - b.di;
+    });
+    for (i = 0; i < arr.length; i++) wrap.appendChild(arr[i].node);
+    for (i = 0; i < arr.length; i++) {
+      var row = arr[i].node;
+      var d = Math.round((first[row.getAttribute("data-i")] || 0) - row.getBoundingClientRect().top);
+      if (!d) continue;
+      (function (r, dd) {
+        r.style.transition = "none"; r.style.webkitTransition = "none";
+        r.style.transform = "translateY(" + dd + "px)"; r.style.webkitTransform = "translateY(" + dd + "px)";
+        setTimeout(function () {
+          if (String(r.className).indexOf("flipping") < 0) r.className += " flipping";
+          r.style.transform = "translateY(0)"; r.style.webkitTransform = "translateY(0)";
+          setTimeout(function () {
+            r.style.transition = ""; r.style.webkitTransition = "";
+            try { r.className = String(r.className).replace(/ ?flipping/g, ""); } catch (eF) {}
+          }, 340);
+        }, 20);
+      })(row, d);
+    }
+  } catch (e) {}
 }
 // سجل النواقص — كل بحث بلا نتائج يُسجَّل (مصدر بيانات مستقبلي لتوسيع الأقسام)
 function mGapLog(q, isAr) {
@@ -12144,7 +12193,12 @@ function trMawridMerge(buckets, cands, isAr, myReq, fails, allMode, localCnt) {
   }
   mUserHits(cands, isAr);
   var qi = isAr ? mNormAr(cands[0]) : String(cands[0]).toLowerCase();
-  mHits.sort(function (a, b) { return mRankOf(b, qi) - mRankOf(a, qi); });
+  mHits.sort(function (a, b) { // v26.41: قاموسي ثم النجوم الأعلى أولاً — تقييمك يرتّب النتائج من أول رسم
+    var sa = a.u ? 6 : mStarOf(a.w, a.t, a.g.id);
+    var sb = b.u ? 6 : mStarOf(b.w, b.t, b.g.id);
+    if (sa !== sb) return sb - sa;
+    return mRankOf(b, qi) - mRankOf(a, qi);
+  });
   for (i = 0; i < mHits.length && i < 30; i++) { if (!bump[mHits[i].g.id]) { bump[mHits[i].g.id] = 1; mUseBump(mHits[i].g.id); } }
   if (!mHits.length && fails) { // v26.38: الفشل الآن = غير مخزَّن + بلا اتصال — رسالة صحيحة لا «تعذّر التحميل» أبداً للمخزَّن
     mState = "err";
@@ -12185,42 +12239,47 @@ function mGapWeb() {
 function trMawridRun2() { // v26.38: الرسم موحد داخل خانة الترجمة — يعاد استدعاؤه عند تغيّر المفضلة دون بحث جديد
   try { trRenderOut(); } catch (e) {}
 }
-// ===== v26.40: بطاقة النتيجة الموحدة — الكلمة + الفونيتيكس + النوع (بالإنكليزية) + نجوم التفضيل + المعنى + أزرار (بلا أمثلة بنصب المستخدم) =====
+// ===== v26.41: سطر النتيجة — كل معنى إنجليزي في سطر مستقل فوق بعضه (لا خانات ولا أمثلة) — عربي→إنكليزي يعرض الإنجليزي فقط: الكلمة + الفونيتيكس + النوع + النجوم + نطق/نسخ/بحث موسع =====
 function mRowHtml(it, i) {
   var g = it.g, isAr = /[\u0600-\u06FF]/.test(it.w);
-  var wt = isAr ? trWtArOf(it.w) : trWtEnOf(it.w);
-  var ipa = (!isAr) ? trIpaSpan(it.w) : "";
   var st = it.u ? 0 : mStarOf(it.w, it.t, g.id);
-  var h = "<div class='m-row" + (!isAr ? " en" : "") + "'>";
-  h += "<div class='m-hw'>" + trEsc(it.w) + ipa + trWtBadge(wt, !isAr) + "</div>"; // v26.40: نوع الكلمة بالإنكليزية في النتائج الإنجليزية
-  if (!it.u) h += "<div class='m-stars'>" + mStarsHtml(i, st) + "</div>"; // v26.40: نجوم تفضيل 1-5 تُحفظ دائماً وتتحكم بالترتيب
-  h += "<div class='m-tr' onclick='mToggleTr(this)' title='اضغط لتمديد المعنى أو طبعه'>" + trEsc(it.t) + "</div>";
-  h += "<div class='m-tools'>";
-  h += "<button class='tr-act' onclick='mCopyIdx(" + i + ",this)'>📋 نسخ</button> <button class='tr-act' onclick='mSayIdx(" + i + ")'>🔊 نطق</button> <button class='tr-act' onclick='mDeepIdx(" + i + ")'>🔎 بحث موسع</button>"; // v26.40: بلا أمثلة — نسخ/نطق/بحث موسع فقط
-  h += "</div></div>";
+  var en = isAr ? it.t : it.w; // v26.41: العنوان في السطر دائماً بالإنكليزية
+  var one = String(en).split(/\s+/).length === 1;
+  var ipa = "";
+  if (one) { try { ipa = trIpaWord(en) || ""; } catch (eI) {} } // v26.41: الفونيتيكس دائماً ظاهرة في نتائج القاموس (للكلمة الأحادية)
+  var h = "<div class='m-row en' data-i='" + i + "'>";
+  h += "<div class='m-line'>";
+  h += "<span class='m-w'>" + trEsc(en) + "</span>";
+  if (ipa) h += "<span class='tr-ipa-in'>/" + trEsc(ipa) + "/</span>";
+  h += trWtBadge(trWtEnOf(en), true); // v26.41: نوع الكلمة بالإنكليزية
+  if (it.u) h += "<span class='m-userbadge'>⭐ قاموسي</span>";
+  else h += "<span class='m-stars'>" + mStarsHtml(i, st) + "</span>";
+  h += "</div>";
+  if (!isAr) h += "<div class='m-tr' onclick='mToggleTr(this)' title='اضغط لتمديد المعنى أو طبعه'>" + trEsc(it.t) + "</div>"; // إنكليزي→عربي: المعنى العربي يبقى مفيداً في هذه الحالة
+  h += "<div class='m-acts'><button class='tr-act' onclick='mSayIdx(" + i + ")'>🔊 نطق</button> <button class='tr-act' onclick='mCopyIdx(" + i + ",this)'>📋 نسخ</button> <button class='tr-act' onclick='mDeepIdx(" + i + ")'>🔎 بحث موسع</button></div>";
+  h += "</div>";
   return h;
 }
 function mToggleTr(node) { try { node.className = node.className.indexOf("open") >= 0 ? node.className.replace(/ ?open/g, "") : node.className + " open"; } catch (e) {} }
-function mCopyIdx(i, btn) { // v26.40: نسخ الكلمة + الفونيتيكس + النوع + المعنى فقط — بلا أمثلة
+function mCopyIdx(i, btn) { // v26.41: عربي→إنكليزي ينسخ الإنجليزي فقط (كلمة + فونيتيكس + نوع) — بلا أي عربي
   var it = mLast[i]; if (!it) return;
   var isAr = /[\u0600-\u06FF]/.test(it.w);
-  var wt = isAr ? trWtArOf(it.w) : trWtEnOf(it.w);
-  var pk = trWtPick(wt);
-  var wtl = (pk && pk.e && !isAr) ? pk.e : wt; // النوع بالإنكليزية في النتائج الإنجليزية
+  var en = isAr ? it.t : it.w;
+  var wtl = trWtEnOf(en);
   var ipa = "";
-  if (!isAr) { try { ipa = trIpaWord(it.w) || ""; } catch (e) {} }
-  var s = it.w + (ipa ? " /" + ipa + "/" : "") + (wtl ? " (" + wtl + ")" : "") + " — " + it.t;
+  if (String(en).split(/\s+/).length === 1) { try { ipa = trIpaWord(en) || ""; } catch (e) {} }
+  var s = en + (ipa ? " /" + ipa + "/" : "") + (wtl ? " (" + wtl + ")" : "") + (isAr ? "" : " — " + it.t);
   var ok = rescueCopy(s);
   if (btn) {
     btn.textContent = ok ? "✓ نُسخ" : "⚠ تعذّر";
     setTimeout(function () { try { btn.textContent = "📋 نسخ"; } catch (e) {} }, 1600);
   }
 }
-function mSayIdx(i) { var it = mLast[i]; if (!it) return; trSpeakText(it.w, (/[\u0600-\u06FF]/.test(it.w) ? "ar" : "en")); }
-function mDeepIdx(i) { // بحث موسع في الإنترنت — عبر المتصفح الأصلي في APK
+function mSayIdx(i) { var it = mLast[i]; if (!it) return; var isAr = /[\u0600-\u06FF]/.test(it.w); trSpeakText(isAr ? it.t : it.w, "en"); } // v26.41: النطق دائماً للكلمة الإنجليزية المعروضة في السطر
+function mDeepIdx(i) { // v26.41: البحث الموسع دائماً عن الكلمة الإنجليزية المعروضة في السطر
   var it = mLast[i]; if (!it) return;
   var isAr = /[\u0600-\u06FF]/.test(it.w);
-  var q = isAr ? (it.w + " معنى وترجمة وأمثلة") : (it.w + " meaning definition examples dictionary");
+  var q = (isAr ? it.t : it.w) + " meaning definition dictionary";
   var ok = rescueOpenUrl("https://www.google.com/search?q=" + encodeURIComponent(q));
   if (!ok) trToast("افتح المتصفح وابحث عن: " + it.w);
 }
@@ -12336,7 +12395,7 @@ function trDlRender() {
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.40/prayer-times-v26.40.apk"; // v26.40: قناة Releases — لا تُحسب في حجم المستودع
+var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.41/prayer-times-v26.41.apk"; // v26.41: قناة Releases — لا تُحسب في حجم المستودع
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -12769,7 +12828,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.40"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
+var CURRENT_APP_VERSION = "26.41"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
