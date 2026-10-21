@@ -1886,7 +1886,15 @@ body.dark-mode #trDlWin { background:#0d1512; }
 .m-inwrap { position:relative;margin-top:8px; }
 .m-inwrap .m-in { padding-left:38px; }
 .m-clear { position:absolute;left:6px;top:50%;margin-top:-13px;width:26px;height:26px;line-height:23px;border-radius:50%;border:1px solid #cfe7dc;background:#f0faf5;color:#065f46;font-size:13px;font-weight:800;cursor:pointer;padding:0;text-align:center;font-family:inherit; }
-.m-clear:active,.m-clear.pressed,.m-fav:active,.m-fav.pressed { -webkit-transform:scale(.92); transform:scale(.92); }
+.m-clear:active,.m-clear.pressed,.m-fav:active,.m-fav.pressed,.m-star:active,.m-star.pressed { -webkit-transform:scale(.92); transform:scale(.92); }
+/* v26.40: نجوم التفضيل 1-5 لكل معنى — تُحفظ دائماً وتتحكم بترتيب النتائج */
+.m-stars { margin:5px 0 1px;line-height:1; }
+.m-star { background:none;border:none;padding:0 2px;font-size:20px;color:#cbd5e1;cursor:pointer;line-height:1;font-family:inherit;vertical-align:middle;-webkit-appearance:none;appearance:none; }
+.m-star.on { color:#f59e0b; }
+.m-star-n { font-size:11px;color:#94a3b8;margin-right:5px;vertical-align:middle;font-weight:700; }
+body.dark-mode .m-star { color:#4b5f54; }
+body.dark-mode .m-star.on { color:#e0b34d; }
+body.dark-mode .m-star-n { color:#8fa8b8; }
 .m-hw { min-height:30px; }
 .m-fav { float:left;width:28px;height:28px;border-radius:50%;border:1px solid #d8ece2;background:#fff;color:#94a3b8;font-size:15px;line-height:24px;cursor:pointer;padding:0;text-align:center;font-family:inherit;margin-right:6px; }
 .m-fav.on { color:#b45309;border-color:#fcd34d;background:#fffbeb; }
@@ -2174,7 +2182,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.39</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.40</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -10932,28 +10940,33 @@ function trWtEn(w) {
 }
 function trWtArOf(w) { var s = trClean(w); if (!s || s.split(" ").length > 1) return ""; return trWtAr(s); }
 function trWtEnOf(w) { var s = trClean(w); if (!s || s.split(" ").length > 1) return ""; return trWtEn(s); }
-function trWtBadge(lb) { // v26.30: نوع الكلمة يُكتب بالعربي والإنكليزي معاً
-  if (!lb) return "";
-  var c = "tr-wt wt-p", en = "";
-  if (lb === "فاعل") { c = "tr-wt wt-r"; en = "Subject"; }
-  else if (lb === "مفعول به") { c = "tr-wt wt-r"; en = "Object"; }
-  else if (lb.indexOf("ماض") !== -1) { c = "tr-wt wt-v"; en = "Past verb"; }
-  else if (lb.indexOf("مضارع") !== -1) { c = "tr-wt wt-v"; en = "Present verb"; }
-  else if (lb.indexOf("أمر") !== -1) { c = "tr-wt wt-v"; en = "Imperative"; }
-  else if (lb === "فعل") { c = "tr-wt wt-v"; en = "Verb"; }
-  else if (lb.indexOf("مجرور") !== -1) { c = "tr-wt wt-n"; en = "Genitive noun"; }
-  else if (lb.indexOf("إشارة") !== -1) { c = "tr-wt wt-n"; en = "Demonstrative"; }
-  else if (lb.indexOf("استفهام") !== -1) { c = "tr-wt wt-n"; en = "Question word"; }
-  else if (lb === "اسم") { c = "tr-wt wt-n"; en = "Noun"; }
-  else if (lb === "صفة") { c = "tr-wt wt-a"; en = "Adjective"; }
-  else if (lb === "حال") { c = "tr-wt wt-h"; en = "Adverb"; }
-  else if (lb === "ضمير") { c = "tr-wt wt-n"; en = "Pronoun"; }
-  else if (lb === "عدد") { c = "tr-wt wt-n"; en = "Number"; }
-  else if (lb === "أداة") { c = "tr-wt wt-p"; en = "Article"; }
-  else if (lb.indexOf("جر") !== -1) { c = "tr-wt wt-p"; en = "Preposition"; }
-  else if (lb.indexOf("عطف") !== -1) { c = "tr-wt wt-p"; en = "Conjunction"; }
-  else if (lb.indexOf("نفي") !== -1) { c = "tr-wt wt-p"; en = "Negation"; }
-  return " <span class='" + c + "'>" + trEsc(lb) + (en ? " · " + en : "") + "</span>";
+function trWtPick(lb) { // v26.40: نوع الكلمة — التسمية العربية + الإنكليزية + فئة اللون في استدعاء واحد
+  if (!lb) return null;
+  if (lb === "فاعل") return { a: lb, e: "Subject", c: "wt-r" };
+  if (lb === "مفعول به") return { a: lb, e: "Object", c: "wt-r" };
+  if (lb.indexOf("ماض") !== -1) return { a: lb, e: "Past verb", c: "wt-v" };
+  if (lb.indexOf("مضارع") !== -1) return { a: lb, e: "Present verb", c: "wt-v" };
+  if (lb.indexOf("أمر") !== -1) return { a: lb, e: "Imperative", c: "wt-v" };
+  if (lb === "فعل") return { a: lb, e: "Verb", c: "wt-v" };
+  if (lb.indexOf("مجرور") !== -1) return { a: lb, e: "Genitive noun", c: "wt-n" };
+  if (lb.indexOf("إشارة") !== -1) return { a: lb, e: "Demonstrative", c: "wt-n" };
+  if (lb.indexOf("استفهام") !== -1) return { a: lb, e: "Question word", c: "wt-n" };
+  if (lb === "اسم") return { a: lb, e: "Noun", c: "wt-n" };
+  if (lb === "صفة") return { a: lb, e: "Adjective", c: "wt-a" };
+  if (lb === "حال") return { a: lb, e: "Adverb", c: "wt-h" };
+  if (lb === "ضمير") return { a: lb, e: "Pronoun", c: "wt-n" };
+  if (lb === "عدد") return { a: lb, e: "Number", c: "wt-n" };
+  if (lb === "أداة") return { a: lb, e: "Article", c: "wt-p" };
+  if (lb.indexOf("جر") !== -1) return { a: lb, e: "Preposition", c: "wt-p" };
+  if (lb.indexOf("عطف") !== -1) return { a: lb, e: "Conjunction", c: "wt-p" };
+  if (lb.indexOf("نفي") !== -1) return { a: lb, e: "Negation", c: "wt-p" };
+  return { a: lb, e: "", c: "wt-p" };
+}
+function trWtBadge(lb, enOnly) { // v26.40: enOnly — النوع بالإنكليزية فقط (بطاقات النتائج الإنجليزية بنصب المستخدم)
+  var p = trWtPick(lb);
+  if (!p) return "";
+  if (enOnly && p.e) return " <span class='tr-wt " + p.c + "'>" + trEsc(p.e) + "</span>";
+  return " <span class='tr-wt " + p.c + "'>" + trEsc(p.a) + (p.e ? " · " + p.e : "") + "</span>";
 }
 function trWtAnalyze(q) {
   var ws = String(q || "").split(" "), out = [], n = ws.length, i, w2, t, vi = -1, prep = false, subj = false;
@@ -11086,7 +11099,7 @@ function trDefBlockHtml() {
     for (i = 0; i < shown; i++) {
       html += "<div class='tr-def-item'><span class='tr-def-num'>" + (i + 1) + ".</span> " + trEsc(trDefData[i].t) +
         (trDefData[i].src === "user" ? " <span class='tr-def-badge' style='color:#b45309;font-weight:700;'>⭐ قاموسي</span>" : (trDefData[i].src === "open" ? " <span class='tr-def-badge'>🌐 موسّع</span>" : "")) +
-        trWtBadge(m.isAr ? trWtEnOf(trDefData[i].t) : trWtArOf(trDefData[i].t)) +
+        trWtBadge(m.isAr ? trWtEnOf(trDefData[i].t) : trWtArOf(trDefData[i].t), m.isAr) + // v26.40: المعاني الإنجليزية بنوعها بالإنكليزية
         " <button class='tr-def-say' onclick='trDefSay(" + i + ")'>🔊</button></div>";
     }
     if (trDefData.length > shown) html += "<div class='tr-def-badge'>+" + (trDefData.length - shown) + "</div>";
@@ -11505,7 +11518,7 @@ function trIpaSpan(w) {
   return ipa ? "<span class='tr-ipa-in'>/" + trEsc(ipa) + "/</span>" : "";
 }
 function trSynRender(main, groups, wt) {
-  var html = "<div class='tr-syn main'><b>" + trEsc(main) + trIpaSpan(main) + "</b><span class='tr-syn-pos best'>الترجمة</span>" + trWtBadge(wt || "") + "</div>", i, j, shown = {}, w, wl;
+  var html = "<div class='tr-syn main'><b>" + trEsc(main) + trIpaSpan(main) + "</b><span class='tr-syn-pos best'>الترجمة</span>" + trWtBadge(wt || "", trState.dst === "en") + "</div>", i, j, shown = {}, w, wl; // v26.40: النوع بالإنكليزية عند الترجمة إلى الإنجليزية
   if (main) shown[main.toLowerCase()] = 1;
   for (i = 0; i < groups.length; i++) {
     for (j = 0; j < groups[i].terms.length; j++) {
@@ -11906,19 +11919,41 @@ function mStoreSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } c
 function mUseAll() { var v = mStoreGet(M_USE_KEY, {}); return (v && typeof v === "object") ? v : {}; }
 function mUseOf(id) { var v = mUseAll(); return (parseInt(v[id], 10) || 0); }
 function mUseBump(id) { var v = mUseAll(); v[id] = (parseInt(v[id], 10) || 0) + 1; mStoreSet(M_USE_KEY, v); }
-// المفضلة ⭐ — نتيجة مثبتة تتصدر البحث دائماً (حفظ دائم على الجهاز)
-function mFavAll() { var v = mStoreGet(M_FAV_KEY, {}); return (v && typeof v === "object") ? v : {}; }
+// نجوم التفضيل ⭐ 1-5 لكل معنى — بحسب عدد النجوم تتقدم الترجمة في النتائج دائماً (v26.40 — حفظ دائم على الجهاز)
+var M_STAR_KEY = "mStarV1", M_STAR_MIG = "mStarMigV1", mStarCache = null;
 function mFavKey(w, t, g) { return g + "|" + String(w || "").toLowerCase() + "|" + String(t || ""); }
-function mIsFav(w, t, g) { return !!mFavAll()[mFavKey(w, t, g)]; }
-function mFavToggle(i, btn) {
+function mStarAll() { // كاش مرة واحدة + ترحيل تلقائي لمفضلة التثبيت القديمة (كل نجمة تثبيت سابقة = 5 نجوم)
+  if (mStarCache) return mStarCache;
+  var v = mStoreGet(M_STAR_KEY, {});
+  if (!v || typeof v !== "object") v = {};
+  if (!mStoreGet(M_STAR_MIG, 0)) {
+    var f = mStoreGet(M_FAV_KEY, {}), kk;
+    for (kk in f) { if (f.hasOwnProperty(kk) && !v[kk]) v[kk] = 5; }
+    mStoreSet(M_STAR_KEY, v); mStoreSet(M_STAR_MIG, 1);
+  }
+  mStarCache = v;
+  return v;
+}
+function mStarSave(f) { mStarCache = f; mStoreSet(M_STAR_KEY, f); }
+function mStarOf(w, t, g) { var v = mStarAll(); return (parseInt(v[mFavKey(w, t, g)], 10) || 0); }
+function mStarsHtml(i, st) { // صف 5 نجوم — النقر يقيّم والنقر على نفس القيمة يلغي التقييم
+  var h = "", k;
+  for (k = 1; k <= 5; k++) h += "<button class='m-star" + (k <= st ? " on" : "") + "' onclick='mStarSet(" + i + "," + k + ",this)' title='تقييم " + k + " من 5 — يُحفظ على جهازك وترتفع هذه الترجمة خياراً مفضلاً'>" + (k <= st ? "★" : "☆") + "</button>";
+  if (st) h += "<span class='m-star-n'>" + st + "/5</span>";
+  return h;
+}
+function mStarSet(i, n, btn) {
   var it = mLast[i]; if (!it || it.u) return;
-  var f = mFavAll(), k = mFavKey(it.w, it.t, it.g.id);
-  if (f[k]) { delete f[k]; } else { f[k] = 1; trToast("⭐ ستتصدر هذه النتيجة البحث دائماً"); }
-  var kk, n = 0; for (kk in f) { if (f.hasOwnProperty(kk)) n++; }
-  if (n > 300) { var ks = [], j; for (kk in f) { if (f.hasOwnProperty(kk)) ks.push(kk); } for (j = 0; j < ks.length - 300; j++) { delete f[ks[j]]; } }
-  mStoreSet(M_FAV_KEY, f);
-  trMawridRun2(); // إعادة ترتيب فورية بالتفضيل الجديد
-  if (btn) { try { btn.textContent = f[k] ? "⭐" : "☆"; btn.className = "m-fav" + (f[k] ? " on" : ""); } catch (e) {} }
+  var f = mStarAll(), k = mFavKey(it.w, it.t, it.g.id);
+  var cur = parseInt(f[k], 10) || 0;
+  var nv = (cur === n) ? 0 : n;
+  if (nv) f[k] = nv; else delete f[k];
+  var kk, ks = [], j; for (kk in f) { if (f.hasOwnProperty(kk)) ks.push(kk); }
+  if (ks.length > 400) { for (j = 0; j < ks.length - 400; j++) delete f[ks[j]]; }
+  mStarSave(f);
+  if (btn && btn.parentNode) btn.parentNode.innerHTML = mStarsHtml(i, nv);
+  trMawridRun2(); // إعادة الترتيب فوراً — النتائج الأعلى تقييماً تتصدر
+  try { trToast(nv ? ("⭐ تقييمك " + nv + "/5 — صارت هذه الترجمة من خياراتك المفضلة وتتصدر نتائجها دائماً") : "أُلغي التقييم — رجعت النتائج لترتيبها الأصلي"); } catch (e) {}
 }
 // سجل النواقص — كل بحث بلا نتائج يُسجَّل (مصدر بيانات مستقبلي لتوسيع الأقسام)
 function mGapLog(q, isAr) {
@@ -12031,10 +12066,13 @@ function mUserHits(cands, isAr) {
     }
   } catch (e) {}
 }
-function mRankOf(it, qi) { // المفضلة أولاً ثم دقة المطابقة ثم الاستخدام
+function mRankOf(it, qi) { // v26.40: النجوم تتحكم بالترتيب — المقيّم بنجوم أعلى يتصدر ثم دقة المطابقة ثم الاستخدام
   var r = 0;
-  if (it.u) r += 60;
-  else if (mIsFav(it.w, it.t, it.g.id)) r += 40;
+  if (it.u) r += 120; // نتائج قاموسي دائماً في القمة
+  else {
+    var st = mStarOf(it.w, it.t, it.g.id); // 0-5
+    if (st > 0) r += 60 + st * 10; // 5★=110 … 1★=70 — كل النتائج المقيّمة فوق غير المقيّمة
+  }
   if (it.k === qi) r += 24; else if (it.m === 2) r += 12; else r += 2;
   r += Math.min(mUseOf(it.g.id), 8);
   return r;
@@ -12147,60 +12185,35 @@ function mGapWeb() {
 function trMawridRun2() { // v26.38: الرسم موحد داخل خانة الترجمة — يعاد استدعاؤه عند تغيّر المفضلة دون بحث جديد
   try { trRenderOut(); } catch (e) {}
 }
-// ===== بطاقة النتيجة الموحدة: الكلمة + الفونيتيكس + النوع (عربي/إنكليزي) + مثال مترجم + المصدر + أزرار =====
-function mShortMeaning(t) { // معنى مقتطع نظيف للأمثلة — أول مقطع غير فارغ قبل الفواصل/الأقواس
-  var s = trClean(t), parts = s.split(/[\u060C\u061B()\/:\n]/), i;
-  for (i = 0; i < parts.length; i++) { var pp = trClean(parts[i]); if (pp && !/^\d+$/.test(pp)) { s = pp; break; } }
-  if (s.length > 38) { var sp = s.substring(0, 38).split(" "); sp.pop(); s = (sp.join(" ") || s.substring(0, 38)).trim(); }
-  return s;
-}
-function mExampleOf(w, t, isAr) {
-  var wt = isAr ? trWtArOf(w) : trWtEnOf(w);
-  var ts = mShortMeaning(t);
-  var a, b;
-  if (isAr) { a = "ما معنى «" + w + "»؟"; b = "What is the meaning of \u201C" + ts + "\u201D?"; }
-  else { a = "What does \u201C" + w + "\u201D mean?"; b = "ماذا يعني «" + ts + "»؟"; }
-  var ex = "<b><span dir='" + (isAr ? "rtl" : "ltr") + "'>" + trEsc(a) + "</span> — <span dir='" + (isAr ? "ltr" : "rtl") + "'>" + trEsc(b) + "</span></b>";
-  var one = /^[\u0600-\u06FFA-Za-z]+$/.test(String(ts || "").replace(/\s+/g, "")) && (ts.split(" ").length === 1);
-  var x = "";
-  if (one) {
-    if (!isAr && wt === "اسم") x = "This is " + (/^[aeiou]/i.test(w) ? "an " : "a ") + w + ". — هذا «" + ts + "».";
-    else if (!isAr && wt === "صفة") x = "It is very " + w + ". — إنه «" + ts + "» جداً.";
-    else if (!isAr && wt === "حال") x = "He did it " + w + ". — فعلها «" + ts + "».";
-    else if (isAr && wt === "اسم") x = "هذا " + w + ". — This is " + (/^[aeiou]/i.test(ts) ? "an " : "a ") + ts + ".";
-    else if (isAr && wt === "صفة") x = "إنه " + w + " جداً. — It is very " + ts + ".";
-  }
-  if (x) ex += "<br><span dir='" + (isAr ? "rtl" : "ltr") + "'>" + trEsc(x) + "</span>";
-  return ex;
-}
+// ===== v26.40: بطاقة النتيجة الموحدة — الكلمة + الفونيتيكس + النوع (بالإنكليزية) + نجوم التفضيل + المعنى + أزرار (بلا أمثلة بنصب المستخدم) =====
 function mRowHtml(it, i) {
   var g = it.g, isAr = /[\u0600-\u06FF]/.test(it.w);
-  var fav = it.u ? true : mIsFav(it.w, it.t, g.id);
   var wt = isAr ? trWtArOf(it.w) : trWtEnOf(it.w);
   var ipa = (!isAr) ? trIpaSpan(it.w) : "";
+  var st = it.u ? 0 : mStarOf(it.w, it.t, g.id);
   var h = "<div class='m-row" + (!isAr ? " en" : "") + "'>";
-  h += "<div class='m-hw'>" + trEsc(it.w) + ipa + trWtBadge(wt);
-  h += "<button class='m-fav" + (fav ? " on" : "") + "' onclick='mFavToggle(" + i + ",this)' title='تثبيت في الأعلى — يُحفظ على جهازك'>" + (fav ? "⭐" : "☆") + "</button></div>";
+  h += "<div class='m-hw'>" + trEsc(it.w) + ipa + trWtBadge(wt, !isAr) + "</div>"; // v26.40: نوع الكلمة بالإنكليزية في النتائج الإنجليزية
+  if (!it.u) h += "<div class='m-stars'>" + mStarsHtml(i, st) + "</div>"; // v26.40: نجوم تفضيل 1-5 تُحفظ دائماً وتتحكم بالترتيب
   h += "<div class='m-tr' onclick='mToggleTr(this)' title='اضغط لتمديد المعنى أو طبعه'>" + trEsc(it.t) + "</div>";
-  h += "<div class='m-ex'>✍️ " + mExampleOf(it.w, it.t, isAr) + "</div>";
   h += "<div class='m-tools'>";
-  h += "<button class='tr-act' onclick='mCopyIdx(" + i + ",this)'>📋 نسخ الكل</button> <button class='tr-act' onclick='mSayIdx(" + i + ")'>🔊 نطق</button> <button class='tr-act' onclick='mDeepIdx(" + i + ")'>🔎 بحث موسع</button>"; // v26.38: زر «إلى المترجم» أُلغي — النتائج داخل المترجم نفسها
+  h += "<button class='tr-act' onclick='mCopyIdx(" + i + ",this)'>📋 نسخ</button> <button class='tr-act' onclick='mSayIdx(" + i + ")'>🔊 نطق</button> <button class='tr-act' onclick='mDeepIdx(" + i + ")'>🔎 بحث موسع</button>"; // v26.40: بلا أمثلة — نسخ/نطق/بحث موسع فقط
   h += "</div></div>";
   return h;
 }
 function mToggleTr(node) { try { node.className = node.className.indexOf("open") >= 0 ? node.className.replace(/ ?open/g, "") : node.className + " open"; } catch (e) {} }
-function mCopyIdx(i, btn) { // نسخ الكلمة وكل معلوماتها (كلمة/نطق/نوع/معنى/مثال/مصدر)
+function mCopyIdx(i, btn) { // v26.40: نسخ الكلمة + الفونيتيكس + النوع + المعنى فقط — بلا أمثلة
   var it = mLast[i]; if (!it) return;
   var isAr = /[\u0600-\u06FF]/.test(it.w);
   var wt = isAr ? trWtArOf(it.w) : trWtEnOf(it.w);
+  var pk = trWtPick(wt);
+  var wtl = (pk && pk.e && !isAr) ? pk.e : wt; // النوع بالإنكليزية في النتائج الإنجليزية
   var ipa = "";
   if (!isAr) { try { ipa = trIpaWord(it.w) || ""; } catch (e) {} }
-  var s = it.w + (ipa ? " /" + ipa + "/" : "") + (wt ? " (" + wt + ")" : "") + " — " + it.t;
-  s += "\n" + (isAr ? ("What is the meaning of \u201C" + it.t + "\u201D? — " + it.w) : ("What does \u201C" + it.w + "\u201D mean? — " + it.t));
+  var s = it.w + (ipa ? " /" + ipa + "/" : "") + (wtl ? " (" + wtl + ")" : "") + " — " + it.t;
   var ok = rescueCopy(s);
   if (btn) {
     btn.textContent = ok ? "✓ نُسخ" : "⚠ تعذّر";
-    setTimeout(function () { try { btn.textContent = "📋 نسخ الكل"; } catch (e) {} }, 1600);
+    setTimeout(function () { try { btn.textContent = "📋 نسخ"; } catch (e) {} }, 1600);
   }
 }
 function mSayIdx(i) { var it = mLast[i]; if (!it) return; trSpeakText(it.w, (/[\u0600-\u06FF]/.test(it.w) ? "ar" : "en")); }
@@ -12295,7 +12308,7 @@ function trDlRender() {
 // ===== v26.34: إحساس الضغط — تفاعل لمسي مرئي فوري لكل أزرار المترجم حتى في الويبفيو القديم =====
 (function () {
   var cur = null;
-  var RX = / (tr-(?:act|chipbtn|go-sm|swap|back|add-btn|fix-btn2|fix-btn|dbfix-btn|def-say|hist-del|user-act|clear)|m-(?:clear|fav)) /;
+  var RX = / (tr-(?:act|chipbtn|go-sm|swap|back|add-btn|fix-btn2|fix-btn|dbfix-btn|def-say|hist-del|user-act|clear)|m-(?:clear|fav|star)) /; // v26.40: + m-star — نجوم التفضيل تعمل باللمس
   function dn(e) {
     var t = e.target, n = 0;
     while (t && t !== document && n < 5) {
@@ -12323,7 +12336,7 @@ function trDlRender() {
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.39/prayer-times-v26.39.apk"; // v26.39: قناة Releases — لا تُحسب في حجم المستودع
+var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.40/prayer-times-v26.40.apk"; // v26.40: قناة Releases — لا تُحسب في حجم المستودع
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -12756,7 +12769,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.39"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.39: قاعدة واحدة بلا أقسام — إلغاء شرائح الأقسام والسحب والترتيب نهائياً والبحث دائماً في القاموس كله + شريط الأدوات نُقل أعلى المترجم بجانب أزرار الاتجاه والترجمة + الإدخال الصوتي: سلسلة لغات عربية بديلة ar-SA/ar-EG/ar ورسائل تشخيص أدق)
+var CURRENT_APP_VERSION = "26.40"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
