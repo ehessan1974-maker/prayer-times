@@ -1712,6 +1712,9 @@ body.dark-mode .tr-act.rec { color:#fca5a5;border-color:#7f1d1d;background:#2a12
 .tr-swap { display:inline-block;width:38px;height:38px;border-radius:50%;background:#065f46;color:#fff;font-size:17px;border:0;cursor:pointer;margin:0 8px;vertical-align:middle;padding:0; }
 .tr-card { background:#ffffff;border:1px solid #d1e7dd;border-radius:12px;padding:10px;margin-bottom:12px; }
 .tr-label { font-size:11px;font-weight:800;color:#065f46;margin-bottom:6px;display:block; }
+/* v26.35: زر ✕ لمسح خانة النص الأصلي — صغير أحمر فاتح بجوار العدّاد */
+.tr-clear { float:left;width:26px;height:20px;line-height:17px;padding:0;margin:1px 0 0 10px;border-radius:7px;background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;text-align:center; }
+body.dark-mode .tr-clear { background:#2a1212;border-color:#7f1d1d;color:#fca5a5; }
 .tr-count { float:left;font-size:10px;color:#9ca3af;font-weight:400; }
 #trInput { display:block;width:100%;min-height:96px;resize:vertical;border:1px solid #cfe7db;border-radius:10px;padding:10px 12px;font-size:16px;line-height:1.7;color:#1f2937;background:#fbfefd;font-family:inherit;-webkit-appearance:none;appearance:none; }
 #trInput:focus { outline:none;border-color:#065f46; }
@@ -1793,10 +1796,10 @@ body.dark-mode .tr-wt.wt-p { color:#cbd5e1;background:#1e293b;border-color:#3341
 .tr-ipa-in { color:#0369a1;font-size:10.5px;font-weight:600;direction:ltr;unicode-bidi:embed;margin:0 1px;white-space:nowrap; }
 body.dark-mode .tr-ipa-in { color:#7dd3fc; }
 /* v26.34: إحساس الضغط والتحويم لكل أزرار المترجم — لمسة مرئية واضحة حتى على الويبفيو القديم */
-.tr-act,.tr-chipbtn,.tr-go-sm,.tr-swap,.tr-back,.tr-add-btn,.tr-fix-btn,.tr-fix-btn2,.tr-dbfix-btn,.tr-def-say,.tr-hist-del,.tr-user-act { -webkit-tap-highlight-color:rgba(16,185,129,.22); touch-action:manipulation; -webkit-transition:-webkit-transform .08s ease,filter .08s ease,box-shadow .08s ease; transition:transform .08s ease,filter .08s ease,box-shadow .08s ease; }
-.tr-act:active,.tr-chipbtn:active,.tr-go-sm:active,.tr-swap:active,.tr-back:active,.tr-add-btn:active,.tr-fix-btn:active,.tr-fix-btn2:active,.tr-dbfix-btn:active,.tr-def-say:active,.tr-hist-del:active,.tr-user-act:active,.tr-act.pressed,.tr-chipbtn.pressed,.tr-go-sm.pressed,.tr-swap.pressed,.tr-back.pressed,.tr-add-btn.pressed,.tr-fix-btn.pressed,.tr-fix-btn2.pressed,.tr-dbfix-btn.pressed,.tr-def-say.pressed,.tr-hist-del.pressed,.tr-user-act.pressed { -webkit-transform:scale(.92); transform:scale(.92); filter:brightness(.78); box-shadow:0 0 0 3px rgba(16,185,129,.4); }
+.tr-act,.tr-chipbtn,.tr-go-sm,.tr-swap,.tr-back,.tr-add-btn,.tr-fix-btn,.tr-fix-btn2,.tr-dbfix-btn,.tr-def-say,.tr-hist-del,.tr-user-act,.tr-clear { -webkit-tap-highlight-color:rgba(16,185,129,.22); touch-action:manipulation; -webkit-transition:-webkit-transform .08s ease,filter .08s ease,box-shadow .08s ease; transition:transform .08s ease,filter .08s ease,box-shadow .08s ease; }
+.tr-act:active,.tr-chipbtn:active,.tr-go-sm:active,.tr-swap:active,.tr-back:active,.tr-add-btn:active,.tr-fix-btn:active,.tr-fix-btn2:active,.tr-dbfix-btn:active,.tr-def-say:active,.tr-hist-del:active,.tr-user-act:active,.tr-clear:active,.tr-act.pressed,.tr-chipbtn.pressed,.tr-go-sm.pressed,.tr-swap.pressed,.tr-back.pressed,.tr-add-btn.pressed,.tr-fix-btn.pressed,.tr-fix-btn2.pressed,.tr-dbfix-btn.pressed,.tr-def-say.pressed,.tr-hist-del.pressed,.tr-user-act.pressed,.tr-clear.pressed { -webkit-transform:scale(.92); transform:scale(.92); filter:brightness(.78); box-shadow:0 0 0 3px rgba(16,185,129,.4); }
 @media (hover:hover) {
-  .tr-act:hover,.tr-chipbtn:hover,.tr-go-sm:hover,.tr-swap:hover,.tr-back:hover,.tr-add-btn:hover,.tr-fix-btn:hover,.tr-fix-btn2:hover,.tr-dbfix-btn:hover,.tr-user-act:hover { filter:brightness(1.12); box-shadow:0 3px 10px rgba(2,44,34,.22); -webkit-transform:translateY(-1px); transform:translateY(-1px); }
+  .tr-act:hover,.tr-chipbtn:hover,.tr-go-sm:hover,.tr-swap:hover,.tr-back:hover,.tr-add-btn:hover,.tr-fix-btn:hover,.tr-fix-btn2:hover,.tr-dbfix-btn:hover,.tr-user-act:hover,.tr-clear:hover { filter:brightness(1.12); box-shadow:0 3px 10px rgba(2,44,34,.22); -webkit-transform:translateY(-1px); transform:translateY(-1px); }
   .tr-def-say:hover,.tr-hist-del:hover { filter:brightness(1.25); }
 }
 #trHistWin,#trWriterWin { display:none;position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:100001;background:#f4fbf7;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain; }
@@ -2119,7 +2122,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.34</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.35</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2417,7 +2420,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <span class="tr-pill active" id="trPillAr" onclick="trSetDir('ar')">عربي</span><button class="tr-swap" id="trSwapBtn" onclick="trSwap()" aria-label="تبديل الاتجاه مع نقل النص">⇄</button><span class="tr-pill" id="trPillEn" onclick="trSetDir('en')">إنكليزي</span><button class="tr-main tr-go-sm" id="trGoBtn" onclick="trTranslate(true)">🔄 ترجمة</button>
     </div>
     <div class="tr-card">
-      <span class="tr-label">النص الأصلي <span class="tr-count" id="trCount">0 / 1500</span></span>
+      <span class="tr-label">النص الأصلي <button type="button" class="tr-clear" id="trClearBtn" onclick="trClearSrc()" title="مسح النص الأصلي" aria-label="مسح النص الأصلي">✕</button> <span class="tr-count" id="trCount">0 / 1500</span></span>
       <textarea id="trInput" oninput="trOnInput()" onkeydown="trKey(event)" placeholder="اكتب نصاً عربياً للترجمة إلى الإنكليزية…"></textarea>
       <div class="tr-tools">
         <button class="tr-act" id="trSpeakSrc" onclick="trSpeakInput()">🔊 ناطق</button>
@@ -9028,6 +9031,17 @@ function trOnInput() {
   trState.autoTimer = setTimeout(function () { trTranslate(false); trDefAuto(); }, 900);
 }
 
+// v26.35: زر ✕ — مسح خانة النص الأصلي بلمسة واحدة
+// يفرّغ الخانة ثم يستدعي trOnInput() فيتصرف تماماً كحالة التفريغ اليدوي (v26.22):
+// تصفير العدّاد + إفراغ خانة الترجمة + إخفاء الفونيتيكس/التصحيح/الاقتراحات + إلغاء الترجمة الجارية
+function trClearSrc() {
+  var inp = el("trInput");
+  if (!inp) return;
+  inp.value = "";
+  trOnInput();
+  try { inp.focus(); } catch (e) {}
+}
+
 // v26.22: إعادة خانة الترجمة إلى حالتها الفارغة وإخفاء ما يتعلق بالترجمة السابقة
 function trOutReset() {
   trState.gen++; // إلغاء أي ترجمة إنترنت جارية بدأت قبل التفريغ
@@ -11665,7 +11679,7 @@ function trMicBridge(json) { // كولباك جسر الأندرويد
 // ===== v26.34: إحساس الضغط — تفاعل لمسي مرئي فوري لكل أزرار المترجم حتى في الويبفيو القديم =====
 (function () {
   var cur = null;
-  var RX = / (tr-(?:act|chipbtn|go-sm|swap|back|add-btn|fix-btn2|fix-btn|dbfix-btn|def-say|hist-del|user-act)) /;
+  var RX = / (tr-(?:act|chipbtn|go-sm|swap|back|add-btn|fix-btn2|fix-btn|dbfix-btn|def-say|hist-del|user-act|clear)) /;
   function dn(e) {
     var t = e.target, n = 0;
     while (t && t !== document && n < 5) {
@@ -11693,7 +11707,7 @@ function trMicBridge(json) { // كولباك جسر الأندرويد
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.34.apk";
+var RESCUE_APK_URL = "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/public/prayer-times-v26.35.apk";
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -12023,7 +12037,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.34"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.34: التحليل النحوي للنص الظاهر في خانة الترجمة (فاعل/مفعول به/فعل ماضٍ-مضارع بالعربي والإنكليزي) بدل النص الأصلي + الفونيتيكس داخل خانة الترجمة بجانب كل كلمة (لونغمان IPA) بدل السطر المنفصل + إصلاح الإملاء «الذبذبات» + إحساس ضغط وتحويم لكل أزرار المترجم بتفاعل لمسي فوري + رسالة تفسيرية عندما لا تصل مستويات صوت حية إلى شريط الذبذبات)
+var CURRENT_APP_VERSION = "26.35"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.35: زر ✕ جديد لمسح خانة النص الأصلي بلمسة واحدة — يفرّغ الخانة ويصفّر العدّاد ويفرغ خانة الترجمة معه بنفس سلوك التفريغ اليدوي، مع إحساس الضغط والتحويم)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
