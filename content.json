@@ -1675,13 +1675,13 @@
   {
     "cat": "_update_cmd",
     "cmd": "load_url",
-    "version": "26.41",
+    "version": "26.42",
     "url": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-    "id": "force-update-2641-20261022",
+    "id": "force-update-2642-20261022",
     "until": "2026-10-29",
     "ts": "2026-10-22",
     "icon": "⬇",
-    "text": "أمر نظام: دفع قسري للإصدار v26.41 — يُنفَّذ تلقائياً على الأجهزة الأقدم ويُصفّى من العرض"
+    "text": "أمر نظام: دفع قسري للإصدار v26.42 — يُنفَّذ تلقائياً على الأجهزة الأقدم ويُصفّى من العرض"
   },
   {
     "icon": "⚙️",
