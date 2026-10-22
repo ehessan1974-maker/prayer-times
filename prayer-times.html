@@ -2195,7 +2195,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.42</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.43</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -11847,7 +11847,7 @@ var M_BASES = [
   "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times-data/main/"
 ];
 var M_GROUPS = [
-  { id: "gen", icon: "📗", name: "المورد الحديث", rev: false, n: 61836, src: "قاموس المورد الحديث إنكليزي–عربي" },
+  { id: "gen", icon: "📗", name: "المورد الحديث", rev: true, n: 61836, src: "قاموس المورد الحديث إنكليزي–عربي / عربي–إنكليزي" },
   { id: "med", icon: "🏥", name: "الطب والصيدلة", rev: true, n: 141257, src: "مصطلحات الطب والصيدلة" },
   { id: "sci", icon: "🔬", name: "العلوم والتقنية", rev: false, n: 120477, src: "مصطلحات العلوم والتقنية" },
   { id: "phy", icon: "⚛️", name: "الفيزياء", rev: true, n: 9970, src: "مصطلحات الفيزياء" },
@@ -11870,7 +11870,7 @@ var M_TOTAL_N = 0; (function () { for (var i = 0; i < M_GROUPS.length; i++) M_TO
 // ===== v26.38: قاعدة بيانات محلية دائمة (IndexedDB) — كل ملف قاموس يُنزَّل مرة واحدة يُخزَّن على الجهاز إلى الأبد =====
 // مخازن: chunks (بيانات الأقسام) + audio (كاش نطق MP3 base64) — يعمل البحث والنطق دون إنترنت بعد أول تحميل
 // متصفح بلا IndexedDB: يعمل بالذاكرة/الشبكة كما سابقاً — لا انهيار إطلاقاً
-var M_FILES = "d/agr:0abcdefghijklmnopqrstuvwxyz|d/che:0abcdefghijklmnopqrstuvwxyz|d/diss:0abcdefghijklmnopqrstuvwxyz|d/eco:0abcdefghijklmnopqrstuvwxyz|d/eng:0abcdefghijklmnopqrstuvwxyz|d/fiqh:0abcdefghijklmnopqrstuvwxyz|d/gen:0abcdefghijklmnopqrstuvwxyz|d/had:0abcdefghijklmnopqrstuvwxyz|d/law:0abcdefghijklmnopqrstuvwxyz|d/lit:0abcdefghijklmnopqrstuvwxyz|d/med:0abcdefghijklmnopqrstuvwxyz|d/medd:0abcdefghijklmnopqrstuvwxyz|d/mil:0abcdefghijklmnopqrstuvwxyz|d/phy:abcdefghijklmnopqrstuvwxyz|d/qur:0abcdefghijklmnopqrstuvwxyz|d/rel:0abcdefghijklmnopqrstuvwxyz|d/sci:0abcdefghijklmnopqrstuvwxyz|d/sha:0abcdefghijklmnopqrstuvwxyz|r/agr:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/che:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/diss:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/eco:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/fiqh:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/had:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/law:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/lit:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/med:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/medd:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/mil:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/phy:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/qur:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/rel:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/sha:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي";
+var M_FILES = "d/agr:0abcdefghijklmnopqrstuvwxyz|d/che:0abcdefghijklmnopqrstuvwxyz|d/diss:0abcdefghijklmnopqrstuvwxyz|d/eco:0abcdefghijklmnopqrstuvwxyz|d/eng:0abcdefghijklmnopqrstuvwxyz|d/fiqh:0abcdefghijklmnopqrstuvwxyz|d/gen:0abcdefghijklmnopqrstuvwxyz|d/had:0abcdefghijklmnopqrstuvwxyz|d/law:0abcdefghijklmnopqrstuvwxyz|d/lit:0abcdefghijklmnopqrstuvwxyz|d/med:0abcdefghijklmnopqrstuvwxyz|d/medd:0abcdefghijklmnopqrstuvwxyz|d/mil:0abcdefghijklmnopqrstuvwxyz|d/phy:abcdefghijklmnopqrstuvwxyz|d/qur:0abcdefghijklmnopqrstuvwxyz|d/rel:0abcdefghijklmnopqrstuvwxyz|d/sci:0abcdefghijklmnopqrstuvwxyz|d/sha:0abcdefghijklmnopqrstuvwxyz|r/agr:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/che:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/diss:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/eco:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/gen:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/fiqh:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/had:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/law:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/lit:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/med:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/medd:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/mil:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/phy:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/qur:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/rel:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي|r/sha:0ابتثجحخدذرزسشصضطظعغفقكلمنهوي";
 var M_MAP = [], M_FILES_N = 0;
 (function () {
   var segs = M_FILES.split("|"), i, j;
@@ -12410,7 +12410,7 @@ function trDlRender() {
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.42/prayer-times-v26.42.apk"; // v26.41: قناة Releases — لا تُحسب في حجم المستودع
+var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.43/prayer-times-v26.43.apk"; // v26.41: قناة Releases — لا تُحسب في حجم المستودع
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -12843,7 +12843,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.42"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى مباشرة + المعاني والنتائج في خانة ثانية تحتها + إصلاح انزياح العناوين العربية خارج الخانة في نسخة HTML) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
+var CURRENT_APP_VERSION = "26.43"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
