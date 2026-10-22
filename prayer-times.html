@@ -1887,6 +1887,8 @@ body.dark-mode .m-stat { color:#5f9c85; }
 /* v26.41: أسطر متراصة فوق بعضها — بلا هوامش خانات */
 .tr-out .m-stat { margin:6px 2px 2px; }
 .tr-out .m-res { padding-bottom:2px; }
+/* v26.42: خانة المعاني/نتائج القاموس الثانية — تظهر تحت أزرار نطق/نسخ مباشرة */
+.tr-out.tr-outx { min-height:0;margin-top:10px; }
 .tr-dl-bar { height:8px;background:#d1fae5;border-radius:4px;overflow:hidden;margin-top:10px;border:1px solid #a7f3d0; }
 .tr-dl-bar i { display:block;height:100%;width:0;background:#059669; }
 .tr-dl-pct { font-size:11px;color:#065f46;margin-top:4px;font-weight:700; }
@@ -2193,7 +2195,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.40</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.42</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2550,6 +2552,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
         <button class="tr-act" id="trSpeakDst" onclick="trSpeakOutput()">🔊 ناطق</button>
         <button class="tr-act" id="trCopyBtn" onclick="trCopyOut()">📋 نسخ</button>
       </div>
+      <div class="tr-out tr-outx" id="trOutExtra" style="display:none;"></div>
       <div class="tr-ph" id="trPhDst" style="display:none;"></div>
       <div class="tr-break" id="trBreak" style="display:none;"></div>
       <div class="tr-addbox" id="trAddBox" style="display:none;"></div>
@@ -9142,6 +9145,7 @@ function trOutReset() {
   trState.result = ""; trState.synHtml = ""; trDefData = []; trDefMeta = null; // v26.30
   var out = el("trOutput");
   if (out) { out.textContent = "ستظهر الترجمة هنا…"; out.className = "tr-out empty"; }
+  try { var ex0 = el("trOutExtra"); if (ex0) { ex0.innerHTML = ""; ex0.style.display = "none"; } } catch (eE0) {} // v26.42
   try { el("trPhSrc").style.display = "none"; } catch (e) {}
   try { el("trPhDst").style.display = "none"; } catch (e) {}
   try { el("trBreak").style.display = "none"; } catch (e) {}
@@ -9177,6 +9181,7 @@ function trSwap() {
   var inp = el("trInput"), out = el("trOutput"), tmp = trClean(trOutPlain()) ? trOutPlain() : "";
   out.textContent = inp.value || "";
   out.className = inp.value ? "tr-out" : "tr-out empty";
+  try { var ex1 = el("trOutExtra"); if (ex1) { ex1.innerHTML = ""; ex1.style.display = "none"; } } catch (eE1) {} // v26.42
   inp.value = tmp;
   el("trCount").textContent = (inp.value || "").length + " / " + TR_MAX;
   trApplyDir();
@@ -11169,25 +11174,33 @@ function trRenderOut() {
   var m = trDefMeta;
   var hasDict = !!(m && m.q === q && mQuery === q && (mHits.length || mState === "busy" || mState === "empty" || mState === "err")); // v26.38
   var fresh = !!(m && m.q === q && (trDefData.length || (m.an && m.an.length) || hasDict));
-  var html = "";
+  var html = "", extra = "";
   if (trState.synHtml) {
     html = trState.synHtml;
-    try { if (fresh && hasDict) html += trDictSectionHtml(q); } catch (eD1) {} // v26.38: نتائج القواميس تظهر حتى مع عرض المورد (الاتجاه العربي)
+    try { if (fresh && hasDict) extra = trDictSectionHtml(q); } catch (eD1) {} // v26.38: نتائج القواميس تظهر حتى مع عرض المورد (الاتجاه العربي)
   } else if (trState.result) {
     var iph = null;
     try { if (trState.dst === "en") iph = trIpaInlineHtml(trState.result); } catch (eP1) {}
     html = iph ? iph : trEsc(trState.result); // v26.34: الفونيتيكس داخل الخانة بجانب كل كلمة
     if (fresh) {
       var blk = trDefBlockHtml();
-      if (blk) html = html ? (html + blk) : blk;
+      if (blk) extra = blk;
     }
   } else if (fresh) {
     var blk2 = trDefBlockHtml();
-    if (blk2) html = blk2;
+    if (blk2) extra = blk2;
   }
-  if (!html) return; // لا شيء جديد — يبقى العرض الحالي (فراغ أو «جارٍ الترجمة»)
+  // v26.42: الفصل — خانة الترجمة الأولى (النتيجة) ثم أزرار نطق/نسخ تحتها مباشرة ثم خانة ثانية للمعاني/نتائج القاموس
+  // والعناوين العربية (معاني/نتائج القاموس/الكلمة بين «») صارت في حاوية RTL فتظهر مكانها الصحيح بدل انزياحها في نسخة HTML
+  if (!html && extra) { html = extra; extra = ""; }
+  if (!html && !extra) return; // لا شيء جديد — يبقى العرض الحالي (فراغ أو «جارٍ الترجمة»)
   out.innerHTML = html;
   out.className = "tr-out";
+  var ex = el("trOutExtra");
+  if (ex) {
+    if (extra) { ex.innerHTML = extra; ex.style.display = "block"; }
+    else { ex.innerHTML = ""; ex.style.display = "none"; }
+  }
   try { var pd2 = el("trPhDst"); if (pd2) { pd2.style.display = "none"; pd2.textContent = ""; } } catch (ePD2) {} // v26.34: لا سطر منفصل — الفونيتيكس داخل الخانة بجانب كل كلمة
 }
 function trDefSay(i) {
@@ -11555,14 +11568,16 @@ function trMaybeShowSyn(q, result, genAtStart) {
 }
 
 // v26.23: نص الخانة كنص عادي — لو عرض المورد مفعل يبني سطراً لكل كلمة
-function trOutPlain() { // v26.30: النسخ يشمل الترجمة + المعاني المرقّمة من الخانة
-  var out = el("trOutput"), rows, txt = [], i, b, p, items, k2, cl, bs, ln;
+function trOutPlain() { // v26.30: النسخ يشمل الترجمة + المعاني المرقّمة من الخانة — v26.42: يجمع الخانتين (الأصل + المعاني)
+  var out = el("trOutput"), ex = el("trOutExtra"), rows, txt = [], i, b, p, items, k2, cl, bs, ln, items2, n1, n2;
   if (!out) return "";
   try { items = out.querySelectorAll(".tr-def-item"); } catch (eDI) { items = []; }
-  if (items && items.length) {
+  try { items2 = ex ? ex.querySelectorAll(".tr-def-item") : []; } catch (eDI2) { items2 = []; }
+  n1 = items ? items.length : 0; n2 = items2 ? items2.length : 0;
+  if (n1 + n2 > 0) {
     if (trState.result) txt.push(trState.result);
-    for (i = 0; i < items.length; i++) {
-      cl = items[i].cloneNode(true);
+    for (i = 0; i < n1 + n2; i++) {
+      cl = (i < n1 ? items[i] : items2[i - n1]).cloneNode(true);
       try { bs = cl.querySelectorAll("button"); for (k2 = 0; k2 < bs.length; k2++) { try { bs[k2].parentNode.removeChild(bs[k2]); } catch (eB2) {} } } catch (eB1) {}
       ln = (cl.textContent || "").replace(/\s+/g, " ").replace(/^\s+/, "").replace(/\s+$/, "");
       if (ln) txt.push(ln);
@@ -11971,7 +11986,7 @@ function mStarValOf(it) { return it.u ? 6 : mStarOf(it.w, it.t, it.g.id); }
 // v26.41: الانزلاق السلس (FLIP) — يعيد ترتيب أسطر النتائج فوراً بحسب النجوم بحركة انزلاق تعمل على ES5/Chromium 37
 function mStarsReflow() {
   try {
-    var box = el("trOutput"); if (!box || !box.querySelector) return;
+    var box = el("trOutExtra") || el("trOutput"); if (!box || !box.querySelector) return; // v26.42: أسطر النتائج صارت في الخانة الثانية
     var wrap = box.querySelector(".m-res"); if (!wrap || !wrap.querySelectorAll) return;
     var rows = wrap.querySelectorAll(".m-row"); if (!rows || rows.length < 2) return;
     var first = {}, i;
@@ -12395,7 +12410,7 @@ function trDlRender() {
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.41/prayer-times-v26.41.apk"; // v26.41: قناة Releases — لا تُحسب في حجم المستودع
+var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.42/prayer-times-v26.42.apk"; // v26.41: قناة Releases — لا تُحسب في حجم المستودع
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -12828,7 +12843,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.41"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
+var CURRENT_APP_VERSION = "26.42"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى مباشرة + المعاني والنتائج في خانة ثانية تحتها + إصلاح انزياح العناوين العربية خارج الخانة في نسخة HTML) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
