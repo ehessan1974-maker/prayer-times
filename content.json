@@ -1717,6 +1717,12 @@
     "cat": "poetry"
   },
   {
+    "icon": "🌍",
+    "text": "[img:https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/media/img-20261107-182303-8234.jpg]\n",
+    "src": "",
+    "cat": "akhbar"
+  },
+  {
     "icon": "⚙️",
     "text": "بيانات الخانات المخصصة — عنصر نظام لا يظهر للمستخدمين، لا تعدِّله ولا تحذفه",
     "cat": "_catmeta",
@@ -1725,6 +1731,11 @@
         "id": "health",
         "name": "",
         "icon": ""
+      },
+      {
+        "id": "akhbar",
+        "name": "أخبار",
+        "icon": "📖"
       }
     ]
   }
