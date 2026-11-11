@@ -1724,6 +1724,13 @@
     "ts": "2026/11/07 18:28"
   },
   {
+    "icon": "📝",
+    "text": "[img:https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/media/img-20261112-020500-8941.jpg]\n",
+    "src": "",
+    "cat": "maalomat",
+    "ts": "2026/11/12 02:05"
+  },
+  {
     "icon": "⚙️",
     "text": "بيانات الخانات المخصصة — عنصر نظام لا يظهر للمستخدمين، لا تعدِّله ولا تحذفه",
     "cat": "_catmeta",
@@ -1737,6 +1744,11 @@
         "id": "akhbar",
         "name": "أخبار",
         "icon": "🌍"
+      },
+      {
+        "id": "maalomat",
+        "name": "معلومات",
+        "icon": "📖"
       }
     ]
   }
