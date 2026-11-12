@@ -1731,6 +1731,48 @@
     "ts": "2026/11/12 02:05"
   },
   {
+    "icon": "💉",
+    "text": "[img:https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/media/img-20261112-124518-4428.jpg]\n",
+    "src": "",
+    "cat": "maalomat-tebbia"
+  },
+  {
+    "icon": "📖",
+    "text": "[img:https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/media/img-20261112-124857-5593.jpg]\n",
+    "src": "",
+    "cat": "maalomat-tebbia"
+  },
+  {
+    "icon": "📖",
+    "text": "[img:https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/media/img-20261112-124908-1333.jpg]\n",
+    "src": "",
+    "cat": "maalomat-tebbia"
+  },
+  {
+    "icon": "📖",
+    "text": "[img:https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/media/img-20261112-124959-4359.jpg]\n",
+    "src": "",
+    "cat": "maalomat-tebbia"
+  },
+  {
+    "icon": "📖",
+    "text": "[img:https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/media/img-20261112-125117-6234.jpg]\n",
+    "src": "",
+    "cat": "maalomat-tebbia"
+  },
+  {
+    "icon": "📖",
+    "text": "[img:https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/media/img-20261112-125151-1109.jpg]\n",
+    "src": "",
+    "cat": "maalomat-tebbia"
+  },
+  {
+    "icon": "💉",
+    "text": "[img:https://cdn.jsdelivr.net/gh/ehessan1974-maker/prayer-times@main/media/img-20261112-125405-2834.jpg]\n\n",
+    "src": "",
+    "cat": "maalomat-tebbia"
+  },
+  {
     "icon": "⚙️",
     "text": "بيانات الخانات المخصصة — عنصر نظام لا يظهر للمستخدمين، لا تعدِّله ولا تحذفه",
     "cat": "_catmeta",
@@ -1748,6 +1790,11 @@
       {
         "id": "maalomat",
         "name": "معلومات",
+        "icon": "📖"
+      },
+      {
+        "id": "maalomat-tebbia",
+        "name": "معلومات طبية",
         "icon": "📖"
       }
     ]
