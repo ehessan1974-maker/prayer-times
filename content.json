@@ -1796,6 +1796,26 @@
         "id": "maalomat-tebbia",
         "name": "معلومات طبية",
         "icon": "📖"
+      },
+      {
+        "id": "azkar-morning",
+        "name": "أذكار الصباح",
+        "icon": "🌅"
+      },
+      {
+        "id": "azkar-evening",
+        "name": "أذكار المساء",
+        "icon": "🌙"
+      },
+      {
+        "id": "azkar-after-prayer",
+        "name": "أذكار بعد الصلاة",
+        "icon": "🕌"
+      },
+      {
+        "id": "azkar-friday",
+        "name": "أوراد يوم الجمعة",
+        "icon": "🕌"
       }
     ]
   }
