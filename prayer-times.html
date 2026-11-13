@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.33</title>
+<title>🕌 مواقيت الصلاة v26.44</title>
 <!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -2195,7 +2195,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.43</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.44</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2532,7 +2532,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <span class="tr-label">النص الأصلي <button type="button" class="tr-clear" id="trClearBtn" onclick="trClearSrc()" title="مسح النص الأصلي" aria-label="مسح النص الأصلي">✕</button> <span class="tr-count" id="trCount">0 / 1500</span></span>
       <textarea id="trInput" oninput="trOnInput()" onkeydown="trKey(event)" placeholder="اكتب نصاً عربياً للترجمة إلى الإنكليزية…"></textarea>
       <div class="tr-tools">
-        <button class="tr-act" id="trSpeakSrc" onclick="trSpeakInput()">🔊 ناطق</button>
+        <button class="tr-act" id="trSpeakSrc" onclick="trSpeakInput()">🔊 نطق</button>
         <button class="tr-act" id="trSpeakStop" onclick="trStopSpeak()" style="display:none;">⏹ إيقاف النطق</button>
         <button class="tr-act" id="trMicBtn" onclick="trMicToggle()" title="إدخال بالصوت">🎤 صوت</button>
       </div>
@@ -2549,7 +2549,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <span class="tr-label">الترجمة</span>
       <div class="tr-out empty" id="trOutput" dir="ltr">ستظهر الترجمة هنا…</div>
       <div class="tr-tools">
-        <button class="tr-act" id="trSpeakDst" onclick="trSpeakOutput()">🔊 ناطق</button>
+        <button class="tr-act" id="trSpeakDst" onclick="trSpeakOutput()">🔊 نطق</button>
         <button class="tr-act" id="trCopyBtn" onclick="trCopyOut()">📋 نسخ</button>
       </div>
       <div class="tr-out tr-outx" id="trOutExtra" style="display:none;"></div>
@@ -12578,7 +12578,7 @@ function trWriterGenerate() {
     trShowResult(para);
     el("trBreak").style.display = "none";
     trHistSave(el("trInput").value, para, "ar>en", "write");
-    trStatus("✓ تولّد الموضوع الإنكليزي — استمع إليه بزر الناطق 🔊");
+    trStatus("✓ تولّد الموضوع الإنكليزي — استمع إليه بزر نطق 🔊");
     trWriterClose();
   };
   for (i = 0; i < lines.length; i++) {
@@ -12843,7 +12843,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.43"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
+var CURRENT_APP_VERSION = "26.44"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
