@@ -12426,7 +12426,7 @@ function trDlRender() {
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.46/prayer-times-v26.46.apk"; // v26.49: محدّث من v26.43 — أحدث APK بكاميرا مباشرة وجسر صوت كامل
+var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.50/prayer-times-v26.50.apk"; // v26.50: محدّث من v26.46 — أحدث APK بميزة «🖼️ صورة» و«📄 مستند» وإصلاح «🎤 صوت» وكاميرا مباشرة
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
