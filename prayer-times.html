@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.47</title>
+<title>🕌 مواقيت الصلاة v26.48</title>
 <!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -2195,7 +2195,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.47</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.48</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2537,6 +2537,8 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
         <button class="tr-act" id="trMicBtn" onclick="trMicToggle()" title="إدخال بالصوت">🎤 صوت</button>
         <button class="tr-act" id="trOcrBtn" onclick="trOcrPick()" title="تصوير نص وإدخاله في خانة النص الأصلي ثم ترجمته فوراً">📷 تصوير</button>
         <input type="file" id="trOcrFile" accept="image/*" capture="environment" style="display:none;" onchange="trOcrFilechg(this)">
+        <button class="tr-act" id="trDocBtn" onclick="trDocPick()" title="ترجمة ملف كامل: نصي TXT أو Word (.docx) أو PDF — يُستخرج النص ويُترجم جزءاً جزءاً حتى النهاية مع عرض النتيجة تدريجياً">📄 مستند</button>
+        <input type="file" id="trDocFile" accept=".txt,.md,.csv,text/plain,application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;" onchange="trDocFilechg(this)">
       </div>
       <div class="tr-wave" id="trWave">
         <div class="tr-wave-bars" id="trWaveBars"></div>
@@ -13010,6 +13012,163 @@ function trOcrEnsureLib(cb, fail) {
   document.head.appendChild(s);
 }
 
+// ===== v26.48: «📄 مستند» — ترجمة ملف كامل (TXT / DOCX / PDF) من داخل المترجم =====
+// المسار: اختيار الملف ← استخراج النص (FileReader للنصي، mammoth للوورد، pdf.js النسخة القديمة المتوافقة مع الأجهزة الضعيفة للـPDF)
+// ← تقسيم على حدود الكلمات (1100 حرفاً) ← ترجمة تسلسلية عبر نفس مصادر TR_SOURCES (مع تكسير إضافي تلقائي للمصادر قصيرة الحد مثل MyMemory)
+// ← عرض النتيجة تدريجياً في خانة الترجمة ونسبة الإنجاز في شريط الحالة. فشل جزء = تجربة كل المصادر ثم إعادة كاملة ثم عرض ما اكتمل.
+var trDocBusy = false;
+function trDocPick() {
+  if (trDocBusy) { trStatus("⏳ ترجمة مستند جارية بالفعل — انتظر انتهاءها أو ابدأ مستنداً جديداً بعد قليل", true); return; }
+  var f = el("trDocFile"); if (!f) return;
+  try { f.value = ""; } catch (eV) {}
+  f.click();
+}
+function trDocEnd() { trDocBusy = false; try { trSetBusy(false); } catch (eB) {} }
+function trDocFilechg(inp) {
+  var f = inp && inp.files && inp.files[0];
+  if (!f) return;
+  var name = f.name || "مستند";
+  var ext = (String(name).split(".").pop() || "").toLowerCase();
+  if (f.size > 12 * 1024 * 1024) { trStatus("✗ «" + name + "» كبير جداً (الحد 12 ميغابايت) — قسّمه إلى ملفات أصغر أو انسخ منه النص المهم", true); return; }
+  trDocBusy = true;
+  try { trSetBusy(true); trFixClear(); trAddHide(); } catch (eS) {}
+  trStatus("⏳ جارٍ فتح «" + name + "»…");
+  var got = function (txt) {
+    txt = String(txt || "").replace(/\u0000/g, "").replace(/\uFFFD/g, " ");
+    if (txt.replace(/\s+/g, "").length < 2) {
+      trDocEnd();
+      trStatus("✗ لم أجد نصاً قابلاً للقراءة في «" + name + "»" + (ext === "pdf" ? " — قد يكون مستنداً مصوّراً (صوراً)، فصوّر صفحاته بـ «📷 تصوير» واحداً واحداً" : " — تأكد أنه ملف نصي فعلاً"), true);
+      return;
+    }
+    trDocTranslate(txt, name);
+  };
+  var fail = function (why) { trDocEnd(); trStatus("✗ تعذّرت قراءة «" + name + "» — " + why, true); };
+  try {
+    if (ext === "docx" || f.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") trDocReadDocx(f, got, fail);
+    else if (ext === "pdf" || f.type === "application/pdf") trDocReadPdf(f, got, fail);
+    else if (ext === "doc") fail("صيغة Word القديمة (.doc) غير مدعومة — افتحه واحفظه بصيغة «مستند Word (.docx)» أو انسخ نصه إلى ملف TXT");
+    else if (ext === "txt" || ext === "text" || ext === "md" || ext === "csv" || ext === "log" || ext === "srt" || (f.type || "").indexOf("text/") === 0 || !ext) trDocReadTxt(f, got, fail);
+    else fail("الصيغة غير مدعومة — المدعوم: TXT و DOCX و PDF");
+  } catch (eD) { fail("خطأ غير متوقع"); }
+}
+function trDocReadTxt(f, ok, fail) { // النصي: UTF-8 أولاً — إن ظهرت رموز فاسدة كثيرة فالملف بترميز عربي قديم (Windows-1256)
+  var r = new FileReader();
+  r.onload = function () {
+    var t = String(r.result || ""), bad = 0, i;
+    for (i = 0; i < t.length; i++) if (t.charCodeAt(i) === 0xFFFD) bad++;
+    if (t.length > 40 && bad / t.length > 0.02) {
+      var r2 = new FileReader();
+      r2.onload = function () { ok(r2.result); };
+      r2.onerror = function () { ok(t); };
+      try { r2.readAsText(f, "windows-1256"); } catch (eW) { ok(t); }
+      return;
+    }
+    ok(t);
+  };
+  r.onerror = function () { fail("تعذّرت قراءة الملف"); };
+  r.readAsText(f, "utf-8");
+}
+function trDocReadDocx(f, ok, fail) { // Word الحديث: mammoth يستخرج النص الخام
+  trDocEnsureLib("https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js", "قارئ Word", function () {
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        mammoth.extractRawText({ arrayBuffer: r.result }).then(function (res) { ok(res && res.value); }, function () { fail("الملف تالف أو ليس مستند Word حديثاً (.docx)"); });
+      } catch (eM) { fail("الملف تالف أو ليس مستند Word حديثاً (.docx)"); }
+    };
+    r.onerror = function () { fail("تعذّرت قراءة الملف"); };
+    r.readAsArrayBuffer(f);
+  }, fail);
+}
+function trDocReadPdf(f, ok, fail) { // PDF: pdf.js إصدار قديم متوافق ES5 مع الأجهزة الضعيفة (مثل جي 5) — قراءة صفحة صفحة بحد 60 صفحة
+  trDocEnsureLib("https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/legacy/build/pdf.min.js", "قارئ PDF", function () {
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/legacy/build/pdf.worker.min.js";
+        pdfjsLib.getDocument({ data: new Uint8Array(r.result) }).promise.then(function (doc) {
+          var n = doc.numPages, MAXP = 60;
+          var lim = Math.min(n, MAXP);
+          if (n > MAXP) trStatus("⏳ مستند كبير (" + n + " صفحة) — ستُقرأ أول " + MAXP + " صفحة وستُترجم");
+          var i = 0, acc = [];
+          var next = function () {
+            if (i >= lim) { ok(acc.join("\n")); return; }
+            trStatus("⏳ جارٍ قراءة صفحة " + (i + 1) + " من " + lim + "…");
+            doc.getPage(i + 1).then(function (pg) { return pg.getTextContent(); }).then(function (tc) {
+              var s = "", j;
+              for (j = 0; j < tc.items.length; j++) s += (tc.items[j] && tc.items[j].str ? tc.items[j].str : "") + (tc.items[j] && tc.items[j].hasEOL ? "\n" : " ");
+              acc.push(s.replace(/[ \t]+/g, " "));
+              i++; next();
+            }, function () { i++; next(); });
+          };
+          next();
+        }, function () { fail("الملف تالف أو مقفل بكلمة مرور"); });
+      } catch (eP) { fail("تعذّر تشغيل قارئ PDF على هذا الجهاز"); }
+    };
+    r.onerror = function () { fail("تعذّرت قراءة الملف"); };
+    r.readAsArrayBuffer(f);
+  }, fail);
+}
+function trDocEnsureLib(url, label, cb, fail) { // تحميل مكتبة قراءة عند أول استخدام فقط (نفس نمط محرك التصوير)
+  trStatus("⏳ تحميل " + label + " (أول مرة فقط)…");
+  var s = document.createElement("script");
+  s.src = url;
+  s.onload = function () { try { cb(); } catch (eC) { fail("خطأ غير متوقع في " + label); } };
+  s.onerror = function () { fail("تعذّر تنزيل " + label + " — تحقق من الاتصال ثم أعد المحاولة"); };
+  document.head.appendChild(s);
+}
+function trDocShow(t) { // عرض خفيف بلا تحليل قاموسي ثقيل — مناسب للنصوص الطويلة والأجهزة الضعيفة
+  try { trState.result = t; trState.synHtml = ""; } catch (eS) {}
+  var o = el("trOutput");
+  if (o) { o.className = "tr-out"; o.textContent = t; }
+  try { var b = el("trBreak"); if (b) b.style.display = "none"; } catch (eB) {}
+}
+function trDocTranslate(txt, name) { // تقسيم + ترجمة تسلسلية مع عرض تدريجي
+  var CHUNK = 1100;
+  var parts = trSplitChunks(txt, CHUNK), i = 0, acc = [];
+  var gen = ++trState.gen; // يُلغى تلقائياً إن بدأ المستخدم ترجمة جديدة
+  if (!parts.length) { trDocEnd(); trStatus("✗ المستند فارغ", true); return; }
+  var next = function () {
+    if (gen !== trState.gen) { trDocEnd(); return; }
+    if (i >= parts.length) {
+      trDocEnd();
+      var full = trClean(acc.join(" "));
+      if (!full) { trStatus("✗ لم تُترجم أي جزئية — تحقق من الاتصال ثم أعد المحاولة", true); return; }
+      trDocShow(full);
+      try { trHistSave(trClean(txt).slice(0, 1500), full, trState.src + ">" + trState.dst, "doc"); } catch (eH) {}
+      trStatus("✓ اكتملت ترجمة «" + name + "» — " + parts.length + " جزءاً، " + full.length + " حرفاً في الترجمة");
+      return;
+    }
+    trStatus("📄 جارٍ ترجمة «" + name + "» — الجزء " + (i + 1) + " من " + parts.length + "…");
+    trDocChunk(parts[i], 0, function (t) {
+      if (gen !== trState.gen) { trDocEnd(); return; }
+      acc.push(t); i++;
+      trDocShow(trClean(acc.join(" "))); // عرض تدريجي مع كل جزء
+      next();
+    }, function () {
+      trDocEnd();
+      if (acc.length) { trDocShow(trClean(acc.join(" "))); trStatus("✗ توقفت الترجمة عند الجزء " + (i + 1) + "/" + parts.length + " — انقطع الاتصال (عرضتُ ما اكتمل — أعد المحاولة لإكمال الباقي)", true); }
+      else trStatus("✗ تعذّر الوصول لخدمة الترجمة — تحقق من اتصال الإنترنت ثم أعد المحاولة", true);
+    });
+  };
+  next();
+}
+function trDocChunk(text, attempt, ok, fail) { // جزء واحد: تجربة المصادر كلها بدءاً بآخر مصدر ناجح ثم إعادة كاملة واحدة
+  var base = trState.lastSrcIdx || 0, order = [], k, pos = 0;
+  for (k = 0; k < TR_SOURCES.length; k++) order.push((base + k) % TR_SOURCES.length);
+  var tryPos = function () {
+    if (pos >= order.length) {
+      if (attempt < 1) { setTimeout(function () { trDocChunk(text, attempt + 1, ok, fail); }, 1800); return; }
+      fail(); return;
+    }
+    var idx = order[pos];
+    trTranslateChunked(text, TR_SOURCES[idx], function (t) {
+      if (trClean(t)) { trState.lastSrcIdx = idx; ok(t); } else { pos++; tryPos(); }
+    }, function () { pos++; tryPos(); });
+  };
+  tryPos();
+}
+
 function trSpeakOutput() { trSpeakText(trState.result || trOutPlain() || "", trState.dst); } // v26.30: نطق الترجمة فقط بلا المعاني
 
 // =====================================================================
@@ -13032,7 +13191,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.47"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.47: إصلاح «📷 تصوير» الذي لم يُظهر ترجمة — مهلة مراقبة 120 ثانية + إظهار نسبة كل مرحلة من مراحل القراءة + خادم نسخ احتياطي عبر الإنترنت يعمل تلقائياً عند تعذّر المحرك المحلي أو قِدم المتصفح) — (v26.46: زر «📷 تصوير» يفتح كاميرا الجهاز مباشرة في تطبيق الأندرويد 26.46 + تصغير الصورة تلقائياً قبل التعرف لتوفير الذاكرة على الأجهزة الضعيفة + فحص قِدم المتصفح ورسائل إرشادية عند عدم فتح الكاميرا) — (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
+var CURRENT_APP_VERSION = "26.48"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.48: ميزة «📄 مستند» — ترجمة ملف كامل TXT أو Word .docx أو PDF من داخل المترجم: استخراج النص ثم ترجمته جزءاً جزءاً مع عرض تدريجي ونسبة الإنجاز وحد 12 ميغابايت و60 صفحة) — (v26.47: إصلاح «📷 تصوير» الذي لم يُظهر ترجمة — مهلة مراقبة 120 ثانية + إظهار نسبة كل مرحلة من مراحل القراءة + خادم نسخ احتياطي عبر الإنترنت يعمل تلقائياً عند تعذّر المحرك المحلي أو قِدم المتصفح) — (v26.46: زر «📷 تصوير» يفتح كاميرا الجهاز مباشرة في تطبيق الأندرويد 26.46 + تصغير الصورة تلقائياً قبل التعرف لتوفير الذاكرة على الأجهزة الضعيفة + فحص قِدم المتصفح ورسائل إرشادية عند عدم فتح الكاميرا) — (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
