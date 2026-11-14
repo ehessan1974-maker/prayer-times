@@ -1,8 +1,8 @@
 {
   "appVersion": "26.46",
   "htmlUrl": "https://raw.githubusercontent.com/ehessan1974-maker/prayer-times/main/prayer-times.html",
-  "apkUrl": "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.43/prayer-times-v26.43.apk",
-  "apkSizeMB": "3.3",
+  "apkUrl": "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.46/prayer-times-v26.46.apk",
+  "apkSizeMB": "3.4",
   "releasedAt": "2026-11-14",
   "changelog": [
     "زر «📷 تصوير» يفتح كاميرا الجهاز مباشرة في تطبيق الأندرويد (يتطلب تحديث APK إلى إصدار 26.46 أو أحدث من خانة التحديث) — صوّر النص فيُقرأ ويُترجم فوراً",
