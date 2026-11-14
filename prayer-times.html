@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.49</title>
+<title>🕌 مواقيت الصلاة v26.50</title>
 <!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -2195,7 +2195,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.49</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.50</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -2537,6 +2537,8 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
         <button class="tr-act" id="trMicBtn" onclick="trMicToggle()" title="إدخال بالصوت">🎤 صوت</button>
         <button class="tr-act" id="trOcrBtn" onclick="trOcrPick()" title="تصوير نص وإدخاله في خانة النص الأصلي ثم ترجمته فوراً">📷 تصوير</button>
         <input type="file" id="trOcrFile" accept="image/*" capture="environment" style="display:none;" onchange="trOcrFilechg(this)">
+        <button class="tr-act" id="trPicBtn" onclick="trPicPick()" title="اختيار صورة محفوظة على الجهاز (من المعرض أو الملفات) وقراءة نصها وترجمته فوراً">🖼️ صورة</button>
+        <input type="file" id="trPicFile" accept="image/*" style="display:none;" onchange="trOcrFilechg(this)">
         <button class="tr-act" id="trDocBtn" onclick="trDocPick()" title="ترجمة ملف كامل: نصي TXT أو Word (.docx) أو PDF — يُستخرج النص ويُترجم جزءاً جزءاً حتى النهاية مع عرض النتيجة تدريجياً">📄 مستند</button>
         <input type="file" id="trDocFile" accept=".txt,.md,.csv,text/plain,application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;" onchange="trDocFilechg(this)">
       </div>
@@ -12873,21 +12875,23 @@ function trSpeakGiveUp() {
 //   يوهم أن الزر لا يعمل، (ج) فشل نهائي عند متصفح قديم بلا WebAssembly أو عند شبكة تحجب CDN.
 // الحل: مراقب تعليق 120ث + إظهار كل المراحل بنسبها + خادم نسخ احتياطي عبر الإنترنت (OCR.space) يعمل تلقائياً عند أي من الأعطاب الثلاثة.
 var trOcrBusy = false, trOcrHintT = null;
-function trOcrPick() {
+function trImgPick(fid, word) { // v26.50: مسار مشترك لاختيار صورة — «📷 تصوير» بالكاميرا و«🖼️ صورة» من المعرض/الملفات
   if (trOcrBusy) { trStatus("⏳ قراءة صورة جارية بالفعل — انتظر انتهاءها أولاً", true); return; }
-  var f = el("trOcrFile");
+  var f = el(fid);
   if (!f) return;
   try { f.value = ""; } catch (eV) {}
-  // v26.46: إن لم يُفتح مختار الملفات/الكاميرا خلال 2.5 ثانية فالـWebView قديم لا يدعمها — رسالة إرشادية بدل الصمت
+  // v26.46: إن لم يُفتح المختار خلال 2.5 ثانية فالـWebView قديم لا يدعمه — رسالة إرشادية بدل الصمت
   try { if (trOcrHintT) clearTimeout(trOcrHintT); } catch (eT) {}
   trOcrHintT = setTimeout(function () {
     trOcrHintT = null;
     if (trOcrBusy || (f.files && f.files.length)) return;
     try { if (document.activeElement === f) return; } catch (eA) {}
-    trToast("إن لم تفتح الكاميرا أو المعرض فتطبيق مواقيت الصلاة لديك قديم — حدّث تطبيق الأندرويد (APK) من خانة التحديث أو افتح التطبيق بمتصفح كروم");
+    trToast("إن لم يُفتح " + word + " فتطبيق مواقيت الصلاة لديك قديم — حدّث تطبيق الأندرويد (APK) من خانة التحديث أو افتح التطبيق بمتصفح كروم");
   }, 2500);
   f.click();
 }
+function trOcrPick() { trImgPick("trOcrFile", "الكاميرا أو المعرض"); }
+function trPicPick() { trImgPick("trPicFile", "معرض الصور أو منتقي الملفات"); } // v26.50: «🖼️ صورة» — صورة محفوظة على الجهاز بلا كاميرا
 function trOcrFilechg(inp) {
   var f = inp && inp.files && inp.files[0];
   if (!f) return;
@@ -13201,7 +13205,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.49"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.49: إصلاح جذري لزر «🎤 صوت» الذي لم يعمل على الكومبيوتر والموبايل — حذف حاجز getUserMedia السابق لبدء التعرف + رسالة خاصة لمن يفتح التطبيق كملف محلي + فحص وجود مايك + رسائل إرشادية أدق + تنبيه واضح عند «نطق» بلا نص + تحديث رابط APK في بطاقة الإنقاذ) — (v26.48: ميزة «📄 مستند» — ترجمة ملف كامل TXT أو Word .docx أو PDF من داخل المترجم: استخراج النص ثم ترجمته جزءاً جزءاً مع عرض تدريجي ونسبة الإنجاز وحد 12 ميغابايت و60 صفحة) — (v26.47: إصلاح «📷 تصوير» الذي لم يُظهر ترجمة — مهلة مراقبة 120 ثانية + إظهار نسبة كل مرحلة من مراحل القراءة + خادم نسخ احتياطي عبر الإنترنت يعمل تلقائياً عند تعذّر المحرك المحلي أو قِدم المتصفح) — (v26.46: زر «📷 تصوير» يفتح كاميرا الجهاز مباشرة في تطبيق الأندرويد 26.46 + تصغير الصورة تلقائياً قبل التعرف لتوفير الذاكرة على الأجهزة الضعيفة + فحص قِدم المتصفح ورسائل إرشادية عند عدم فتح الكاميرا) — (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
+var CURRENT_APP_VERSION = "26.50"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.50: ميزة «🖼️ صورة» — زر جديد بجوار «📷 تصوير» يختار صورة محفوظة على الجهاز (معرض/ملفات) ويقرأ نصها ويرجمه فوراً بنفس محرك التصوير) — (v26.49: إصلاح جذري لزر «🎤 صوت» الذي لم يعمل على الكومبيوتر والموبايل — حذف حاجز getUserMedia السابق لبدء التعرف + رسالة خاصة لمن يفتح التطبيق كملف محلي + فحص وجود مايك + رسائل إرشادية أدق + تنبيه واضح عند «نطق» بلا نص + تحديث رابط APK في بطاقة الإنقاذ) — (v26.48: ميزة «📄 مستند» — ترجمة ملف كامل TXT أو Word .docx أو PDF من داخل المترجم: استخراج النص ثم ترجمته جزءاً جزءاً مع عرض تدريجي ونسبة الإنجاز وحد 12 ميغابايت و60 صفحة) — (v26.47: إصلاح «📷 تصوير» الذي لم يُظهر ترجمة — مهلة مراقبة 120 ثانية + إظهار نسبة كل مرحلة من مراحل القراءة + خادم نسخ احتياطي عبر الإنترنت يعمل تلقائياً عند تعذّر المحرك المحلي أو قِدم المتصفح) — (v26.46: زر «📷 تصوير» يفتح كاميرا الجهاز مباشرة في تطبيق الأندرويد 26.46 + تصغير الصورة تلقائياً قبل التعرف لتوفير الذاكرة على الأجهزة الضعيفة + فحص قِدم المتصفح ورسائل إرشادية عند عدم فتح الكاميرا) — (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
