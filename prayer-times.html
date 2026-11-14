@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.50</title>
+<title>🕌 مواقيت الصلاة v26.51</title>
 <!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -2195,7 +2195,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.50</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.51</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -9184,11 +9184,15 @@ function trSetDir(s) { if (s === trState.src) return; trState.src = s; trState.d
 
 function trSwap() {
   var t = trState.src; trState.src = trState.dst; trState.dst = t;
-  var inp = el("trInput"), out = el("trOutput"), tmp = trClean(trOutPlain()) ? trOutPlain() : "";
-  out.textContent = inp.value || "";
+  var inp = el("trInput"), out = el("trOutput");
+  // v26.51: خانة الناتج الفارغة تحمل النص الإرشادي «ستظهر الترجمة هنا…» — كان يُنقل إلى خانة الإدخال
+  // عند التبديل كأنه ترجمة فعلية فيضطر المستخدم لمسحه قبل الكتابة. الآن: النص الإرشادي ليس ترجمة ولا يُنقل أبداً.
+  var wasEmpty = out.className.indexOf("empty") >= 0;
+  var oldRes = (!wasEmpty && trClean(trOutPlain())) ? (trOutPlain() || "") : "";
+  out.textContent = inp.value || (oldRes ? "" : "ستظهر الترجمة هنا…");
   out.className = inp.value ? "tr-out" : "tr-out empty";
   try { var ex1 = el("trOutExtra"); if (ex1) { ex1.innerHTML = ""; ex1.style.display = "none"; } } catch (eE1) {} // v26.42
-  inp.value = tmp;
+  inp.value = oldRes;
   el("trCount").textContent = (inp.value || "").length + " / " + TR_MAX;
   trApplyDir();
 }
@@ -11823,10 +11827,17 @@ function trMicWebStart(SR) {
   } catch (e) { trMicOn = false; trMicSetUi(false); try { trWaveShow(false); } catch (eW9) {} trToast("🎤 تعذر بدء الإدخال الصوتي — حدّث APK إلى أحدث إصدار أو افتح التطبيق بمتصفح كروم محدّث"); }
 }
 function trMicStop() {
+  var was = trMicOn;
   try { if (trMicRec) { trMicRec.stop(); trMicRec = null; } } catch (e) {}
   try { if (window.AndroidPrayer && AndroidPrayer.stopSpeechInput) AndroidPrayer.stopSpeechInput(); } catch (e2) {}
   if (trMicOn) { trMicOn = false; trMicSetUi(false); }
   try { trWaveShow(false); } catch (e3) {} // v26.33: إخفاء الذبذبات
+  // v26.51: الإيقاف بلمسة المستخدم = نهاية الإملاء — الترجمة تبدأ فوراً بدون ضغط «ترجمة».
+  // (كان onend يفحص trMicOn وقد صار false قبل وصوله فلا يترجم أبداً عند الإيقاف اليدوي)
+  try {
+    var win = el("translatorWin");
+    if (was && (!win || win.classList.contains("open")) && trClean(el("trInput").value)) trOnInput();
+  } catch (e4) {}
 }
 function trMicBridge(json) { // كولباك جسر الأندرويد
   try {
@@ -12426,7 +12437,7 @@ function trDlRender() {
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.50/prayer-times-v26.50.apk"; // v26.50: محدّث من v26.46 — أحدث APK بميزة «🖼️ صورة» و«📄 مستند» وإصلاح «🎤 صوت» وكاميرا مباشرة
+var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.51/prayer-times-v26.51.apk"; // v26.51: محدّث من v26.50 — أحدث APK بإصلاح «⏹ إيقاف الصوت يترجم فوراً» و«⇄ لا ينقل النص الإرشادي» وميزة «🖼️ صورة» و«📄 مستند»
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -13205,7 +13216,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.50"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.50: ميزة «🖼️ صورة» — زر جديد بجوار «📷 تصوير» يختار صورة محفوظة على الجهاز (معرض/ملفات) ويقرأ نصها ويرجمه فوراً بنفس محرك التصوير) — (v26.49: إصلاح جذري لزر «🎤 صوت» الذي لم يعمل على الكومبيوتر والموبايل — حذف حاجز getUserMedia السابق لبدء التعرف + رسالة خاصة لمن يفتح التطبيق كملف محلي + فحص وجود مايك + رسائل إرشادية أدق + تنبيه واضح عند «نطق» بلا نص + تحديث رابط APK في بطاقة الإنقاذ) — (v26.48: ميزة «📄 مستند» — ترجمة ملف كامل TXT أو Word .docx أو PDF من داخل المترجم: استخراج النص ثم ترجمته جزءاً جزءاً مع عرض تدريجي ونسبة الإنجاز وحد 12 ميغابايت و60 صفحة) — (v26.47: إصلاح «📷 تصوير» الذي لم يُظهر ترجمة — مهلة مراقبة 120 ثانية + إظهار نسبة كل مرحلة من مراحل القراءة + خادم نسخ احتياطي عبر الإنترنت يعمل تلقائياً عند تعذّر المحرك المحلي أو قِدم المتصفح) — (v26.46: زر «📷 تصوير» يفتح كاميرا الجهاز مباشرة في تطبيق الأندرويد 26.46 + تصغير الصورة تلقائياً قبل التعرف لتوفير الذاكرة على الأجهزة الضعيفة + فحص قِدم المتصفح ورسائل إرشادية عند عدم فتح الكاميرا) — (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
+var CURRENT_APP_VERSION = "26.51"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.51: إصلاحان بطلب المستخدم — «⏹ إيقاف الصوت» يبدأ الترجمة فوراً بدون ضغط «ترجمة» (كان onend يفحص trMicOn بعد تصفيره فلا يترجم عند الإيقاف اليدوي) — و«⇄ تبديل الاتجاه» لم يعد ينقل النص الإرشادي «ستظهر الترجمة هنا…» من خانة الناتج الفارغة إلى خانة الإدخال كنص فعلي) — (v26.50: ميزة «🖼️ صورة» — زر جديد بجوار «📷 تصوير» يختار صورة محفوظة على الجهاز (معرض/ملفات) ويقرأ نصها ويرجمه فوراً بنفس محرك التصوير) — (v26.49: إصلاح جذري لزر «🎤 صوت» الذي لم يعمل على الكومبيوتر والموبايل — حذف حاجز getUserMedia السابق لبدء التعرف + رسالة خاصة لمن يفتح التطبيق كملف محلي + فحص وجود مايك + رسائل إرشادية أدق + تنبيه واضح عند «نطق» بلا نص + تحديث رابط APK في بطاقة الإنقاذ) — (v26.48: ميزة «📄 مستند» — ترجمة ملف كامل TXT أو Word .docx أو PDF من داخل المترجم: استخراج النص ثم ترجمته جزءاً جزءاً مع عرض تدريجي ونسبة الإنجاز وحد 12 ميغابايت و60 صفحة) — (v26.47: إصلاح «📷 تصوير» الذي لم يُظهر ترجمة — مهلة مراقبة 120 ثانية + إظهار نسبة كل مرحلة من مراحل القراءة + خادم نسخ احتياطي عبر الإنترنت يعمل تلقائياً عند تعذّر المحرك المحلي أو قِدم المتصفح) — (v26.46: زر «📷 تصوير» يفتح كاميرا الجهاز مباشرة في تطبيق الأندرويد 26.46 + تصغير الصورة تلقائياً قبل التعرف لتوفير الذاكرة على الأجهزة الضعيفة + فحص قِدم المتصفح ورسائل إرشادية عند عدم فتح الكاميرا) — (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
