@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.45</title>
+<title>🕌 مواقيت الصلاة v26.46</title>
 <!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -2195,7 +2195,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.45</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.46</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -12856,24 +12856,32 @@ function trSpeakGiveUp() {
 
 // ===== v26.45: «تصوير» — قراءة نص من صورة/كاميرا داخل التطبيق (OCR) ثم وضعه في خانة النص الأصلي وترجمته فوراً =====
 // المحرك: Tesseract.js v5 يُحمَّل من CDN عند أول استخدام فقط، ويلغّم العربية والإنكليزية معاً
-var trOcrBusy = false;
+var trOcrBusy = false, trOcrHintT = null;
 function trOcrPick() {
   if (trOcrBusy) { trStatus("⏳ قراءة صورة جارية بالفعل — انتظر انتهاءها أولاً", true); return; }
   var f = el("trOcrFile");
   if (!f) return;
   try { f.value = ""; } catch (eV) {}
+  // v26.46: إن لم يُفتح مختار الملفات/الكاميرا خلال 2.5 ثانية فالـWebView قديم لا يدعمها — رسالة إرشادية بدل الصمت
+  try { if (trOcrHintT) clearTimeout(trOcrHintT); } catch (eT) {}
+  trOcrHintT = setTimeout(function () {
+    trOcrHintT = null;
+    if (trOcrBusy || (f.files && f.files.length)) return;
+    try { if (document.activeElement === f) return; } catch (eA) {}
+    trToast("إن لم تفتح الكاميرا أو المعرض فتطبيق مواقيت الصلاة لديك قديم — حدّث تطبيق الأندرويد (APK) من خانة التحديث أو افتح التطبيق بمتصفح كروم");
+  }, 2500);
   f.click();
 }
 function trOcrFilechg(inp) {
   var f = inp && inp.files && inp.files[0];
   if (!f) return;
+  try { if (trOcrHintT) { clearTimeout(trOcrHintT); trOcrHintT = null; } } catch (eT) {}
   trOcrBusy = true;
   trOcrEnsureLib(function () {
     trStatus("⏳ جارٍ قراءة النص من الصورة…");
-    var r = new FileReader();
-    r.onload = function (ev) {
+    trOcrPrepare(f, function (dataUrl) {
       var finished = false;
-      Tesseract.recognize(ev.target.result, "ara+eng", { logger: function (m) { if (m && m.status === "recognizing text") trStatus("⏳ قراءة النص من الصورة… " + Math.round((m.progress || 0) * 100) + "%"); } })
+      Tesseract.recognize(dataUrl, "ara+eng", { logger: function (m) { if (m && m.status === "recognizing text") trStatus("⏳ قراءة النص من الصورة… " + Math.round((m.progress || 0) * 100) + "%"); } })
         .then(function (res) {
           if (finished) return; finished = true;
           trOcrBusy = false;
@@ -12889,13 +12897,49 @@ function trOcrFilechg(inp) {
           trOcrBusy = false;
           trStatus("✗ فشل التعرف على النص من الصورة — تحقق من الاتصال بالإنترنت (محرك التعرف يُنزَّل أول مرة) وأعد المحاولة", true);
         });
-    };
-    r.onerror = function () { trOcrBusy = false; trStatus("✗ تعذّر قراءة ملف الصورة — جرّب صورة أخرى", true); };
-    r.readAsDataURL(f);
+    }, function () { trOcrBusy = false; trStatus("✗ تعذّر قراءة ملف الصورة — جرّب صورة أخرى", true); });
   });
+}
+function trOcrPrepare(file, ok, fail) { // v26.46: تصغير الصور الضخمة قبل التعرف — ذاكرة أقل وسرعة أكبر على الأجهزة الضعيفة (مثل جي 5 بذاكرة 1.5GB)
+  var maxDim = 1600;
+  try {
+    var url = URL.createObjectURL(file);
+    var im = new Image();
+    im.onload = function () {
+      try { URL.revokeObjectURL(url); } catch (eR) {}
+      var w = im.naturalWidth || im.width, h = im.naturalHeight || im.height;
+      var sc = Math.min(1, maxDim / Math.max(w, h));
+      if (sc >= 1) { // الصورة مناسبة كما هي
+        var r0 = new FileReader();
+        r0.onload = function (e0) { ok(e0.target.result); };
+        r0.onerror = fail;
+        r0.readAsDataURL(file);
+        return;
+      }
+      var cv = document.createElement("canvas");
+      cv.width = Math.round(w * sc);
+      cv.height = Math.round(h * sc);
+      var cx = cv.getContext("2d");
+      cx.drawImage(im, 0, 0, cv.width, cv.height);
+      ok(cv.toDataURL("image/jpeg", 0.85));
+    };
+    im.onerror = function () { try { URL.revokeObjectURL(url); } catch (eR2) {} fail(); };
+    im.src = url;
+  } catch (e) {
+    var r1 = new FileReader();
+    r1.onload = function (e1) { ok(e1.target.result); };
+    r1.onerror = fail;
+    r1.readAsDataURL(file);
+  }
 }
 function trOcrEnsureLib(cb) {
   if (window.Tesseract && Tesseract.recognize) { cb(); return; }
+  // v26.46: محرك التعرف يحتاج WebAssembly — متصفحات قديمة جداً (WebView قبل 2017) لا تدعمه
+  if (typeof WebAssembly === "undefined") {
+    trOcrBusy = false;
+    trStatus("✗ متصفح هذا الجهاز قديم جداً ولا يدعم محرك التعرف على النص — حدّث «Android System WebView» من متجر Play أو استخدم إصدار APK الجديد", true);
+    return;
+  }
   trStatus("⏳ تحميل محرك التعرف على النص (أول مرة فقط)…");
   var s = document.createElement("script");
   s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
@@ -12926,7 +12970,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.45"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.45: إصلاح جذري لصمت زر النطق — مصادر نطق بشري متعددة (جوجل + مرآة googleapis + StreamElements للإنكليزية) بمراقبة تعليق تنتقل تلقائياً بينها عند الفشل/الحجب + مسار أسرع حين لا أصوات على الجهاز — وميزة «📷 تصوير» جديدة: صوّر نصاً فيُقرأ ويُوضع في خانة النص ويُترجم فوراً) — (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
+var CURRENT_APP_VERSION = "26.46"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.46: زر «📷 تصوير» يفتح كاميرا الجهاز مباشرة في تطبيق الأندرويد 26.46 + تصغير الصورة تلقائياً قبل التعرف لتوفير الذاكرة على الأجهزة الضعيفة + فحص قِدم المتصفح ورسائل إرشادية عند عدم فتح الكاميرا) — (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
