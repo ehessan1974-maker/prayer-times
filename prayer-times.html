@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.48</title>
+<title>🕌 مواقيت الصلاة v26.49</title>
 <!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -2195,7 +2195,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.48</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.49</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -11734,18 +11734,24 @@ function trMicToggle() {
   showRescueModal({ icon: "🎤", title: "الإدخال الصوتي غير مدعوم في هذه النسخة", body: RESCUE_VOICE_MSG }); // v26.26: بطاقة إنقاذ (تنزيل APK / نسخ الرابط) بدل توست بلا مخرج
 }
 function trMicWeb(SR) {
-  // إلغاء الأصوات المحيطة: طلب المايك بقيود عزل الضوضاء أولاً ثم بدء التعرف
-  var start = function () { trMicWebStart(SR); };
+  // v26.49 [جذري — إصلاح «زر صوت لا يعمل على الكومبيوتر والموبايل»]: كان المسار يبدأ بـ«تسخين» المايك عبر getUserMedia قبل التعرف:
+  //   (أ) كروم يحجب المايك داخل الملفات المحلية (file://) فتُفشل الخطوة الأولى وتُهمل بقية المسار عند بعض الإصدارات،
+  //   (ب) نوافذ إذن مزدوجة (واحدة من getUserMedia وأخرى من محرك التعرف) تُربك المستخدم فيرفض،
+  //   (ج) على بعض الويبفيو القديم getUserMedia نفسه غير موجود فيتوقف كل شيء بصمت.
+  // الآن: التعرف يبدأ مباشرة بكلمة واحدة من كروم/الويبفيو نفسه (هو يطلب الإذن بنفسه)، والمايك الإضافي للذبذبات فقط ولا يعطّل شيئاً.
+  try { trMicCheckMic(); } catch (eC) {}
+  trMicWebStart(SR);
+}
+function trMicCheckMic() { // v26.49: فحص وجود مايك أصلاً — رسالة فورية بدل انتظار خطأ غامض
   try {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).then(function (s) {
-        try { var ts = s.getTracks(), i; for (i = 0; i < ts.length; i++) ts[i].stop(); } catch (eS) {}
-        start();
-      }).catch(function () { start(); });
-      return;
+    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+      navigator.mediaDevices.enumerateDevices().then(function (ds) {
+        var mics = 0, i;
+        for (i = 0; i < ds.length; i++) if (ds[i] && ds[i].kind === "audioinput") mics++;
+        if (!mics) trToast("🎤 لا يوجد مايكروفون موصول بهذا الجهاز — وصّل مايك أو استخدم جهازاً آخر");
+      }).catch(function () {});
     }
-  } catch (eG) {}
-  start();
+  } catch (eE) {}
 }
 function trMicWebStart(SR) {
   try {
@@ -11789,7 +11795,11 @@ function trMicWebStart(SR) {
         trMicWebStart(SR);
         return;
       }
-      var m = { "not-allowed": "🎤 اسمح بالوصول للمايكروفون من إعدادات المتصفح", "no-speech": "🎤 لم ألتقط كلاماً — حاول مجدداً", "network": "🎤 الإدخال الصوتي يحتاج اتصالاً بالإنترنت", "audio-capture": "🎤 لم أجد مايكروفوناً على هذا الجهاز", "service-not-allowed": "__RESCUE__", "aborted": null }[ev.error];
+      var m = { "not-allowed": "🎤 اسمح بالوصول للمايكروفون من إعدادات المتصفح (أيقونة القفل بجانب العنوان ← المايكروفون ← السماح ثم أعد المحاولة)", "no-speech": "🎤 لم ألتقط كلاماً — حاول مجدداً", "network": "🎤 خدمة التعرف الصوتي لا تردّ — قد تكون محجوبة على شبكتك؛ جرّب شبكة أخرى أو استخدم إدخال الكاميرا «📷 تصوير»", "audio-capture": "🎤 لم أجد مايكروفوناً على هذا الجهاز", "service-not-allowed": "__RESCUE__", "aborted": null }[ev.error];
+      if ((ev.error === "not-allowed" || ev.error === "service-not-allowed") && String(location.protocol) === "file:") { // v26.49: حالة فتح الملف محلياً
+        trToast("🎤 كروم يمنع المايك داخل الملفات المحلية — افتح التطبيق من رابطه المباشر (زر التحديث أعلى التطبيق يعرض الرابط) ثم اضغط 🎤 صوت");
+        return;
+      }
       if (m === "__RESCUE__") { // v26.26: حالة مستعصية — محرك التعرف محظور/غائب في هذا الويبفيو القديم
         showRescueModal({ icon: "🎤", title: "الإدخال الصوتي غير مدعوم في هذا الجهاز", body: RESCUE_VOICE_MSG });
         return;
@@ -11808,7 +11818,7 @@ function trMicWebStart(SR) {
     r.onsoundend = function () { trWaveFake = false; }; // v26.33
     r.start(); _wdArm(); // v26.28: بدء مراقب الصمت مع أول بدء
     try { trWaveShow(true); trWaveStartAudio(); } catch (eW0) {} // v26.33: شريط الذبذبات + تحليل صوتي مباشر
-  } catch (e) { trMicOn = false; trMicSetUi(false); trToast("تعذر بدء الإدخال الصوتي"); }
+  } catch (e) { trMicOn = false; trMicSetUi(false); try { trWaveShow(false); } catch (eW9) {} trToast("🎤 تعذر بدء الإدخال الصوتي — حدّث APK إلى أحدث إصدار أو افتح التطبيق بمتصفح كروم محدّث"); }
 }
 function trMicStop() {
   try { if (trMicRec) { trMicRec.stop(); trMicRec = null; } } catch (e) {}
@@ -12414,7 +12424,7 @@ function trDlRender() {
 // (صوت بلا جسر على APK قديم، محرك تعرف محظور في ويبفيو قديم…) — v26.27: الأزرار متزامنة داخل اللمسة
 // + جسر أصلي openUrl/copyText (APK ≥ 26.27) + الرابط ظاهر دائماً قابل للنسخ اليدوي
 var RESCUE_VOICE_MSG = "جهازك يشغّل نسخة قديمة من التطبيق مع صفحة محدّثة — الإدخال الصوتي يحتاج مكوّناً أصلياً داخل التطبيق نفسه (أُضيف في v26.23) ولا يمكن أن يأتي مع تحديث الصفحة تلقائياً. الحل: ثبّت آخر APK — يدعم أندرويد 5/6 وبنفس التوقيع، يُثبَّت مباشرة فوق القديم دون حذف بياناتك. أو افتح المترجم في متصفح كروم.";
-var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.43/prayer-times-v26.43.apk"; // v26.41: قناة Releases — لا تُحسب في حجم المستودع
+var RESCUE_APK_URL = "https://github.com/ehessan1974-maker/prayer-times/releases/download/v26.46/prayer-times-v26.46.apk"; // v26.49: محدّث من v26.43 — أحدث APK بكاميرا مباشرة وجسر صوت كامل
 function rescueUrlOf(opts) { return (opts && opts.url) ? opts.url : RESCUE_APK_URL; } // متزامن — بلا شبكة داخل اللمسة
 function rescueOpenUrl(u) {
   // v26.27: كل الخطوات متزامنة داخل لمسة المستخدم — أي XHR قبل التنفيذ يفقد اللمسة فيحجب كروم/الويبفيو العملية
@@ -12658,7 +12668,7 @@ try {
 
 function trSpeakText(text, lang) {
   var t = trClean(text);
-  if (!t) return;
+  if (!t) { trToast("🔊 لا يوجد نص لنطقه — ترجم النص أولاً ثم اضغط «نطق»"); return; }
   trStopSpeak();
   var p = trSpeakPrefs();
   var rep = parseInt(p.rep, 10) || 1;
@@ -13191,7 +13201,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.48"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.48: ميزة «📄 مستند» — ترجمة ملف كامل TXT أو Word .docx أو PDF من داخل المترجم: استخراج النص ثم ترجمته جزءاً جزءاً مع عرض تدريجي ونسبة الإنجاز وحد 12 ميغابايت و60 صفحة) — (v26.47: إصلاح «📷 تصوير» الذي لم يُظهر ترجمة — مهلة مراقبة 120 ثانية + إظهار نسبة كل مرحلة من مراحل القراءة + خادم نسخ احتياطي عبر الإنترنت يعمل تلقائياً عند تعذّر المحرك المحلي أو قِدم المتصفح) — (v26.46: زر «📷 تصوير» يفتح كاميرا الجهاز مباشرة في تطبيق الأندرويد 26.46 + تصغير الصورة تلقائياً قبل التعرف لتوفير الذاكرة على الأجهزة الضعيفة + فحص قِدم المتصفح ورسائل إرشادية عند عدم فتح الكاميرا) — (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
+var CURRENT_APP_VERSION = "26.49"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.49: إصلاح جذري لزر «🎤 صوت» الذي لم يعمل على الكومبيوتر والموبايل — حذف حاجز getUserMedia السابق لبدء التعرف + رسالة خاصة لمن يفتح التطبيق كملف محلي + فحص وجود مايك + رسائل إرشادية أدق + تنبيه واضح عند «نطق» بلا نص + تحديث رابط APK في بطاقة الإنقاذ) — (v26.48: ميزة «📄 مستند» — ترجمة ملف كامل TXT أو Word .docx أو PDF من داخل المترجم: استخراج النص ثم ترجمته جزءاً جزءاً مع عرض تدريجي ونسبة الإنجاز وحد 12 ميغابايت و60 صفحة) — (v26.47: إصلاح «📷 تصوير» الذي لم يُظهر ترجمة — مهلة مراقبة 120 ثانية + إظهار نسبة كل مرحلة من مراحل القراءة + خادم نسخ احتياطي عبر الإنترنت يعمل تلقائياً عند تعذّر المحرك المحلي أو قِدم المتصفح) — (v26.46: زر «📷 تصوير» يفتح كاميرا الجهاز مباشرة في تطبيق الأندرويد 26.46 + تصغير الصورة تلقائياً قبل التعرف لتوفير الذاكرة على الأجهزة الضعيفة + فحص قِدم المتصفح ورسائل إرشادية عند عدم فتح الكاميرا) — (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
