@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" media="print" onload="this.media='all';">
-<title>🕌 مواقيت الصلاة v26.46</title>
+<title>🕌 مواقيت الصلاة v26.47</title>
 <!-- v26.11: بحث شامل في كل كتب الأحاديث — خيار «كل الكتب» افتراضياً في البحث مع تحميل الفهارس بالتوازي مرة واحدة لكل جلسة وعرض النتائج مجمّعة حسب الكتاب مع الانتقال المباشر لأي كتاب -->
 <!-- v13: طريقة الحساب (22 طريقة + مذهب العصر) + بحث عالمي عن المدن (Open-Meteo) + اسم الموقع التلقائي -->
 <!-- v14: بوصلة القبلة التفاعلية (حساس الاتجاه + زاوية القبلة الدقيقة نحو مكة) + الوضع الليلي/النهاري مع حفظ التفضيل -->
@@ -2195,7 +2195,7 @@ body.dark-mode *::-webkit-scrollbar-corner { background: #0f1f18; }
       <div class="header-ramadan" id="headerRamadanBox" style="display:none;"></div>
     </div>
     <div class="title-cell">
-      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.46</span></h1>
+      <h1 style="font-size:13px;font-weight:700;color:#065f46;">🕌 مواقيت الصلاة <span id="hdrAppVer" class="hdr-app-ver" style="font-size:9px;font-weight:700;color:inherit;background:rgba(6,95,70,.09);border:1px solid rgba(6,95,70,.16);border-radius:6px;padding:1px 5px;vertical-align:middle;white-space:nowrap;">v26.47</span></h1>
     </div>
   </div>
   <div class="header-row2">
@@ -12856,6 +12856,10 @@ function trSpeakGiveUp() {
 
 // ===== v26.45: «تصوير» — قراءة نص من صورة/كاميرا داخل التطبيق (OCR) ثم وضعه في خانة النص الأصلي وترجمته فوراً =====
 // المحرك: Tesseract.js v5 يُحمَّل من CDN عند أول استخدام فقط، ويلغّم العربية والإنكليزية معاً
+// v26.47 [إصلاح «صوّرت ولم تظهر الترجمة»]: كانت الأعطاب المحتملة الثلاثة كلها تُنهي العملية برسالة أو بصمت:
+//   (أ) تعلّق محرك التعرف بلا نتيجة على الأجهزة الضعيفة — بلا مهلة مراقبة، (ب) صمت أثناء تنزيل بيانات اللغة الأولى (عشرات الميغابايتات)
+//   يوهم أن الزر لا يعمل، (ج) فشل نهائي عند متصفح قديم بلا WebAssembly أو عند شبكة تحجب CDN.
+// الحل: مراقب تعليق 120ث + إظهار كل المراحل بنسبها + خادم نسخ احتياطي عبر الإنترنت (OCR.space) يعمل تلقائياً عند أي من الأعطاب الثلاثة.
 var trOcrBusy = false, trOcrHintT = null;
 function trOcrPick() {
   if (trOcrBusy) { trStatus("⏳ قراءة صورة جارية بالفعل — انتظر انتهاءها أولاً", true); return; }
@@ -12877,28 +12881,86 @@ function trOcrFilechg(inp) {
   if (!f) return;
   try { if (trOcrHintT) { clearTimeout(trOcrHintT); trOcrHintT = null; } } catch (eT) {}
   trOcrBusy = true;
+  trStatus("⏳ جارٍ تحضير الصورة…");
   trOcrEnsureLib(function () {
-    trStatus("⏳ جارٍ قراءة النص من الصورة…");
     trOcrPrepare(f, function (dataUrl) {
+      // v26.47: مراقب تعليق — إن تعثّر المحرك المحلي ولم يُكمل خلال 120 ثانية ننتقل تلقائياً للخدمة الاحتياطية
       var finished = false;
-      Tesseract.recognize(dataUrl, "ara+eng", { logger: function (m) { if (m && m.status === "recognizing text") trStatus("⏳ قراءة النص من الصورة… " + Math.round((m.progress || 0) * 100) + "%"); } })
+      var watchdog = setTimeout(function () {
+        if (finished) return; finished = true;
+        trOcrFallback(dataUrl, "استغرقت قراءة النص وقتاً طويلاً");
+      }, 120000);
+      Tesseract.recognize(dataUrl, "ara+eng", { logger: function (m) {
+        if (!m || finished) return;
+        // v26.47: أظهر كل مراحل التحميل بنسبها — الصمت أثناء تنزيل بيانات اللغة كان يوهم أن الزر لا يعمل
+        var name = { "loading tesseract core": "تحميل نواة قارئ النص", "initializing tesseract": "تهيئة قارئ النص", "loading language traineddata": "تحميل بيانات اللغة (أول مرة فقط)", "loading language traineddata (from cache)": "تحميل بيانات اللغة (من الذاكرة)", "initializing api": "تهيئة القارئ", "recognizing text": "قراءة النص من الصورة" }[m.status];
+        if (name) trStatus("⏳ " + name + (m.progress ? "… " + Math.round(m.progress * 100) + "%" : "…"));
+      } })
         .then(function (res) {
-          if (finished) return; finished = true;
-          trOcrBusy = false;
+          if (finished) return; finished = true; clearTimeout(watchdog);
           var txt = trClean((res && res.data && res.data.text) || "");
-          if (!txt) { trStatus("✗ لم يُتعرّف على نص واضح في الصورة — صوّر النص قريباً وبإضاءة جيدة وعلى سطح مستوٍ ثم أعد المحاولة", true); return; }
-          el("trInput").value = txt;
-          trOnInput();
-          trStatus("✓ نُسخ النص من الصورة (" + txt.length + " حرفاً) — جارٍ الترجمة…");
-          trTranslate(true);
+          if (txt.length >= 2) { trOcrApply(txt); return; }
+          trOcrFallback(dataUrl); // v26.47: المحرك المحلي لم يقرأ شيئاً مفيداً — الخدمة الاحتياطية
         })
         .catch(function () {
-          if (finished) return; finished = true;
-          trOcrBusy = false;
-          trStatus("✗ فشل التعرف على النص من الصورة — تحقق من الاتصال بالإنترنت (محرك التعرف يُنزَّل أول مرة) وأعد المحاولة", true);
+          if (finished) return; finished = true; clearTimeout(watchdog);
+          trOcrFallback(dataUrl); // v26.47: فشل المحرك المحلي — الخدمة الاحتياطية بدل رسالة توقف
         });
     }, function () { trOcrBusy = false; trStatus("✗ تعذّر قراءة ملف الصورة — جرّب صورة أخرى", true); });
+  }, function (why) {
+    // v26.47: تعذّر تشغيل المحرك المحلي (متصفح قديم بلا WebAssembly أو شبكة تحجب CDN) — الخدمة الاحتياطية مباشرة من الملف الأصلي
+    trOcrPrepare(f, function (dataUrl) { trOcrFallback(dataUrl, why); }, function () { trOcrBusy = false; trStatus("✗ تعذّر قراءة ملف الصورة — جرّب صورة أخرى", true); });
   });
+}
+function trOcrApply(txt) { // v26.47: توحيد مسار النجاح (محلي أو احتياطي)
+  trOcrBusy = false;
+  el("trInput").value = txt;
+  trOnInput();
+  trStatus("✓ نُسخ النص من الصورة (" + txt.length + " حرفاً) — جارٍ الترجمة…");
+  trTranslate(true);
+}
+function trOcrFallback(dataUrl, why) { // v26.47: خادم نسخ احتياطي عبر الإنترنت — يعمل حتى لو كان متصفح الجهاز قديماً أو تعذّر تنزيل بيانات اللغة
+  trOcrBusy = true;
+  trStatus("⏳ " + (why || "لم يكتمل النسخ المحلي") + " — جارٍ تجربة خدمة النسخ عبر الإنترنت…");
+  var tries = [["auto", 2], ["ara", 2]];
+  var i = 0;
+  var next = function () {
+    if (i >= tries.length) {
+      trOcrBusy = false;
+      trStatus("✗ لم أستطع قراءة النص من الصورة — صوّر النص قريباً وبإضاءة جيدة وعلى سطح مستوٍ، أو اكتبه يدوياً في خانة النص ثم اضغط «ترجم»", true);
+      return;
+    }
+    var t = tries[i++];
+    trOcrSpace(dataUrl, t[0], t[1], function (txt) {
+      txt = trClean(txt || "");
+      if (txt.length >= 2) trOcrApply(txt); else next();
+    }, next);
+  };
+  next();
+}
+function trOcrSpace(dataUrl, lang, engine, ok, fail) { // v26.47: نداء الخدمة الاحتياطية (XHR للتوافق مع المتصفحات القديمة)
+  try {
+    var x = new XMLHttpRequest();
+    x.open("POST", "https://api.ocr.space/parse/image", true);
+    x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    x.timeout = 60000;
+    x.onload = function () {
+      try {
+        var j = JSON.parse(x.responseText);
+        if (j && !j.IsErroredOnProcessing && j.ParsedResults && j.ParsedResults.length) {
+          var s = "";
+          for (var k = 0; k < j.ParsedResults.length; k++) s += ((j.ParsedResults[k] || {}).ParsedText || "") + "\n";
+          ok(s);
+        } else fail();
+      } catch (eP) { fail(); }
+    };
+    x.onerror = fail; x.ontimeout = fail; x.onabort = fail;
+    x.send("apikey=" + encodeURIComponent("helloworld")
+      + "&base64Image=" + encodeURIComponent(dataUrl)
+      + "&language=" + encodeURIComponent(lang)
+      + "&OCREngine=" + engine
+      + "&scale=true&detectOrientation=true&isTable=false");
+  } catch (eX) { fail(); }
 }
 function trOcrPrepare(file, ok, fail) { // v26.46: تصغير الصور الضخمة قبل التعرف — ذاكرة أقل وسرعة أكبر على الأجهزة الضعيفة (مثل جي 5 بذاكرة 1.5GB)
   var maxDim = 1600;
@@ -12932,19 +12994,19 @@ function trOcrPrepare(file, ok, fail) { // v26.46: تصغير الصور الض�
     r1.readAsDataURL(file);
   }
 }
-function trOcrEnsureLib(cb) {
+function trOcrEnsureLib(cb, fail) {
   if (window.Tesseract && Tesseract.recognize) { cb(); return; }
   // v26.46: محرك التعرف يحتاج WebAssembly — متصفحات قديمة جداً (WebView قبل 2017) لا تدعمه
+  // v26.47: بدل التوقف برسالة خطأ نمرّر السبب للمسار الاحتياطي (خدمة النسخ عبر الإنترنت)
   if (typeof WebAssembly === "undefined") {
-    trOcrBusy = false;
-    trStatus("✗ متصفح هذا الجهاز قديم جداً ولا يدعم محرك التعرف على النص — حدّث «Android System WebView» من متجر Play أو استخدم إصدار APK الجديد", true);
+    fail && fail("متصفح هذا الجهاز قديم لقارئ النص المحلي");
     return;
   }
   trStatus("⏳ تحميل محرك التعرف على النص (أول مرة فقط)…");
   var s = document.createElement("script");
   s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
-  s.onload = function () { try { cb(); } catch (eC) { trOcrBusy = false; trStatus("✗ خطأ غير متوقع في محرك التعرف على النص", true); } };
-  s.onerror = function () { trOcrBusy = false; trStatus("✗ تعذّر تحميل محرك التعرف على النص — تحقق من اتصال الإنترنت ثم أعد المحاولة", true); };
+  s.onload = function () { try { cb(); } catch (eC) { fail && fail("حدث خطأ غير متوقع في تشغيل المحرك المحلي"); } };
+  s.onerror = function () { fail && fail("تعذّر تنزيل محرك القراءة المحلي"); };
   document.head.appendChild(s);
 }
 
@@ -12970,7 +13032,7 @@ var UPDATE_SOURCE_URLS = [
 ];
 var APP_VERSION_KEY = "pt-app-version";
 var APP_VERSION_CHECK_INTERVAL = 60 * 1000; // كل دقيقة (v20.2: تقليل الفاصل لتسريع التحديث)
-var CURRENT_APP_VERSION = "26.46"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.46: زر «📷 تصوير» يفتح كاميرا الجهاز مباشرة في تطبيق الأندرويد 26.46 + تصغير الصورة تلقائياً قبل التعرف لتوفير الذاكرة على الأجهزة الضعيفة + فحص قِدم المتصفح ورسائل إرشادية عند عدم فتح الكاميرا) — (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
+var CURRENT_APP_VERSION = "26.47"; // النسخة الحالية — تُقارن مع version.json على GitHub (v26.47: إصلاح «📷 تصوير» الذي لم يُظهر ترجمة — مهلة مراقبة 120 ثانية + إظهار نسبة كل مرحلة من مراحل القراءة + خادم نسخ احتياطي عبر الإنترنت يعمل تلقائياً عند تعذّر المحرك المحلي أو قِدم المتصفح) — (v26.46: زر «📷 تصوير» يفتح كاميرا الجهاز مباشرة في تطبيق الأندرويد 26.46 + تصغير الصورة تلقائياً قبل التعرف لتوفير الذاكرة على الأجهزة الضعيفة + فحص قِدم المتصفح ورسائل إرشادية عند عدم فتح الكاميرا) — (v26.44: زرّا «ناطق» في المترجم صارا «نطق» بطلب المستخدم — توحيداً مع زر «نطق» في بطاقة القاموس) — (v26.43: القاموس العام يعمل في الاتجاه عربي→إنكليزي — سد فجوة الكلمات الشائعة +61,836 مدخلاً) — (v26.42: أزرار نطق/نسخ تحت خانة الترجمة الأولى + خانة ثانية للمعاني) — (v26.40: بطاقة النتيجة بلا أمثلة نهائياً — المعنى + الفونيتيكس + زر نطق الكلمة الإنجليزية + نسخ + بحث موسع + نوع الكلمة بالإنكليزية + نجوم تفضيل 1-5 لكل معنى تُحفظ دائماً وتتحكم بترتيب النتائج كخيارات مفضلة — وأزرار استبدال/تحقق وعدّل/تجاهل عند الاختلاف مع ترجمة جوجل بنفس النمط الجاري)
 /* v26.8: العنوان وشارة الرأس تُبنى دائماً من CURRENT_APP_VERSION — تطابق مضمون بين المعروض والنسخة الفعلية */
 try {
   document.title = "🕌 مواقيت الصلاة v" + CURRENT_APP_VERSION;
